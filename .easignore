@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+ios/
+android/
+dist/
+build/
+*.ipa
+*.apk
+*.aab
+
+# Temp/Cache files
+.expo/
+.cache/
+.npm/
+
+# Environment/Secrets
+.env.local
+.env.*.local
+
+# Large Assets/Logs
+*.log

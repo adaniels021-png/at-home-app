@@ -1,0 +1,44 @@
+{
+  "version": "tough-cookie@4.0.0",
+  "storeType": "u",
+  "rejectPublicSuffixes": true,
+  "cookies": [
+    {
+      "key": "myacinfo",
+      "value": "DAWTKNV323952cf8084a204fb20ab2508441a07d02d3fe6f1de28ea832998ee09d1e42083d5e4680e6d143fb550ec0f6824fd078c2c5106b414eaebfb6d6836fa876bb90b3bc04d1d7e547e7ef43e7043048aa6b6370ab85e7fd12338e3742517e162ea2f08f876429f9b30c2538c7666df14a57c433b1d1cc228bc046632028dd660ee8d8156df31305ba135cbb8f2ff5aaf255210aeaef0d24b12f81d2672cdb674032d2a13b0e099242cf0929333d7643a0e8d203790508e3afa317524fa0f62778bbefacad455427cbebed0843be367af71a8306e5512af0e457444869c2ab5037b8ddcacb6cd65b8305a0be7f5d032c81c24358d658c0b672fbfc8f0f3928c1cf3ebc126936d3d433126de8f674b45c882a84d547e030f9452b4402b00fc9adf1c9bb7dd9a3da66f73cd86d4a6edcc26b986b08a99af8efd295508887518b4f32f493ea1382690433551c4a5a09c4a98e2ef60b79b21b3bc14e90d96d40a82653f46b24782bb80bb512c752d5d4bba79ea205af5fc6d0df4b3b5daf5114aed36a2ddc1853f9e00c1d773136f712923bcc2eb311898e288dfa71c2af4f92874de6bb51873b4b1ab34ba15ec59d868079067b1d50e2aa04cbba50c48e10876e9b9a41a7d63858ce053a40b6c472c80dd4c252a4c6e14229bf5bef00742fd4ed231ebec4b0d6f32e58a13478a7f5fd7c4dce05a897fb367922b786ee908366954341c9f406c17b396fee29f294252ec94c28888a5f585a47V3",
+      "domain": "apple.com",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true,
+      "hostOnly": false,
+      "creation": "2026-03-19T05:23:37.503Z",
+      "lastAccessed": "2026-03-23T17:09:04.677Z"
+    },
+    {
+      "key": "DES53649db8d46e71e8147d2f4b4e880d29b",
+      "value": "HSARMTKNSRVXWFlaXIlQXMJmnav5RYXYMfwRx14OoJrDbiownJc2YrUxtgTqYbT5zlYcB7NXAAKvXdI1TsRZJOCj7K21zrxvSNIEIHzis/KV7D8o1HujLeO35eTKIp4x/Tv/t4uIFwW9SWn0mGtqm0MpTWz8Sh6Sl5ZoqLYCAEcyVNPuXsz0/CsGHRUfoDxNj5Zc5DB24Q==SRVX",
+      "expires": "2026-04-19T23:04:59.000Z",
+      "maxAge": 2592000,
+      "domain": "idmsa.apple.com",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true,
+      "hostOnly": false,
+      "creation": "2026-03-19T05:23:37.926Z",
+      "lastAccessed": "2026-03-23T12:32:29.023Z"
+    },
+    {
+      "key": "dqsid",
+      "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NzQyODQ4NTcsImp0aSI6IldBR3lHYXp4NUg0YjM3NzFCbjhFU3cifQ.vfqwYeKyGHBiDIfATeZZjDrRz9vSlTLZRqPkVCZ7a5A",
+      "expires": "2026-03-23T17:39:05.000Z",
+      "maxAge": 1800,
+      "domain": "appstoreconnect.apple.com",
+      "path": "/",
+      "secure": true,
+      "httpOnly": true,
+      "hostOnly": true,
+      "creation": "2026-03-23T16:54:17.323Z",
+      "lastAccessed": "2026-03-23T17:09:05.026Z"
+    }
+  ]
+}
