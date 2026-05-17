@@ -1,20 +1,48 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { OpenAI } from "https://esm.sh/openai@4.28.0"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.2.1"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  const { childName, age, level } = await req.json()
-  
-  const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      { role: "system", content: "You are an expert ABA therapist and play coach." },
-      { role: "user", content: `Create a fun activity for ${childName}, age ${age} months, level: ${level}. Include: Title, Items Needed, and Step-by-Step Instructions.` }
-    ],
-  })
+  try {
+    const { childName, ageMonths, category, systemInstruction } = await req.json();
+    
+    // 1. Get your Gemini API Key from Supabase Secrets
+    const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || "");
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
-  return new Response(JSON.stringify(response.choices[0].message), {
-    headers: { "Content-Type": "application/json" },
-  })
+    const prompt = `
+      ${systemInstruction}
+      
+      Target Child: ${childName}
+      Age: ${ageMonths} months
+      Skill Category: ${category}
+
+      Return a JSON object with the following keys:
+      name, materials, instructions, pro_tip, success_criteria, video_term.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    return new Response(text, {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
+  }
 })

@@ -1,21 +1,82 @@
+import 'dotenv/config';
+
 export default {
   expo: {
     name: 'ABA at Home',
-    slug: 'aba-at-home',
+    slug: 'at-home-app',
     version: '1.0.0',
-    extra: {
-      eas: {
-        projectId: 'fda0fd5b-e698-479f-8733-1d5f5b59d6c5'
-      }
+    orientation: 'portrait',
+    scheme: 'abaathome',
+    userInterfaceStyle: 'light',
+
+    icon: './assets/icon.png',
+
+    splash: {
+      image: './assets/splash.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
     },
+
     ios: {
-      bundleIdentifier: 'com.adaniels021.abaathome',
-      appleTeamId: 'VD89UA35Z8',
-      supportsTablet: true,
-      infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
-      }
+  supportsTablet: false,
+  bundleIdentifier: 'com.adaniels021.abaathome',
+  buildNumber: '14',
+
+  infoPlist: {
+    NSCameraUsageDescription:
+      'ABA at Home may use the camera for profile photos and PECS content.',
+
+    NSPhotoLibraryUsageDescription:
+      'ABA at Home may access your photo library for profile customization and PECS image uploads.',
+
+    NSPhotoLibraryAddUsageDescription:
+      'ABA at Home may save exported worksheets and visual supports to your photo library.',
+
+    ITSAppUsesNonExemptEncryption: false,
+  },
+},
+
+    android: {
+      package: 'com.adaniels021.abaathome',
+
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#ffffff',
+      },
+
+      permissions: ['NOTIFICATIONS'],
     },
-    plugins: ['expo-router']
-  }
+
+    web: {
+      favicon: './assets/favicon.png',
+    },
+
+    plugins: [
+      'expo-router',
+      'expo-notifications',
+    ],
+
+    extra: {
+      EXPO_PUBLIC_SUPABASE_URL:
+        process.env.EXPO_PUBLIC_SUPABASE_URL,
+
+      EXPO_PUBLIC_SUPABASE_ANON_KEY:
+        process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+
+      EXPO_PUBLIC_GEMINI_API_KEY:
+        process.env.EXPO_PUBLIC_GEMINI_API_KEY,
+
+      EXPO_PUBLIC_RC_APPLE_API_KEY:
+        process.env.EXPO_PUBLIC_RC_APPLE_API_KEY,
+
+      EXPO_PUBLIC_RC_ENTITLEMENT_ID:
+        process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID,
+
+      eas: {
+        projectId: 'c4a657a7-ca99-4f5d-900f-7e7b19d7c3c8',
+      },
+    },
+
+    owner: 'adaniels021',
+  },
 };

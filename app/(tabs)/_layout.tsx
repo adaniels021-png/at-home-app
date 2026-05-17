@@ -1,64 +1,113 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
+        headerShown: false,
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: '#64748B',
         tabBarStyle: {
-          borderTopWidth: 0.5,
-          borderTopColor: '#E5E5EA',
+          borderTopWidth: 1,
+          borderTopColor: '#E2E8F0',
+          height: 65,
+          paddingBottom: 10,
+          paddingTop: 8,
           backgroundColor: '#FFFFFF',
         },
-        headerShown: false, // We use custom headers in our screens
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '700',
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="curriculum"
+        name="dashboard"
         options={{
-          title: '30-Day',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={24} color={color} />
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="progress"
+        name="routines"
         options={{
-          title: 'Progress',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={24} color={color} />
+          title: 'Routine',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="printables"
+        name="daily-lessons"
         options={{
-          title: 'Print',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'print' : 'print-outline'} size={24} color={color} />
+          title: 'Lessons',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="communication"
+        options={{
+          title: 'Talk',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles" size={size} color={color} />
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="activities"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="saved"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="worksheets"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="progress"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

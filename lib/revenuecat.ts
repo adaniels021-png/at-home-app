@@ -1,23 +1,241 @@
-import Purchases from 'react-native-purchases';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import Purchases, {
+  CustomerInfo,
+  LOG_LEVEL,
+  PurchasesOffering,
+  PurchasesPackage,
+} from 'react-native-purchases';
+import { supabase } from './supabase';
 
-// Use the verified iOS Public SDK Key
-const REVENUECAT_API_KEY = 'appl_oYFGztbuDzENRwfGfnSqRFISsLd';
+const APPLE_API_KEY = process.env.EXPO_PUBLIC_RC_APPLE_API_KEY;
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_RC_GOOGLE_API_KEY;
+const TEST_STORE_API_KEY = process.env.EXPO_PUBLIC_RC_TEST_STORE_API_KEY;
+const ENTITLEMENT_ID = process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID || 'pro';
 
-export const initRevenueCat = async () => {
-  if (Platform.OS === 'ios') {
-    try {
-      // Initialize the SDK
-      await Purchases.configure({ apiKey: REVENUECAT_API_KEY });
-      
-      // Enable debug logs to confirm connection in the terminal
-      await Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
-      
-      console.log("✅ RevenueCat: SDK configured successfully.");
-    } catch (error) {
-      console.error("❌ RevenueCat: Configuration failed:", error);
-    }
-  } else {
-    console.log("⚠️ RevenueCat: Platform not supported in this config.");
+let configured = false;
+let configuringPromise: Promise<void> | null = null;
+let revenueCatAvailable = true;
+let currentRevenueCatAppUserId: string | null = null;
+
+function isExpoGo(): boolean {
+  return Constants.appOwnership === 'expo';
+}
+
+function getRevenueCatApiKey(): string | null {
+  if (isExpoGo()) {
+    return TEST_STORE_API_KEY || null;
   }
-};
+
+  if (Platform.OS === 'ios') {
+    return APPLE_API_KEY || null;
+  }
+
+  if (Platform.OS === 'android') {
+    return GOOGLE_API_KEY || null;
+  }
+
+  return null;
+}
+
+async function isNativeRevenueCatConfigured(): Promise<boolean> {
+  try {
+    return await Purchases.isConfigured();
+  } catch {
+    return false;
+  }
+}
+
+export async function configureRevenueCat() {
+  if (configured) return;
+
+  if (configuringPromise) {
+    await configuringPromise;
+    return;
+  }
+
+  configuringPromise = (async () => {
+    const apiKey = getRevenueCatApiKey();
+
+    if (!apiKey) {
+      revenueCatAvailable = false;
+
+      if (isExpoGo()) {
+        console.log(
+          'RevenueCat skipped in Expo Go: add EXPO_PUBLIC_RC_TEST_STORE_API_KEY or use a development build.'
+        );
+      } else {
+        console.log('RevenueCat skipped: missing platform API key.');
+      }
+
+      return;
+    }
+
+    try {
+      const alreadyConfigured = await isNativeRevenueCatConfigured();
+
+      if (alreadyConfigured) {
+        configured = true;
+        revenueCatAvailable = true;
+
+        try {
+          const info = await Purchases.getCustomerInfo();
+          currentRevenueCatAppUserId = info?.originalAppUserId || null;
+        } catch {
+          currentRevenueCatAppUserId = null;
+        }
+
+        return;
+      }
+
+      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const appUserID = session?.user?.id ?? undefined;
+
+      Purchases.configure({
+        apiKey,
+        appUserID,
+      });
+
+      configured = true;
+      revenueCatAvailable = true;
+      currentRevenueCatAppUserId = appUserID ?? null;
+    } catch (error) {
+      revenueCatAvailable = false;
+      console.error('RevenueCat configure failed:', error);
+    }
+  })();
+
+  try {
+    await configuringPromise;
+  } finally {
+    configuringPromise = null;
+  }
+}
+
+export async function logInRevenueCat(appUserID: string) {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured || !appUserID) return;
+
+  try {
+    if (currentRevenueCatAppUserId === appUserID) {
+      return;
+    }
+
+    const result = await Purchases.logIn(appUserID);
+    currentRevenueCatAppUserId =
+      result.customerInfo?.originalAppUserId || appUserID;
+  } catch (error) {
+    console.error('RevenueCat login failed:', error);
+  }
+}
+
+export async function logOutRevenueCat() {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured) return;
+
+  try {
+    const isAnonymous = await Purchases.isAnonymous();
+
+    if (isAnonymous) {
+      currentRevenueCatAppUserId = null;
+      return;
+    }
+
+    const info = await Purchases.logOut();
+    currentRevenueCatAppUserId = info?.originalAppUserId || null;
+  } catch (error: any) {
+    const message = error?.message || '';
+
+    if (message.toLowerCase().includes('anonymous')) {
+      currentRevenueCatAppUserId = null;
+      return;
+    }
+
+    console.error('RevenueCat logout failed:', error);
+  }
+}
+
+export async function getCustomerInfo(): Promise<CustomerInfo | null> {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured) return null;
+
+  try {
+    return await Purchases.getCustomerInfo();
+  } catch (error) {
+    console.error('RevenueCat getCustomerInfo failed:', error);
+    return null;
+  }
+}
+
+export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured) return null;
+
+  try {
+    const offerings = await Purchases.getOfferings();
+    return offerings.current;
+  } catch (error) {
+    console.error('RevenueCat getOfferings failed:', error);
+    return null;
+  }
+}
+
+export function hasProAccess(customerInfo: CustomerInfo | null | undefined): boolean {
+  if (!customerInfo) return false;
+  return typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
+}
+
+export async function isProUser(): Promise<boolean> {
+  const info = await getCustomerInfo();
+  return hasProAccess(info);
+}
+
+function isCancelledPurchaseError(error: any): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    message.includes('cancelled') ||
+    message.includes('canceled') ||
+    message.includes('purchase was cancelled')
+  );
+}
+
+export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo | null> {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured) return null;
+
+  try {
+    const result = await Purchases.purchasePackage(pkg);
+    currentRevenueCatAppUserId =
+      result.customerInfo.originalAppUserId || currentRevenueCatAppUserId;
+    return result.customerInfo;
+  } catch (error) {
+    if (isCancelledPurchaseError(error)) {
+      console.log('RevenueCat purchase cancelled by user.');
+      return null;
+    }
+
+    console.error('RevenueCat purchase failed:', error);
+    return null;
+  }
+}
+
+export async function restorePurchases(): Promise<CustomerInfo | null> {
+  await configureRevenueCat();
+  if (!revenueCatAvailable || !configured) return null;
+
+  try {
+    const info = await Purchases.restorePurchases();
+    currentRevenueCatAppUserId = info.originalAppUserId || currentRevenueCatAppUserId;
+    return info;
+  } catch (error) {
+    console.error('RevenueCat restore failed:', error);
+    return null;
+  }
+}
+
+export { ENTITLEMENT_ID };
