@@ -62,6 +62,19 @@ type CustomRoutineRow = {
   created_at: string;
 };
 
+const DAY_OPTIONS: { label: string; value: DayType }[] = [
+  { label: 'Every Day', value: 'everyday' },
+  { label: 'School Days', value: 'school_days' },
+  { label: 'Weekends', value: 'weekends' },
+  { label: 'Monday', value: 'monday' },
+  { label: 'Tuesday', value: 'tuesday' },
+  { label: 'Wednesday', value: 'wednesday' },
+  { label: 'Thursday', value: 'thursday' },
+  { label: 'Friday', value: 'friday' },
+  { label: 'Saturday', value: 'saturday' },
+  { label: 'Sunday', value: 'sunday' },
+];
+
 const DEFAULT_ROUTINES: Record<TimePeriod, RoutineItem[]> = {
   morning: [
     { label: 'Wake Up', icon: 'sunny' },
@@ -83,39 +96,14 @@ const DEFAULT_ROUTINES: Record<TimePeriod, RoutineItem[]> = {
   ],
 };
 
-function getTodayDayType(): DayType {
-  const day = new Date().getDay();
-
-  if (day === 0) return 'sunday';
-  if (day === 1) return 'monday';
-  if (day === 2) return 'tuesday';
-  if (day === 3) return 'wednesday';
-  if (day === 4) return 'thursday';
-  if (day === 5) return 'friday';
-  return 'saturday';
-}
-
 function getFallbackDayType(dayType: DayType): DayType {
   return dayType === 'saturday' || dayType === 'sunday'
     ? 'weekends'
     : 'school_days';
 }
 
-function prettyDayType(dayType: DayType) {
-  const labels: Record<DayType, string> = {
-    everyday: 'Every Day',
-    school_days: 'School Days',
-    weekends: 'Weekends',
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    sunday: 'Sunday',
-  };
-
-  return labels[dayType];
+function getDayLabel(dayType: DayType) {
+  return DAY_OPTIONS.find((day) => day.value === dayType)?.label || 'Every Day';
 }
 
 function getIconForTask(taskName: string): keyof typeof Ionicons.glyphMap {
@@ -147,9 +135,11 @@ export default function RoutinesScreen() {
   const { selectedChild } = useChild();
 
   const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
+  const [selectedDayType, setSelectedDayType] = useState<DayType>('everyday');
+  const [showDayDropdown, setShowDayDropdown] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedDayType, setSelectedDayType] = useState<DayType>('everyday');
 
   const [todayLogs, setTodayLogs] = useState<RoutineLogRow[]>([]);
   const [savingTask, setSavingTask] = useState<string | null>(null);
@@ -161,7 +151,7 @@ export default function RoutinesScreen() {
     } else {
       setLoading(false);
     }
- }, [selectedChild, selectedTime, selectedDayType]);
+  }, [selectedChild, selectedTime, selectedDayType]);
 
   const childName = useMemo(() => {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
@@ -181,79 +171,78 @@ export default function RoutinesScreen() {
   }, [customRoutineRows, selectedTime]);
 
   const loadRoutineData = async () => {
-  if (!selectedChild?.id) return;
+    if (!selectedChild?.id) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const todayDayType = selectedDayType;
-    const fallbackDayType =
-  selectedDayType === 'everyday'
-    ? null
-    : getFallbackDayType(selectedDayType);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const todayDayType = selectedDayType;
+      const fallbackDayType =
+        selectedDayType === 'everyday'
+          ? null
+          : getFallbackDayType(selectedDayType);
 
-    const [logResponse, customRoutineResponse] = await Promise.all([
-      supabase
-        .from('routine_logs')
-        .select('*')
-        .eq('child_id', selectedChild.id)
-        .eq('routine_period', selectedTime)
-        .in('day_type',
-  [todayDayType, fallbackDayType, 'everyday'].filter(Boolean)
-)
-        .gte('completed_at', `${today}T00:00:00Z`)
-        .order('completed_at', { ascending: false }),
+      const dayTypesToLoad = [todayDayType, fallbackDayType, 'everyday'].filter(
+        Boolean
+      ) as string[];
 
-      supabase
-        .from('custom_routines')
-        .select(
-          'id, child_id, routine_period, day_type, task_name, sort_order, image_url, default_icon, is_custom_image, created_at'
-        )
-        .eq('child_id', selectedChild.id)
-        .eq('routine_period', selectedTime)
-       .in(
-           'day_type',
-          [todayDayType, fallbackDayType, 'everyday'].filter(Boolean)
-        )
-        .order('sort_order', { ascending: true }),
-    ]);
+      const [logResponse, customRoutineResponse] = await Promise.all([
+        supabase
+          .from('routine_logs')
+          .select('*')
+          .eq('child_id', selectedChild.id)
+          .eq('routine_period', selectedTime)
+          .in('day_type', dayTypesToLoad)
+          .gte('completed_at', `${today}T00:00:00Z`)
+          .order('completed_at', { ascending: false }),
 
-    if (logResponse.error) throw logResponse.error;
-    if (customRoutineResponse.error) throw customRoutineResponse.error;
+        supabase
+          .from('custom_routines')
+          .select(
+            'id, child_id, routine_period, day_type, task_name, sort_order, image_url, default_icon, is_custom_image, created_at'
+          )
+          .eq('child_id', selectedChild.id)
+          .eq('routine_period', selectedTime)
+          .in('day_type', dayTypesToLoad)
+          .order('sort_order', { ascending: true }),
+      ]);
 
-    const rows = (customRoutineResponse.data || []) as CustomRoutineRow[];
+      if (logResponse.error) throw logResponse.error;
+      if (customRoutineResponse.error) throw customRoutineResponse.error;
 
-    const exactRows = rows.filter((row) => row.day_type === todayDayType);
-    const fallbackRows = rows.filter((row) => row.day_type === fallbackDayType);
-    const everydayRows = rows.filter(
-      (row) => !row.day_type || row.day_type === 'everyday'
-    );
+      const rows = (customRoutineResponse.data || []) as CustomRoutineRow[];
 
-    const bestRows =
-      exactRows.length > 0
-        ? exactRows
-        : fallbackRows.length > 0
-          ? fallbackRows
-          : everydayRows.length > 0
-            ? everydayRows
-            : [];
+      const exactRows = rows.filter((row) => row.day_type === todayDayType);
+      const fallbackRows = rows.filter((row) => row.day_type === fallbackDayType);
+      const everydayRows = rows.filter(
+        (row) => !row.day_type || row.day_type === 'everyday'
+      );
 
-    setCustomRoutineRows(bestRows);
-    setTodayLogs((logResponse.data || []) as RoutineLogRow[]);
-  } catch (error) {
-    console.error('Routine data load error:', error);
-    Alert.alert('Routine Error', 'Could not load routine progress.');
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
+      const bestRows =
+        exactRows.length > 0
+          ? exactRows
+          : fallbackRows.length > 0
+            ? fallbackRows
+            : everydayRows.length > 0
+              ? everydayRows
+              : [];
+
+      setCustomRoutineRows(bestRows);
+      setTodayLogs((logResponse.data || []) as RoutineLogRow[]);
+    } catch (error) {
+      console.error('Routine data load error:', error);
+      Alert.alert('Routine Error', 'Could not load routine progress.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   const handleRefresh = async () => {
-  setRefreshing(true);
-  await loadRoutineData();
-};
+    setRefreshing(true);
+    await loadRoutineData();
+  };
 
   const getTaskLog = (taskName: string) => {
     return todayLogs.find((log) => log.task_name === taskName);
@@ -275,61 +264,126 @@ export default function RoutinesScreen() {
     }
   };
 
-  const handleCompleteTask = async (taskName: string) => {
+  const handleToggleTask = async (taskName: string) => {
     if (!selectedChild?.id) {
       Alert.alert('No Child Selected', 'Please select a child profile first.');
       return;
     }
 
-    if (isTaskCompleted(taskName)) {
-      Alert.alert('Already Completed', 'This task has already been checked off today.');
-      return;
-    }
+    const existingLog = getTaskLog(taskName);
 
     setSavingTask(taskName);
 
     try {
+      if (existingLog) {
+        setTodayLogs((prev) => prev.filter((log) => log.id !== existingLog.id));
+
+        if (!existingLog.id.startsWith('local-')) {
+          const { error } = await withTimeout(
+            supabase.from('routine_logs').delete().eq('id', existingLog.id),
+            8000,
+            'Removing routine progress took too long.'
+          );
+
+          if (error) throw error;
+        }
+
+        return;
+      }
+
       const now = new Date().toISOString();
 
       const payload = {
-          child_id: selectedChild.id,
-          routine_period: selectedTime,
-          day_type: selectedDayType,
-          routine_name: `${selectedTime} routine`,
-          task_name: taskName,
-          completed: true,
-          completed_at: now,
+        child_id: selectedChild.id,
+        routine_period: selectedTime,
+        day_type: selectedDayType,
+        routine_name: `${selectedTime} routine`,
+        task_name: taskName,
+        completed: true,
+        completed_at: now,
       };
 
       const optimisticLog: RoutineLogRow = {
-  id: `local-${Date.now()}`,
-  child_id: selectedChild.id,
-  routine_period: selectedTime,
-  day_type: selectedDayType,
-  routine_name: `${selectedTime} routine`,
-  task_name: taskName,
-  completed: true,
-  completed_at: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-};
+        id: `local-${Date.now()}`,
+        child_id: selectedChild.id,
+        routine_period: selectedTime,
+        day_type: selectedDayType,
+        routine_name: `${selectedTime} routine`,
+        task_name: taskName,
+        completed: true,
+        completed_at: now,
+        created_at: now,
+      };
 
-setTodayLogs((prev) => [optimisticLog, ...prev]);
+      setTodayLogs((prev) => [optimisticLog, ...prev]);
 
       const { error } = await withTimeout(
-  supabase.from('routine_logs').insert([payload]),
-  8000,
-  'Saving routine progress took too long.'
-);
+        supabase.from('routine_logs').insert([payload]),
+        8000,
+        'Saving routine progress took too long.'
+      );
 
-    if (error) throw error;
-
-
+      if (error) throw error;
     } catch (error: any) {
-      console.error('Routine log save error:', error);
-      Alert.alert('Save Error', error?.message || 'Could not save task completion.');
+      console.error('Routine toggle error:', error);
+      Alert.alert(
+        'Routine Error',
+        error?.message || 'Could not update task completion.'
+      );
+
+      await loadRoutineData();
     } finally {
       setSavingTask(null);
     }
+  };
+
+  const handleResetRoutine = async () => {
+    if (!selectedChild?.id) return;
+
+    Alert.alert(
+      'Reset Routine',
+      `Are you sure you want to reset all completed tasks for this ${selectedTime} routine?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const logsToDelete = todayLogs.filter(
+                (log) => log.routine_period === selectedTime
+              );
+
+              const idsToDelete = logsToDelete
+                .map((log) => log.id)
+                .filter((id) => !id.startsWith('local-'));
+
+              setTodayLogs((prev) =>
+                prev.filter((log) => log.routine_period !== selectedTime)
+              );
+
+              if (idsToDelete.length > 0) {
+                const { error } = await supabase
+                  .from('routine_logs')
+                  .delete()
+                  .in('id', idsToDelete);
+
+                if (error) throw error;
+              }
+            } catch (error) {
+              console.error('Reset routine error:', error);
+
+              Alert.alert('Reset Error', 'Could not reset the routine.');
+
+              await loadRoutineData();
+            }
+          },
+        },
+      ]
+    );
   };
 
   const completedCount = currentRoutine.filter((item) =>
@@ -412,59 +466,65 @@ setTodayLogs((prev) => [optimisticLog, ...prev]);
           })}
         </View>
 
-<View style={styles.daySelectorWrap}>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    {[
-      { label: 'Every Day', value: 'everyday' },
-      { label: 'School Days', value: 'school_days' },
-      { label: 'Weekends', value: 'weekends' },
-      { label: 'Monday', value: 'monday' },
-      { label: 'Tuesday', value: 'tuesday' },
-      { label: 'Wednesday', value: 'wednesday' },
-      { label: 'Thursday', value: 'thursday' },
-      { label: 'Friday', value: 'friday' },
-      { label: 'Saturday', value: 'saturday' },
-      { label: 'Sunday', value: 'sunday' },
-    ].map((day) => {
-      const active = selectedDayType === day.value;
-
-      return (
-        <TouchableOpacity
-          key={day.value}
-          style={[styles.dayChip, active && styles.dayChipActive]}
-          onPress={() => setSelectedDayType(day.value as DayType)}
-        >
-          <Text
-            style={[
-              styles.dayChipText,
-              active && styles.dayChipTextActive,
-            ]}
-          >
-            {day.label}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </ScrollView>
-</View>
-
-        <View style={styles.topActionRow}>
+        <View style={styles.dayDropdownWrap}>
           <TouchableOpacity
-            style={styles.secondaryActionBtn}
-            onPress={() => router.push('/routines/customize')}
+            style={styles.dayDropdownButton}
+            onPress={() => setShowDayDropdown((prev) => !prev)}
           >
-            <Ionicons name="create-outline" size={18} color="#4F46E5" />
-            <Text style={styles.secondaryActionBtnText}>Customize Routine</Text>
+            <View>
+              <Text style={styles.dayDropdownLabel}>Routine Schedule</Text>
+              <Text style={styles.dayDropdownValue}>
+                {getDayLabel(selectedDayType)}
+              </Text>
+            </View>
+
+            <Ionicons
+              name={showDayDropdown ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color="#4F46E5"
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.primaryActionBtn}
-            onPress={() => router.push('/routine-printables')}
-          >
-            <Ionicons name="print-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.primaryActionBtnText}>Print Routine</Text>
-          </TouchableOpacity>
+          {showDayDropdown ? (
+            <View style={styles.dayDropdownMenu}>
+              {DAY_OPTIONS.map((day) => {
+                const active = selectedDayType === day.value;
+
+                return (
+                  <TouchableOpacity
+                    key={day.value}
+                    style={[
+                      styles.dayDropdownItem,
+                      active && styles.dayDropdownItemActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedDayType(day.value);
+                      setShowDayDropdown(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dayDropdownItemText,
+                        active && styles.dayDropdownItemTextActive,
+                      ]}
+                    >
+                      {day.label}
+                    </Text>
+
+                    {active ? (
+                      <Ionicons name="checkmark" size={18} color="#4F46E5" />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
+
+        <TouchableOpacity style={styles.resetBtn} onPress={handleResetRoutine}>
+          <Ionicons name="refresh-outline" size={14} color="#DC2626" />
+          <Text style={styles.resetBtnText}>Reset Today</Text>
+        </TouchableOpacity>
 
         <View style={styles.cardContainer}>
           {currentRoutine.map((item, index) => {
@@ -521,13 +581,13 @@ setTodayLogs((prev) => [optimisticLog, ...prev]);
                       styles.checkBtn,
                       completed && styles.checkBtnCompleted,
                     ]}
-                    onPress={() => handleCompleteTask(item.label)}
-                    disabled={completed || saving}
+                    onPress={() => handleToggleTask(item.label)}
+                    disabled={saving}
                   >
                     {saving ? (
                       <ActivityIndicator size="small" color="#4F46E5" />
                     ) : completed ? (
-                      <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                      <Text style={styles.uncheckBtnText}>Undo</Text>
                     ) : (
                       <Text style={styles.checkBtnText}>Check Off</Text>
                     )}
@@ -542,6 +602,24 @@ setTodayLogs((prev) => [optimisticLog, ...prev]);
               </View>
             );
           })}
+        </View>
+
+        <View style={styles.topActionRow}>
+          <TouchableOpacity
+            style={styles.secondaryActionBtn}
+            onPress={() => router.push('/routines/customize')}
+          >
+            <Ionicons name="create-outline" size={18} color="#4F46E5" />
+            <Text style={styles.secondaryActionBtnText}>Customize Routine</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.primaryActionBtn}
+            onPress={() => router.push('/routine-printables')}
+          >
+            <Ionicons name="print-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.primaryActionBtnText}>Print Routine</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.infoCard}>
@@ -692,44 +770,88 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  topActionRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+  dayDropdownWrap: {
+    marginBottom: 12,
   },
 
-  secondaryActionBtn: {
-    flex: 1,
+  dayDropdownButton: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#C7D2FE',
-    paddingVertical: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
-  secondaryActionBtnText: {
-    marginLeft: 8,
-    color: '#4F46E5',
+  dayDropdownLabel: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+
+  dayDropdownValue: {
+    color: '#1E293B',
+    fontSize: 15,
     fontWeight: '800',
   },
 
-  primaryActionBtn: {
-    flex: 1,
-    backgroundColor: '#4F46E5',
+  dayDropdownMenu: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingVertical: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+
+  dayDropdownItem: {
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+
+  dayDropdownItemActive: {
+    backgroundColor: '#EEF2FF',
+  },
+
+  dayDropdownItemText: {
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  dayDropdownItemTextActive: {
+    color: '#4F46E5',
+    fontWeight: '900',
+  },
+
+  resetBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginBottom: 14,
   },
 
-  primaryActionBtnText: {
-    marginLeft: 8,
-    color: '#FFFFFF',
+  resetBtnText: {
+    marginLeft: 6,
+    color: '#DC2626',
     fontWeight: '800',
+    fontSize: 12,
   },
 
   cardContainer: {
@@ -830,9 +952,55 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+  uncheckBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+
   arrowWrap: {
     marginTop: 10,
     alignItems: 'center',
+  },
+
+  topActionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  secondaryActionBtn: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+
+  secondaryActionBtnText: {
+    marginLeft: 8,
+    color: '#4F46E5',
+    fontWeight: '800',
+  },
+
+  primaryActionBtn: {
+    flex: 1,
+    backgroundColor: '#4F46E5',
+    borderRadius: 18,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+
+  primaryActionBtnText: {
+    marginLeft: 8,
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
 
   infoCard: {
@@ -885,32 +1053,4 @@ const styles = StyleSheet.create({
     color: '#B45309',
     lineHeight: 20,
   },
-  daySelectorWrap: {
-  marginBottom: 18,
-},
-
-dayChip: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 999,
-  paddingVertical: 10,
-  paddingHorizontal: 14,
-  marginRight: 8,
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-},
-
-dayChipActive: {
-  backgroundColor: '#4F46E5',
-  borderColor: '#4F46E5',
-},
-
-dayChipText: {
-  color: '#475569',
-  fontSize: 12,
-  fontWeight: '800',
-},
-
-dayChipTextActive: {
-  color: '#FFFFFF',
-},
 });
