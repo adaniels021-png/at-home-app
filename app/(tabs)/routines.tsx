@@ -252,18 +252,6 @@ export default function RoutinesScreen() {
     return !!getTaskLog(taskName);
   };
 
-  const formatCompletedTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } catch {
-      return '';
-    }
-  };
-
   const handleToggleTask = async (taskName: string) => {
     if (!selectedChild?.id) {
       Alert.alert('No Child Selected', 'Please select a child profile first.');
@@ -567,12 +555,10 @@ export default function RoutinesScreen() {
                       ) : null}
 
                       {completedLog ? (
-                        <Text style={styles.completedTimeText}>
-                          Completed at {formatCompletedTime(completedLog.completed_at)}
-                        </Text>
-                      ) : (
-                        <Text style={styles.pendingText}>Not completed yet</Text>
-                      )}
+                       <Text style={styles.completedTimeText}>Completed today</Text>
+                    ) : (
+                       <Text style={styles.pendingText}>Not completed yet</Text>
+                    )}
                     </View>
                   </View>
 

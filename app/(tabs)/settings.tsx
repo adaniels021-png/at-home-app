@@ -11,11 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useChild } from '../../lib/SelectedChildContext';
-import { useSettings } from '../../lib/SettingsContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
 import { deleteChildProfile } from '../../lib/deleteChildProfile';
 import { useResponsiveLayout } from '../../lib/responsive';
+import { useChild } from '../../lib/SelectedChildContext';
+import { useSubscription } from '../../lib/SubscriptionContext';
 import { supabase } from '../../lib/supabase';
 
 type SettingItemProps = {
@@ -41,7 +40,6 @@ export default function SettingsScreen() {
   const { selectedChild, refreshChildren } = childContext;
 
   const { isPro, adminMode, toggleAdminMode } = useSubscription();
-  const { language } = useSettings();
 
   const [adminTapCount, setAdminTapCount] = useState(0);
   const [showAdminMode, setShowAdminMode] = useState(false);
@@ -152,8 +150,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
 
             <Text style={styles.subtitle}>
-              Manage profiles, therapy tools, subscription access, and app
-              preferences.
+              Manage your account, child profiles, subscription, legal links, and app tools.
             </Text>
 
             <View style={styles.statusPill}>
@@ -184,8 +181,7 @@ export default function SettingsScreen() {
                 <View style={styles.adminTextWrap}>
                   <Text style={styles.adminTitle}>Admin Mode</Text>
                   <Text style={styles.adminText}>
-                    Testing access is currently{' '}
-                    {adminMode ? 'enabled' : 'disabled'}.
+                    Testing access is currently {adminMode ? 'enabled' : 'disabled'}.
                   </Text>
                 </View>
               </View>
@@ -288,26 +284,41 @@ export default function SettingsScreen() {
             />
           </Section>
 
-          <Section title="Therapy Tools">
+          <Section title="Subscription">
+            <SettingItem
+              icon="card-outline"
+              label={isPro ? 'Manage Subscription' : 'View Subscription Options'}
+              helper={
+                isPro
+                  ? 'Change plans or cancel through Apple'
+                  : 'Choose monthly or yearly Pro access'
+              }
+              onPress={() => router.push('/subscription')}
+            />
+          </Section>
+
+          <Section title="Legal">
+            <SettingItem
+              icon="document-text-outline"
+              label="Privacy Policy"
+              helper="Review how ABA at Home handles privacy and data"
+              onPress={() => openRoute('/settings/privacy-policy')}
+            />
+
+            <SettingItem
+              icon="reader-outline"
+              label="Terms of Use"
+              helper="View app terms and subscription terms"
+              onPress={() => openRoute('/settings/terms-of-use')}
+            />
+          </Section>
+
+          <Section title="App Tools">
             <SettingItem
               icon="chatbubbles-outline"
               label="Communication / PECS"
               helper="Open visual communication supports"
               onPress={() => openRoute('/communication')}
-            />
-
-            <SettingItem
-              icon="volume-high-outline"
-              label="Communication Voice"
-              helper="Choose a clearer voice for PECS speech"
-              onPress={() => openRoute('/settings/voice-settings')}
-            />
-
-            <SettingItem
-              icon="notifications-outline"
-              label="Daily Lesson Reminders"
-              helper="Set parent practice reminders"
-              onPress={() => openRoute('/settings/daily-reminders')}
             />
 
             <SettingItem
@@ -327,22 +338,23 @@ export default function SettingsScreen() {
             />
           </Section>
 
-          <Section title="Subscription">
+          <Section title="App Preferences">
             <SettingItem
-              icon="card-outline"
-              label={isPro ? 'Manage Subscription' : 'View Subscription Options'}
-              helper={
-                isPro
-                  ? 'Change plans or cancel through Apple'
-                  : 'Choose monthly or yearly Pro access'
-              }
-              onPress={() => router.push('/subscription')}
+              icon="notifications-outline"
+              label="Daily Lesson Reminders"
+              helper="Set parent practice reminders"
+              onPress={() => openRoute('/settings/daily-reminders')}
+            />
+
+            <SettingItem
+              icon="volume-high-outline"
+              label="Communication Voice"
+              helper="Choose a clearer voice for PECS speech"
+              onPress={() => openRoute('/settings/voice-settings')}
             />
           </Section>
 
-          <Text style={styles.versionText}>
-            ABA at Home 
-          </Text>
+          <Text style={styles.versionText}>ABA at Home</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

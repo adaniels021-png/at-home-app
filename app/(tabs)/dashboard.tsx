@@ -12,13 +12,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ensureLessonQueue } from '../../lib/lessonQueue';
 
 import ProfileSwitcher from '../../components/ProfileSwitcher';
+import { generateProgressSummary } from '../../lib/aiService';
+import { ensureLessonQueue } from '../../lib/lessonQueue';
+import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
-import { generateProgressSummary } from '../../lib/aiService';
-import { useResponsiveLayout } from '../../lib/responsive';
 import { supabase } from '../../lib/supabase';
 
 type LessonLogRow = {
@@ -34,9 +34,20 @@ type LessonLogRow = {
   created_at: string;
 };
 
+type RoutineLogRow = {
+  id: string;
+  child_id: string;
+  routine_period: string;
+  task_name: string;
+  completed: boolean;
+  completed_at: string;
+  created_at: string;
+};
+
 type DashboardCache = {
   assessment: any | null;
   weeklyLogs: LessonLogRow[];
+  todayRoutineLogs: RoutineLogRow[];
   weeklySummary: string;
   cachedAt: string;
 };
@@ -97,14 +108,17 @@ export default function Dashboard() {
   const { selectedChild, loading: childLoading } = useChild();
   const { isPro } = useSubscription();
 
-  const itemWidth = `${100 / layout.gridColumns - 2}%`;
+  const featuredItemWidth = `${100 / layout.gridColumns - 2}%`;
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showQuickAccess, setShowQuickAccess] = useState(false);
 
   const [assessment, setAssessment] = useState<any | null>(null);
   const [weeklyLogs, setWeeklyLogs] = useState<LessonLogRow[]>([]);
+  const [todayRoutineLogs, setTodayRoutineLogs] = useState<RoutineLogRow[]>([]);
   const [weeklySummary, setWeeklySummary] = useState(
     'Progress data is being collected this week.'
   );
@@ -114,46 +128,46 @@ export default function Dashboard() {
   }, [selectedChild]);
 
   const PRELOAD_CATEGORIES = [
-  'Communication',
-  'Social',
-  'Play',
-  'Self-Help',
-  'Motor',
-];
+    'Communication',
+    'Social',
+    'Play',
+    'Self-Help',
+    'Motor',
+  ];
 
-useEffect(() => {
-  if (!selectedChild?.id) return;
+  useEffect(() => {
+    if (!selectedChild?.id) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  const preloadLessons = async () => {
-    for (const category of PRELOAD_CATEGORIES) {
-      if (cancelled) return;
+    const preloadLessons = async () => {
+      for (const category of PRELOAD_CATEGORIES) {
+        if (cancelled) return;
 
-      await ensureLessonQueue({
-        childId: selectedChild.id,
-        childName,
-        category,
-        isPro,
-      }).catch((error) => {
-        console.log(`Lesson preload skipped for ${category}:`, error);
-      });
-    }
-  };
+        await ensureLessonQueue({
+          childId: selectedChild.id,
+          childName,
+          category,
+          isPro,
+        }).catch((error) => {
+          console.log(`Lesson preload skipped for ${category}:`, error);
+        });
+      }
+    };
 
-  void preloadLessons();
+    void preloadLessons();
 
-  return () => {
-    cancelled = true;
-  };
-}, [selectedChild?.id, childName, isPro]);
-
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChild?.id, childName, isPro]);
 
   const hasAssessment = !!assessment;
   const lessonsThisWeek = weeklyLogs.length;
+  const routineCompletedToday = todayRoutineLogs.length;
 
   const topCategory = useMemo(() => {
-    if (!weeklyLogs.length) return 'No lessons yet';
+    if (!weeklyLogs.length) return 'None yet';
 
     const counts: Record<string, number> = {};
 
@@ -165,6 +179,26 @@ useEffect(() => {
   }, [weeklyLogs]);
 
   const streakCount = useMemo(() => calculateStreak(weeklyLogs), [weeklyLogs]);
+
+  const dashboardTip = useMemo(() => {
+    if (!hasAssessment) {
+      return 'Complete the assessment first so lessons, routines, and support tools can be personalized.';
+    }
+
+    if (routineCompletedToday === 0 && lessonsThisWeek === 0) {
+      return 'Start with one routine task or one short lesson today. Small steps still count.';
+    }
+
+    if (routineCompletedToday > 0 && lessonsThisWeek === 0) {
+      return 'Great routine progress. Try one short daily lesson next.';
+    }
+
+    if (lessonsThisWeek > 0) {
+      return 'You are building helpful consistency. Keep sessions short, positive, and repeatable.';
+    }
+
+    return 'Use today’s tools to support communication, learning, and daily structure.';
+  }, [hasAssessment, routineCompletedToday, lessonsThisWeek]);
 
   const loadCachedDashboard = useCallback(async () => {
     if (!selectedChild?.id) return null;
@@ -205,7 +239,9 @@ useEffect(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const [assessmentResult, logsResult] = await Promise.all([
+    const today = new Date().toISOString().split('T')[0];
+
+    const [assessmentResult, logsResult, routineResult] = await Promise.all([
       supabase
         .from('assessments')
         .select('id, child_id, created_at')
@@ -218,20 +254,31 @@ useEffect(() => {
         .from('lesson_logs')
         .select(
           'id, child_id, category, lesson_number, lesson_name, status, notes, completed_at, created_at'
-       )
-         .eq('child_id', selectedChild.id)
-         .eq('status', 'success')
-         .gte('completed_at', sevenDaysAgo.toISOString())
+        )
+        .eq('child_id', selectedChild.id)
+        .eq('status', 'success')
+        .gte('completed_at', sevenDaysAgo.toISOString())
         .order('completed_at', { ascending: false })
-        .limit(50)
+        .limit(50),
+
+      supabase
+        .from('routine_logs')
+        .select(
+          'id, child_id, routine_period, task_name, completed, completed_at, created_at'
+        )
+        .eq('child_id', selectedChild.id)
+        .gte('completed_at', `${today}T00:00:00Z`)
+        .order('completed_at', { ascending: false }),
     ]);
 
     if (assessmentResult.error) throw assessmentResult.error;
     if (logsResult.error) throw logsResult.error;
+    if (routineResult.error) throw routineResult.error;
 
     return {
       assessment: assessmentResult.data || null,
       weeklyLogs: (logsResult.data || []) as LessonLogRow[],
+      todayRoutineLogs: (routineResult.data || []) as RoutineLogRow[],
     };
   }, [selectedChild?.id]);
 
@@ -246,6 +293,7 @@ useEffect(() => {
           if (cached) {
             setAssessment(cached.assessment);
             setWeeklyLogs(cached.weeklyLogs || []);
+            setTodayRoutineLogs(cached.todayRoutineLogs || []);
             setWeeklySummary(
               cached.weeklySummary || 'Progress data is being collected this week.'
             );
@@ -261,6 +309,7 @@ useEffect(() => {
 
         setAssessment(freshData.assessment);
         setWeeklyLogs(freshData.weeklyLogs);
+        setTodayRoutineLogs(freshData.todayRoutineLogs);
 
         let summaryText = 'Progress data is being collected this week.';
 
@@ -281,12 +330,13 @@ useEffect(() => {
         await saveDashboardCache({
           assessment: freshData.assessment,
           weeklyLogs: freshData.weeklyLogs,
+          todayRoutineLogs: freshData.todayRoutineLogs,
           weeklySummary: summaryText,
           cachedAt: new Date().toISOString(),
-      });
-        } catch (error) {
-       console.error('Dashboard load error:', error);
-       setWeeklySummary('Could not load weekly progress right now.');
+        });
+      } catch (error) {
+        console.error('Dashboard load error:', error);
+        setWeeklySummary('Could not load weekly progress right now.');
       } finally {
         setRefreshing(false);
         setInitialLoading(false);
@@ -299,7 +349,6 @@ useEffect(() => {
       saveDashboardCache,
     ]
   );
-
 
   useEffect(() => {
     if (!selectedChild?.id) return;
@@ -333,10 +382,11 @@ useEffect(() => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
+          <Ionicons name="person-add-outline" size={40} color="#94A3B8" />
           <Text style={styles.emptyTitle}>No Child Profile Found</Text>
 
           <Text style={styles.emptyText}>
-            Let’s set up your child to start building your ABA plan.
+            Let’s set up your child to start building your ABA support plan.
           </Text>
 
           <TouchableOpacity
@@ -387,88 +437,70 @@ useEffect(() => {
 
           <View style={styles.header}>
             <View style={styles.headerTextWrap}>
-               <Text style={styles.greeting}>Welcome back 👋</Text>
-               <Text style={styles.subtitle}>
-                 Today’s support plan for {childName}
-               </Text>
+              <Text style={styles.greeting}>Welcome back 👋</Text>
+              <Text style={styles.subtitle}>
+                Today’s support plan for {childName}
+              </Text>
             </View>
 
-           <TouchableOpacity
-            style={[styles.statsBtn, { minHeight: layout.touchSize }]}
-            onPress={() => router.push('/progress')}
-          >
-            <Ionicons name="stats-chart" size={22} color="#4F46E5" />
+            <TouchableOpacity
+              style={[styles.statsBtn, { minHeight: layout.touchSize }]}
+              onPress={() => router.push('/progress')}
+            >
+              <Ionicons name="stats-chart" size={22} color="#4F46E5" />
             </TouchableOpacity>
           </View>
 
           <ProfileSwitcher />
 
-          <TouchableOpacity
-            style={styles.heroCard}
-            onPress={() =>
-              hasAssessment
-                ? router.push('/daily-lessons')
-                : router.push('/onboarding/assessment')
-            }
-          >
-            <View style={styles.heroTopRow}>
-              <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>
-                  {hasAssessment ? 'TODAY’S PLAN' : 'SETUP'}
-                </Text>
+          {!hasAssessment ? (
+            <TouchableOpacity
+              style={styles.assessmentPromptCard}
+              onPress={() => router.push('/onboarding/assessment')}
+            >
+              <View style={styles.heroTopRow}>
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>SETUP NEEDED</Text>
+                </View>
+
+                <Ionicons name="clipboard-outline" size={18} color="#FFFFFF" />
               </View>
 
-              <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-            </View>
+              <Text style={styles.heroTitle}>Complete Assessment</Text>
 
-            <Text style={styles.heroTitle}>
-              {hasAssessment ? 'Start Today’s Lesson' : 'Complete Assessment'}
-            </Text>
-
-            <Text style={styles.heroDesc}>
-              {hasAssessment
-                ? 'Continue your child’s personalized ABA plan with lessons, communication tools, and support activities.'
-                : 'Finish the onboarding assessment to personalize lessons, routines, PECS, worksheets, and progress tracking.'}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.summaryRow}>
-            <View style={[styles.summaryCard, { backgroundColor: '#EEF2FF' }]}>
-              <Text style={styles.summaryValue}>
-                {hasAssessment ? 'Ready' : 'Pending'}
+              <Text style={styles.heroDesc}>
+                Finish the onboarding assessment to personalize lessons, routines, PECS, worksheets, and progress tracking.
               </Text>
-              <Text style={styles.summaryLabel}>Assessment</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          <View style={styles.focusProgressRow}>
+            <View style={styles.compactFocusCard}>
+              <View style={styles.tipHeader}>
+                <Ionicons name="bulb-outline" size={17} color="#F59E0B" />
+                <Text style={styles.tipTitle}>Today’s Focus</Text>
+              </View>
+
+              <Text style={styles.tipText}>{dashboardTip}</Text>
             </View>
 
-            <View style={[styles.summaryCard, { backgroundColor: '#ECFDF5' }]}>
-              <Text style={styles.summaryValue}>Daily</Text>
-              <Text style={styles.summaryLabel}>Lessons</Text>
-            </View>
+            <View style={styles.compactStreakCard}>
+              <View style={styles.streakHeader}>
+                <Ionicons name="flame" size={17} color="#F97316" />
+                <Text style={styles.streakTitle}>Streak</Text>
+              </View>
 
-            <View style={[styles.summaryCard, { backgroundColor: '#FFF7ED' }]}>
-              <Text style={styles.summaryValue}>PECS</Text>
-              <Text style={styles.summaryLabel}>Tools</Text>
+              <Text style={styles.compactStreakNumber}>
+                {streakCount} Day{streakCount === 1 ? '' : 's'}
+              </Text>
+
+              <Text style={styles.compactStreakText}>
+                {streakCount > 0 ? 'Keep going!' : 'Start today'}
+              </Text>
             </View>
           </View>
 
-          <View style={styles.streakCard}>
-            <View style={styles.streakHeader}>
-              <Ionicons name="flame" size={20} color="#F97316" />
-              <Text style={styles.streakTitle}>Streak</Text>
-            </View>
-
-            <Text style={styles.streakNumber}>
-              {streakCount} Day{streakCount === 1 ? '' : 's'}
-            </Text>
-
-            <Text style={styles.streakText}>
-              {streakCount > 0
-                ? "You're building a strong routine 💪"
-                : 'Complete a lesson today to start your streak'}
-            </Text>
-          </View>
-
-          <View style={styles.weeklyCard}>
+          <View style={styles.compactWeeklyCard}>
             <View style={styles.weeklyHeader}>
               <Ionicons name="calendar-outline" size={18} color="#4F46E5" />
               <Text style={styles.weeklyTitle}>Weekly Progress</Text>
@@ -477,7 +509,7 @@ useEffect(() => {
             <View style={styles.weeklyStatsRow}>
               <View style={styles.weeklyStatBox}>
                 <Text style={styles.weeklyStatNumber}>{lessonsThisWeek}</Text>
-                <Text style={styles.weeklyStatLabel}>Lessons This Week</Text>
+                <Text style={styles.weeklyStatLabel}>Lessons</Text>
               </View>
 
               <View style={styles.weeklyStatBox}>
@@ -486,128 +518,195 @@ useEffect(() => {
               </View>
             </View>
 
-            <View style={styles.weeklySummaryBox}>
-              <Text style={styles.weeklySummaryLabel}>Summary</Text>
-
-              <Text style={styles.weeklySummaryText}>
-                {summaryLoading
-                  ? 'Reviewing this week’s progress...'
-                  : weeklySummary}
-              </Text>
-            </View>
+            <Text style={styles.weeklySummaryText}>
+              {summaryLoading ? 'Reviewing progress...' : weeklySummary}
+            </Text>
           </View>
 
-          <SectionHeader title="Therapy Tools" />
+          <SectionHeader title="Featured Parent Tools" />
 
-          <View style={styles.grid}>
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="chatbubbles"
-              label="PECS"
-              subtitle="Talk tools"
-              bg="#EEF2FF"
-              color="#4F46E5"
-              onPress={() => openRoute('/communication')}
-            />
-
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="create"
-              label="Worksheets"
-              subtitle={isPro ? 'Printables' : 'Pro feature'}
-              bg="#FFF7ED"
-              color="#EA580C"
-              onPress={() => openPremiumRoute('/worksheets')}
-            />
-
-            <ActionItem
-              itemWidth={itemWidth}
+          <View style={styles.featuredGrid}>
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
               icon="color-palette"
               label="Activities"
-              subtitle="Fun ideas"
+              subtitle="Fun at-home ideas for learning, play, and skill building."
               bg="#FDF2F8"
               color="#DB2777"
+              accent="#DB2777"
               onPress={() => openRoute('/activities')}
             />
 
-            <ActionItem
-              itemWidth={itemWidth}
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
+              icon="create"
+              label="Worksheets"
+              subtitle={isPro ? 'Printable practice for tracing, colors, shapes, and more.' : 'Upgrade to unlock printable practice.'}
+              bg="#FFF7ED"
+              color="#EA580C"
+              accent="#EA580C"
+              onPress={() => openPremiumRoute('/worksheets')}
+            />
+
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
               icon="heart-circle"
               label="Parent Support"
-              subtitle={isPro ? 'AI guidance' : 'Pro feature'}
+              subtitle={isPro ? 'Guidance tools for daily ABA support at home.' : 'Upgrade to unlock parent support tools.'}
               bg="#F3E8FF"
               color="#7C3AED"
+              accent="#7C3AED"
               onPress={() => openPremiumRoute('/parent-support')}
             />
-          </View>
 
-          <SectionHeader title="Tracking" />
-
-          <View style={styles.grid}>
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="trending-up"
-              label="Progress"
-              subtitle="Growth"
-              bg="#EFF6FF"
-              color="#2563EB"
-              onPress={() => openRoute('/progress')}
-            />
-
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="clipboard"
-              label="Assessment"
-              subtitle="Review"
-              bg="#FEF3C7"
-              color="#D97706"
-              onPress={() => openRoute('/onboarding/assessment')}
-            />
-          </View>
-
-          <SectionHeader title="Resources" />
-
-          <View style={styles.grid}>
-            <ActionItem
-              itemWidth={itemWidth}
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
               icon="play-circle-outline"
-              label="Video Hub"
-              subtitle="Parent videos"
+              label="Videos"
+              subtitle="Parent-friendly video help and support resources."
               bg="#FEF2F2"
               color="#DC2626"
+              accent="#DC2626"
               onPress={() => openRoute('/videos')}
             />
-
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="book"
-              label="Library"
-              subtitle="Guides"
-              bg="#F1F5F9"
-              color="#475569"
-              onPress={() => openRoute('/resources')}
-            />
-
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="albums-outline"
-              label="Manage PECS"
-              subtitle={isPro ? 'Edit cards' : 'Pro feature'}
-              bg="#ECFDF5"
-              color="#059669"
-              onPress={() => openPremiumRoute('/manage-pecs')}
-            />
-
-            <ActionItem
-              itemWidth={itemWidth}
-              icon="add-circle-outline"
-              label="Add Child"
-              subtitle={isPro ? 'New profile' : 'Pro feature'}
-              bg="#EEF2FF"
-              color="#4338CA"
-              onPress={() => openPremiumRoute('/onboarding/add-child')}
-            />
           </View>
+
+          <TouchableOpacity
+            style={styles.libraryButton}
+            onPress={() => setShowLibrary((prev) => !prev)}
+          >
+            <View style={styles.libraryButtonLeft}>
+              <View style={styles.libraryIconWrap}>
+                <Ionicons name="library-outline" size={21} color="#4F46E5" />
+              </View>
+
+              <View style={styles.dropdownTextWrap}>
+                <Text style={styles.libraryTitle}>Library</Text>
+                <Text style={styles.librarySubtitle}>
+                  PECS, guides, resources, and saved tools
+                </Text>
+              </View>
+            </View>
+
+            <Ionicons
+              name={showLibrary ? 'chevron-up' : 'chevron-down'}
+              size={22}
+              color="#64748B"
+            />
+          </TouchableOpacity>
+
+          {showLibrary ? (
+            <View style={styles.libraryDropdown}>
+              <LibraryItem
+                icon="chatbubbles"
+                title="PECS"
+                subtitle="Communication cards"
+                color="#4F46E5"
+                bg="#EEF2FF"
+                onPress={() => openRoute('/communication')}
+              />
+
+              <LibraryItem
+                icon="albums-outline"
+                title="Manage PECS"
+                subtitle={isPro ? 'Edit and organize cards' : 'Pro feature'}
+                color="#059669"
+                bg="#ECFDF5"
+                onPress={() => openPremiumRoute('/manage-pecs')}
+              />
+
+              <LibraryItem
+                icon="book"
+                title="Guides"
+                subtitle="Parent learning resources"
+                color="#475569"
+                bg="#F1F5F9"
+                onPress={() => openRoute('/resources')}
+              />
+
+              <LibraryItem
+                icon="folder-open-outline"
+                title="Resources"
+                subtitle="Helpful support materials"
+                color="#D97706"
+                bg="#FEF3C7"
+                onPress={() => openRoute('/resources')}
+              />
+            </View>
+          ) : null}
+
+          <TouchableOpacity
+            style={styles.libraryButton}
+            onPress={() => setShowQuickAccess((prev) => !prev)}
+          >
+            <View style={styles.libraryButtonLeft}>
+              <View style={styles.quickAccessIconWrap}>
+                <Ionicons name="apps-outline" size={21} color="#7C3AED" />
+              </View>
+
+              <View style={styles.dropdownTextWrap}>
+                <Text style={styles.libraryTitle}>Quick Access</Text>
+                <Text style={styles.librarySubtitle}>
+                  Lessons, routine, talk, progress, and assessment
+                </Text>
+              </View>
+            </View>
+
+            <Ionicons
+              name={showQuickAccess ? 'chevron-up' : 'chevron-down'}
+              size={22}
+              color="#64748B"
+            />
+          </TouchableOpacity>
+
+          {showQuickAccess ? (
+            <View style={styles.libraryDropdown}>
+              <LibraryItem
+                icon="school-outline"
+                title="Lessons"
+                subtitle="Daily learning practice"
+                color="#4F46E5"
+                bg="#EEF2FF"
+                onPress={() => openRoute('/daily-lessons')}
+              />
+
+              <LibraryItem
+                icon="calendar-outline"
+                title="Routine"
+                subtitle={`${routineCompletedToday} completed today`}
+                color="#059669"
+                bg="#ECFDF5"
+                onPress={() => openRoute('/routine')}
+              />
+
+              <LibraryItem
+                icon="chatbubbles-outline"
+                title="Talk"
+                subtitle="Communication tools"
+                color="#DB2777"
+                bg="#FDF2F8"
+                onPress={() => openRoute('/communication')}
+              />
+
+              <LibraryItem
+                icon="trending-up"
+                title="Progress"
+                subtitle="View growth and tracking"
+                color="#2563EB"
+                bg="#EFF6FF"
+                onPress={() => openRoute('/progress')}
+              />
+
+              <LibraryItem
+                icon="clipboard"
+                title="Assessment"
+                subtitle={hasAssessment ? 'Review plan' : 'Complete setup'}
+                color="#D97706"
+                bg="#FEF3C7"
+                onPress={() => openRoute('/onboarding/assessment')}
+              />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -618,13 +717,14 @@ function SectionHeader({ title }: { title: string }) {
   return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
-function ActionItem({
+function FeaturedToolCard({
   itemWidth,
   icon,
   label,
   subtitle,
   bg,
   color,
+  accent,
   onPress,
 }: {
   itemWidth: string;
@@ -633,25 +733,64 @@ function ActionItem({
   subtitle: string;
   bg: string;
   color: string;
+  accent: string;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity
-      style={[styles.item, { width: itemWidth }]}
+      style={[styles.featuredCard, { width: itemWidth }]}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.86}
     >
-      <View style={[styles.itemIconWrap, { backgroundColor: bg }]}>
-        <Ionicons name={icon} size={24} color={color} />
+      <View style={[styles.featuredAccentBar, { backgroundColor: accent }]} />
+
+      <View style={[styles.featuredIconWrap, { backgroundColor: bg }]}>
+        <Ionicons name={icon} size={27} color={color} />
       </View>
 
-      <Text style={styles.itemText} numberOfLines={1}>
+      <Text style={styles.featuredText} numberOfLines={1}>
         {label}
       </Text>
 
-      <Text style={styles.itemSubtext} numberOfLines={1}>
+      <Text style={styles.featuredSubtext} numberOfLines={3}>
         {subtitle}
       </Text>
+
+      <View style={styles.featuredFooter}>
+        <Text style={[styles.featuredFooterText, { color }]}>Open</Text>
+        <Ionicons name="arrow-forward" size={15} color={color} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function LibraryItem({
+  icon,
+  title,
+  subtitle,
+  bg,
+  color,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle: string;
+  bg: string;
+  color: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={styles.libraryItem} onPress={onPress} activeOpacity={0.86}>
+      <View style={[styles.libraryItemIconWrap, { backgroundColor: bg }]}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+
+      <View style={styles.libraryItemTextWrap}>
+        <Text style={styles.libraryItemTitle}>{title}</Text>
+        <Text style={styles.libraryItemSubtitle}>{subtitle}</Text>
+      </View>
+
+      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
     </TouchableOpacity>
   );
 }
@@ -720,11 +859,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  heroCard: {
+  assessmentPromptCard: {
     backgroundColor: '#4F46E5',
     borderRadius: 28,
     padding: 22,
-    marginBottom: 22,
+    marginBottom: 18,
     shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
@@ -766,74 +905,80 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  summaryRow: {
+  focusProgressRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 10,
+    gap: 12,
+    marginBottom: 14,
   },
 
-  summaryCard: {
-    flex: 1,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-    alignItems: 'center',
+  compactFocusCard: {
+    flex: 1.45,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 22,
+    padding: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
   },
 
-  summaryValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-
-  summaryLabel: {
-    fontSize: 12,
-    color: '#475569',
-    fontWeight: '700',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-
-  streakCard: {
+  compactStreakCard: {
+    flex: 0.75,
     backgroundColor: '#FFF7ED',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 20,
+    borderRadius: 22,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#FED7AA',
+  },
+
+  tipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+
+  tipTitle: {
+    marginLeft: 8,
+    fontWeight: '900',
+    color: '#92400E',
+  },
+
+  tipText: {
+    color: '#B45309',
+    lineHeight: 19,
+    fontWeight: '600',
+    fontSize: 13,
   },
 
   streakHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   streakTitle: {
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: 6,
+    fontSize: 13,
     fontWeight: '800',
     color: '#9A3412',
   },
 
-  streakNumber: {
-    fontSize: 26,
+  compactStreakNumber: {
+    fontSize: 19,
     fontWeight: '900',
     color: '#EA580C',
   },
 
-  streakText: {
-    marginTop: 6,
-    fontSize: 14,
+  compactStreakText: {
+    marginTop: 4,
+    fontSize: 12,
     color: '#C2410C',
+    fontWeight: '700',
   },
 
-  weeklyCard: {
+  compactWeeklyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 24,
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 22,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -853,7 +998,7 @@ const styles = StyleSheet.create({
 
   weeklyStatsRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 12,
     gap: 12,
   },
 
@@ -861,12 +1006,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
     borderRadius: 18,
-    padding: 14,
+    padding: 12,
     alignItems: 'center',
   },
 
   weeklyStatNumber: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
@@ -880,23 +1025,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  weeklySummaryBox: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 18,
-    padding: 14,
-  },
-
-  weeklySummaryLabel: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#3730A3',
-    marginBottom: 6,
-  },
-
   weeklySummaryText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#4338CA',
-    lineHeight: 20,
+    lineHeight: 19,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 16,
+    padding: 12,
+    fontWeight: '600',
   },
 
   sectionTitle: {
@@ -906,43 +1042,169 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  grid: {
+  featuredGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 24,
   },
 
-  item: {
-    minHeight: 140,
+  featuredCard: {
+    minHeight: 178,
     backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    borderRadius: 22,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+    overflow: 'hidden',
   },
 
-  itemIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 17,
+  featuredAccentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 5,
+  },
+
+  featuredIconWrap: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
 
-  itemText: {
-    fontWeight: '800',
-    fontSize: 14,
+  featuredText: {
+    fontWeight: '900',
+    fontSize: 16,
+    color: '#0F172A',
+  },
+
+  featuredSubtext: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+
+  featuredFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+
+  featuredFooterText: {
+    fontSize: 12,
+    fontWeight: '900',
+    marginRight: 4,
+  },
+
+  libraryButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  libraryButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: 10,
+  },
+
+  libraryIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+
+  quickAccessIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+
+  dropdownTextWrap: {
+    flex: 1,
+  },
+
+  libraryTitle: {
+    fontSize: 16,
+    fontWeight: '900',
     color: '#1E293B',
   },
 
-  itemSubtext: {
-    marginTop: 4,
+  librarySubtitle: {
+    marginTop: 3,
     fontSize: 12,
-    color: '#64748B',
     fontWeight: '600',
+    color: '#64748B',
+  },
+
+  libraryDropdown: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    marginBottom: 18,
+  },
+
+  libraryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+
+  libraryItemIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+
+  libraryItemTextWrap: {
+    flex: 1,
+  },
+
+  libraryItemTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#1E293B',
+  },
+
+  libraryItemSubtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
   },
 
   emptyTitle: {
@@ -950,6 +1212,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     color: '#111827',
+    marginTop: 12,
   },
 
   emptyText: {
