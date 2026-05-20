@@ -4,7 +4,7 @@ export default {
   expo: {
     name: 'ABA at Home',
     slug: 'at-home-app',
-    version: '1.0.0',
+    version: '1.0.1',
     orientation: 'portrait',
     scheme: 'abaathome',
     userInterfaceStyle: 'light',
@@ -18,26 +18,27 @@ export default {
     },
 
     ios: {
-  supportsTablet: false,
-  bundleIdentifier: 'com.adaniels021.abaathome',
-  buildNumber: '14',
+      supportsTablet: false,
+      bundleIdentifier: 'com.adaniels021.abaathome',
+      buildNumber: '19',
 
-  infoPlist: {
-    NSCameraUsageDescription:
-      'ABA at Home may use the camera for profile photos and PECS content.',
+      infoPlist: {
+        NSCameraUsageDescription:
+          'ABA at Home may use the camera for profile photos and PECS content.',
 
-    NSPhotoLibraryUsageDescription:
-      'ABA at Home may access your photo library for profile customization and PECS image uploads.',
+        NSPhotoLibraryUsageDescription:
+          'ABA at Home may access your photo library for profile customization and PECS image uploads.',
 
-    NSPhotoLibraryAddUsageDescription:
-      'ABA at Home may save exported worksheets and visual supports to your photo library.',
+        NSPhotoLibraryAddUsageDescription:
+          'ABA at Home may save exported worksheets and visual supports to your photo library.',
 
-    ITSAppUsesNonExemptEncryption: false,
-  },
-},
+        ITSAppUsesNonExemptEncryption: false,
+      },
+    },
 
     android: {
       package: 'com.adaniels021.abaathome',
+      versionCode: 2,
 
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
@@ -68,6 +69,9 @@ export default {
 
       EXPO_PUBLIC_RC_APPLE_API_KEY:
         process.env.EXPO_PUBLIC_RC_APPLE_API_KEY,
+
+      EXPO_PUBLIC_RC_GOOGLE_API_KEY:
+        process.env.EXPO_PUBLIC_RC_GOOGLE_API_KEY,
 
       EXPO_PUBLIC_RC_ENTITLEMENT_ID:
         process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID,

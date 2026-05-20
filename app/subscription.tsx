@@ -158,7 +158,8 @@ export default function SubscriptionScreen() {
           (pkg: any) =>
             pkg.packageType === 'MONTHLY' ||
             pkg.identifier?.toLowerCase().includes('monthly') ||
-            pkg.product?.identifier?.toLowerCase().includes('month')
+            pkg.product?.identifier?.toLowerCase().includes('month') ||
+            pkg.product?.identifier?.toLowerCase().includes('aba_monthly')
         ) || null;
 
       const yearlyPkg =
@@ -168,7 +169,8 @@ export default function SubscriptionScreen() {
             pkg.packageType === 'YEARLY' ||
             pkg.identifier?.toLowerCase().includes('annual') ||
             pkg.identifier?.toLowerCase().includes('yearly') ||
-            pkg.product?.identifier?.toLowerCase().includes('year')
+            pkg.product?.identifier?.toLowerCase().includes('year') ||
+            pkg.product?.identifier?.toLowerCase().includes('aba_yearly')
         ) || null;
 
       if (monthlyPkg) {
@@ -251,12 +253,14 @@ export default function SubscriptionScreen() {
                 (pkg: any) =>
                   pkg.packageType === 'ANNUAL' ||
                   pkg.packageType === 'YEARLY' ||
-                  pkg.product?.identifier?.toLowerCase().includes('year')
+                 pkg.product?.identifier?.toLowerCase().includes('year') ||
+                 pkg.product?.identifier?.toLowerCase().includes('aba_yearly')
               )
             : availablePackages.find(
                 (pkg: any) =>
                   pkg.packageType === 'MONTHLY' ||
-                  pkg.product?.identifier?.toLowerCase().includes('month')
+                  pkg.product?.identifier?.toLowerCase().includes('month') ||
+                  pkg.product?.identifier?.toLowerCase().includes('aba_monthly')
               );
 
         if (!selectedPackage && availablePackages.length > 0) {

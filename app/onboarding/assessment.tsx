@@ -353,7 +353,7 @@ function buildLessonProfile(
 
 export default function AssessmentScreen() {
   const router = useRouter();
-  const { selectedChild } = useChild() as any;
+  const { selectedChild, refreshChildren } = useChild() as any;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
@@ -433,7 +433,6 @@ export default function AssessmentScreen() {
     setSaving(true);
 
     const lessonProfile = buildLessonProfile(answers, childName);
-
     const completedAt = new Date().toISOString();
 
     const payload = {
@@ -454,26 +453,36 @@ export default function AssessmentScreen() {
       completed_at: completedAt,
     };
 
-    const { error } = await supabase.from('assessments').insert(payload);
+    const { error: assessmentError } = await supabase
+      .from('assessments')
+      .insert(payload);
 
-    if (error) throw error;
+    if (assessmentError) {
+      throw assessmentError;
+    }
 
-    await supabase
+    const { error: childUpdateError } = await supabase
       .from('children')
       .update({
         assessment_status: 'completed',
         assessment_completed_at: completedAt,
-        personalization_status: 'processing',
+        personalization_status: 'completed',
       })
       .eq('id', selectedChild.id);
 
-    router.replace('/(tabs)/dashboard');
+    if (childUpdateError) {
+      throw childUpdateError;
+    }
 
+    await refreshChildren();
+
+    router.replace('/(tabs)/dashboard');
   } catch (error: any) {
     console.error('Save assessment error:', error);
+
     Alert.alert(
       'Save Error',
-      error?.message || 'Could not save the assessment.'
+      error?.message || 'Could not save the assessment. Please try again.'
     );
   } finally {
     setSaving(false);

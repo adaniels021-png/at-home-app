@@ -46,7 +46,7 @@ async function isNativeRevenueCatConfigured(): Promise<boolean> {
   }
 }
 
-export async function configureRevenueCat() {
+export async function configureRevenueCat(): Promise<void> {
   if (configured) return;
 
   if (configuringPromise) {
@@ -64,8 +64,16 @@ export async function configureRevenueCat() {
         console.log(
           'RevenueCat skipped in Expo Go: add EXPO_PUBLIC_RC_TEST_STORE_API_KEY or use a development build.'
         );
+      } else if (Platform.OS === 'android') {
+        console.log(
+          'RevenueCat skipped on Android: missing EXPO_PUBLIC_RC_GOOGLE_API_KEY.'
+        );
+      } else if (Platform.OS === 'ios') {
+        console.log(
+          'RevenueCat skipped on iOS: missing EXPO_PUBLIC_RC_APPLE_API_KEY.'
+        );
       } else {
-        console.log('RevenueCat skipped: missing platform API key.');
+        console.log('RevenueCat skipped: unsupported platform.');
       }
 
       return;
@@ -104,8 +112,15 @@ export async function configureRevenueCat() {
       configured = true;
       revenueCatAvailable = true;
       currentRevenueCatAppUserId = appUserID ?? null;
+
+      console.log(
+        `RevenueCat configured for ${
+          isExpoGo() ? 'Expo Go/Test Store' : Platform.OS
+        }.`
+      );
     } catch (error) {
       revenueCatAvailable = false;
+      configured = false;
       console.error('RevenueCat configure failed:', error);
     }
   })();
@@ -117,8 +132,9 @@ export async function configureRevenueCat() {
   }
 }
 
-export async function logInRevenueCat(appUserID: string) {
+export async function logInRevenueCat(appUserID: string): Promise<void> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured || !appUserID) return;
 
   try {
@@ -127,6 +143,7 @@ export async function logInRevenueCat(appUserID: string) {
     }
 
     const result = await Purchases.logIn(appUserID);
+
     currentRevenueCatAppUserId =
       result.customerInfo?.originalAppUserId || appUserID;
   } catch (error) {
@@ -134,8 +151,9 @@ export async function logInRevenueCat(appUserID: string) {
   }
 }
 
-export async function logOutRevenueCat() {
+export async function logOutRevenueCat(): Promise<void> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured) return;
 
   try {
@@ -147,11 +165,12 @@ export async function logOutRevenueCat() {
     }
 
     const info = await Purchases.logOut();
+
     currentRevenueCatAppUserId = info?.originalAppUserId || null;
   } catch (error: any) {
-    const message = error?.message || '';
+    const message = String(error?.message || '').toLowerCase();
 
-    if (message.toLowerCase().includes('anonymous')) {
+    if (message.includes('anonymous')) {
       currentRevenueCatAppUserId = null;
       return;
     }
@@ -162,6 +181,7 @@ export async function logOutRevenueCat() {
 
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured) return null;
 
   try {
@@ -174,6 +194,7 @@ export async function getCustomerInfo(): Promise<CustomerInfo | null> {
 
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured) return null;
 
   try {
@@ -185,8 +206,11 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   }
 }
 
-export function hasProAccess(customerInfo: CustomerInfo | null | undefined): boolean {
+export function hasProAccess(
+  customerInfo: CustomerInfo | null | undefined
+): boolean {
   if (!customerInfo) return false;
+
   return typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
 }
 
@@ -197,6 +221,7 @@ export async function isProUser(): Promise<boolean> {
 
 function isCancelledPurchaseError(error: any): boolean {
   const message = String(error?.message || '').toLowerCase();
+
   return (
     message.includes('cancelled') ||
     message.includes('canceled') ||
@@ -204,14 +229,19 @@ function isCancelledPurchaseError(error: any): boolean {
   );
 }
 
-export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo | null> {
+export async function purchasePackage(
+  pkg: PurchasesPackage
+): Promise<CustomerInfo | null> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured) return null;
 
   try {
     const result = await Purchases.purchasePackage(pkg);
+
     currentRevenueCatAppUserId =
       result.customerInfo.originalAppUserId || currentRevenueCatAppUserId;
+
     return result.customerInfo;
   } catch (error) {
     if (isCancelledPurchaseError(error)) {
@@ -226,11 +256,15 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerIn
 
 export async function restorePurchases(): Promise<CustomerInfo | null> {
   await configureRevenueCat();
+
   if (!revenueCatAvailable || !configured) return null;
 
   try {
     const info = await Purchases.restorePurchases();
-    currentRevenueCatAppUserId = info.originalAppUserId || currentRevenueCatAppUserId;
+
+    currentRevenueCatAppUserId =
+      info.originalAppUserId || currentRevenueCatAppUserId;
+
     return info;
   } catch (error) {
     console.error('RevenueCat restore failed:', error);
