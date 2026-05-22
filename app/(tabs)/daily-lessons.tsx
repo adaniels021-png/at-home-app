@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -40,12 +40,35 @@ type LockedPreviewLesson = {
   subtitle: string;
 };
 
+function cleanLessonTitle(title: any, category: string) {
+  const raw = String(title || '').trim();
+
+  const hasBadVariationTitle =
+    raw.toLowerCase().includes('variation') || /\d{8,}/.test(raw);
+
+  if (!raw || hasBadVariationTitle) {
+    const cleanTitles: Record<string, string> = {
+      Communication: 'Practicing Communication at Home',
+      Social: 'Building Social Skills',
+      Play: 'Learning Through Play',
+      'Self-Help': 'Practicing Independence',
+      Motor: 'Movement and Motor Practice',
+    };
+
+    return cleanTitles[category] || `${category} Practice`;
+  }
+
+  return raw;
+}
+
 export default function DailyLessonsScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
   const { isPro } = useSubscription();
-  const [started, setStarted] = useState(false);
 
+  const loadRequestRef = useRef(0);
+
+  const [started, setStarted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Communication');
   const [lessonData, setLessonData] = useState<Lesson | null>(null);
 
@@ -54,7 +77,6 @@ export default function DailyLessonsScreen() {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const [lessonNumber, setLessonNumber] = useState(1);
-
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
 
   const [completionRating, setCompletionRating] = useState<1 | 2 | 3 | 4 | 5>(4);
@@ -68,209 +90,159 @@ export default function DailyLessonsScreen() {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
 
-const buildInstantLesson = (
-  category: string,
-  childName: string,
-  lessonNumber = 1
-) => ({
-  lesson_name: `${category} Practice Lesson ${lessonNumber}`,
-  objective: `${childName} will practice a short ${category.toLowerCase()} skill with parent support.`,
-  setting: 'Home',
-  focus_skill: category,
-  materials: ['Preferred item', 'Visual support if available', 'Small reinforcer'],
-  setup: [
-    'Choose a calm area with limited distractions.',
-    'Place materials nearby before starting.',
-  ],
-  teaching_steps: [
-    'Get your child’s attention.',
-    'Give one short, clear instruction.',
-    'Wait 3–5 seconds for a response.',
-    'Prompt gently if needed.',
-    'Reinforce any successful attempt right away.',
-  ],
-  prompting_hierarchy: [
-    'Independent',
-    'Gesture prompt',
-    'Model prompt',
-    'Verbal prompt',
-    'Physical support only if needed',
-  ],
-  reinforcement: [
-    'Specific praise',
-    'Access to a preferred item',
-    'Short celebration after success',
-  ],
-  error_correction: [
-    'Stay calm and brief.',
-    'Model the correct response.',
-    'Try again with more support.',
-  ],
-  generalization: [
-    'Practice the same skill in another room.',
-    'Have another caregiver try the same routine later.',
-  ],
-  success_criteria: 'Complete 3–5 practice opportunities with support.',
-  parent_coaching_note:
-    'Keep the session short, positive, and focused on successful attempts.',
-});
+  const loadLesson = useCallback(async () => {
+    if (!selectedChild?.id) return;
 
-const loadLesson = useCallback(async () => {
-  if (!selectedChild?.id) return;
+    const requestId = loadRequestRef.current + 1;
+    loadRequestRef.current = requestId;
 
-  const categoryToUse = selectedCategory || 'Communication';
-  const requestCategory = categoryToUse;
+    const requestCategory = selectedCategory || 'Communication';
 
-  try {
-    setStarted(false);
-    setDailyLimitReached(false);
+    try {
+      setStarted(false);
+      setDailyLimitReached(false);
+      setLoading(true);
 
-    // Show instant lesson immediately
-    const instantLesson = buildInstantLesson(requestCategory, childName, lessonNumber);
+      const lessonRow = await getNextQueuedLesson({
+        childId: selectedChild.id,
+        childName,
+        category: requestCategory,
+        isPro,
+      });
 
-    setLessonData({
-      ...instantLesson,
-      id: `instant-${requestCategory}-${Date.now()}`,
-      lesson_number: lessonNumber,
-      source: 'fallback',
-    });
+      if (loadRequestRef.current !== requestId) return;
 
-    setLoading(false);
-    setRefreshing(false);
+      if (!lessonRow?.lesson_payload) {
+        throw new Error('No lesson was returned.');
+      }
 
-    // Then load real queued/AI lesson in background
-    const lessonRow = await getNextQueuedLesson({
-      childId: selectedChild.id,
-      childName,
-      category: requestCategory,
-      isPro,
-    });
+      const lesson = {
+        ...lessonRow.lesson_payload,
+        id: lessonRow.lesson_instance_id,
+        lesson_number: lessonRow.lesson_number || 1,
+        source: lessonRow.source || 'ai',
+        focus_skill: lessonRow.lesson_payload?.focus_skill || requestCategory,
+        lesson_name: cleanLessonTitle(
+          lessonRow.lesson_payload?.lesson_name,
+          requestCategory
+        ),
+      };
 
-    // Prevent another category from overwriting current screen
+      setLessonData(lesson);
+      setLessonNumber(lesson.lesson_number || 1);
 
-    if (!lessonRow?.lesson_payload) {
-      return;
+      ensureLessonQueue({
+        childId: selectedChild.id,
+        childName,
+        category: requestCategory,
+        isPro,
+      }).catch((error) => {
+        console.log('Background lesson queue refill failed:', error);
+      });
+    } catch (error: any) {
+      if (loadRequestRef.current !== requestId) return;
+
+      if (error?.message?.toLowerCase().includes('limit')) {
+        setDailyLimitReached(true);
+      } else {
+        console.log('Lesson load error:', error);
+        Alert.alert(
+          'Lesson Loading Issue',
+          'The app could not load a full lesson right now. Please pull down to refresh.'
+        );
+      }
+    } finally {
+      if (loadRequestRef.current === requestId) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
+  }, [selectedChild?.id, selectedCategory, childName, isPro]);
 
-    const lesson = {
-      ...lessonRow.lesson_payload,
-      id: lessonRow.lesson_instance_id,
-      lesson_number: lessonRow.lesson_number,
-      source: lessonRow.source || 'ai',
-      focus_skill: requestCategory,
-    };
+  const handleLogLesson = async (status: LessonStatus) => {
+    if (!selectedChild?.id || !lessonData?.id) return;
 
-    setLessonData(lesson);
-    setLessonNumber(lesson.lesson_number || 1);
-  } catch (error: any) {
-    if (error?.message?.toLowerCase().includes('limit')) {
-      setDailyLimitReached(true);
-    } else {
-      console.log('Lesson load error:', error);
-    }
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-}, [
-  selectedChild?.id,
-  selectedCategory,
-  childName,
-  isPro,
-]);
+    setIsCompleting(true);
 
-const handleLogLesson = async (status: LessonStatus) => {
-  if (!selectedChild?.id || !lessonData?.id) return;
+    try {
+      const performanceScore = status === 'success' ? completionRating * 20 : 20;
 
-if (String(lessonData.id).startsWith('instant-')) {
-  Alert.alert(
-    'Preparing Full Lesson',
-    'Your full lesson is almost ready. Please wait a moment before starting.'
-  );
-  return;
-}
+      await completeLesson({
+        lessonId: lessonData.id,
+        childId: selectedChild.id,
+        category: selectedCategory,
+        performanceScore,
+        promptLevel,
+        behaviorResponse,
+        consistencyLevel,
+        status: status === 'success' ? 'completed' : 'unsuccessful',
+      });
 
-  setIsCompleting(true);
+      if (status === 'success') {
+        ensureLessonQueue({
+          childId: selectedChild.id,
+          childName,
+          category: selectedCategory,
+          isPro,
+        }).catch((error) => {
+          console.log('Lesson queue refill failed:', error);
+        });
+      }
 
-  try {
-    const performanceScore = status === 'success' ? completionRating * 20 : 20;
+      setStarted(false);
 
-    await completeLesson({
-      lessonId: lessonData.id,
-      childId: selectedChild.id,
-      category: selectedCategory,
-      performanceScore,
-      promptLevel,
-      behaviorResponse,
-      consistencyLevel,
-      status: status === 'success' ? 'completed' : 'unsuccessful',
-    });
+      if (!isPro && status === 'success') {
+        setDailyLimitReached(true);
 
-    if (status === 'success') {
-  ensureLessonQueue({
-    childId: selectedChild.id,
-    childName,
-    category: selectedCategory,
-    isPro,
-  }).catch((error) => {
-    console.log('Lesson queue refill failed:', error);
-  });
-}
+        Alert.alert(
+          'Today’s free lesson completed 🎉',
+          'You’ve used your free lesson. Upgrade for unlimited access.',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => router.push('/subscription') },
+          ]
+        );
 
-    setStarted(false);
+        return;
+      }
 
-    if (!isPro && status === 'success') {
-      setDailyLimitReached(true);
+      setLessonData(null);
+      setLessonNumber((prev) => prev + 1);
+
+      setTimeout(() => {
+        void loadLesson();
+      }, 300);
+
+      if (status === 'success') {
+        Alert.alert('Lesson Completed 🎉', 'A new lesson is ready.');
+      }
+    } catch (error: any) {
+      console.log('Complete lesson error:', error);
 
       Alert.alert(
-        'Today’s free lesson completed 🎉',
-        'You’ve used your free lesson. Upgrade for unlimited access.',
-        [
-          { text: 'Later', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.push('/subscription') },
-        ]
+        'Save Error',
+        error?.message || 'Could not save lesson progress.'
       );
-
-      return;
+    } finally {
+      setIsCompleting(false);
     }
+  };
 
-    setLessonData(null);
-setLessonNumber((prev) => prev + 1);
-
-setTimeout(() => {
-  void loadLesson();
-}, 300);
-
-    if (status === 'success') {
-      Alert.alert('Lesson Completed 🎉', 'A new lesson is ready.');
-    }
-  } catch (error: any) {
-    console.log('Complete lesson error:', error);
-
-    Alert.alert(
-      'Save Error',
-      error?.message || 'Could not save lesson progress.'
-    );
-  } finally {
-    setIsCompleting(false);
-  }
-};
-
-    const handleRefresh = async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     await loadLesson();
   };
 
-useEffect(() => {
-  if (!selectedChild?.id) {
-    setLoading(false);
-    return;
-  }
+  useEffect(() => {
+    if (!selectedChild?.id) {
+      setLoading(false);
+      return;
+    }
 
-  void loadLesson();
-}, [selectedChild?.id, selectedCategory, loadLesson]);
+    void loadLesson();
+  }, [selectedChild?.id, selectedCategory, loadLesson]);
 
-    const lockedPreviewLessons = useMemo<LockedPreviewLesson[]>(() => {
+  const lockedPreviewLessons = useMemo<LockedPreviewLesson[]>(() => {
     return [
       {
         id: '1',
@@ -322,47 +294,48 @@ useEffect(() => {
 
         <CategorySelector
           selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          onSelectCategory={(category) => {
+            setLessonData(null);
+            setSelectedCategory(category);
+          }}
         />
 
         {dailyLimitReached ? (
-  <DailyLimitView
-    selectedCategory={selectedCategory}
-    lockedPreviewLessons={lockedPreviewLessons}
-    showLockedPreviews={showLockedPreviews}
-    onUpgrade={() => router.push('/subscription')}
-    onRefresh={() => void loadLesson()}
-  />
-) : !started ? (
-  <LessonStartCard
-    lessonData={lessonData}
-    lessonNumber={lessonNumber}
-    selectedCategory={selectedCategory}
-    onStart={() => {
-  setStarted(true);
-}}
-  />
-) : (
-  <GuidedLessonView
-    lessonData={lessonData}
-    lessonNumber={lessonNumber}
-    selectedCategory={selectedCategory}
-    completionRating={completionRating}
-    setCompletionRating={setCompletionRating}
-    promptLevel={promptLevel}
-    setPromptLevel={setPromptLevel}
-    behaviorResponse={behaviorResponse}
-    setBehaviorResponse={setBehaviorResponse}
-    consistencyLevel={consistencyLevel}
-    setConsistencyLevel={setConsistencyLevel}
-    isCompleting={isCompleting}
-    onTryAgain={() => void handleLogLesson('unsuccessful')}
-    onComplete={() => void handleLogLesson('success')}
-    showLockedPreviews={showLockedPreviews}
-    lockedPreviewLessons={lockedPreviewLessons}
-    onUpgrade={() => router.push('/subscription')}
-  />
-)}
+          <DailyLimitView
+            selectedCategory={selectedCategory}
+            lockedPreviewLessons={lockedPreviewLessons}
+            showLockedPreviews={showLockedPreviews}
+            onUpgrade={() => router.push('/subscription')}
+            onRefresh={() => void loadLesson()}
+          />
+        ) : !started ? (
+          <LessonStartCard
+            lessonData={lessonData}
+            lessonNumber={lessonNumber}
+            selectedCategory={selectedCategory}
+            onStart={() => setStarted(true)}
+          />
+        ) : (
+          <GuidedLessonView
+            lessonData={lessonData}
+            lessonNumber={lessonNumber}
+            selectedCategory={selectedCategory}
+            completionRating={completionRating}
+            setCompletionRating={setCompletionRating}
+            promptLevel={promptLevel}
+            setPromptLevel={setPromptLevel}
+            behaviorResponse={behaviorResponse}
+            setBehaviorResponse={setBehaviorResponse}
+            consistencyLevel={consistencyLevel}
+            setConsistencyLevel={setConsistencyLevel}
+            isCompleting={isCompleting}
+            onTryAgain={() => void handleLogLesson('unsuccessful')}
+            onComplete={() => void handleLogLesson('success')}
+            showLockedPreviews={showLockedPreviews}
+            lockedPreviewLessons={lockedPreviewLessons}
+            onUpgrade={() => router.push('/subscription')}
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -727,22 +700,10 @@ function LessonStartCard({
           </View>
         )}
 
-        <TouchableOpacity
-  style={[
-    styles.startLessonButton,
-    String(lessonData?.id || '').startsWith('instant-') && { opacity: 0.65 },
-  ]}
-  onPress={() => {
-    if (String(lessonData?.id || '').startsWith('instant-')) {
-  Alert.alert(
-    'Lesson Still Loading',
-    'Please wait a moment for the full lesson to finish loading.'
-  );
-  return;
-}
-
-    onStart();
-  }}
+       <TouchableOpacity
+  style={styles.startLessonButton}
+  onPress={onStart}
+  disabled={!lessonData?.id}
 >
           <Ionicons name="play" size={18} color="#FFFFFF" />
           <Text style={styles.startLessonButtonText}>Start Lesson</Text>
@@ -1003,7 +964,7 @@ function LessonHero({ lessonData, lessonNumber, selectedCategory }: any) {
       </View>
 
       <Text style={styles.heroTitle}>
-        {lessonData?.lesson_name || 'Today’s Lesson'}
+        {cleanLessonTitle(lessonData?.lesson_name, selectedCategory)}
       </Text>
 
       <Text style={styles.heroDesc}>

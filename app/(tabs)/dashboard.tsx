@@ -127,40 +127,39 @@ export default function Dashboard() {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
 
-  const PRELOAD_CATEGORIES = [
-    'Communication',
-    'Social',
-    'Play',
-    'Self-Help',
-    'Motor',
-  ];
+const PRELOAD_CATEGORIES = useMemo(
+  () => ['Communication', 'Social', 'Play', 'Self-Help', 'Motor'],
+  []
+);
 
-  useEffect(() => {
-    if (!selectedChild?.id) return;
+useEffect(() => {
+  if (!selectedChild?.id) return;
 
-    let cancelled = false;
+  let cancelled = false;
 
-    const preloadLessons = async () => {
-      for (const category of PRELOAD_CATEGORIES) {
-        if (cancelled) return;
+  PRELOAD_CATEGORIES.forEach((category, index) => {
+    setTimeout(() => {
+      if (cancelled) return;
 
-        await ensureLessonQueue({
-          childId: selectedChild.id,
-          childName,
-          category,
-          isPro,
-        }).catch((error) => {
+      ensureLessonQueue({
+        childId: selectedChild.id,
+        childName,
+        category,
+        isPro,
+      })
+        .then(() => {
+          console.log(`✅ Preloaded ${category} lessons`);
+        })
+        .catch((error) => {
           console.log(`Lesson preload skipped for ${category}:`, error);
         });
-      }
-    };
+    }, index * 900);
+  });
 
-    void preloadLessons();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedChild?.id, childName, isPro]);
+  return () => {
+    cancelled = true;
+  };
+}, [selectedChild?.id, childName, isPro, PRELOAD_CATEGORIES]);
 
   const hasAssessment = !!assessment;
   const lessonsThisWeek = weeklyLogs.length;
@@ -313,17 +312,21 @@ export default function Dashboard() {
 
         let summaryText = 'Progress data is being collected this week.';
 
-        setSummaryLoading(true);
+        if (forceRefresh || !weeklySummary || weeklySummary === 'Progress data is being collected this week.') {
+          setSummaryLoading(true);
 
-        try {
-          const summary = await generateProgressSummary(selectedChild.id);
-          summaryText =
-            summary?.summary || 'Progress data is being collected this week.';
-        } catch (error) {
-          console.error('Weekly summary error:', error);
-        } finally {
-          setSummaryLoading(false);
-        }
+           try {
+             const summary = await generateProgressSummary(selectedChild.id);
+              summaryText =
+                summary?.summary || 'Progress data is being collected this week.';
+            } catch (error) {
+              console.error('Weekly summary error:', error);
+            } finally {
+              setSummaryLoading(false);
+            }
+          } else {
+            summaryText = weeklySummary;
+          }
 
         setWeeklySummary(summaryText);
 

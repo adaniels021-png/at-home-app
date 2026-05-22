@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 const FREE_QUEUE_LIMIT = 2;
 const PRO_QUEUE_LIMIT = 4;
+const MAX_GENERATION_ATTEMPTS = 3;
 
 function getQueueLimit(isPro: boolean) {
   return isPro ? PRO_QUEUE_LIMIT : FREE_QUEUE_LIMIT;
@@ -26,78 +27,75 @@ async function getAuthenticatedUserId(): Promise<string> {
   return data.user.id;
 }
 
-function buildFallbackLesson(
-  category: string,
-  childName: string,
-  lessonNumber: number
-) {
-  return {
-    lesson_name: `${category} Practice Lesson ${lessonNumber}`,
-    objective: `${childName || 'Your child'} will practice a simple ${category.toLowerCase()} skill during a short parent-led routine.`,
-    setting: 'Home',
-    focus_skill: category,
-    materials: ['Preferred item', 'Visual support if available', 'Small reinforcer'],
-    setup: [
-      'Choose a calm area with limited distractions.',
-      'Place the materials nearby before starting.',
-    ],
-    teaching_steps: [
-      'Get your child’s attention.',
-      'Give one short, clear instruction.',
-      'Wait 3–5 seconds for a response.',
-      'Prompt gently if needed.',
-      'Reinforce any successful attempt right away.',
-    ],
-    prompting_hierarchy: [
-      'Independent',
-      'Gesture prompt',
-      'Model prompt',
-      'Verbal prompt',
-      'Physical support only if needed',
-    ],
-    reinforcement: [
-      'Specific praise',
-      'Access to a preferred item',
-      'Short celebration after success',
-    ],
-    error_correction: [
-      'Stay calm and brief.',
-      'Model the correct response.',
-      'Try again with more support.',
-    ],
-    generalization: [
-      'Practice the same skill in another room.',
-      'Have another caregiver try the same routine later.',
-    ],
-    success_criteria: 'Complete 3–5 practice opportunities with support.',
-    parent_coaching_note:
-      'Keep the session short, positive, and focused on successful attempts.',
-  };
+function isBasicOrFallbackLesson(lesson: any, source?: string | null) {
+  if (!lesson || typeof lesson !== 'object') return true;
+  // Do NOT automatically reject fallback.
+  // Only reject it if the content itself is too basic.
+
+  const text = [
+    lesson.lesson_name,
+    lesson.objective,
+    ...(lesson.materials || []),
+    ...(lesson.teaching_steps || []),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const basicPhrases = [
+    'preferred item',
+    'small reinforcer',
+    'give one short',
+    'wait 3–5 seconds',
+    'prompt gently',
+    'reinforce any successful attempt',
+    'simple parent-led routine',
+  ];
+
+  const basicHits = basicPhrases.filter((phrase) => text.includes(phrase)).length;
+
+  const teachingSteps = Array.isArray(lesson.teaching_steps)
+    ? lesson.teaching_steps
+    : [];
+
+  const objective = String(lesson.objective || '');
+
+  return basicHits >= 4 || teachingSteps.length < 5 || objective.length < 120;
 }
 
-function normalizeGeneratedLesson(
-  result: any,
-  category: string,
-  childName: string,
-  lessonNumber: number
-) {
-  const lesson = result?.lesson || result;
+function hasFullLessonContent(lesson: any) {
+  return Boolean(
+    lesson?.lesson_name &&
+      lesson?.objective &&
+      String(lesson.objective).length >= 120 &&
+      Array.isArray(lesson.materials) &&
+      lesson.materials.length >= 2 &&
+      Array.isArray(lesson.setup) &&
+      lesson.setup.length >= 2 &&
+      Array.isArray(lesson.teaching_steps) &&
+      lesson.teaching_steps.length >= 5 &&
+      Array.isArray(lesson.prompting_hierarchy) &&
+      lesson.prompting_hierarchy.length >= 3 &&
+      Array.isArray(lesson.reinforcement) &&
+      lesson.reinforcement.length >= 1 &&
+      lesson.success_criteria
+  );
+}
 
-  if (!lesson || typeof lesson !== 'object') {
-    return {
-      lesson: buildFallbackLesson(category, childName, lessonNumber),
-      source: 'fallback',
-    };
+function normalizeGeneratedLesson(result: any, category: string) {
+  const lesson = result?.lesson || result;
+  const source = result?.source || 'ai';
+
+  if (!hasFullLessonContent(lesson) || isBasicOrFallbackLesson(lesson, source)) {
+    throw new Error('Generated lesson was too basic or fallback.');
   }
 
   return {
     lesson: {
-      ...buildFallbackLesson(category, childName, lessonNumber),
       ...lesson,
       focus_skill: lesson.focus_skill || category,
       setting: lesson.setting || 'Home',
     },
-    source: result?.source || 'ai',
+    source: 'ai' as const,
   };
 }
 
@@ -141,6 +139,65 @@ async function getNextLessonNumber({
   return Math.max(logNumber, instanceNumber, queueNumber) + 1;
 }
 
+async function markBadQueuedLessonsUsed(childId: string, category: string) {
+  const { data } = await supabase
+    .from('lesson_queue')
+    .select('id, lesson_payload, source')
+    .eq('child_id', childId)
+    .eq('category', category)
+    .eq('is_used', false);
+
+  const badIds =
+    data
+      ?.filter((row: any) =>
+        isBasicOrFallbackLesson(row.lesson_payload, row.source)
+      )
+      .map((row: any) => row.id) || [];
+
+  if (badIds.length > 0) {
+    await supabase
+      .from('lesson_queue')
+      .update({
+        is_used: true,
+        used_at: new Date().toISOString(),
+      })
+      .in('id', badIds);
+  }
+}
+
+async function generateFullAiLesson({
+  childId,
+  childName,
+  category,
+  lessonNumber,
+}: {
+  childId: string;
+  childName: string;
+  category: string;
+  lessonNumber: number;
+}) {
+  let lastError: any = null;
+
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+    try {
+      const generated = await generatePremiumLesson({
+        childName,
+        childId,
+        skill: category,
+        location: 'Home',
+        lessonNumber,
+      });
+
+      return normalizeGeneratedLesson(generated, category);
+    } catch (error) {
+      lastError = error;
+      console.log(`AI lesson generation attempt ${attempt} failed:`, error);
+    }
+  }
+
+  throw lastError || new Error('Could not generate a full AI lesson.');
+}
+
 export async function ensureLessonQueue({
   childId,
   childName = 'your child',
@@ -155,16 +212,7 @@ export async function ensureLessonQueue({
   const userId = await getAuthenticatedUserId();
   const queueLimit = getQueueLimit(isPro);
 
-  await supabase
-    .from('lesson_queue')
-    .update({
-      is_used: true,
-      used_at: new Date().toISOString(),
-    })
-    .eq('child_id', childId)
-    .eq('category', category)
-    .eq('is_used', false)
-    .is('lesson_payload', null);
+  await markBadQueuedLessonsUsed(childId, category);
 
   const { data: queuedLessons, error } = await supabase
     .from('lesson_queue')
@@ -172,7 +220,7 @@ export async function ensureLessonQueue({
     .eq('child_id', childId)
     .eq('category', category)
     .eq('is_used', false)
-    .not('lesson_payload', 'is', null);
+    .not('lesson_payload', 'is', null)
 
   if (error) {
     console.log('Queue check error:', error);
@@ -193,20 +241,12 @@ export async function ensureLessonQueue({
     const lessonNumber = startLessonNumber + i;
 
     try {
-      const generated = await generatePremiumLesson({
-        childName,
+      const normalized = await generateFullAiLesson({
         childId,
-        skill: category,
-        location: 'Home',
+        childName,
+        category,
         lessonNumber,
       });
-
-      const normalized = normalizeGeneratedLesson(
-        generated,
-        category,
-        childName,
-        lessonNumber
-      );
 
       const { error: insertError } = await supabase.from('lesson_queue').upsert(
         {
@@ -228,25 +268,7 @@ export async function ensureLessonQueue({
         console.log('Queue insert error:', insertError);
       }
     } catch (error) {
-      console.log('Generate queued lesson error:', error);
-
-      const fallback = buildFallbackLesson(category, childName, lessonNumber);
-
-      await supabase.from('lesson_queue').upsert(
-        {
-          user_id: userId,
-          child_id: childId,
-          category,
-          lesson_number: lessonNumber,
-          lesson_payload: fallback,
-          source: 'fallback',
-          is_used: false,
-          created_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'child_id,category,lesson_number',
-        }
-      );
+      console.log('Skipped saving basic/fallback queued lesson:', error);
     }
   }
 }
@@ -266,6 +288,8 @@ export async function getNextQueuedLesson({
   const today = todayString();
   const now = new Date().toISOString();
 
+  await markBadQueuedLessonsUsed(childId, category);
+
   const { data: openInstance, error: openError } = await supabase
     .from('daily_lesson_instances')
     .select('*')
@@ -280,13 +304,26 @@ export async function getNextQueuedLesson({
 
   if (openError) throw openError;
 
-  if (openInstance?.lesson_payload) {
+  if (
+    openInstance?.lesson_payload &&
+    !isBasicOrFallbackLesson(openInstance.lesson_payload, openInstance.source)
+  ) {
     return {
       lesson_instance_id: openInstance.id,
       lesson_payload: openInstance.lesson_payload,
       lesson_number: openInstance.lesson_number,
       source: openInstance.source || 'ai',
     };
+  }
+
+  if (openInstance?.id) {
+    await supabase
+      .from('daily_lesson_instances')
+      .update({
+        status: 'unsuccessful',
+        updated_at: now,
+      })
+      .eq('id', openInstance.id);
   }
 
   const { data: todayInstances, error: todayError } = await supabase
@@ -316,26 +353,41 @@ export async function getNextQueuedLesson({
   }
 
   let queueQuery = supabase
-  .from('lesson_queue')
-  .select('*')
-  .eq('child_id', childId)
-  .eq('category', category)
-  .eq('is_used', false)
-  .not('lesson_payload', 'is', null)
-  .order('lesson_number', { ascending: true })
-  .limit(1);
+    .from('lesson_queue')
+    .select('*')
+    .eq('child_id', childId)
+    .eq('category', category)
+    .eq('is_used', false)
+    .not('lesson_payload', 'is', null)
+    .order('lesson_number', { ascending: true })
+    .limit(1);
 
-if (usedTodayNumbers.length > 0) {
-  queueQuery = queueQuery.not(
-    'lesson_number',
-    'in',
-    `(${usedTodayNumbers.join(',')})`
-  );
-}
+  if (usedTodayNumbers.length > 0) {
+    queueQuery = queueQuery.not(
+      'lesson_number',
+      'in',
+      `(${usedTodayNumbers.join(',')})`
+    );
+  }
 
-let { data: lessonToOpen, error: queueError } = await queueQuery.maybeSingle();
+  let { data: lessonToOpen, error: queueError } = await queueQuery.maybeSingle();
 
   if (queueError) throw queueError;
+
+  if (
+    lessonToOpen &&
+    isBasicOrFallbackLesson(lessonToOpen.lesson_payload, lessonToOpen.source)
+  ) {
+    await supabase
+      .from('lesson_queue')
+      .update({
+        is_used: true,
+        used_at: now,
+      })
+      .eq('id', lessonToOpen.id);
+
+    lessonToOpen = null;
+  }
 
   if (!lessonToOpen) {
     const nextLessonNumber = await getNextLessonNumber({
@@ -343,20 +395,12 @@ let { data: lessonToOpen, error: queueError } = await queueQuery.maybeSingle();
       category,
     });
 
-    const generated = await generatePremiumLesson({
-      childName,
+    const normalized = await generateFullAiLesson({
       childId,
-      skill: category,
-      location: 'Home',
+      childName,
+      category,
       lessonNumber: nextLessonNumber,
     });
-
-    const normalized = normalizeGeneratedLesson(
-      generated,
-      category,
-      childName,
-      nextLessonNumber
-    );
 
     const { data: insertedQueue, error: insertQueueError } = await supabase
       .from('lesson_queue')
@@ -366,7 +410,7 @@ let { data: lessonToOpen, error: queueError } = await queueQuery.maybeSingle();
         category,
         lesson_number: nextLessonNumber,
         lesson_payload: normalized.lesson,
-        source: normalized.source || 'ai',
+        source: normalized.source,
         is_used: false,
         created_at: now,
       })
@@ -399,7 +443,7 @@ let { data: lessonToOpen, error: queueError } = await queueQuery.maybeSingle();
     .select()
     .single();
 
-    if (instanceError) {
+  if (instanceError) {
     if (instanceError.code === '23505') {
       if (lessonToOpen.id) {
         await supabase

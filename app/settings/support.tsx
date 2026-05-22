@@ -34,39 +34,26 @@ export default function SupportScreen() {
     }
   };
 
-  const contactSupport = async () => {
-    try {
-      const cleanMessage = message.trim();
+ const contactSupport = async () => {
+  const cleanMessage = message.trim();
 
-      const subject = encodeURIComponent(
-        'ABA at Home Support Request'
-      );
+  const subject = encodeURIComponent('ABA at Home Support Request');
 
-      const body = encodeURIComponent(
-        cleanMessage ||
-          'Hi ABA at Home Support,\n\nI need help with:\n\n'
-      );
+  const body = encodeURIComponent(
+    cleanMessage || 'Hi ABA at Home Support,\n\nI need help with:\n\n'
+  );
 
-      const emailUrl = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  const emailUrl = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
 
-      const supported = await Linking.canOpenURL(emailUrl);
-
-      if (!supported) {
-        Alert.alert(
-          'Email Not Available',
-          `Please email support directly at ${SUPPORT_EMAIL}`
-        );
-        return;
-      }
-
-      await Linking.openURL(emailUrl);
-    } catch (error) {
-      Alert.alert(
-        'Support Error',
-        `Please contact support directly at ${SUPPORT_EMAIL}`
-      );
-    }
-  };
+  try {
+    await Linking.openURL(emailUrl);
+  } catch (error) {
+    Alert.alert(
+      'Email Support',
+      `Please email support directly at:\n\n${SUPPORT_EMAIL}`
+    );
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

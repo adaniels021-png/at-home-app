@@ -395,32 +395,34 @@ do {
   attempts++;
 
   console.log('🧠 Lesson attempt:', attempts, result?.lesson?.lesson_name);
-
 } while (
   attempts < MAX_ATTEMPTS &&
   isLessonTooSimilar(result?.lesson, recentLessons)
 );
 
+if (!result?.lesson) {
+  throw new Error('Lesson generation failed.');
+}
+
 if (isLessonTooSimilar(result.lesson, recentLessons)) {
-  console.log('⚠️ Forcing STRONG variation fallback');
+  console.log('⚠️ Lesson looked similar, renaming only — keeping full AI content');
 
-  result.lesson.lesson_name =
-    result.lesson.lesson_name + ' (New Variation ' + Date.now() + ')';
+  const cleanTitles: Record<string, string> = {
+    Communication: 'Practicing Communication in a New Way',
+    Social: 'Building Social Skills in a New Way',
+    Play: 'Learning Through Play in a New Way',
+    'Self-Help': 'Practicing Independence in a New Way',
+    Motor: 'Movement Practice in a New Way',
+  };
 
-  result.lesson.materials = [
-    'Different toy or item',
-    'New environment setup',
-  ];
-
-  result.lesson.teaching_steps = [
-    'Introduce the skill using a completely different object.',
-    'Change the setting (table, floor, outside).',
-    'Use a new prompting strategy.',
-    'Reinforce quickly with a different reward.',
-  ];
-
-  result.lesson.focus_skill =
-    (result.lesson.focus_skill || category) + ' variation';
+  result.lesson = {
+    ...result.lesson,
+    lesson_name: cleanTitles[category] || `${category} Practice in a New Way`,
+    focus_skill: result.lesson.focus_skill || skillTarget || category,
+    lesson_variation:
+      result.lesson.lesson_variation ||
+      'Try this skill in a different room, routine, or activity for better generalization.',
+  };
 }
 
   const now = new Date().toISOString();

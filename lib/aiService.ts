@@ -131,9 +131,21 @@ function hasUsableLessonContent(
   );
 }
 
+function getFallbackLessonTitle(skill: string) {
+  const titles: Record<string, string> = {
+    Communication: 'Practicing Communication at Home',
+    Social: 'Building Social Skills at Home',
+    Play: 'Learning Through Play',
+    'Self-Help': 'Practicing Independence',
+    Motor: 'Movement and Motor Practice',
+  };
+
+  return titles[skill] || `${skill} Practice at Home`;
+}
+
 function buildFallbackLesson(skill: string): Lesson {
   return {
-    lesson_name: `${skill} Practice Variation ${Date.now()}`,
+    lesson_name: getFallbackLessonTitle(skill),
     setting: 'Home',
     focus_skill: skill,
     objective: `Teach your child to practice ${skill.toLowerCase()} during a short home routine by setting up a clear opportunity, giving one simple direction, waiting 3–5 seconds, prompting only as needed, and immediately reinforcing any attempt. The goal is to help your child participate with more confidence, less frustration, and more independence.`,
@@ -2184,7 +2196,7 @@ export async function generateDailyLesson(
     console.error('generateDailyLesson error:', error);
 
     return {
-      name: `${category} Lesson ${lessonNumber}`,
+      name: getFallbackLessonTitle(category),
       materials: 'Preferred items, simple household materials',
       instructions:
         'Present the activity, wait for a response, prompt as needed, reinforce immediately.',
