@@ -127,13 +127,16 @@ export default function Dashboard() {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
 
-  const PRELOAD_CATEGORIES = [
+  const PRELOAD_CATEGORIES = useMemo(
+  () => [
     'Communication',
     'Social',
     'Play',
     'Self-Help',
     'Motor',
-  ];
+  ],
+  []
+);
 
   useEffect(() => {
     if (!selectedChild?.id) return;
@@ -160,7 +163,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [selectedChild?.id, childName, isPro]);
+  }, [selectedChild?.id, childName, isPro, PRELOAD_CATEGORIES]);
 
   const hasAssessment = !!assessment;
   const lessonsThisWeek = weeklyLogs.length;
@@ -535,6 +538,17 @@ export default function Dashboard() {
               color="#DB2777"
               accent="#DB2777"
               onPress={() => openRoute('/activities')}
+            />
+
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
+              icon="heart-outline"
+              label="Calm Down"
+              subtitle="Quick calming tools for regulation, sensory needs, and emotional support."
+              bg="#ECFDF5"
+              color="#059669"
+              accent="#059669"
+              onPress={() => openRoute('/calm-down')}
             />
 
             <FeaturedToolCard

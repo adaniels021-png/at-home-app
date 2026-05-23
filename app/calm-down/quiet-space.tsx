@@ -1,3 +1,4 @@
+import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
@@ -180,19 +181,30 @@ export default function QuietSpaceScreen() {
     pulseAnim.setValue(1);
   }
 
-  function saveQuietPreferences() {
+  async function saveQuietPreferences() {
     const helpfulSupports = quietSupports.filter((support) =>
       mostHelpfulIds.includes(support.id)
     );
 
-    const preferenceText =
-      helpfulSupports.length > 0
-        ? helpfulSupports.map((support) => support.title).join(' + ')
-        : selectedSupports.map((support) => support.title).join(' + ');
+    const supportsToSave =
+      helpfulSupports.length > 0 ? helpfulSupports : selectedSupports;
+
+    const preferenceText = supportsToSave
+      .map((support) => support.title)
+      .join(' + ');
 
     if (!preferenceText) return;
 
     setSavedPreference(preferenceText);
+
+    await saveCalmStrategy({
+      type: 'quiet-space',
+      title: 'Quiet Space',
+      subtitle: preferenceText,
+      icon: 'moon-outline',
+      color: '#4338CA',
+      bg: '#EEF2FF',
+    });
   }
 
   function resetTool() {

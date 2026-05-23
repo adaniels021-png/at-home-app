@@ -4,7 +4,8 @@ export type CalmStrategyType =
   | 'quiet-space'
   | 'sensory-reset'
   | 'simple-words'
-  | 'breathe-together';
+  | 'breathe-together'
+  | 'emotional-reset';
 
 export type SavedCalmStrategy = {
   id: string;
@@ -19,15 +20,21 @@ export type SavedCalmStrategy = {
 
 const STORAGE_KEY = 'aba_at_home_saved_calm_strategies';
 
-export async function getSavedCalmStrategies(): Promise<SavedCalmStrategy[]> {
+export async function getSavedCalmStrategies(): Promise<
+  SavedCalmStrategy[]
+> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
 
-    if (!raw) return [];
+    if (!raw) {
+      return [];
+    }
 
     const parsed = JSON.parse(raw);
 
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
 
     return parsed;
   } catch (error) {
@@ -48,6 +55,7 @@ export async function saveCalmStrategy(
       createdAt: new Date().toISOString(),
     };
 
+    // Remove duplicate entries
     const filteredStrategies = currentStrategies.filter(
       (item) =>
         !(
@@ -57,28 +65,44 @@ export async function saveCalmStrategy(
         )
     );
 
-    const updatedStrategies = [newStrategy, ...filteredStrategies].slice(0, 12);
+    // Add newest first
+    const updatedStrategies = [
+      newStrategy,
+      ...filteredStrategies,
+    ].slice(0, 20);
 
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedStrategies));
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(updatedStrategies)
+    );
 
     return updatedStrategies;
   } catch (error) {
     console.log('Error saving calm strategy:', error);
+
     return getSavedCalmStrategies();
   }
 }
 
-export async function deleteCalmStrategy(id: string): Promise<SavedCalmStrategy[]> {
+export async function deleteCalmStrategy(
+  id: string
+): Promise<SavedCalmStrategy[]> {
   try {
     const currentStrategies = await getSavedCalmStrategies();
 
-    const updatedStrategies = currentStrategies.filter((item) => item.id !== id);
+    const updatedStrategies = currentStrategies.filter(
+      (item) => item.id !== id
+    );
 
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedStrategies));
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(updatedStrategies)
+    );
 
     return updatedStrategies;
   } catch (error) {
     console.log('Error deleting calm strategy:', error);
+
     return getSavedCalmStrategies();
   }
 }

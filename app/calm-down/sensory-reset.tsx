@@ -1,3 +1,4 @@
+import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -77,21 +78,15 @@ export default function SensoryResetScreen() {
 
   const [beforeLevel, setBeforeLevel] = useState<number | null>(null);
   const [afterLevel, setAfterLevel] = useState<number | null>(null);
-
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
-
   const [completed, setCompleted] = useState(false);
-
   const [helpfulStatus, setHelpfulStatus] = useState<
     'helpful' | 'not_helpful' | null
   >(null);
-
   const [savedPlan, setSavedPlan] = useState<string | null>(null);
 
   const selectedTools = useMemo(() => {
-    return sensoryTools.filter((tool) =>
-      selectedToolIds.includes(tool.id)
-    );
+    return sensoryTools.filter((tool) => selectedToolIds.includes(tool.id));
   }, [selectedToolIds]);
 
   const resultMessage = useMemo(() => {
@@ -110,6 +105,8 @@ export default function SensoryResetScreen() {
 
   function toggleTool(id: string) {
     setCompleted(false);
+    setSavedPlan(null);
+    setHelpfulStatus(null);
 
     setSelectedToolIds((prev) =>
       prev.includes(id)
@@ -118,13 +115,22 @@ export default function SensoryResetScreen() {
     );
   }
 
-  function savePlanAsHelpful() {
-    const planName = selectedTools
-      .map((tool) => tool.title)
-      .join(' + ');
+  async function savePlanAsHelpful() {
+    if (selectedTools.length === 0) return;
+
+    const planName = selectedTools.map((tool) => tool.title).join(' + ');
 
     setHelpfulStatus('helpful');
     setSavedPlan(planName);
+
+    await saveCalmStrategy({
+      type: 'sensory-reset',
+      title: 'Sensory Reset',
+      subtitle: planName,
+      icon: 'sparkles-outline',
+      color: '#B45309',
+      bg: '#FFFBEB',
+    });
   }
 
   function markNotHelpful() {
@@ -144,33 +150,17 @@ export default function SensoryResetScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color="#0F172A"
-          />
-
-          <Text style={styles.backText}>
-            Calm Down Toolkit
-          </Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={22} color="#0F172A" />
+          <Text style={styles.backText}>Calm Down Toolkit</Text>
         </TouchableOpacity>
 
         <View style={styles.headerCard}>
           <View style={styles.iconCircle}>
-            <Ionicons
-              name="sparkles-outline"
-              size={30}
-              color="#B45309"
-            />
+            <Ionicons name="sparkles-outline" size={30} color="#B45309" />
           </View>
 
-          <Text style={styles.title}>
-            Sensory Reset
-          </Text>
+          <Text style={styles.title}>Sensory Reset</Text>
 
           <Text style={styles.subtitle}>
             Pick one or more calming tools to help your child reset their body.
@@ -178,14 +168,8 @@ export default function SensoryResetScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.stepLabel}>
-            Step 1
-          </Text>
-
-          <Text style={styles.sectionTitle}>
-            Dysregulation level
-          </Text>
-
+          <Text style={styles.stepLabel}>Step 1</Text>
+          <Text style={styles.sectionTitle}>Dysregulation level</Text>
           <Text style={styles.helperText}>
             How dysregulated does your child seem right now?
           </Text>
@@ -197,15 +181,13 @@ export default function SensoryResetScreen() {
                 onPress={() => setBeforeLevel(level)}
                 style={[
                   styles.levelButton,
-                  beforeLevel === level &&
-                    styles.levelButtonSelected,
+                  beforeLevel === level && styles.levelButtonSelected,
                 ]}
               >
                 <Text
                   style={[
                     styles.levelText,
-                    beforeLevel === level &&
-                      styles.levelTextSelected,
+                    beforeLevel === level && styles.levelTextSelected,
                   ]}
                 >
                   {level}
@@ -215,127 +197,72 @@ export default function SensoryResetScreen() {
           </View>
 
           <View style={styles.levelLabels}>
-            <Text style={styles.labelSmall}>
-              Calm
-            </Text>
-
-            <Text style={styles.labelSmall}>
-              Highly dysregulated
-            </Text>
+            <Text style={styles.labelSmall}>Calm</Text>
+            <Text style={styles.labelSmall}>Highly dysregulated</Text>
           </View>
         </View>
 
         <View style={styles.planCard}>
-          <Text style={styles.stepLabel}>
-            Step 2
-          </Text>
-
-          <Text style={styles.sectionTitle}>
-            Choose sensory tools
-          </Text>
-
-          <Text style={styles.helperText}>
-            Select anything you want to try.
-          </Text>
+          <Text style={styles.stepLabel}>Step 2</Text>
+          <Text style={styles.sectionTitle}>Choose sensory tools</Text>
+          <Text style={styles.helperText}>Select anything you want to try.</Text>
 
           {selectedTools.length > 0 && (
             <View style={styles.selectedSummary}>
-              <Text style={styles.selectedSummaryTitle}>
-                Your reset plan
-              </Text>
+              <Text style={styles.selectedSummaryTitle}>Your reset plan</Text>
 
               <Text style={styles.selectedSummaryText}>
-                {selectedTools
-                  .map((tool) => tool.title)
-                  .join(', ')}
+                {selectedTools.map((tool) => tool.title).join(', ')}
               </Text>
             </View>
           )}
 
           <View style={styles.toolGrid}>
             {sensoryTools.map((tool) => {
-              const selected =
-                selectedToolIds.includes(tool.id);
+              const selected = selectedToolIds.includes(tool.id);
 
               return (
                 <Pressable
                   key={tool.id}
                   onPress={() => toggleTool(tool.id)}
-                  style={[
-                    styles.toolCard,
-                    selected &&
-                      styles.toolCardSelected,
-                  ]}
+                  style={[styles.toolCard, selected && styles.toolCardSelected]}
                 >
                   <View style={styles.toolTopRow}>
                     <View
                       style={[
                         styles.toolIcon,
-                        selected &&
-                          styles.toolIconSelected,
+                        selected && styles.toolIconSelected,
                       ]}
                     >
                       <Ionicons
                         name={tool.icon}
                         size={22}
-                        color={
-                          selected
-                            ? '#FFFFFF'
-                            : '#B45309'
-                        }
+                        color={selected ? '#FFFFFF' : '#B45309'}
                       />
                     </View>
 
                     <Ionicons
-                      name={
-                        selected
-                          ? 'checkmark-circle'
-                          : 'add-circle-outline'
-                      }
+                      name={selected ? 'checkmark-circle' : 'add-circle-outline'}
                       size={24}
-                      color={
-                        selected
-                          ? '#B45309'
-                          : '#94A3B8'
-                      }
+                      color={selected ? '#B45309' : '#94A3B8'}
                     />
                   </View>
 
                   <Text
                     style={[
                       styles.toolText,
-                      selected &&
-                        styles.toolTextSelected,
+                      selected && styles.toolTextSelected,
                     ]}
                   >
                     {tool.title}
                   </Text>
 
-                  <Text style={styles.shortText}>
-                    {tool.shortText}
-                  </Text>
+                  <Text style={styles.shortText}>{tool.shortText}</Text>
 
                   {selected && (
-                    <View
-                      style={
-                        styles.inlineInstruction
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.instructionLabel
-                        }
-                      >
-                        Try this:
-                      </Text>
-
-                      <Text
-                        style={
-                          styles.instructionText
-                        }
-                      >
-                        {tool.instruction}
-                      </Text>
+                    <View style={styles.inlineInstruction}>
+                      <Text style={styles.instructionLabel}>Try this:</Text>
+                      <Text style={styles.instructionText}>{tool.instruction}</Text>
                     </View>
                   )}
                 </Pressable>
@@ -345,73 +272,44 @@ export default function SensoryResetScreen() {
         </View>
 
         <View style={styles.tryCard}>
-          <Text style={styles.stepLabel}>
-            Step 3
-          </Text>
-
-          <Text style={styles.sectionTitle}>
-            Try your reset plan
-          </Text>
+          <Text style={styles.stepLabel}>Step 3</Text>
+          <Text style={styles.sectionTitle}>Try your reset plan</Text>
 
           <Text style={styles.tryText}>
-            Use one selected tool at a time.
-            Keep your voice calm and give your
+            Use one selected tool at a time. Keep your voice calm and give your
             child quiet time.
           </Text>
 
           <TouchableOpacity
             style={[
               styles.primaryButton,
-              (!beforeLevel ||
-                selectedTools.length === 0) &&
-                styles.disabledButton,
+              (!beforeLevel || selectedTools.length === 0) && styles.disabledButton,
             ]}
-            disabled={
-              !beforeLevel ||
-              selectedTools.length === 0
-            }
+            disabled={!beforeLevel || selectedTools.length === 0}
             onPress={() => setCompleted(true)}
           >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={20}
-              color="#FFFFFF"
-            />
-
-            <Text style={styles.primaryButtonText}>
-              We tried this
-            </Text>
+            <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>We tried this</Text>
           </TouchableOpacity>
 
           {completed && (
             <View style={styles.completedBox}>
-              <Ionicons
-                name="checkmark-circle"
-                size={22}
-                color="#B45309"
-              />
+              <Ionicons name="checkmark-circle" size={22} color="#B45309" />
 
               <Text style={styles.completedText}>
-                Nice work. Now rate how
-                regulated your child seems
-                after trying the reset.
+                Nice work. Now rate how regulated your child seems after trying
+                the reset.
               </Text>
             </View>
           )}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.stepLabel}>
-            Step 4
-          </Text>
-
-          <Text style={styles.sectionTitle}>
-            Regulation level after reset
-          </Text>
+          <Text style={styles.stepLabel}>Step 4</Text>
+          <Text style={styles.sectionTitle}>Regulation level after reset</Text>
 
           <Text style={styles.helperText}>
-            How regulated does your child
-            seem after trying the reset?
+            How regulated does your child seem after trying the reset?
           </Text>
 
           <View style={styles.levelRow}>
@@ -421,15 +319,13 @@ export default function SensoryResetScreen() {
                 onPress={() => setAfterLevel(level)}
                 style={[
                   styles.levelButton,
-                  afterLevel === level &&
-                    styles.levelButtonSelected,
+                  afterLevel === level && styles.levelButtonSelected,
                 ]}
               >
                 <Text
                   style={[
                     styles.levelText,
-                    afterLevel === level &&
-                      styles.levelTextSelected,
+                    afterLevel === level && styles.levelTextSelected,
                   ]}
                 >
                   {level}
@@ -439,39 +335,30 @@ export default function SensoryResetScreen() {
           </View>
 
           <View style={styles.levelLabels}>
-            <Text style={styles.labelSmall}>
-              Still dysregulated
-            </Text>
-
-            <Text style={styles.labelSmall}>
-              More regulated
-            </Text>
+            <Text style={styles.labelSmall}>Still dysregulated</Text>
+            <Text style={styles.labelSmall}>More regulated</Text>
           </View>
 
           <View style={styles.feedbackRow}>
             <TouchableOpacity
               style={[
                 styles.feedbackButton,
-                helpfulStatus === 'helpful' &&
-                  styles.feedbackButtonHelpful,
+                helpfulStatus === 'helpful' && styles.feedbackButtonHelpful,
+                selectedTools.length === 0 && styles.disabledButton,
               ]}
+              disabled={selectedTools.length === 0}
               onPress={savePlanAsHelpful}
             >
               <Ionicons
                 name="thumbs-up-outline"
                 size={20}
-                color={
-                  helpfulStatus === 'helpful'
-                    ? '#FFFFFF'
-                    : '#15803D'
-                }
+                color={helpfulStatus === 'helpful' ? '#FFFFFF' : '#15803D'}
               />
 
               <Text
                 style={[
                   styles.feedbackButtonText,
-                  helpfulStatus === 'helpful' &&
-                    styles.feedbackButtonTextActive,
+                  helpfulStatus === 'helpful' && styles.feedbackButtonTextActive,
                 ]}
               >
                 Yes, this helped
@@ -481,28 +368,20 @@ export default function SensoryResetScreen() {
             <TouchableOpacity
               style={[
                 styles.feedbackButton,
-                helpfulStatus ===
-                  'not_helpful' &&
-                  styles.feedbackButtonNotHelpful,
+                helpfulStatus === 'not_helpful' && styles.feedbackButtonNotHelpful,
               ]}
               onPress={markNotHelpful}
             >
               <Ionicons
                 name="thumbs-down-outline"
                 size={20}
-                color={
-                  helpfulStatus ===
-                  'not_helpful'
-                    ? '#FFFFFF'
-                    : '#B45309'
-                }
+                color={helpfulStatus === 'not_helpful' ? '#FFFFFF' : '#B45309'}
               />
 
               <Text
                 style={[
                   styles.feedbackButtonText,
-                  helpfulStatus ===
-                    'not_helpful' &&
+                  helpfulStatus === 'not_helpful' &&
                     styles.feedbackButtonTextActive,
                 ]}
               >
@@ -514,59 +393,27 @@ export default function SensoryResetScreen() {
 
         {!!resultMessage && (
           <View style={styles.resultCard}>
-            <Ionicons
-              name="sparkles-outline"
-              size={24}
-              color="#B45309"
-            />
+            <Ionicons name="sparkles-outline" size={24} color="#B45309" />
 
-            <Text style={styles.resultTitle}>
-              Personal result
-            </Text>
-
-            <Text style={styles.resultText}>
-              {resultMessage}
-            </Text>
+            <Text style={styles.resultTitle}>Personal result</Text>
+            <Text style={styles.resultText}>{resultMessage}</Text>
 
             {savedPlan && (
               <View style={styles.savedPlanBox}>
-                <Ionicons
-                  name="bookmark-outline"
-                  size={18}
-                  color="#92400E"
-                />
+                <Ionicons name="bookmark-outline" size={18} color="#92400E" />
 
                 <View style={{ flex: 1 }}>
-                  <Text
-                    style={styles.savedPlanTitle}
-                  >
-                    Saved to Quick Access
-                  </Text>
-
-                  <Text
-                    style={styles.savedPlanText}
-                  >
-                    {savedPlan}
-                  </Text>
+                  <Text style={styles.savedPlanTitle}>Saved to Quick Access</Text>
+                  <Text style={styles.savedPlanText}>{savedPlan}</Text>
                 </View>
               </View>
             )}
           </View>
         )}
 
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={resetTool}
-        >
-          <Ionicons
-            name="refresh-outline"
-            size={18}
-            color="#B45309"
-          />
-
-          <Text style={styles.resetText}>
-            Reset this tool
-          </Text>
+        <TouchableOpacity style={styles.resetButton} onPress={resetTool}>
+          <Ionicons name="refresh-outline" size={18} color="#B45309" />
+          <Text style={styles.resetText}>Reset this tool</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

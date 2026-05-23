@@ -1,3 +1,4 @@
+import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -241,12 +242,21 @@ export default function SimpleWordsScreen() {
     setFavoritePhrase(null);
   }
 
-  function saveFavoritePhrase() {
-    if (!selectedPhrase) return;
+  async function saveFavoritePhrase() {
+  if (!selectedPhrase) return;
 
-    setFavoritePhrase(selectedPhrase.phrase);
-    setHelpfulStatus('helpful');
-  }
+  setFavoritePhrase(selectedPhrase.phrase);
+  setHelpfulStatus('helpful');
+
+  await saveCalmStrategy({
+    type: 'simple-words',
+    title: selectedPhrase.phrase,
+    subtitle: selectedPhrase.parentAction,
+    icon: 'chatbubble-ellipses-outline',
+    color: '#BE123C',
+    bg: '#FFF1F2',
+  });
+}
 
   function markNotHelpful() {
     setHelpfulStatus('not_helpful');

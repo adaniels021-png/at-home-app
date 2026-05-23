@@ -12,6 +12,56 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSubscription } from '../lib/SubscriptionContext';
 
+type SupportSection = {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bg: string;
+  border: string;
+  route:
+    | '/parent-support/emotional-reset'
+    | '/parent-support/journal'
+    | '/parent-support/support-feed';
+};
+
+const SUPPORT_SECTIONS: SupportSection[] = [
+  {
+    id: 'emotional-reset',
+    title: 'Emotional Reset',
+    subtitle:
+      'A quick parent reset that helps you calm your body and know what to do next.',
+    icon: 'heart-circle-outline',
+    color: '#7C3AED',
+    bg: '#F5F3FF',
+    border: '#DDD6FE',
+    route: '/parent-support/emotional-reset',
+  },
+  {
+    id: 'journal',
+    title: 'Parent Journal',
+    subtitle:
+      'Quick check-ins with options to type, text-style journal, or use voice-to-text.',
+    icon: 'journal-outline',
+    color: '#0F766E',
+    bg: '#ECFDF5',
+    border: '#A7F3D0',
+    route: '/parent-support/journal',
+  },
+  {
+    id: 'support-feed',
+    title: 'Support Feed',
+    subtitle:
+      'Encouragement, hard-day support, burnout reminders, and parent sensory overload tips.',
+    icon: 'sparkles-outline',
+    color: '#BE123C',
+    bg: '#FFF1F2',
+    border: '#FECDD3',
+    route: '/parent-support/support-feed',
+  },
+];
+
 export default function ParentSupportScreen() {
   const router = useRouter();
   const { isPro } = useSubscription();
@@ -24,14 +74,11 @@ export default function ParentSupportScreen() {
             <Ionicons name="lock-closed" size={34} color="#7C3AED" />
           </View>
 
-          <Text style={styles.lockedTitle}>
-            Parent Support is a Pro Feature
-          </Text>
+          <Text style={styles.lockedTitle}>Parent Support is a Pro Feature</Text>
 
           <Text style={styles.lockedText}>
-            Upgrade to Pro to access ABA parental guidance, behavior support,
-            communication tools, routine support, social stories, and saved
-            support plans.
+            Upgrade to Pro to access parent emotional reset tools, journaling,
+            encouragement, hard-day support, and caregiver wellness features.
           </Text>
 
           <TouchableOpacity
@@ -84,115 +131,74 @@ export default function ParentSupportScreen() {
         </View>
 
         <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
+
           <View style={styles.heroIcon}>
-            <Ionicons name="heart-circle" size={34} color="#FFFFFF" />
+            <Ionicons name="heart-circle" size={36} color="#FFFFFF" />
           </View>
 
-          <Text style={styles.heroTitle}>ABA Parental Guidance</Text>
+          <Text style={styles.heroTitle}>Support for You</Text>
 
           <Text style={styles.heroText}>
-            Get parent-friendly support for behavior, communication, routines,
-            and everyday challenges at home.
+            A calm space for caregivers to reset, reflect, and feel supported
+            through hard moments.
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.historyButton}
-          onPress={() => router.push('/parent-support/history')}
-        >
-          <Ionicons name="time-outline" size={20} color="#7C3AED" />
-          <Text style={styles.historyButtonText}>
-            View Saved Support Plans
-          </Text>
-          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-        </TouchableOpacity>
+        <Text style={styles.sectionTitle}>Parent Support Tools</Text>
 
-        <Text style={styles.sectionTitle}>Support Tools</Text>
+        <View style={styles.sectionList}>
+          {SUPPORT_SECTIONS.map((section) => (
+            <TouchableOpacity
+              key={section.id}
+              activeOpacity={0.88}
+              style={[
+                styles.sectionCard,
+                {
+                  backgroundColor: section.bg,
+                  borderColor: section.border,
+                },
+              ]}
+              onPress={() => router.push(section.route)}
+            >
+              <View style={styles.sectionLeft}>
+                <View style={styles.sectionIcon}>
+                  <Ionicons
+                    name={section.icon}
+                    size={26}
+                    color={section.color}
+                  />
+                </View>
 
-        <SupportToolCard
-          icon="warning-outline"
-          title="Behavior Support"
-          subtitle="Tantrums, transitions, refusal, aggression, elopement, and more."
-          color="#DC2626"
-          bg="#FEF2F2"
-          onPress={() => router.push('/parent-support/behavior')}
-        />
+                <View style={styles.sectionTextWrap}>
+                  <Text style={[styles.sectionCardTitle, { color: section.color }]}>
+                    {section.title}
+                  </Text>
 
-        <SupportToolCard
-          icon="chatbubbles-outline"
-          title="Communication Help"
-          subtitle="Support requesting, PECS, AAC, gestures, and frustration."
-          color="#4F46E5"
-          bg="#EEF2FF"
-          onPress={() => router.push('/parent-support/communication')}
-        />
+                  <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
+                </View>
+              </View>
 
-        <SupportToolCard
-          icon="calendar-outline"
-          title="Routine Builder"
-          subtitle="Create calm routines for bedtime, hygiene, meals, and outings."
-          color="#EA580C"
-          bg="#FFF7ED"
-          onPress={() => router.push('/parent-support/routines')}
-        />
-
-        <SupportToolCard
-          icon="book-outline"
-          title="Social Story Generator"
-          subtitle="Create simple social stories for new or difficult situations."
-          color="#7C3AED"
-          bg="#F3E8FF"
-          onPress={() => router.push('/parent-support/social-story')}
-        />
+              <Ionicons name="chevron-forward" size={22} color={section.color} />
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <View style={styles.infoCard}>
           <Ionicons name="shield-checkmark-outline" size={22} color="#059669" />
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.infoTitle}>
-              Parent guidance, not medical advice
-            </Text>
+            <Text style={styles.infoTitle}>Caregiver support, not medical advice</Text>
 
             <Text style={styles.infoText}>
-              These tools are designed to support caregivers with practical
-              ABA-style strategies. They do not replace clinical, medical,
-              psychological, or emergency services.
+              These tools are designed to support caregiver wellness and daily
+              coping. They do not replace therapy, medical care, crisis support,
+              or emergency services.
             </Text>
           </View>
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function SupportToolCard({
-  icon,
-  title,
-  subtitle,
-  color,
-  bg,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle: string;
-  color: string;
-  bg: string;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={styles.toolCard} onPress={onPress}>
-      <View style={[styles.toolIcon, { backgroundColor: bg }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-
-      <View style={styles.toolTextWrap}>
-        <Text style={styles.toolTitle}>{title}</Text>
-        <Text style={styles.toolSubtitle}>{subtitle}</Text>
-      </View>
-
-      <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-    </TouchableOpacity>
   );
 }
 
@@ -228,7 +234,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
   },
 
@@ -237,16 +243,27 @@ const styles = StyleSheet.create({
   },
 
   heroCard: {
+    overflow: 'hidden',
     backgroundColor: '#7C3AED',
-    borderRadius: 28,
+    borderRadius: 32,
     padding: 24,
     marginBottom: 24,
   },
 
+  heroGlow: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    top: -70,
+    right: -55,
+  },
+
   heroIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
+    width: 62,
+    height: 62,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,7 +272,7 @@ const styles = StyleSheet.create({
 
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
     marginBottom: 8,
   },
@@ -264,52 +281,62 @@ const styles = StyleSheet.create({
     color: '#EDE9FE',
     fontSize: 15,
     lineHeight: 23,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
     color: '#0F172A',
     marginBottom: 12,
   },
 
-  toolCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
+  sectionList: {
+    gap: 14,
+    marginBottom: 18,
   },
 
-  toolIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
+  sectionCard: {
+    borderRadius: 26,
+    padding: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  sectionLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+
+  sectionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
 
-  toolTextWrap: {
+  sectionTextWrap: {
     flex: 1,
   },
 
-  toolTitle: {
-    fontSize: 16,
+  sectionCardTitle: {
+    fontSize: 17,
     fontWeight: '900',
-    color: '#1E293B',
+    marginBottom: 4,
   },
 
-  toolSubtitle: {
-    marginTop: 4,
-    color: '#64748B',
+  sectionSubtitle: {
+    color: '#475569',
     fontSize: 13,
     lineHeight: 19,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   infoCard: {
@@ -319,6 +346,8 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 16,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
 
   infoTitle: {
@@ -334,26 +363,7 @@ const styles = StyleSheet.create({
     color: '#047857',
     fontSize: 13,
     lineHeight: 20,
-    fontWeight: '600',
-  },
-
-  historyButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 22,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  historyButtonText: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#1E293B',
-    fontWeight: '900',
-    fontSize: 14,
+    fontWeight: '700',
   },
 
   lockedContainer: {
@@ -386,6 +396,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 22,
     textAlign: 'center',
+    fontWeight: '600',
   },
 
   upgradeButton: {
