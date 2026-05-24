@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -10,55 +10,50 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type SavedReflectionPreview = {
-  id: string;
-  title: string;
-  subtitle: string;
-  date: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  bg: string;
-};
+import {
+  getSavedParentReflections,
+  SavedParentReflection,
+} from '@/lib/parentReflectionsStorage';
 
-const SAMPLE_REFLECTIONS: SavedReflectionPreview[] = [
-  {
-    id: 'sample-1',
-    title: 'Journal Check-In',
-    subtitle: 'Stress level: 4 • Feeling overwhelmed, tired',
-    date: 'Today',
-    icon: 'journal-outline',
-    color: '#0F766E',
-    bg: '#ECFDF5',
-  },
-  {
-    id: 'sample-2',
-    title: 'Emotional Reset',
-    subtitle: 'Lower the pressure first',
-    date: 'Recently',
-    icon: 'heart-circle-outline',
-    color: '#7C3AED',
-    bg: '#F5F3FF',
-  },
-  {
-    id: 'sample-3',
-    title: 'Saved Reminder',
-    subtitle: 'You are doing enough.',
-    date: 'Recently',
-    icon: 'sparkles-outline',
-    color: '#BE123C',
-    bg: '#FFF1F2',
-  },
-];
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Recently';
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 export default function SavedReflectionsScreen() {
   const router = useRouter();
 
-  const savedReflections: SavedReflectionPreview[] = [];
+  const [savedReflections, setSavedReflections] = useState<
+    SavedParentReflection[]
+  >([]);
 
-  const displayItems =
-    savedReflections.length > 0 ? savedReflections : SAMPLE_REFLECTIONS;
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-  const usingSamples = savedReflections.length === 0;
+      async function loadSavedReflections() {
+        const saved = await getSavedParentReflections();
+
+        if (active) {
+          setSavedReflections(saved);
+        }
+      }
+
+      void loadSavedReflections();
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -86,61 +81,79 @@ export default function SavedReflectionsScreen() {
           <Text style={styles.heroTitle}>Saved Reflections</Text>
 
           <Text style={styles.heroText}>
-            A place for journal check-ins, emotional reset notes, and helpful
-            reminders you want to return to later.
+            Return to emotional resets, journal check-ins, and supportive
+            reminders that helped before.
           </Text>
         </View>
 
-        {usingSamples && (
-          <View style={styles.previewNotice}>
-            <Ionicons name="information-circle-outline" size={20} color="#2563EB" />
-
-            <Text style={styles.previewNoticeText}>
-              Preview shown. Once journal saving is connected, your real saved
-              reflections will appear here.
-            </Text>
-          </View>
-        )}
-
         <Text style={styles.sectionTitle}>Recent Reflections</Text>
 
-        <View style={styles.reflectionList}>
-          {displayItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.88}
-              style={[styles.reflectionCard, { backgroundColor: item.bg }]}
-              onPress={() =>
-                router.push({
-                  pathname: '/parent-support/reflection-detail',
-                  params: { id: item.id },
-                })
-              }
-            >
-              <View style={styles.reflectionLeft}>
-                <View style={styles.reflectionIcon}>
-                  <Ionicons name={item.icon} size={24} color={item.color} />
+        {savedReflections.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Ionicons name="folder-open-outline" size={42} color="#94A3B8" />
+
+            <Text style={styles.emptyTitle}>No saved reflections yet</Text>
+
+            <Text style={styles.emptyText}>
+              Save an Emotional Reset or Journal Check-In, and it will appear
+              here for quick access.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.reflectionList}>
+            {savedReflections.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                activeOpacity={0.88}
+                style={[
+                  styles.reflectionCard,
+                  { backgroundColor: item.bg },
+                ]}
+                onPress={() =>
+                  router.push({
+                    pathname: '/parent-support/reflection-detail',
+                    params: { id: item.id },
+                  })
+                }
+              >
+                <View style={styles.reflectionLeft}>
+                  <View style={styles.reflectionIcon}>
+                    <Ionicons
+                      name={item.icon as keyof typeof Ionicons.glyphMap}
+                      size={24}
+                      color={item.color}
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.reflectionTitle,
+                        { color: item.color },
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+
+                    <Text style={styles.reflectionSubtitle}>
+                      {item.subtitle}
+                    </Text>
+
+                    <Text style={styles.reflectionDate}>
+                      {formatDate(item.createdAt)}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.reflectionTitle, { color: item.color }]}>
-                    {item.title}
-                  </Text>
-
-                  <Text style={styles.reflectionSubtitle}>
-                    {item.subtitle}
-                  </Text>
-
-                  <Text style={styles.reflectionDate}>
-                    {item.date}
-                  </Text>
-                </View>
-              </View>
-
-              <Ionicons name="chevron-forward" size={20} color={item.color} />
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={item.color}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <View style={styles.infoCard}>
           <Ionicons name="leaf-outline" size={22} color="#0F766E" />
@@ -149,9 +162,8 @@ export default function SavedReflectionsScreen() {
             <Text style={styles.infoTitle}>Built for short reflections</Text>
 
             <Text style={styles.infoText}>
-              This section should stay simple. The goal is to help parents
-              notice patterns, remember what helped, and come back to supportive
-              reminders without feeling overwhelmed.
+              This section helps parents notice patterns, remember what helped,
+              and return to supportive reminders without feeling overwhelmed.
             </Text>
           </View>
         </View>
@@ -242,26 +254,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  previewNotice: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 20,
-    padding: 14,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-
-  previewNoticeText: {
-    flex: 1,
-    marginLeft: 8,
-    color: '#1D4ED8',
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 19,
-  },
-
   sectionTitle: {
     fontSize: 19,
     fontWeight: '900',
@@ -319,6 +311,33 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 12,
     fontWeight: '800',
+  },
+
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 26,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 18,
+  },
+
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+  },
+
+  emptyText: {
+    marginTop: 8,
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 
   infoCard: {

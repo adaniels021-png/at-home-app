@@ -2,10 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,458 +11,362 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { supabase } from '../../lib/supabase';
+import {
+  deleteParentReflection,
+  getParentReflectionById,
+  SavedParentReflection,
+} from '@/lib/parentReflectionsStorage';
 
-export default function ParentSupportPlanDetailScreen() {
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return 'Recently';
+
+  return date.toLocaleDateString(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export default function ReflectionDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState<any>(null);
+  const [reflection, setReflection] = useState<SavedParentReflection | null>(
+    null
+  );
 
   useEffect(() => {
-    if (id) {
-      void loadPlan();
+    async function loadReflection() {
+      if (!id) return;
+
+      const saved = await getParentReflectionById(id);
+      setReflection(saved);
     }
+
+    void loadReflection();
   }, [id]);
 
-  async function loadPlan() {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from('parent_support_plans')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      setPlan(data);
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.message || 'Could not load support plan.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleShare() {
-    if (!plan) return;
-
-    try {
-      await Share.share({
-        message: `
-${plan.title || 'Support Plan'}
-
-${plan.plan_text || ''}
-        `,
-      });
-    } catch (error) {
-      console.error('share error:', error);
-    }
-  }
-
   async function handleDelete() {
-    if (!plan?.id) return;
+    if (!reflection) return;
 
     Alert.alert(
-      'Delete Plan',
-      'Are you sure you want to permanently delete this support plan?',
+      'Delete Reflection',
+      'Are you sure you want to delete this saved reflection?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('parent_support_plans')
-                .delete()
-                .eq('id', plan.id);
-
-              if (error) throw error;
-
-              router.back();
-            } catch (error: any) {
-              Alert.alert(
-                'Delete Failed',
-                error?.message || 'Could not delete plan.'
-              );
-            }
+            await deleteParentReflection(reflection.id);
+            router.back();
           },
         },
       ]
     );
   }
 
-  if (loading) {
+  if (!reflection) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#7C3AED" />
-      </View>
-    );
-  }
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.emptyWrap}>
+          <Ionicons name="alert-circle-outline" size={44} color="#94A3B8" />
 
-  if (!plan) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Ionicons
-            name="document-text-outline"
-            size={50}
-            color="#94A3B8"
-          />
-
-          <Text style={styles.emptyTitle}>Plan Not Found</Text>
+          <Text style={styles.emptyTitle}>Reflection not found</Text>
 
           <Text style={styles.emptyText}>
-            This support plan could not be loaded.
+            This reflection may have been deleted or is no longer available.
           </Text>
+
+          <TouchableOpacity style={styles.backHomeButton} onPress={() => router.back()}>
+            <Text style={styles.backHomeButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
-        </TouchableOpacity>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Support Plan</Text>
+          <Text style={styles.headerTitle}>Reflection</Text>
 
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={handleShare}
-        >
-          <Ionicons name="share-outline" size={22} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.headerSpacer} />
+        </View>
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: reflection.color }]}>
+          <View style={styles.heroGlow} />
+
           <View style={styles.heroIcon}>
             <Ionicons
-              name="sparkles"
-              size={28}
-              color="#7C3AED"
+              name={reflection.icon as keyof typeof Ionicons.glyphMap}
+              size={34}
+              color="#FFFFFF"
             />
           </View>
 
-          <Text style={styles.heroTitle}>
-            {plan.title || 'Behavior Support Plan'}
-          </Text>
+          <Text style={styles.heroTitle}>{reflection.title}</Text>
 
-          <Text style={styles.heroSubtitle}>
-            {plan.tool_type === 'behavior_support'
-              ? 'Behavior Support'
-              : 'Parent Support'}
-          </Text>
+          <Text style={styles.heroText}>{reflection.subtitle}</Text>
 
-          <Text style={styles.heroDate}>
-            Created{' '}
-            {new Date(plan.created_at).toLocaleDateString()}
+          <Text style={styles.heroDate}>{formatDate(reflection.createdAt)}</Text>
+        </View>
+
+        {!!reflection.body && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Reflection Note</Text>
+            <Text style={styles.bodyText}>{reflection.body}</Text>
+          </View>
+        )}
+
+        {reflection.mood && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Mood</Text>
+            <Text style={styles.bodyText}>{reflection.mood}</Text>
+          </View>
+        )}
+
+        {typeof reflection.stressLevel === 'number' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Stress Level</Text>
+            <Text style={styles.bodyText}>{reflection.stressLevel} / 5</Text>
+          </View>
+        )}
+
+        {!!reflection.completedSteps?.length && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Completed Steps</Text>
+
+            {reflection.completedSteps.map((step) => (
+              <View key={step} style={styles.stepRow}>
+                <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                <Text style={styles.stepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.infoCard}>
+          <Ionicons name="sparkles-outline" size={22} color="#7C3AED" />
+
+          <Text style={styles.infoText}>
+            Return to this reflection when a similar moment happens again. What
+            helped before can help guide the next hard moment.
           </Text>
         </View>
 
-        <View style={styles.planCard}>
-  <Text style={styles.sectionTitle}>AI Recommendations</Text>
-
-  <PlanSection
-    title="Possible Reason"
-    items={[plan.ai_response?.possible_reason]}
-  />
-
-  <PlanSection
-    title="Prevention Strategies"
-    items={plan.ai_response?.prevention_strategies}
-  />
-
-  <PlanSection
-    title="Replacement Skills"
-    items={plan.ai_response?.replacement_skills}
-  />
-
-  <PlanSection
-    title="Calming Supports"
-    items={plan.ai_response?.calming_supports}
-  />
-
-  <PlanSection
-    title="Parent Tips"
-    items={plan.ai_response?.parent_tips}
-  />
-
-  {plan.ai_response?.encouragement ? (
-    <View style={styles.encouragementBox}>
-      <Ionicons name="heart" size={18} color="#7C3AED" />
-      <Text style={styles.encouragementText}>
-        {plan.ai_response.encouragement}
-      </Text>
-    </View>
-  ) : null}
-</View>
-        {plan.reinforcement_summary ? (
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Reinforcement Strategy</Text>
-
-            <Text style={styles.infoText}>
-              {plan.reinforcement_summary}
-            </Text>
-          </View>
-        ) : null}
-
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={18}
-            color="#FFFFFF"
-          />
-
-          <Text style={styles.deleteButtonText}>
-            Delete Plan
-          </Text>
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.deleteButtonText}>Delete Reflection</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function PlanSection({
-  title,
-  items,
-}: {
-  title: string;
-  items?: string[];
-}) {
-  const cleanItems = (items || []).filter(Boolean);
-
-  if (!cleanItems.length) return null;
-
-  return (
-    <View style={styles.planSection}>
-      <Text style={styles.infoTitle}>{title}</Text>
-
-      {cleanItems.map((item, index) => (
-        <View key={index} style={styles.resultRow}>
-          <View style={styles.resultDot} />
-          <Text style={styles.infoText}>{item}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
 
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: '#F8FAFC',
+  container: {
+    padding: 20,
+    paddingBottom: 42,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 14,
+    marginBottom: 18,
   },
 
-  headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
 
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
   },
 
-  content: {
-    padding: 20,
-    paddingBottom: 50,
+  headerSpacer: {
+    width: 42,
   },
 
   heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
+    overflow: 'hidden',
+    borderRadius: 32,
     padding: 24,
-    alignItems: 'center',
     marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  },
+
+  heroGlow: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    top: -70,
+    right: -55,
   },
 
   heroIcon: {
-    width: 70,
-    height: 70,
-    borderRadius: 24,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
+    width: 62,
+    height: 62,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
 
   heroTitle: {
-    fontSize: 22,
+    color: '#FFFFFF',
+    fontSize: 28,
     fontWeight: '900',
-    color: '#0F172A',
-    textAlign: 'center',
+    marginBottom: 8,
   },
 
-  heroSubtitle: {
-    marginTop: 6,
-    color: '#7C3AED',
-    fontWeight: '800',
-    fontSize: 13,
+  heroText: {
+    color: '#FFFFFF',
+    opacity: 0.9,
+    fontSize: 15,
+    lineHeight: 23,
+    fontWeight: '700',
   },
 
   heroDate: {
-    marginTop: 8,
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
+    marginTop: 12,
+    color: '#FFFFFF',
+    opacity: 0.85,
+    fontSize: 13,
+    fontWeight: '900',
   },
 
-  planCard: {
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 22,
-    marginBottom: 18,
+    borderRadius: 26,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
 
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
-    marginBottom: 14,
-  },
-
-  planText: {
-    color: '#334155',
-    lineHeight: 24,
-    fontSize: 15,
-  },
-
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  infoTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#1E293B',
     marginBottom: 8,
   },
 
-  infoText: {
+  bodyText: {
     color: '#475569',
+    fontSize: 15,
     lineHeight: 22,
-    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 10,
+  },
+
+  stepText: {
+    flex: 1,
+    marginLeft: 9,
+    color: '#047857',
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+
+  infoCard: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+
+  infoText: {
+    flex: 1,
+    marginLeft: 10,
+    color: '#5B21B6',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '800',
   },
 
   deleteButton: {
-    backgroundColor: '#DC2626',
-    paddingVertical: 16,
+    height: 54,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#DC2626',
     flexDirection: 'row',
-    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   deleteButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 15,
     marginLeft: 8,
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 15,
+  },
+
+  emptyWrap: {
+    flex: 1,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   emptyTitle: {
-    marginTop: 14,
+    marginTop: 12,
     fontSize: 20,
     fontWeight: '900',
     color: '#0F172A',
+    textAlign: 'center',
   },
 
   emptyText: {
     marginTop: 8,
-    textAlign: 'center',
     color: '#64748B',
-    lineHeight: 22,
+    textAlign: 'center',
+    lineHeight: 21,
+    fontWeight: '700',
   },
 
-  planSection: {
-  marginBottom: 18,
-},
+  backHomeButton: {
+    marginTop: 20,
+    backgroundColor: '#7C3AED',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+  },
 
-resultRow: {
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-  marginBottom: 10,
-},
-
-resultDot: {
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: '#7C3AED',
-  marginTop: 7,
-  marginRight: 10,
-},
-
-encouragementBox: {
-  marginTop: 10,
-  backgroundColor: '#F5F3FF',
-  borderRadius: 18,
-  padding: 16,
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-},
-
-encouragementText: {
-  flex: 1,
-  marginLeft: 10,
-  color: '#6D28D9',
-  fontWeight: '700',
-  lineHeight: 20,
-},
+  backHomeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
 });

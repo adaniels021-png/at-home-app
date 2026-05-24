@@ -21,9 +21,10 @@ type SupportSection = {
   bg: string;
   border: string;
   route:
-    | '/parent-support/emotional-reset'
-    | '/parent-support/journal'
-    | '/parent-support/support-feed';
+  | '/parent-support/emotional-reset'
+  | '/parent-support/journal'
+  | '/parent-support/support-feed'
+  | '/parent-support/saved-reflections';
 };
 
 const SUPPORT_SECTIONS: SupportSection[] = [
@@ -60,6 +61,17 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     border: '#FECDD3',
     route: '/parent-support/support-feed',
   },
+  {
+  id: 'saved-reflections',
+  title: 'Saved Reflections',
+  subtitle:
+    'Return to saved emotional reset plans and helpful caregiver supports.',
+  icon: 'bookmark-outline',
+  color: '#2563EB',
+  bg: '#EFF6FF',
+  border: '#BFDBFE',
+  route: '/parent-support/saved-reflections',
+},
 ];
 
 export default function ParentSupportScreen() {

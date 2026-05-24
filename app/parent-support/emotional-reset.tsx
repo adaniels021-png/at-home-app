@@ -1,4 +1,4 @@
-import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
+import { saveParentReflection } from '@/lib/parentReflectionsStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -26,6 +26,11 @@ type ResetPlan = {
   avoid: string[];
 };
 
+type Encouragement = {
+  title: string;
+  message: string;
+};
+
 const situations: ResetSituation[] = [
   { id: 'overwhelmed', title: 'I feel overwhelmed', icon: 'pulse-outline' },
   { id: 'meltdown-ended', title: 'A meltdown just ended', icon: 'rainy-outline' },
@@ -35,6 +40,59 @@ const situations: ResetSituation[] = [
   { id: 'exhausted', title: 'I feel exhausted', icon: 'battery-dead-outline' },
   { id: 'shut-down', title: 'I feel shut down', icon: 'remove-circle-outline' },
   { id: 'transition', title: 'Transition struggle', icon: 'swap-horizontal-outline' },
+];
+
+const encouragements: Encouragement[] = [
+  {
+    title: 'You are doing enough.',
+    message:
+      'Your child does not need perfection. They need your support, safety, and steady presence.',
+  },
+  {
+    title: 'This moment is not the whole story.',
+    message:
+      'A hard moment does not erase your progress. You can reset and take the next small step.',
+  },
+  {
+    title: 'Small calm choices matter.',
+    message:
+      'Lowering your voice, pausing, or choosing fewer words can help the whole moment soften.',
+  },
+  {
+    title: 'You are allowed to pause.',
+    message:
+      'Taking a breath before responding is not giving up. It is choosing connection over pressure.',
+  },
+  {
+    title: 'Progress can be quiet.',
+    message:
+      'Some days, success looks like recovering, reconnecting, and trying again later.',
+  },
+  {
+    title: 'You are learning too.',
+    message:
+      'Parenting through hard moments takes practice. You are building skill with every reset.',
+  },
+  {
+    title: 'Connection comes first.',
+    message:
+      'Teaching can wait until everyone feels safer and calmer. Repair and regulation matter first.',
+  },
+  {
+    title: 'One small win counts.',
+    message:
+      'Even one calm phrase, one pause, or one gentle repair is meaningful progress.',
+  },
+  {
+    title: 'You are not alone in this.',
+    message:
+      'Difficult moments happen. What matters is that you keep showing up with care.',
+  },
+  {
+    title: 'Reset before you respond.',
+    message:
+      'You do not have to solve everything immediately. A calmer body can choose a clearer next step.',
+  },
 ];
 
 const plans: Record<string, ResetPlan> = {
@@ -221,6 +279,14 @@ export default function EmotionalResetScreen() {
     return plans[selectedSituationId] || plans.overwhelmed;
   }, [selectedSituationId]);
 
+  const dailyEncouragement = useMemo(() => {
+    const today = new Date();
+    const daySeed =
+      today.getFullYear() + today.getMonth() + today.getDate();
+
+    return encouragements[daySeed % encouragements.length];
+  }, []);
+
   function toggleStep(step: string) {
     setCompletedSteps((prev) =>
       prev.includes(step)
@@ -228,13 +294,20 @@ export default function EmotionalResetScreen() {
         : [...prev, step]
     );
   }
-async function saveReflection() {
-  await saveCalmStrategy({
+
+  async function saveReflection() {
+  await saveParentReflection({
     type: 'emotional-reset',
     title: selectedPlan.title,
-    subtitle: situations.find(
-      (item) => item.id === selectedSituationId
-    )?.title || 'Parent Reflection',
+    subtitle:
+      situations.find(
+        (item) => item.id === selectedSituationId
+      )?.title || 'Emotional Reset',
+
+    body: selectedPlan.message,
+
+    completedSteps,
+
     icon: 'heart-circle-outline',
     color: '#7C3AED',
     bg: '#F5F3FF',
@@ -246,6 +319,7 @@ async function saveReflection() {
   function resetPage() {
     setSelectedSituationId('overwhelmed');
     setCompletedSteps([]);
+    setSaved(false);
   }
 
   return (
@@ -377,29 +451,27 @@ async function saveReflection() {
           ))}
         </View>
 
-        <TouchableOpacity
-  style={styles.saveButton}
-  onPress={saveReflection}
->
-  <Ionicons
-    name={saved ? 'bookmark' : 'bookmark-outline'}
-    size={18}
-    color="#FFFFFF"
-  />
+        <TouchableOpacity style={styles.saveButton} onPress={saveReflection}>
+          <Ionicons
+            name={saved ? 'bookmark' : 'bookmark-outline'}
+            size={18}
+            color="#FFFFFF"
+          />
 
-  <Text style={styles.saveButtonText}>
-    {saved ? 'Saved to Quick Access' : 'Save Reflection'}
-  </Text>
-</TouchableOpacity>
+          <Text style={styles.saveButtonText}>
+            {saved ? 'Saved to Quick Access' : 'Save Reflection'}
+          </Text>
+        </TouchableOpacity>
 
         <View style={styles.reassuranceCard}>
           <Ionicons name="sparkles-outline" size={24} color="#7C3AED" />
 
-          <Text style={styles.reassuranceTitle}>You are not failing.</Text>
+          <Text style={styles.reassuranceTitle}>
+            {dailyEncouragement.title}
+          </Text>
 
           <Text style={styles.reassuranceText}>
-            A hard moment does not mean you are a bad parent. Reset first, then
-            respond from a calmer place.
+            {dailyEncouragement.message}
           </Text>
         </View>
 
@@ -653,22 +725,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-saveButton: {
-  height: 54,
-  borderRadius: 18,
-  backgroundColor: '#7C3AED',
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: 16,
-},
+  saveButton: {
+    height: 54,
+    borderRadius: 18,
+    backgroundColor: '#7C3AED',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
 
-saveButtonText: {
-  marginLeft: 8,
-  color: '#FFFFFF',
-  fontWeight: '900',
-  fontSize: 15,
-},
+  saveButtonText: {
+    marginLeft: 8,
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 15,
+  },
 
   resetButton: {
     height: 52,
