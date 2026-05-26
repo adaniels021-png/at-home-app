@@ -27,11 +27,14 @@ export default function AddChild() {
   const children = childContext?.children || [];
   const refreshChildren = childContext?.refreshChildren;
   const setSelectedChild = childContext?.setSelectedChild;
+  const selectedChild = childContext?.selectedChild;
 
   const { isPro, adminMode, loading: subscriptionLoading } = useSubscription();
 
   const hasProAccess = isPro || adminMode;
 
+  const [caregiverName, setCaregiverName] = useState('');
+  const [caregiverRelationship, setCaregiverRelationship] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [saving, setSaving] = useState(false);
@@ -84,8 +87,18 @@ export default function AddChild() {
   };
 
   const handleSave = async () => {
+    const trimmedCaregiverName = caregiverName.trim();
+    const trimmedCaregiverRelationship = caregiverRelationship.trim();
     const trimmedName = name.trim();
     const trimmedAge = age.trim();
+
+    if (isFirstChild && (!trimmedCaregiverName || !trimmedCaregiverRelationship)) {
+      Alert.alert(
+        'Missing Caregiver Info',
+        'Please enter your name and relationship to the child.'
+      );
+      return;
+    }
 
     if (!trimmedName || !trimmedAge) {
       Alert.alert('Missing Info', 'Please provide a child name and age.');
@@ -126,36 +139,67 @@ export default function AddChild() {
         throw new Error('No active account found. Please log in again.');
       }
 
-   const { data, error } = await withTimeout(
-  supabase
-     .from('children')
-     .insert({
-       parent_id: user.id,
-       child_name: trimmedName,
-       name: trimmedName,
-       age: parsedAge,
-       child_age: String(parsedAge),
-       caregiver_relationship: 'Primary Caregiver',
-     })
-     .select('*')
-     .single(),
-   10000,
-   'Creating child profile took too long. Please check your connection.'
- );
+      if (isFirstChild) {
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: {
+            full_name: trimmedCaregiverName,
+            caregiver_name: trimmedCaregiverName,
+            relationship_to_child: trimmedCaregiverRelationship,
+            caregiver_role: trimmedCaregiverRelationship,
+          },
+        });
 
-if (error) throw error;
+        if (metadataError) throw metadataError;
 
-if (typeof setSelectedChild === 'function') {
-  setSelectedChild(data);
-}
+        const { error: profileError } = await supabase.from('profiles').upsert(
+          {
+            id: user.id,
+            full_name: trimmedCaregiverName,
+            caregiver_name: trimmedCaregiverName,
+            relationship_to_child: trimmedCaregiverRelationship,
+            caregiver_role: trimmedCaregiverRelationship,
+            email: user.email || null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
 
-runInBackground(async () => {
-  if (typeof refreshChildren === 'function') {
-    await refreshChildren();
-  }
-}, 'Refresh children after add child');
+        if (profileError) throw profileError;
+      }
 
-router.replace('/onboarding/assessment');
+      const { data, error } = await withTimeout(
+        supabase
+          .from('children')
+          .insert({
+            parent_id: user.id,
+            child_name: trimmedName,
+            name: trimmedName,
+            age: parsedAge,
+            child_age: String(parsedAge),
+            caregiver_relationship:
+              trimmedCaregiverRelationship ||
+              selectedChild?.caregiver_relationship ||
+              'Caregiver',
+          })
+          .select('*')
+          .single(),
+        10000,
+        'Creating child profile took too long. Please check your connection.'
+      );
+
+      if (error) throw error;
+
+      if (typeof setSelectedChild === 'function') {
+        setSelectedChild(data);
+      }
+
+      runInBackground(async () => {
+        if (typeof refreshChildren === 'function') {
+          await refreshChildren();
+        }
+      }, 'Refresh children after add child');
+
+      router.replace('/onboarding/assessment');
     } catch (error: any) {
       console.error('Add child error:', error);
 
@@ -194,17 +238,21 @@ router.replace('/onboarding/assessment');
             <Ionicons name="arrow-back" size={24} color="#111827" />
           </TouchableOpacity>
 
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {isFirstChild ? 'Set Up Child Profile' : 'Add Another Child'}
-            </Text>
+          <View style={styles.stepBadge}>
+  <Text style={styles.stepBadgeText}>STEP 1 OF 3</Text>
+</View>
 
-            <Text style={styles.subtitle}>
-              {isFirstChild
-                ? 'Create your first child profile so lessons, activities, PECS, routines, worksheets, and progress tools can be personalized.'
-                : 'Add another child under your same caregiver account. Each child will have their own lessons, routines, PECS setup, worksheets, and progress tracking.'}
-            </Text>
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+       {isFirstChild ? 'Create Your Family Profile' : 'Add Another Child'}
+       </Text>
+
+  <Text style={styles.subtitle}>
+    {isFirstChild
+      ? 'We’ll use this information to personalize lessons, routines, communication tools, worksheets, and parent support.'
+      : 'Each child gets their own personalized lessons, routines, communication tools, and progress tracking.'}
+  </Text>
+      </View>
 
           <View style={styles.proCard}>
             <View style={styles.proHeader}>
@@ -215,18 +263,50 @@ router.replace('/onboarding/assessment');
               />
 
               <Text style={styles.proTitle}>
-                {isFirstChild ? 'Included in Free Plan' : 'Multiple Child Profiles'}
+              {isFirstChild ? 'Your First Child Profile' : 'Family Profiles'}
               </Text>
             </View>
 
             <Text style={styles.proText}>
-              {isFirstChild
-                ? 'Your first child profile is included free. Additional child profiles require ABA at Home Pro.'
-                : 'One caregiver account can manage multiple child profiles with separate assessments, routines, lessons, and progress records.'}
+               {isFirstChild
+              ? 'Your first child profile is included in the free plan. Additional child profiles can be added with Pro.'
+              : 'One caregiver account can support multiple children with separate lessons, assessments, and progress.'}
             </Text>
           </View>
 
           <View style={styles.formCard}>
+            {isFirstChild ? (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Your Name</Text>
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Example: Ashley"
+                    value={caregiverName}
+                    onChangeText={setCaregiverName}
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Relationship to Child</Text>
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Example: Mom, Dad, Grandma, Caregiver"
+                    value={caregiverRelationship}
+                    onChangeText={setCaregiverRelationship}
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </>
+            ) : null}
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Child’s Name</Text>
 
@@ -258,7 +338,9 @@ router.replace('/onboarding/assessment');
             <View style={styles.accountCard}>
               <Ionicons name="person-circle-outline" size={20} color="#4F46E5" />
               <View style={{ flex: 1 }}>
-                <Text style={styles.accountTitle}>Connected to your caregiver account</Text>
+                <Text style={styles.accountTitle}>
+                  Connected to your caregiver account
+                </Text>
                 <Text style={styles.accountText}>
                   This child will be added under your current ABA at Home login.
                 </Text>
@@ -280,7 +362,7 @@ router.replace('/onboarding/assessment');
                     size={18}
                     color="#FFFFFF"
                   />
-                  <Text style={styles.saveBtnText}>Continue to Assessment</Text>
+                  <Text style={styles.saveBtnText}>Continue to Step 2</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -501,4 +583,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+
+  stepBadge: {
+  alignSelf: 'flex-start',
+  backgroundColor: '#EEF2FF',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 999,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+
+stepBadgeText: {
+  color: '#4338CA',
+  fontSize: 11,
+  fontWeight: '900',
+  letterSpacing: 0.5,
+},
 });

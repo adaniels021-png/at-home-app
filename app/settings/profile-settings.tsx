@@ -71,7 +71,16 @@ export default function ProfileSettingsScreen() {
           </Text>
         </View>
 
+
+
         <Section title="Account">
+          <ProfileItem
+            icon="person-circle-outline"
+            title="Caregiver Profile"
+            subtitle="Edit your name, relationship to your child, and caregiver role."
+            onPress={() => router.push('/settings/caregiver-profile' as any)}
+          />
+        
           <ProfileItem
             icon="mail-outline"
             title="Email & Login"

@@ -68,21 +68,13 @@ export default function WorksheetsScreen() {
     'Child';
 
   const requireProForWorksheet = (worksheet: WorksheetItem) => {
-    if (!isPro) {
-      Alert.alert(
-        'Pro Feature',
-        `${worksheet.title} is available with ABA at Home Pro.`,
-        [
-          { text: 'Maybe Later', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.push('/subscription') },
-        ]
-      );
+  if (!isPro) {
+    router.push('/subscription');
+    return true;
+  }
 
-      return true;
-    }
-
-    return false;
-  };
+  return false;
+};
 
   const createWorksheetPdf = async (worksheet: WorksheetItem) => {
     const html = buildWorksheetHtml({

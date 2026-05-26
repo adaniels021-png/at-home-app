@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import ProfileSwitcher from '../../components/ProfileSwitcher';
+import WeeklyProgressInsights from '../../components/WeeklyProgressInsights';
 import { generateProgressSummary } from '../../lib/aiService';
 import { ensureLessonQueue } from '../../lib/lessonQueue';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -455,6 +455,8 @@ export default function Dashboard() {
           </View>
 
           <ProfileSwitcher />
+
+          <WeeklyProgressInsights />
 
           {!hasAssessment ? (
             <TouchableOpacity

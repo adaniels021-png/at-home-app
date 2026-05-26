@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
+import { useSubscription } from '../../lib/SubscriptionContext';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
@@ -133,6 +134,18 @@ function getIconForTask(taskName: string): keyof typeof Ionicons.glyphMap {
 export default function RoutinesScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
+
+const { isPro, adminMode } = useSubscription();
+const hasProAccess = isPro || adminMode;
+
+const openProRoute = (path: string) => {
+  if (!hasProAccess) {
+    router.push('/subscription');
+    return;
+  }
+
+  router.push(path as any);
+};
 
   const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
   const [selectedDayType, setSelectedDayType] = useState<DayType>('everyday');
@@ -591,22 +604,34 @@ export default function RoutinesScreen() {
         </View>
 
         <View style={styles.topActionRow}>
-          <TouchableOpacity
-            style={styles.secondaryActionBtn}
-            onPress={() => router.push('/routines/customize')}
-          >
-            <Ionicons name="create-outline" size={18} color="#4F46E5" />
-            <Text style={styles.secondaryActionBtnText}>Customize Routine</Text>
-          </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.secondaryActionBtn}
+    onPress={() => openProRoute('/routines/customize')}
+  >
+    <Ionicons
+      name={hasProAccess ? 'create-outline' : 'lock-closed-outline'}
+      size={18}
+      color="#4F46E5"
+    />
+    <Text style={styles.secondaryActionBtnText}>
+      {hasProAccess ? 'Customize Routine' : 'Customize Routine Pro'}
+    </Text>
+  </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.primaryActionBtn}
-            onPress={() => router.push('/routine-printables')}
-          >
-            <Ionicons name="print-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.primaryActionBtnText}>Print Routine</Text>
-          </TouchableOpacity>
-        </View>
+  <TouchableOpacity
+    style={styles.primaryActionBtn}
+    onPress={() => openProRoute('/routine-printables')}
+  >
+    <Ionicons
+      name={hasProAccess ? 'print-outline' : 'lock-closed-outline'}
+      size={18}
+      color="#FFFFFF"
+    />
+    <Text style={styles.primaryActionBtnText}>
+      {hasProAccess ? 'Print Routine' : 'Print Routine Pro'}
+    </Text>
+  </TouchableOpacity>
+</View>
 
         <View style={styles.infoCard}>
           <View style={styles.infoHeader}>

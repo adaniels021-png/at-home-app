@@ -270,7 +270,8 @@ const QUESTIONS: AssessmentQuestion[] = [
     id: 'parent_notes',
     section: 'Caregiver Notes',
     question: 'Is there anything important you want the app to know?',
-    helper: 'Examples: fears, favorite items, medical restrictions, family routines, or school goals.',
+    helper:
+      'Examples: fears, favorite items, medical restrictions, family routines, or school goals.',
     type: 'text',
   },
 ];
@@ -424,61 +425,59 @@ export default function AssessmentScreen() {
   };
 
   const saveAssessment = async () => {
-  if (!selectedChild?.id) {
-    Alert.alert('No Child Selected', 'Please select a child profile first.');
-    return;
-  }
+    if (!selectedChild?.id) {
+      Alert.alert('No Child Selected', 'Please select a child profile first.');
+      return;
+    }
 
-  try {
-    setSaving(true);
+    try {
+      setSaving(true);
 
-    const lessonProfile = buildLessonProfile(answers, childName);
+      const lessonProfile = buildLessonProfile(answers, childName);
+      const completedAt = new Date().toISOString();
 
-    const completedAt = new Date().toISOString();
-
-    const payload = {
-      child_id: selectedChild.id,
-      responses: {
-        version: 'premium_v1',
-        completed_at: completedAt,
-        answers,
-        lesson_profile: lessonProfile,
-        app_connections: {
-          daily_lessons: lessonProfile.recommended_lesson_categories,
-          pecs: lessonProfile.recommended_pecs_cards,
-          worksheets: lessonProfile.recommended_worksheets,
-          routines: lessonProfile.routine_targets,
-          parent_support: lessonProfile.parent_support_focus,
+      const payload = {
+        child_id: selectedChild.id,
+        responses: {
+          version: 'premium_v1',
+          completed_at: completedAt,
+          answers,
+          lesson_profile: lessonProfile,
+          app_connections: {
+            daily_lessons: lessonProfile.recommended_lesson_categories,
+            pecs: lessonProfile.recommended_pecs_cards,
+            worksheets: lessonProfile.recommended_worksheets,
+            routines: lessonProfile.routine_targets,
+            parent_support: lessonProfile.parent_support_focus,
+          },
         },
-      },
-      completed_at: completedAt,
-    };
+        completed_at: completedAt,
+      };
 
-    const { error } = await supabase.from('assessments').insert(payload);
+      const { error } = await supabase.from('assessments').insert(payload);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    await supabase
-      .from('children')
-      .update({
-        assessment_status: 'completed',
-        assessment_completed_at: completedAt,
-        personalization_status: 'processing',
-      })
-      .eq('id', selectedChild.id);
+      await supabase
+        .from('children')
+        .update({
+          assessment_status: 'completed',
+          assessment_completed_at: completedAt,
+          personalization_status: 'processing',
+        })
+        .eq('id', selectedChild.id);
 
-    router.replace('/(tabs)/dashboard');
-
-  } catch (error: any) {
-    console.error('Save assessment error:', error);
-    Alert.alert(
-      'Save Error',
-      error?.message || 'Could not save the assessment.'
-    );
-  } finally {
-    setSaving(false);
-  }
-};
+      router.replace('/onboarding/plan-ready' as any);
+    } catch (error: any) {
+      console.error('Save assessment error:', error);
+      Alert.alert(
+        'Save Error',
+        error?.message || 'Could not save the assessment.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -491,7 +490,10 @@ export default function AssessmentScreen() {
             <Ionicons name="arrow-back" size={22} color="#0F172A" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Child Assessment</Text>
+          <View style={styles.headerCenter}>
+            <Text style={styles.stepBadgeText}>STEP 2 OF 3</Text>
+            <Text style={styles.headerTitle}>Child Assessment</Text>
+          </View>
 
           <View style={styles.headerSpacer} />
         </View>
@@ -599,7 +601,7 @@ export default function AssessmentScreen() {
             <>
               <Text style={styles.nextButtonText}>
                 {currentIndex === QUESTIONS.length - 1
-                  ? 'Finish Assessment'
+                  ? 'Build My Plan'
                   : 'Continue'}
               </Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
@@ -608,8 +610,8 @@ export default function AssessmentScreen() {
         </TouchableOpacity>
 
         <Text style={styles.footerNote}>
-          This assessment personalizes lessons, PECS recommendations, worksheets,
-          routines, and parent support tools.
+          Your answers help personalize lessons, PECS recommendations,
+          worksheets, routines, and parent support tools.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -619,11 +621,13 @@ export default function AssessmentScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { padding: 20, paddingBottom: 44 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 18,
   },
+
   backButton: {
     width: 42,
     height: 42,
@@ -634,14 +638,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  headerTitle: {
+
+  headerCenter: {
     flex: 1,
-    textAlign: 'center',
+    alignItems: 'center',
+  },
+
+  stepBadgeText: {
+    color: '#4F46E5',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+
+  headerTitle: {
     fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
   },
+
   headerSpacer: { width: 42 },
+
   progressCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
@@ -650,32 +668,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+
   progressTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+
   progressLabel: {
     color: '#475569',
     fontWeight: '800',
     fontSize: 13,
   },
+
   progressPercent: {
     color: '#4F46E5',
     fontWeight: '900',
     fontSize: 13,
   },
+
   progressTrack: {
     height: 12,
     backgroundColor: '#E2E8F0',
     borderRadius: 999,
     overflow: 'hidden',
   },
+
   progressFill: {
     height: '100%',
     backgroundColor: '#4F46E5',
     borderRadius: 999,
   },
+
   questionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 28,
@@ -684,6 +708,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     marginBottom: 18,
   },
+
   sectionPill: {
     alignSelf: 'flex-start',
     backgroundColor: '#EEF2FF',
@@ -692,11 +717,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 14,
   },
+
   sectionPillText: {
     color: '#4F46E5',
     fontSize: 12,
     fontWeight: '900',
   },
+
   questionText: {
     fontSize: 23,
     fontWeight: '900',
@@ -704,12 +731,14 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     marginBottom: 8,
   },
+
   helperText: {
     color: '#64748B',
     fontWeight: '600',
     lineHeight: 21,
     marginBottom: 14,
   },
+
   optionButton: {
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
@@ -721,10 +750,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+
   optionActive: {
     backgroundColor: '#EEF2FF',
     borderColor: '#4F46E5',
   },
+
   optionText: {
     flex: 1,
     color: '#334155',
@@ -732,9 +763,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     paddingRight: 10,
   },
+
   optionTextActive: {
     color: '#3730A3',
   },
+
   textInput: {
     marginTop: 12,
     minHeight: 140,
@@ -748,6 +781,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
+
   nextButton: {
     backgroundColor: '#4F46E5',
     borderRadius: 18,
@@ -757,15 +791,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   disabledButton: {
     opacity: 0.5,
   },
+
   nextButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '900',
     marginRight: 8,
   },
+
   footerNote: {
     marginTop: 14,
     color: '#64748B',

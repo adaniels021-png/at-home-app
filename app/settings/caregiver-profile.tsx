@@ -15,12 +15,24 @@ import {
 
 import { supabase } from '../../lib/supabase';
 
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs = 10000,
+  message = 'Request timed out. Please try again.'
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(message)), timeoutMs)
+    ),
+  ]);
+}
+
 export default function CaregiverProfileScreen() {
   const router = useRouter();
 
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState('');
-  const [role, setRole] = useState('Parent / Caregiver');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -35,41 +47,36 @@ export default function CaregiverProfileScreen() {
       const {
         data: { user },
         error: userError,
-      } = await supabase.auth.getUser();
+      } = await withTimeout(
+        supabase.auth.getUser(),
+        10000,
+        'Loading your profile took too long. Please check your connection.'
+      );
 
       if (userError) throw userError;
       if (!user?.id) throw new Error('No authenticated user found.');
 
       const metadata = user.user_metadata || {};
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, full_name, caregiver_name, relationship_to_child, caregiver_role')
-        .eq('id', user.id)
-        .maybeSingle();
+      const { data: profileData, error: profileError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('id, full_name, relationship_to_child')
+          .eq('id', user.id)
+          .maybeSingle(),
+        10000,
+        'Loading caregiver profile took too long. Please check your connection.'
+      );
 
       if (profileError) {
         console.log('Profile table load warning:', profileError);
       }
 
-      setName(
-        profileData?.caregiver_name ||
-          profileData?.full_name ||
-          metadata.caregiver_name ||
-          metadata.full_name ||
-          ''
-      );
-
+      setName(profileData?.full_name || metadata.full_name || '');
       setRelationship(
         profileData?.relationship_to_child ||
           metadata.relationship_to_child ||
           ''
-      );
-
-      setRole(
-        profileData?.caregiver_role ||
-          metadata.caregiver_role ||
-          'Parent / Caregiver'
       );
     } catch (error: any) {
       console.error('Load caregiver profile error:', error);
@@ -85,10 +92,17 @@ export default function CaregiverProfileScreen() {
   const handleSave = async () => {
     const trimmedName = name.trim();
     const trimmedRelationship = relationship.trim();
-    const trimmedRole = role.trim() || 'Parent / Caregiver';
 
     if (!trimmedName) {
       Alert.alert('Missing Name', 'Please enter your caregiver name.');
+      return;
+    }
+
+    if (!trimmedRelationship) {
+      Alert.alert(
+        'Missing Relationship',
+        'Please enter your relationship to the child.'
+      );
       return;
     }
 
@@ -98,38 +112,46 @@ export default function CaregiverProfileScreen() {
       const {
         data: { user },
         error: userError,
-      } = await supabase.auth.getUser();
+      } = await withTimeout(
+        supabase.auth.getUser(),
+        10000,
+        'Checking your account took too long. Please try again.'
+      );
 
       if (userError) throw userError;
       if (!user?.id) throw new Error('No authenticated user found.');
 
-      const { error: metadataError } = await supabase.auth.updateUser({
-        data: {
-          full_name: trimmedName,
-          caregiver_name: trimmedName,
-          relationship_to_child: trimmedRelationship,
-          caregiver_role: trimmedRole,
-        },
-      });
-
-      if (metadataError) throw metadataError;
-
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: user.id,
-          full_name: trimmedName,
-          caregiver_name: trimmedName,
-          relationship_to_child: trimmedRelationship,
-          caregiver_role: trimmedRole,
-          email: user.email || null,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'id',
-        }
+      const { error: profileError } = await withTimeout(
+        supabase.from('profiles').upsert(
+          {
+            id: user.id,
+            full_name: trimmedName,
+            relationship_to_child: trimmedRelationship,
+            email: user.email || null,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'id',
+          }
+        ),
+        10000,
+        'Saving caregiver profile took too long. Please try again.'
       );
 
       if (profileError) throw profileError;
+
+      const { error: childError } = await withTimeout(
+        supabase
+          .from('children')
+          .update({
+            caregiver_relationship: trimmedRelationship,
+          })
+          .eq('parent_id', user.id),
+        10000,
+        'Updating child profile relationship took too long. Please try again.'
+      );
+
+      if (childError) throw childError;
 
       Alert.alert('Profile Updated', 'Your caregiver profile has been saved.', [
         { text: 'OK', onPress: () => router.back() },
@@ -155,7 +177,10 @@ export default function CaregiverProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </TouchableOpacity>
@@ -164,12 +189,14 @@ export default function CaregiverProfileScreen() {
           <Ionicons name="person-circle-outline" size={48} color="#FFFFFF" />
           <Text style={styles.heroTitle}>Caregiver Profile</Text>
           <Text style={styles.heroText}>
-            Personalize how the app supports your family and child’s learning.
+            Update your name and relationship so the app can personalize your
+            family experience.
           </Text>
         </View>
 
         <View style={styles.card}>
           <Label text="Caregiver Name" />
+
           <TextInput
             value={name}
             onChangeText={setName}
@@ -180,43 +207,26 @@ export default function CaregiverProfileScreen() {
             returnKeyType="next"
           />
 
+          <Text style={styles.helperText}>
+            For privacy, avoid using your full legal name if you plan to post in
+            Parent Wins.
+          </Text>
+
           <Label text="Relationship to Child" />
+
           <TextInput
             value={relationship}
             onChangeText={setRelationship}
-            placeholder="Example: Mom, Dad, Grandma, Therapist"
+            placeholder="Example: Mom, Dad, Grandma, Caregiver"
             placeholderTextColor="#94A3B8"
             style={styles.input}
             autoCapitalize="words"
             returnKeyType="done"
           />
 
-          <Label text="Caregiver Role" />
-          <View style={styles.optionGrid}>
-            {['Parent / Caregiver', 'Therapist', 'Teacher', 'Family Support'].map(
-              (item) => {
-                const active = role === item;
-
-                return (
-                  <TouchableOpacity
-                    key={item}
-                    style={[styles.option, active && styles.optionActive]}
-                    onPress={() => setRole(item)}
-                    activeOpacity={0.85}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        active && styles.optionTextActive,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }
-            )}
-          </View>
+          <Text style={styles.helperText}>
+            This may appear on Parent Wins as “Mom of 5-year-old” or similar.
+          </Text>
 
           <TouchableOpacity
             style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
@@ -228,7 +238,11 @@ export default function CaregiverProfileScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
-                <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" />
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={18}
+                  color="#FFFFFF"
+                />
                 <Text style={styles.saveText}>Save Profile</Text>
               </>
             )}
@@ -244,9 +258,15 @@ function Label({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
 
-  content: { padding: 20, paddingBottom: 40 },
+  content: {
+    padding: 20,
+    paddingBottom: 40,
+  },
 
   centered: {
     flex: 1,
@@ -321,28 +341,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  optionGrid: { gap: 10 },
-
-  option: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  optionActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
-  },
-
-  optionText: {
-    color: '#475569',
-    fontWeight: '800',
-  },
-
-  optionTextActive: {
-    color: '#4F46E5',
+  helperText: {
+    marginTop: 8,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
   },
 
   saveBtn: {
