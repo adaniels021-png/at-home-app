@@ -18,7 +18,9 @@ import {
 } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useChild } from '../../lib/SelectedChildContext';
+import { useSubscription } from '../../lib/SubscriptionContext';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
@@ -148,6 +150,8 @@ function formatDayType(value: DayType) {
 export default function CustomizeRoutineScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
+  const { isPro, adminMode, loading: subscriptionLoading } = useSubscription();
+  const hasProAccess = isPro || adminMode;
 
   const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
   const [selectedDayType, setSelectedDayType] = useState<DayType>('everyday');
@@ -167,6 +171,14 @@ export default function CustomizeRoutineScreen() {
   const selectedDayLabel = useMemo(() => {
     return formatDayType(selectedDayType);
   }, [selectedDayType]);
+
+  useEffect(() => {
+  if (subscriptionLoading) return;
+
+  if (!hasProAccess) {
+    router.replace('/subscription');
+  }
+}, [hasProAccess, subscriptionLoading, router]);
 
   useEffect(() => {
     if (selectedChild?.id) {
@@ -543,7 +555,7 @@ export default function CustomizeRoutineScreen() {
     );
   }
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>

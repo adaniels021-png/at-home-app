@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import ProfileSwitcher from '../../components/ProfileSwitcher';
+import WeeklyProgressInsights from '../../components/WeeklyProgressInsights';
 import { generateProgressSummary } from '../../lib/aiService';
 import { ensureLessonQueue } from '../../lib/lessonQueue';
 import { useResponsiveLayout } from '../../lib/responsive';
@@ -456,6 +456,8 @@ useEffect(() => {
 
           <ProfileSwitcher />
 
+          <WeeklyProgressInsights />
+
           {!hasAssessment ? (
             <TouchableOpacity
               style={styles.assessmentPromptCard}
@@ -538,6 +540,17 @@ useEffect(() => {
               color="#DB2777"
               accent="#DB2777"
               onPress={() => openRoute('/activities')}
+            />
+
+            <FeaturedToolCard
+              itemWidth={featuredItemWidth}
+              icon="heart-outline"
+              label="Calm Down"
+              subtitle="Quick calming tools for regulation, sensory needs, and emotional support."
+              bg="#ECFDF5"
+              color="#059669"
+              accent="#059669"
+              onPress={() => openRoute('/calm-down')}
             />
 
             <FeaturedToolCard

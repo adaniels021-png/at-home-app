@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import {
-  ai,
   extractJsonFromText,
-  retryWithBackoff,
   safeString,
   safeStringArray,
   toStringArray,
@@ -61,6 +59,40 @@ function getYesterdayDateString(): string {
 function cleanPlainText(text: string | undefined | null): string {
   if (!text) return '';
   return text.trim();
+}
+
+async function generateJsonWithEdgeFunction<T>(
+  prompt: string,
+  fallback: T,
+  type = 'lesson'
+): Promise<T> {
+  try {
+    const { data, error } = await supabase.functions.invoke(
+      'generate-daily-lessons',
+      {
+        body: {
+          type,
+          prompt,
+        },
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    const rawText =
+      typeof data?.result === 'string'
+        ? data.result
+        : JSON.stringify(data?.result || '');
+
+    const parsed = extractJsonFromText(rawText);
+
+    return parsed as T;
+  } catch (error) {
+    console.error('Edge AI generation failed:', error);
+    return fallback;
+  }
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -886,7 +918,6 @@ export async function generateDailyABAActivities({
   const fallbackActivities = buildFallbackActivities(childName, count);
 
   try {
-    if (!ai) return fallbackActivities;
 
     const prompt = `
 Create ${count} parent-friendly ABA activity ideas.
@@ -921,19 +952,13 @@ Rules:
 - Keep activities short, supportive, and realistic.
 `;
 
-    const response = await retryWithBackoff(() =>
-      ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      })
-    );
+    const parsed = await generateJsonWithEdgeFunction<any[]>(
+  prompt,
+  fallbackActivities,
+  'activities'
+);
 
-    const parsed = extractJsonFromText(response.text || '');
-
-    return normalizeActivities(parsed, childName, count);
+return normalizeActivities(parsed, childName, count);
   } catch (error) {
     console.error('Generate daily ABA activities error:', error);
     return fallbackActivities;
@@ -974,12 +999,6 @@ export async function generatePremiumLesson({
 
     const fallback = buildFallbackLesson(skill);
 
-    if (!ai) {
-      return {
-        lesson: fallback,
-        source: 'fallback',
-      };
-    }
 
     const prompt = `
 You are a BCBA-style ABA lesson planner for parents doing short at-home practice.
@@ -1039,18 +1058,13 @@ Rules:
 - setup must have at least 2 parent setup steps.
 `;
 
-    const response = await retryWithBackoff(() =>
-      ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      })
-    );
+    const raw = await generateJsonWithEdgeFunction<any>(
+  prompt,
+  fallback,
+  'premium-lesson'
+);
 
-    const raw = extractJsonFromText(response.text || '');
-    const coerced = coerceLessonShape(raw);
+const coerced = coerceLessonShape(raw);
 
     const safeLesson: Lesson = {
       ...fallback,
@@ -1304,23 +1318,33 @@ JSON Format:
 }
 `;
 
-if (!ai) {
-  throw new Error('AI not configured');
-}
-
-const response = await retryWithBackoff(() =>
-  ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-    },
-  })
+return await generateJsonWithEdgeFunction(
+  prompt,
+  {
+    possible_reason:
+      'The child may be struggling with communication, regulation, transitions, or unmet needs.',
+    prevention_strategies: [
+      'Use visual schedules.',
+      'Give transition warnings.',
+      'Keep routines predictable.',
+    ],
+    replacement_skills: [
+      'Teach requesting help.',
+      'Practice calm communication.',
+    ],
+    calming_supports: [
+      'Offer sensory breaks.',
+      'Reduce environmental stress.',
+    ],
+    parent_tips: [
+      'Stay calm and consistent.',
+      'Reinforce positive behavior immediately.',
+    ],
+    encouragement:
+      'You are doing a great job supporting your child.',
+  },
+  'behavior-support'
 );
-
-const parsed = extractJsonFromText(response.text || '{}');
-
-return parsed;
     
   } catch (error) {
     console.error('generateBehaviorSupportPlan error:', error);
@@ -1435,21 +1459,35 @@ Rules:
 - Make the story supportive for home use.
 `;
 
-    if (!ai) {
-      throw new Error('AI not configured');
-    }
+    return await generateJsonWithEdgeFunction(
+  prompt,
+  {
+    title: `${situation} Social Story`,
+    introduction: `${childName} can learn what to expect and how to feel safe.`,
+    story_pages: [
+      {
+        page_title: 'I can learn',
+        text: 'Sometimes I practice new things. My grown-up will help me.',
+        visual_suggestion: 'Picture of child with caregiver.',
+      },
+      {
+        page_title: 'I can stay calm',
+        text: 'I can take a breath, ask for help, or take a break.',
+        visual_suggestion: 'Picture of calm breathing or break card.',
+      },
+    ],
+    practice_tips: [
+      'Read the story before the situation happens.',
+      'Use a calm voice.',
+      'Praise small successes.',
+    ],
+    caregiver_note:
+      'Read this story often and keep practice short and positive.',
+    calming_phrase: 'I am safe. I can ask for help.',
+  },
+  'social-story'
+);
 
-    const response = await retryWithBackoff(() =>
-      ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      })
-    );
-
-    return extractJsonFromText(response.text || '{}');
   } catch (error) {
     console.error('generateSocialStory error:', error);
 

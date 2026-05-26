@@ -1,57 +1,81 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 import { useSubscription } from '../lib/SubscriptionContext';
 
 export default function ProGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isPro, loading } = useSubscription();
+  const { isPro, adminMode, loading } = useSubscription();
+
+  const hasProAccess = isPro || adminMode;
 
   if (loading) {
     return (
       <View style={styles.screen}>
         <View style={styles.card}>
-          <Ionicons name="hourglass-outline" size={34} color="#4F46E5" />
+          <ActivityIndicator size="large" color="#4F46E5" />
           <Text style={styles.title}>Checking access...</Text>
           <Text style={styles.subtitle}>
-            Please wait while we confirm your subscription.
+            Confirming your ABA at Home Pro access.
           </Text>
         </View>
       </View>
     );
   }
 
-  if (isPro) {
+  if (hasProAccess) {
     return <>{children}</>;
   }
 
   return (
     <View style={styles.screen}>
       <View style={styles.card}>
+        <View style={styles.badge}>
+          <Ionicons name="sparkles" size={14} color="#7C3AED" />
+          <Text style={styles.badgeText}>ABA AT HOME PRO</Text>
+        </View>
+
         <View style={styles.iconWrap}>
           <Ionicons name="lock-closed" size={38} color="#4F46E5" />
         </View>
 
-        <Text style={styles.title}>Pro Feature</Text>
+        <Text style={styles.title}>Unlock This Tool</Text>
 
         <Text style={styles.subtitle}>
-          Upgrade to unlock this feature and support your child’s communication,
-          routines, and daily progress.
+          Pro gives families access to premium routines, printables,
+          personalized tools, and expanded support features.
         </Text>
+
+        <View style={styles.featureList}>
+          <Feature text="Custom visual routines" />
+          <Feature text="Printable routine charts" />
+          <Feature text="Expanded parent support tools" />
+        </View>
 
         <TouchableOpacity
           style={styles.button}
           onPress={() => router.push('/subscription')}
+          activeOpacity={0.9}
         >
-          <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-          <Text style={styles.buttonText}>Unlock Pro</Text>
+          <Ionicons name="star" size={17} color="#FFFFFF" />
+          <Text style={styles.buttonText}>Upgrade to Pro</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.8}>
           <Text style={styles.backText}>Maybe later</Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
+}
+
+function Feature({ text }: { text: string }) {
+  return (
+    <View style={styles.featureRow}>
+      <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+      <Text style={styles.featureText}>{text}</Text>
     </View>
   );
 }
@@ -68,29 +92,49 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
+    borderRadius: 30,
     padding: 28,
     alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
 
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+  },
+
+  badgeText: {
+    marginLeft: 6,
+    color: '#6D28D9',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+
   iconWrap: {
-    width: 78,
-    height: 78,
-    borderRadius: 24,
+    width: 82,
+    height: 82,
+    borderRadius: 26,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
   title: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: '#0F172A',
     marginBottom: 8,
+    textAlign: 'center',
   },
 
   subtitle: {
@@ -99,29 +143,53 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontSize: 14,
     marginBottom: 18,
+    fontWeight: '600',
+  },
+
+  featureList: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  featureText: {
+    marginLeft: 8,
+    color: '#334155',
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   button: {
     backgroundColor: '#4F46E5',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 16,
+    paddingHorizontal: 22,
+    paddingVertical: 15,
+    borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 170,
+    minWidth: 190,
   },
 
   buttonText: {
-    color: '#FFF',
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontWeight: '900',
     marginLeft: 8,
     fontSize: 15,
   },
 
   backText: {
-    marginTop: 14,
+    marginTop: 15,
     color: '#64748B',
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

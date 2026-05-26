@@ -34,11 +34,11 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="dashboard"
+        name="daily-lessons"
         options={{
-          title: 'Dashboard',
+          title: 'Lessons',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
+            <Ionicons name="book" size={size} color={color} />
           ),
         }}
       />
@@ -49,16 +49,6 @@ export default function TabLayout() {
           title: 'Routine',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="daily-lessons"
-        options={{
-          title: 'Lessons',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
           ),
         }}
       />
@@ -80,6 +70,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" size={size} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          href: null,
         }}
       />
 

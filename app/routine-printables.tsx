@@ -18,7 +18,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProGate from '../components/ProGate';
 import { useChild } from '../lib/SelectedChildContext';
-
 import { supabase } from '../lib/supabase';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening';
@@ -1140,6 +1139,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#94A3B8',
   },
+  
   daySelectorWrap: {
   marginBottom: 18,
 },
