@@ -1,6 +1,9 @@
 import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
+import { saveCalmToolkitLog } from '@/lib/calmToolkitInsights';
+import { useChild } from '@/lib/SelectedChildContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
 import React, { useMemo, useState } from 'react';
 import {
   Pressable,
@@ -76,6 +79,27 @@ const sensoryTools: SensoryTool[] = [
 export default function SensoryResetScreen() {
   const router = useRouter();
 
+  const sensorySections = [
+  {
+    id: 'pressure',
+    title: 'Pressure & Comfort',
+    subtitle: 'Best when your child seeks firm calming input.',
+    tools: ['deep-pressure', 'fidget'],
+  },
+  {
+    id: 'movement',
+    title: 'Movement Reset',
+    subtitle: 'Best when your child needs safe body movement.',
+    tools: ['wall-push', 'stretch', 'movement'],
+  },
+  {
+    id: 'quiet',
+    title: 'Simple Body Reset',
+    subtitle: 'Best when your child needs a gentle pause.',
+    tools: ['water'],
+  },
+];
+
   const [beforeLevel, setBeforeLevel] = useState<number | null>(null);
   const [afterLevel, setAfterLevel] = useState<number | null>(null);
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
@@ -88,6 +112,10 @@ export default function SensoryResetScreen() {
   const selectedTools = useMemo(() => {
     return sensoryTools.filter((tool) => selectedToolIds.includes(tool.id));
   }, [selectedToolIds]);
+
+  const [openSection, setOpenSection] = useState<string | null>('pressure');
+
+  const { selectedChild } = useChild() as any;
 
   const resultMessage = useMemo(() => {
     if (!beforeLevel || !afterLevel) return '';
@@ -116,27 +144,49 @@ export default function SensoryResetScreen() {
   }
 
   async function savePlanAsHelpful() {
-    if (selectedTools.length === 0) return;
+  if (selectedTools.length === 0) return;
 
-    const planName = selectedTools.map((tool) => tool.title).join(' + ');
+  const planName = selectedTools.map((tool) => tool.title).join(' + ');
 
-    setHelpfulStatus('helpful');
-    setSavedPlan(planName);
+  setHelpfulStatus('helpful');
+  setSavedPlan(planName);
 
-    await saveCalmStrategy({
-      type: 'sensory-reset',
-      title: 'Sensory Reset',
-      subtitle: planName,
-      icon: 'sparkles-outline',
-      color: '#B45309',
-      bg: '#FFFBEB',
-    });
-  }
+  await saveCalmStrategy({
+    type: 'sensory-reset',
+    title: 'Sensory Reset',
+    subtitle: planName,
+    icon: 'sparkles-outline',
+    color: '#B45309',
+    bg: '#FFFBEB',
+  });
 
-  function markNotHelpful() {
-    setHelpfulStatus('not_helpful');
-    setSavedPlan(null);
-  }
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'sensory-reset',
+    strategyName: planName,
+    helped: true,
+    beforeLevel,
+    afterLevel,
+    toolsUsed: selectedTools.map((tool) => tool.title),
+  });
+}
+
+async function markNotHelpful() {
+  const planName = selectedTools.map((tool) => tool.title).join(' + ');
+
+  setHelpfulStatus('not_helpful');
+  setSavedPlan(null);
+
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'sensory-reset',
+    strategyName: planName || 'Sensory Reset',
+    helped: false,
+    beforeLevel,
+    afterLevel,
+    toolsUsed: selectedTools.map((tool) => tool.title),
+  });
+}
 
   function resetTool() {
     setBeforeLevel(null);
@@ -171,7 +221,7 @@ export default function SensoryResetScreen() {
           <Text style={styles.stepLabel}>Step 1</Text>
           <Text style={styles.sectionTitle}>Dysregulation level</Text>
           <Text style={styles.helperText}>
-            How dysregulated does your child seem right now?
+            How regulated does your child seem right now?
           </Text>
 
           <View style={styles.levelRow}>
@@ -197,8 +247,8 @@ export default function SensoryResetScreen() {
           </View>
 
           <View style={styles.levelLabels}>
-            <Text style={styles.labelSmall}>Calm</Text>
             <Text style={styles.labelSmall}>Highly dysregulated</Text>
+            <Text style={styles.labelSmall}>More regulated</Text>
           </View>
         </View>
 
@@ -218,7 +268,35 @@ export default function SensoryResetScreen() {
           )}
 
           <View style={styles.toolGrid}>
-            {sensoryTools.map((tool) => {
+  {sensorySections.map((section) => {
+    const open = openSection === section.id;
+
+    const sectionTools = sensoryTools.filter((tool) =>
+      section.tools.includes(tool.id)
+    );
+
+    return (
+      <View key={section.id} style={styles.accordionSection}>
+        <TouchableOpacity
+          style={styles.accordionHeader}
+          activeOpacity={0.9}
+          onPress={() => setOpenSection(open ? null : section.id)}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.accordionTitle}>{section.title}</Text>
+            <Text style={styles.accordionSubtitle}>{section.subtitle}</Text>
+          </View>
+
+          <Ionicons
+            name={open ? 'chevron-up' : 'chevron-down'}
+            size={21}
+            color="#B45309"
+          />
+        </TouchableOpacity>
+
+        {open ? (
+          <View style={styles.accordionBody}>
+            {sectionTools.map((tool) => {
               const selected = selectedToolIds.includes(tool.id);
 
               return (
@@ -269,7 +347,13 @@ export default function SensoryResetScreen() {
               );
             })}
           </View>
-        </View>
+        ) : null}
+      </View>
+    );
+  })}
+</View>
+
+</View>
 
         <View style={styles.tryCard}>
           <Text style={styles.stepLabel}>Step 3</Text>
@@ -341,14 +425,14 @@ export default function SensoryResetScreen() {
 
           <View style={styles.feedbackRow}>
             <TouchableOpacity
-              style={[
-                styles.feedbackButton,
-                helpfulStatus === 'helpful' && styles.feedbackButtonHelpful,
-                selectedTools.length === 0 && styles.disabledButton,
-              ]}
-              disabled={selectedTools.length === 0}
-              onPress={savePlanAsHelpful}
-            >
+  style={[
+    styles.feedbackButton,
+    helpfulStatus === 'not_helpful' && styles.feedbackButtonNotHelpful,
+    selectedTools.length === 0 && styles.disabledButton,
+  ]}
+  disabled={selectedTools.length === 0}
+  onPress={markNotHelpful}
+>
               <Ionicons
                 name="thumbs-up-outline"
                 size={20}
@@ -824,4 +908,39 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#B45309',
   },
+
+  accordionSection: {
+  backgroundColor: '#FFFBEB',
+  borderRadius: 22,
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+  overflow: 'hidden',
+},
+
+accordionHeader: {
+  padding: 15,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+accordionTitle: {
+  fontSize: 16,
+  fontWeight: '900',
+  color: '#92400E',
+},
+
+accordionSubtitle: {
+  marginTop: 4,
+  fontSize: 12.5,
+  color: '#64748B',
+  fontWeight: '700',
+  lineHeight: 18,
+},
+
+accordionBody: {
+  padding: 12,
+  paddingTop: 0,
+  gap: 12,
+},
 });

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import Purchases from 'react-native-purchases';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Purchases from 'react-native-purchases';
 
 export default function ProGuard({ children }: { children: React.ReactNode }) {
   const [isPro, setIsPro] = useState<boolean | null>(null);
@@ -32,7 +32,7 @@ export default function ProGuard({ children }: { children: React.ReactNode }) {
         </Text>
         <TouchableOpacity 
           style={styles.button} 
-          onPress={() => router.push('/paywall')}
+          onPress={() => router.push('/subscription')}
         >
           <Text style={styles.buttonText}>View Subscription Plans</Text>
         </TouchableOpacity>

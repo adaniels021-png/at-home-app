@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,22 +11,18 @@ import {
   Text,
   View,
 } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AnimatedPressable from '../../components/AnimatedPressable';
 import FadeInView from '../../components/FadeInView';
-import { ensureLessonQueue } from '../../lib/lessonQueue';
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
 import { supabase } from '../../lib/supabase';
 
 const WEEKLY_PROGRESS_LAST_SEEN_KEY = 'weekly_progress_last_seen';
-
 export default function HomeScreen() {
   const router = useRouter();
   const childContext = useChild() as any;
 
   const selectedChild = childContext?.selectedChild;
-  const { isPro } = useSubscription();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,43 +69,10 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
     return selectedChild?.age || selectedChild?.child_age || null;
   }, [selectedChild]);
 
-  const PRELOAD_CATEGORIES = useMemo(
-    () => ['Communication', 'Social', 'Play', 'Self-Help', 'Motor'],
-    []
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      void fetchHomeData();
-    }, [selectedChild?.id])
-  );
-
   useEffect(() => {
-    if (!selectedChild?.id) return;
+  void fetchHomeData();
+}, [selectedChild?.id]);
 
-    let cancelled = false;
-
-    const preloadLessons = async () => {
-      for (const category of PRELOAD_CATEGORIES) {
-        if (cancelled) return;
-
-        await ensureLessonQueue({
-          childId: selectedChild.id,
-          childName,
-          category,
-          isPro,
-        }).catch((error) => {
-          console.log(`Lesson preload skipped for ${category}:`, error);
-        });
-      }
-    };
-
-    void preloadLessons();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedChild?.id, childName, isPro, PRELOAD_CATEGORIES]);
 
   async function checkWeeklyProgressVisibility() {
     const lastViewed = await AsyncStorage.getItem(
@@ -187,11 +150,17 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
     );
   }
 
-  return (
-    <View style={styles.container}>
+    return (
+      <SafeAreaView style={styles.container}>
        <View pointerEvents="none" style={styles.screenGlowTop} />
       <View pointerEvents="none" style={styles.screenGlowMiddle} />
       <View pointerEvents="none" style={styles.screenGlowBottom} />
+
+      <View
+  pointerEvents="none"
+  style={styles.floatingBackgroundOrb}
+/>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -204,37 +173,42 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
         }
       >
         <FadeInView delay={0}>
-          <View style={styles.headerCard}>
-            <View style={styles.headerGlowOne} />
-            <View style={styles.headerGlowTwo} />
+  <View style={styles.topHeroCard}>
+    <View pointerEvents="none" style={styles.topHeroGlowOne} />
+    <View pointerEvents="none" style={styles.topHeroGlowTwo} />
 
-            <View style={styles.headerRow}>
-              <View style={styles.headerTextWrap}>
-                <Text style={styles.greeting}>{greetingCopy.title}</Text>
-                  <Text style={styles.subtitle}>
-                    {selectedChild
-                      ? `${greetingCopy.message} Today’s plan is ready for ${childName}.`
-                      : 'Set up your first child profile to begin.'}
-                </Text>
-              </View>
+    <View style={styles.topHeroRow}>
+      <View style={styles.topHeroIcon}>
+        <Ionicons name="sparkles" size={20} color="#4F46E5" />
+      </View>
 
-              <AnimatedPressable
-                style={styles.logoutIcon}
-                onPress={handleSignOut}
-              >
-                <Ionicons name="log-out-outline" size={20} color="#334155" />
-              </AnimatedPressable>
-            </View>
-          </View>
-        </FadeInView>
+      <AnimatedPressable
+        style={styles.logoutGlassButton}
+        onPress={handleSignOut}
+      >
+        <Ionicons name="log-out-outline" size={22} color="#0F172A" />
+      </AnimatedPressable>
+    </View>
 
-        <FadeInView delay={80}>
-          <View style={styles.childSummaryCard}>
+    <Text style={styles.topHeroTitle}>
+      {greetingCopy.title}
+    </Text>
+
+    <Text style={styles.topHeroMessage}>
+      {selectedChild
+        ? `${greetingCopy.message} Today’s plan is ready for ${childName}.`
+        : 'Set up your first child profile to begin.'}
+    </Text>
+  </View>
+</FadeInView>
+
+<FadeInView delay={120}>
+  <View style={styles.childSummaryCard}>
             <View style={styles.childAvatar}>
-              <Ionicons name="person" size={24} color="#FFFFFF" />
+              <Ionicons name="person" size={21} color="#FFFFFF" />
             </View>
 
-            <View style={styles.childSummaryText}>
+            <View>
               <Text style={styles.childName}>
                 {selectedChild ? childName : 'No child selected'}
               </Text>
@@ -265,7 +239,7 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
 
             <View style={styles.lessonTopRow}>
               <View style={styles.lessonIcon}>
-                <Ionicons name="sparkles" size={22} color="#4F46E5" />
+                <Ionicons name="sparkles" size={20} color="#5B3FF4" />
               </View>
 
               <View style={{ flex: 1 }}>
@@ -425,7 +399,7 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
           </FadeInView>
         ) : null}
             </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -520,15 +494,14 @@ function DropdownItem({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F4F7FB',
-    paddingTop: 56,
-  },
+  flex: 1,
+  backgroundColor: '#F7F8FC',
+},
 
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 44,
-  },
+  paddingHorizontal: 20,
+  paddingBottom: 190,
+},
 
   centered: {
     flex: 1,
@@ -543,133 +516,98 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  headerCard: {
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#E0F2FE',
-    borderRadius: 30,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 4,
-  },
+ childSummaryCard: {
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 26,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.9)',
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  elevation: 2,
+},
 
-  headerGlowOne: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-    top: -70,
-    left: -40,
-  },
+childAvatar: {
+  width: 50,
+  height: 50,
+  borderRadius: 18,
+  backgroundColor: '#5B3FF4',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+  shadowColor: '#5B3FF4',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.18,
+  shadowRadius: 10,
+  elevation: 3,
+},
 
-  headerGlowTwo: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(125,211,252,0.45)',
-    bottom: -50,
-    right: -30,
-  },
+childName: {
+  color: '#0F172A',
+  fontSize: 16,
+  fontWeight: '900',
+},
 
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+childSubtext: {
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '700',
+  marginTop: 2,
+},
 
-  headerTextWrap: {
-    flex: 1,
-    paddingRight: 12,
-  },
+ lessonCard: {
+  overflow: 'hidden',
+  backgroundColor: '#5B3FF4',
+  borderRadius: 28,
+  padding: 18,
+  marginBottom: 20,
+  shadowColor: '#5B3FF4',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.2,
+  shadowRadius: 16,
+  elevation: 4,
+},
 
-  greeting: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
+lessonTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 9,
+},
 
-  subtitle: {
-    marginTop: 5,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: '#0369A1',
-  },
+lessonIcon: {
+  width: 46,
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 11,
+},
 
-  logoutIcon: {
-    width: 42,
-    height: 42,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
+lessonLabel: {
+  color: '#DDD6FE',
+  fontSize: 11,
+  fontWeight: '900',
+  marginBottom: 3,
+},
 
-  childSummaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
+lessonTitle: {
+  color: '#FFFFFF',
+  fontSize: 18,
+  fontWeight: '900',
+},
 
-  childAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 20,
-    backgroundColor: '#4F46E5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  childSummaryText: {
-    flex: 1,
-  },
-
-  childName: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-
-  childSubtext: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-
-  lessonCard: {
-    overflow: 'hidden',
-    backgroundColor: '#4F46E5',
-    borderRadius: 30,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 22,
-    elevation: 5,
-  },
+lessonText: {
+  color: '#EDE9FE',
+  fontSize: 12,
+  lineHeight: 18,
+  fontWeight: '700',
+},
 
   lessonGlow: {
     position: 'absolute',
@@ -679,69 +617,43 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     top: -70,
     right: -50,
-  },
-
-  lessonTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  lessonIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  lessonLabel: {
-    color: '#DDD6FE',
-    fontSize: 12,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
-
-  lessonTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900',
-  },
-
-  lessonText: {
-    color: '#EDE9FE',
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
+},
 
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginBottom: 14,
-  },
+  fontSize: 19,
+  fontWeight: '900',
+  color: '#0F172A',
+  marginBottom: 12,
+},
 
   toolList: {
     gap: 14,
     marginBottom: 20,
   },
 
-  toolCard: {
-    borderRadius: 28,
-    padding: 17,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 1,
-  },
+ toolCard: {
+  borderRadius: 28,
+  padding: 15,
+  borderWidth: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.04,
+  shadowRadius: 14,
+  elevation: 2,
+},
+
+toolIconWrap: {
+  width: 56,
+  height: 56,
+  borderRadius: 21,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+},
 
   toolLeft: {
     flex: 1,
@@ -750,41 +662,37 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
-  toolIconWrap: {
-    width: 58,
-    height: 58,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-
   toolTextWrap: {
     flex: 1,
   },
 
-  toolTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
+ toolTitle: {
+  fontSize: 16,
+  fontWeight: '900',
+  marginBottom: 3,
+},
 
-  toolSubtitle: {
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: '700',
-  },
+toolSubtitle: {
+  color: '#475569',
+  fontSize: 12.5,
+  lineHeight: 18,
+  fontWeight: '700',
+},
 
   dropdownCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 14,
-    overflow: 'hidden',
-  },
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 30,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.9)',
+  marginBottom: 16,
+  overflow: 'hidden',
+
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.05,
+  shadowRadius: 16,
+  elevation: 3,
+},
 
   dropdownHeader: {
     padding: 17,
@@ -829,12 +737,18 @@ const styles = StyleSheet.create({
   },
 
   progressCard: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 26,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
+  backgroundColor: '#ECFDF5',
+  borderRadius: 30,
+  padding: 20,
+  borderWidth: 1,
+  borderColor: '#A7F3D0',
+
+  shadowColor: '#10B981',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.08,
+  shadowRadius: 16,
+  elevation: 3,
+},
 
   progressHeader: {
     flexDirection: 'row',
@@ -899,5 +813,99 @@ screenGlowBottom: {
   backgroundColor: 'rgba(168,85,247,0.05)',
   bottom: -120,
   right: -100,
+},
+
+floatingBackgroundOrb: {
+  position: 'absolute',
+  width: 320,
+  height: 320,
+  borderRadius: 160,
+  backgroundColor: 'rgba(91,63,244,0.06)',
+  top: -140,
+  left: -120,
+},
+
+topHeroGlowOne: {
+  position: 'absolute',
+  width: 170,
+  height: 170,
+  borderRadius: 85,
+  backgroundColor: 'rgba(96,165,250,0.14)',
+  right: -60,
+  bottom: -70,
+},
+
+topHeroGlowTwo: {
+  position: 'absolute',
+  width: 120,
+  height: 120,
+  borderRadius: 60,
+  backgroundColor: 'rgba(139,92,246,0.10)',
+  top: -40,
+  left: -30,
+},
+
+topHeroRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+
+topHeroCard: {
+  position: 'relative',
+  overflow: 'hidden',
+  backgroundColor: '#EEF5FF',
+  borderRadius: 28,
+  paddingTop: 14,
+  paddingBottom: 15,
+  paddingHorizontal: 16,
+  marginTop: 2,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: '#D6E6FF',
+  shadowColor: '#60A5FA',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.08,
+  shadowRadius: 14,
+  elevation: 2,
+},
+
+topHeroIcon: {
+  width: 42,
+  height: 42,
+  borderRadius: 16,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+topHeroTitle: {
+  fontSize: 22,
+  fontWeight: '900',
+  color: '#0F172A',
+  letterSpacing: -0.6,
+},
+
+topHeroMessage: {
+  marginTop: 5,
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '800',
+  color: '#2563EB',
+},
+
+logoutGlassButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 16,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.08,
+  shadowRadius: 10,
+  elevation: 2,
 },
 });

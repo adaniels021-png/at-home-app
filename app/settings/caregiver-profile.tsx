@@ -16,7 +16,7 @@ import {
 import { supabase } from '../../lib/supabase';
 
 function withTimeout<T>(
-  promise: Promise<T>,
+  promise: PromiseLike<T>,
   timeoutMs = 10000,
   message = 'Request timed out. Please try again.'
 ): Promise<T> {

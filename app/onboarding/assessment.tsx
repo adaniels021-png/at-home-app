@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
 
@@ -217,22 +216,52 @@ const QUESTIONS: AssessmentQuestion[] = [
     ],
   },
   {
-    id: 'reinforcers',
-    section: 'Motivation',
-    question: 'What motivates your child?',
-    type: 'multi',
-    options: [
+    id: 'favorite_interests',
+  section: 'Motivation',
+  question: 'What does your child enjoy right now?',
+  helper: 'These may be used sometimes as motivation, but lessons will also use everyday home routines and materials.',
+  type: 'multi',
+  options: [
       'Praise',
       'Snacks',
       'Tablet',
       'Toys',
       'Bubbles',
       'Music',
-      'Movement',
       'Books',
       'Cars/trains',
-      'Sensory play',
+      'Blocks',
+      'Pretend play',
+      'Movement games',
+      'Water play',
+      'Sensory toys',
     ],
+  },
+  {
+  id: 'instruction_following_level',
+  section: 'Learning Readiness',
+  question: 'How does your child respond to simple directions?',
+  type: 'choice',
+  options: [
+    'Does not respond yet',
+    'Responds with full physical help',
+    'Responds with modeling',
+    'Responds with gestures or reminders',
+    'Responds independently sometimes',
+  ],
+},
+{
+  id: 'imitation_level',
+  section: 'Learning Readiness',
+  question: 'Can your child copy simple actions?',
+  type: 'choice',
+  options: [
+    'Not yet',
+    'With full help',
+    'After seeing a model',
+    'Sometimes independently',
+    'Often independently',
+  ],
   },
   {
     id: 'social_skills',
@@ -267,6 +296,13 @@ const QUESTIONS: AssessmentQuestion[] = [
     ],
   },
   {
+  id: 'avoid_in_lessons',
+  section: 'Safety & Preferences',
+  question: 'Are there any items or activities lessons should avoid?',
+  helper: 'Examples: food allergies, loud sounds, messy play, small objects, or activities that cause distress.',
+  type: 'text',
+  },
+  {
     id: 'parent_notes',
     section: 'Caregiver Notes',
     question: 'Is there anything important you want the app to know?',
@@ -298,17 +334,22 @@ function buildLessonProfile(
     ? answers.sensory_needs
     : [];
 
-  const reinforcers = Array.isArray(answers.reinforcers)
-    ? answers.reinforcers
-    : [];
+  const favoriteInterests = Array.isArray(answers.favorite_interests)
+  ? answers.favorite_interests
+  : [];
 
   const recommendedLessonCategories = [
-    primaryGoal,
-    communicationTargets.length ? 'Communication' : null,
-    behaviorConcerns.includes('No major concerns') ? null : 'Behavior',
-    routineChallenges.length ? 'Routines' : null,
-    sensoryNeeds.includes('No major sensory needs') ? null : 'Sensory',
-  ].filter(Boolean);
+  primaryGoal === 'Communication' ? 'Communication' : null,
+  primaryGoal === 'Social skills' ? 'Social' : null,
+  primaryGoal === 'Daily routines' || primaryGoal === 'Independence'
+    ? 'Self-Help'
+    : null,
+  primaryGoal === 'School readiness' ? 'Play' : null,
+  communicationTargets.length ? 'Communication' : null,
+  routineChallenges.length ? 'Self-Help' : null,
+  sensoryNeeds.includes('No major sensory needs') ? null : 'Motor',
+  'Play',
+].filter(Boolean);
 
   return {
     child_name: childName,
@@ -320,7 +361,8 @@ function buildLessonProfile(
     behavior_targets: behaviorConcerns,
     sensory_supports: sensoryNeeds,
     routine_targets: routineChallenges,
-    preferred_reinforcers: reinforcers,
+    preferred_interests: favoriteInterests,
+    preferred_reinforcers: favoriteInterests,
     recommended_pecs_cards: [
       'Help',
       'Break',
@@ -385,21 +427,38 @@ export default function AssessmentScreen() {
   };
 
   const toggleMultiAnswer = (value: string) => {
-    setAnswers((prev) => {
-      const current = Array.isArray(prev[question.id])
-        ? (prev[question.id] as string[])
-        : [];
+  setAnswers((prev) => {
+    const current = Array.isArray(prev[question.id])
+      ? (prev[question.id] as string[])
+      : [];
 
-      const next = current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value];
+    const noneOptions = [
+      'No major concerns',
+      'No major sensory needs',
+      'No major safety concerns',
+    ];
 
-      return {
-        ...prev,
-        [question.id]: next,
-      };
-    });
-  };
+    const isNoneOption = noneOptions.includes(value);
+
+    let next: string[];
+
+    if (isNoneOption) {
+      next = current.includes(value) ? [] : [value];
+    } else {
+      next = current
+        .filter((item) => !noneOptions.includes(item));
+
+      next = next.includes(value)
+        ? next.filter((item) => item !== value)
+        : [...next, value];
+    }
+
+    return {
+      ...prev,
+      [question.id]: next,
+    };
+  });
+};
 
   const goNext = async () => {
     if (!canContinue) {
@@ -434,12 +493,20 @@ export default function AssessmentScreen() {
       setSaving(true);
 
       const lessonProfile = buildLessonProfile(answers, childName);
-      const completedAt = new Date().toISOString();
+      const completedAt = new Date().toISOString();  
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        throw new Error('User not authenticated.');
+      }
 
       const payload = {
-        child_id: selectedChild.id,
-        responses: {
-          version: 'premium_v1',
+          child_id: selectedChild.id,
+          responses: {
+          version: 'premium_v2',
           completed_at: completedAt,
           answers,
           lesson_profile: lessonProfile,
@@ -460,20 +527,36 @@ export default function AssessmentScreen() {
 
       if (assessmentError) throw assessmentError;
 
-      const { error: childUpdateError } = await supabase
-        .from('children')
-        .update({
-          assessment_status: 'completed',
-          assessment_completed_at: completedAt,
-          personalization_status: 'completed',
-        })
-        .eq('id', selectedChild.id);
+     const { error: childUpdateError } = await supabase
+  .from('children')
+  .update({
+    assessment_status: 'completed',
+    assessment_completed_at: completedAt,
+    personalization_status: 'completed',
+    next_reassessment_due_at: new Date(
+      new Date(completedAt).getTime() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString(),
+  })
+  .eq('id', selectedChild.id);
 
       if (childUpdateError) throw childUpdateError;
 
-      await refreshChildren();
+      await supabase
+  .from('lesson_queue')
+  .delete()
+  .eq('child_id', selectedChild.id);
 
-      router.replace('/(tabs)/dashboard' as any);
+await supabase
+  .from('daily_lesson_instances')
+  .delete()
+  .eq('child_id', selectedChild.id)
+  .in('status', ['generated', 'started', 'unsuccessful']);
+
+      if (typeof refreshChildren === 'function') {
+  await refreshChildren();
+}
+
+      router.replace('/onboarding/parent-goals' as any);
     } catch (error: any) {
       console.error('Save assessment error:', error);
 
@@ -498,7 +581,7 @@ export default function AssessmentScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.stepBadgeText}>STEP 2 OF 3</Text>
+            <Text style={styles.stepBadgeText}>STEP 2 OF 4</Text>
             <Text style={styles.headerTitle}>Child Assessment</Text>
           </View>
 

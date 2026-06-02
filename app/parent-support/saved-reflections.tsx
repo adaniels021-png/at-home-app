@@ -95,8 +95,7 @@ export default function SavedReflectionsScreen() {
             <Text style={styles.emptyTitle}>No saved reflections yet</Text>
 
             <Text style={styles.emptyText}>
-              Save an Emotional Reset or Journal Check-In, and it will appear
-              here for quick access.
+              Save an Emotional Reset, Journal Check-In, or Support Feed reminder, and it will appear here for quick access.
             </Text>
           </View>
         ) : (

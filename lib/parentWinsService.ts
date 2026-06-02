@@ -137,10 +137,9 @@ async function getParentWinProfileSnapshot(userId: string) {
   );
 
   caregiverRole =
-    profile?.relationship_to_child ||
-    profile?.caregiver_role ||
-    user?.user_metadata?.relationship_to_child ||
-    'Caregiver';
+  profile?.relationship_to_child ||
+  user?.user_metadata?.relationship_to_child ||
+  'Caregiver';
 
   const { data: child } = await supabase
     .from('children')

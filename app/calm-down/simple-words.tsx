@@ -1,4 +1,6 @@
 import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
+import { saveCalmToolkitLog } from '@/lib/calmToolkitInsights';
+import { useChild } from '@/lib/SelectedChildContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -187,6 +189,8 @@ export default function SimpleWordsScreen() {
     );
   }, [selectedSituationIds]);
 
+  const { selectedChild } = useChild() as any;
+
   const prioritySituation = useMemo(() => {
     return situations.find((item) => item.id === prioritySituationId);
   }, [prioritySituationId]);
@@ -256,11 +260,33 @@ export default function SimpleWordsScreen() {
     color: '#BE123C',
     bg: '#FFF1F2',
   });
+
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'simple-words',
+    strategyName: selectedPhrase.phrase,
+    helped: true,
+    toolsUsed: ['Simple Words'],
+    phraseUsed: selectedPhrase.phrase,
+    trigger: selectedSituationTitles.join(', '),
+  });
 }
 
-  function markNotHelpful() {
-    setHelpfulStatus('not_helpful');
-  }
+async function markNotHelpful() {
+  setHelpfulStatus('not_helpful');
+
+  if (!selectedPhrase) return;
+
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'simple-words',
+    strategyName: selectedPhrase.phrase,
+    helped: false,
+    toolsUsed: ['Simple Words'],
+    phraseUsed: selectedPhrase.phrase,
+    trigger: selectedSituationTitles.join(', '),
+  });
+}
 
   function resetTool() {
     setSelectedPhrase(null);
@@ -268,6 +294,7 @@ export default function SimpleWordsScreen() {
     setHelpfulStatus(null);
     setSelectedSituationIds(['crying']);
   }
+  
 
   function renderPhraseCard(card: PhraseCard, recommended = false) {
     const selected = selectedPhrase?.id === card.id;
@@ -329,7 +356,7 @@ export default function SimpleWordsScreen() {
             <Ionicons name="chatbubble-ellipses-outline" size={30} color="#BE123C" />
           </View>
 
-          <Text style={styles.title}>Use Simple Words</Text>
+          <Text style={styles.title}>Simple Words</Text>
 
           <Text style={styles.subtitle}>
             A parent coaching tool for calmer communication during dysregulation.

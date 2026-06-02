@@ -110,7 +110,7 @@ export default function AuthScreen() {
 
       Alert.alert('Login Error', 'Something went wrong while logging in.');
     } catch (error: any) {
-      console.error('❌ AUTH ERROR:', error?.message || error);
+      console.warn('AUTH ERROR:', error?.message || error);
 
       const friendlyMessage = getFriendlyAuthMessage(
         error,
@@ -148,7 +148,7 @@ export default function AuthScreen() {
         'If that email is registered, a password reset link has been sent to the inbox.'
       );
     } catch (error: any) {
-      console.error('❌ PASSWORD RESET ERROR:', error?.message || error);
+       console.warn('PASSWORD RESET ERROR:', error?.message || error);
       Alert.alert(
         'Reset Error',
         error?.message || 'We could not send the reset email. Please try again.'

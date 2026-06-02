@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import {
   extractJsonFromText,
   safeString,
@@ -6,9 +5,7 @@ import {
   toStringArray,
 } from './aiCore';
 import {
-  CachedDailyLessonRow,
   DailyABAActivity,
-  DailyLessonInstanceRow,
   Lesson,
   LessonDifficultyLevel,
   LessonPerformanceProfile,
@@ -17,33 +14,6 @@ import {
 } from './lessonTypes';
 import { buildParentSupportContext } from './parentSupportContext';
 import { supabase } from './supabase';
-
-const lessonSchema = z.object({
-  lesson_name: z.string().optional(),
-  setting: z.string().optional(),
-  focus_skill: z.string().optional(),
-  objective: z.string().optional(),
-  materials: z.array(z.string()).optional(),
-  setup: z.array(z.string()).optional(),
-  prompting_hierarchy: z.array(z.string()).optional(),
-  teaching_steps: z.array(z.string()).optional(),
-  reinforcement: z.array(z.string()).optional(),
-  error_correction: z.array(z.string()).optional(),
-  generalization: z.array(z.string()).optional(),
-  success_criteria: z.string().optional(),
-  difficulty_level: z.enum(['support', 'balanced', 'challenge']).optional(),
-  difficulty_reason: z.string().optional(),
-  parent_coaching_note: z.string().optional(),
-  lesson_variation: z.string().optional(),
-  abc_strategy: z.string().optional(),
-});
-
-const activitySchema = z.object({
-  name: z.string(),
-  materials: z.array(z.string()),
-  instructions: z.array(z.string()),
-  success_criteria: z.string(),
-});
 
 
 function getTodayDateString(): string {
@@ -56,43 +26,61 @@ function getYesterdayDateString(): string {
   return d.toISOString().split('T')[0];
 }
 
-function cleanPlainText(text: string | undefined | null): string {
-  if (!text) return '';
-  return text.trim();
-}
-
 async function generateJsonWithEdgeFunction<T>(
   prompt: string,
   fallback: T,
   type = 'lesson'
 ): Promise<T> {
-  try {
-    const { data, error } = await supabase.functions.invoke(
-      'generate-daily-lessons',
-      {
-        body: {
-          type,
-          prompt,
-        },
-      }
-    );
-
-    if (error) {
-      throw error;
+  const { data, error } = await supabase.functions.invoke(
+    'generate-daily-lessons',
+    {
+      body: {
+        type,
+        prompt,
+      },
     }
+  );
 
-    const rawText =
-      typeof data?.result === 'string'
-        ? data.result
-        : JSON.stringify(data?.result || '');
+  console.log('RAW EDGE FUNCTION RESPONSE:', data);
 
-    const parsed = extractJsonFromText(rawText);
+  if (error) {
+  console.error('Edge function invoke error:', error);
 
-    return parsed as T;
-  } catch (error) {
-    console.error('Edge AI generation failed:', error);
-    return fallback;
+  const context = (error as any)?.context;
+
+  if (context) {
+    try {
+      const errorText = await context.text();
+      console.error('EDGE FUNCTION ERROR BODY:', errorText);
+    } catch (readError) {
+      console.error(
+        'Could not read edge error body:',
+        readError
+      );
+    }
   }
+
+  throw error;
+}
+
+  const rawText =
+    typeof data?.result === 'string'
+      ? data.result.trim()
+      : JSON.stringify(data?.result || '');
+
+  if (!rawText) {
+    console.error('AI returned empty result:', data);
+    throw new Error('AI returned an empty lesson.');
+  }
+
+  const parsed = extractJsonFromText(rawText);
+
+  if (!parsed) {
+    console.error('AI JSON PARSE FAILED:', rawText);
+    throw new Error('AI returned invalid lesson JSON.');
+  }
+
+  return parsed as T;
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -213,37 +201,6 @@ function buildFallbackLesson(skill: string): Lesson {
     abc_strategy:
       'Antecedent → Behavior → Consequence with immediate reinforcement',
   };
-}
-
-const SKILL_CATEGORIES = [
-  'Communication',
-  'Social',
-  'Play',
-  'Self-Help',
-  'Motor',
-];
-
-export async function ensureAllCategoryQueues({
-  childId,
-  childName,
-}: {
-  childId: string;
-  childName: string;
-}) {
-  for (const category of SKILL_CATEGORIES) {
-    const lessonNumber = await getNextLessonNumber({
-  childId,
-  category,
-});
-
-    await pregenerateLessonQueue({
-  childId,
-  childName,
-  category,
-  startLessonNumber: lessonNumber,
-  count: 3,
-});
-  }
 }
 
 export type { DailyABAActivity, Lesson } from './lessonTypes';
@@ -920,36 +877,29 @@ export async function generateDailyABAActivities({
   try {
 
     const prompt = `
-Create ${count} parent-friendly ABA activity ideas.
+Create exactly ${count} short ABA home activities for a parent.
 
 Child name: ${childName}
 Location: ${location}
 Skill focus: ${skillFocus}
 
-Assessment context:
-${JSON.stringify(assessmentContext, null, 2)}
+Return ONLY valid compact JSON array. No markdown. No extra text.
 
-Recent lessons:
-${JSON.stringify(recentLessons, null, 2)}
-
-Recent routines:
-${JSON.stringify(recentRoutines, null, 2)}
-
-Return ONLY valid JSON array.
-
-Each activity must include:
+Each activity must follow this shape:
 {
   "name": "string",
   "materials": ["string"],
-  "instructions": ["step 1", "step 2", "step 3"],
+  "instructions": ["string"],
   "success_criteria": "string"
 }
 
 Rules:
-- Instructions must tell the parent exactly what to do with the child.
-- Do not only list materials.
-- Use simple home materials.
-- Keep activities short, supportive, and realistic.
+- Exactly ${count} activities.
+- Each activity must have exactly 2 materials.
+- Each activity must have exactly 4 instructions.
+- Each instruction must be under 150 characters.
+- success_criteria must be under 180 characters.
+- Keep language parent-friendly and simple.
 `;
 
     const parsed = await generateJsonWithEdgeFunction<any[]>(
@@ -975,6 +925,7 @@ export async function generatePremiumLesson({
   skillTarget,
   behaviorPattern,
   avoidSkills = [],
+  lessonVarietyGuidance = '',
 }: {
   childName: string;
   childId: string;
@@ -987,7 +938,8 @@ export async function generatePremiumLesson({
     strategy: string;
     summary: string;
   };
-  avoidSkills?: string[];
+   avoidSkills?: string[];
+  lessonVarietyGuidance?: string;
 }): Promise<{ lesson: Lesson; source: 'ai' | 'fallback' }> {
   try {
     const difficultyModifier =
@@ -1001,34 +953,35 @@ export async function generatePremiumLesson({
 
 
     const prompt = `
-You are a BCBA-style ABA lesson planner for parents doing short at-home practice.
+You are creating a real parent-led ABA home lesson for a child.
 
-Create one clear, parent-friendly ABA lesson.
+This should NOT be generic.
+This should feel like a simple ABA therapy session a parent can actually run at home.
 
 Child name: ${childName}
-Child ID: ${childId}
 Category: ${skill}
-Target skill: ${skillTarget || skill}
+Specific target skill: ${skillTarget || skill}
 Location: ${location}
 Lesson number: ${lessonNumber}
 Difficulty guidance: ${difficultyModifier}
-Behavior pattern: ${
-      behaviorPattern?.summary ||
-      'Use balanced prompting, reinforcement, and realistic expectations.'
-    }
 
-Recent lessons/skills to avoid repeating:${avoidSkills.length ? avoidSkills.join(', ') : 'None'}
-Important variety rule:
-Do not repeat the same lesson name, same target skill, same teaching activity, or same materials from the recent lessons listed above. Create a clearly different activity while staying in the same category.
+Behavior/support pattern:
+${behaviorPattern?.summary || 'Use balanced prompting, short practice, and immediate reinforcement.'}
 
-Return ONLY valid JSON.
+Variety guidance:
+${lessonVarietyGuidance || 'Rotate lesson types so lessons do not all feel the same.'}
 
-Required JSON shape:
+Avoid repeating these skills or lesson ideas:
+${avoidSkills.length ? avoidSkills.join(', ') : 'None'}
+
+Return ONLY valid JSON. No markdown. No bullets outside JSON.
+
+JSON shape:
 {
   "lesson_name": "string",
   "setting": "Home",
   "focus_skill": "string",
-  "objective": "clear parent-facing paragraph explaining exactly what the parent should do",
+  "objective": "string",
   "materials": ["string"],
   "setup": ["string"],
   "prompting_hierarchy": ["string"],
@@ -1044,18 +997,37 @@ Required JSON shape:
   "abc_strategy": "string"
 }
 
-Rules:
-- NEVER use generic phrases like "A structured lesson to support your child’s development today."
-- NEVER use vague objectives.
-- Objective must be specific, detailed, and parent-facing.
-- Objective must explain exactly what the parent will teach, what the child will practice, where it happens, what materials are used, how prompting works, and what success looks like.
-- Teaching steps must be detailed enough that a parent can follow them without guessing.
-- Each teaching step must include what the parent says, what the parent does, what the child should do, how to prompt, and how to reinforce.
-- Use real home examples, real materials, and specific instructions.
-- Play lessons must include hands-on play instructions.
-- Play lessons must include exactly what toy/material to use, what the parent says, what the child should do, how to prompt, and how to reinforce.
-- teaching_steps must have at least 5 clear parent action steps.
-- setup must have at least 2 parent setup steps.
+Lesson quality rules:
+- Make the lesson specific to the category and target skill.
+- Do not write generic steps like "practice communication."
+- Include exactly 2 simple household materials.
+- Include exactly 2 setup steps.
+- Include exactly 4 prompting hierarchy steps.
+- Include exactly 5 teaching steps.
+- Teaching steps should tell the parent exactly what to say or do.
+- Include wait time when appropriate, such as 3–5 seconds.
+- Include what the child should do.
+- Include what the parent should do if the child does not respond.
+- Include immediate reinforcement after attempts.
+- Use home-friendly examples.
+- Avoid clinical language.
+- Keep it warm, practical, and parent-friendly.
+- Do not mention therapy, clinic, therapist, or school.
+- difficulty_level must be only support, balanced, or challenge.
+- Keep every array item under 120 characters.
+- Reinforcement must have exactly 2 items.
+- Error correction must have exactly 2 items.
+- Do not use long examples inside one sentence.
+- Do not include commas at the end of array strings.
+- Do not describe physical prompting around the mouth.
+- Keep the full JSON compact and short.
+
+Category examples:
+Communication: requesting, choosing, help, all done, more, labeling, yes/no.
+Social: turn taking, greeting, sharing attention, responding to name, waiting.
+Play: imitation, functional play, pretend play, turn-taking play, expanding play.
+Self-Help: brushing teeth, handwashing, cleaning up, dressing, snack routine.
+Motor: clapping, jumping, stacking, crossing midline, imitation, obstacle play.
 `;
 
     const raw = await generateJsonWithEdgeFunction<any>(
@@ -1063,6 +1035,7 @@ Rules:
   fallback,
   'premium-lesson'
 );
+console.log('AI LESSON RAW:', raw);
 
 const coerced = coerceLessonShape(raw);
 
@@ -1149,6 +1122,8 @@ const coerced = coerceLessonShape(raw);
         source: 'fallback',
       };
     }
+
+    console.log('FINAL AI LESSON:', safeLesson.lesson_name, safeLesson);
 
     return {
       lesson: safeLesson,
@@ -1380,371 +1355,7 @@ return await generateJsonWithEdgeFunction(
   }
 }
 
-export async function generateSocialStory({
-  childId,
-  childName,
-  situation,
-  goal,
-  location,
-  supportNeeds,
-}: {
-  childId: string;
-  childName: string;
-  situation: string;
-  goal?: string;
-  location?: string;
-  supportNeeds?: string;
-}) {
-  try {
-    const supportContext = await buildParentSupportContext({
-      childId,
-    });
 
-    const contextSummary = supportContext
-      ? `
-Child Name: ${supportContext.childName}
-Age: ${supportContext.age || 'Unknown'}
-Communication Level: ${supportContext.communicationLevel}
-Sensory Needs: ${supportContext.sensoryNeeds?.join(', ') || 'Unknown'}
-Weak Skills: ${supportContext.weakSkills?.join(', ') || 'None identified'}
-Strong Skills: ${supportContext.strongSkills?.join(', ') || 'None identified'}
-`
-      : 'No additional child context available.';
-
-    const prompt = `
-Create a personalized social story for a child.
-
-Child Name: ${childName}
-
-Child Context:
-${contextSummary}
-
-Situation:
-${situation}
-
-Goal:
-${goal || 'Help the child understand what to expect and what they can do.'}
-
-Location:
-${location || 'Not provided'}
-
-Support Needs:
-${supportNeeds || 'Not provided'}
-
-Return ONLY valid JSON.
-
-JSON Format:
-{
-  "title": "",
-  "introduction": "",
-  "story_pages": [
-    {
-      "page_title": "",
-      "text": "",
-      "visual_suggestion": ""
-    }
-  ],
-  "practice_tips": [""],
-  "caregiver_note": "",
-  "calming_phrase": ""
-}
-
-Rules:
-- Use simple, positive, child-friendly language.
-- Write in first person when possible.
-- Keep each story page short.
-- Do not shame the child.
-- Focus on what the child CAN do.
-- Include visuals a parent could create or print.
-- Make the story supportive for home use.
-`;
-
-    return await generateJsonWithEdgeFunction(
-  prompt,
-  {
-    title: `${situation} Social Story`,
-    introduction: `${childName} can learn what to expect and how to feel safe.`,
-    story_pages: [
-      {
-        page_title: 'I can learn',
-        text: 'Sometimes I practice new things. My grown-up will help me.',
-        visual_suggestion: 'Picture of child with caregiver.',
-      },
-      {
-        page_title: 'I can stay calm',
-        text: 'I can take a breath, ask for help, or take a break.',
-        visual_suggestion: 'Picture of calm breathing or break card.',
-      },
-    ],
-    practice_tips: [
-      'Read the story before the situation happens.',
-      'Use a calm voice.',
-      'Praise small successes.',
-    ],
-    caregiver_note:
-      'Read this story often and keep practice short and positive.',
-    calming_phrase: 'I am safe. I can ask for help.',
-  },
-  'social-story'
-);
-
-  } catch (error) {
-    console.error('generateSocialStory error:', error);
-
-    return {
-      title: `${situation} Social Story`,
-      introduction: `${childName} can learn what to expect and how to feel safe.`,
-      story_pages: [
-        {
-          page_title: 'I can learn',
-          text: `Sometimes I practice new things. My grown-up will help me.`,
-          visual_suggestion: 'Picture of child with caregiver.',
-        },
-        {
-          page_title: 'I can stay calm',
-          text: 'I can take a breath, ask for help, or take a break.',
-          visual_suggestion: 'Picture of calm breathing or break card.',
-        },
-      ],
-      practice_tips: [
-        'Read the story before the situation happens.',
-        'Use a calm voice.',
-        'Praise small successes.',
-      ],
-      caregiver_note:
-        'Read this story often and keep practice short and positive.',
-      calming_phrase: 'I am safe. I can ask for help.',
-    };
-  }
-}
-
-export async function pregenerateLessonQueue({
-  childName,
-  childId,
-  category,
-  startLessonNumber,
-  count = 3,
-}: {
-  childName: string;
-  childId: string;
-  category: string;
-  startLessonNumber: number;
-  count?: number;
-}) {
-  try {
-    console.log('⚡ Generating lesson queue...');
-
-    const { getProgressionDecision } = await import('./progressionEngine');
-
-    const progression = await getProgressionDecision({
-      childId,
-      category,
-    });
-
-    const trend = progression.difficultyTrend;
-    const skillTarget = progression.skillTarget;
-
-    const behaviorPattern = await getRecentBehaviorPattern({
-      childId,
-      category,
-    });
-
-    for (let i = 0; i < count; i++) {
-      const lessonNumber = startLessonNumber + i;
-
-      // 🚫 Prevent duplicates
-      const { data: existing } = await supabase
-        .from('lesson_queue')
-        .select('id')
-        .eq('child_id', childId)
-        .eq('category', category)
-        .eq('lesson_number', lessonNumber)
-        .maybeSingle();
-
-      if (existing) continue;
-
-      const result = await generatePremiumLesson({
-        childName,
-        childId,
-        skill: category,
-        location: 'Home',
-        lessonNumber,
-        difficultyTrend: trend,
-        skillTarget,
-        behaviorPattern,
-      });
-
-      const { error } = await supabase.from('lesson_queue').upsert({
-        child_id: childId,
-        category,
-        lesson_number: lessonNumber,
-        lesson_payload: result.lesson,
-        source: result.source,
-        difficulty_trend: trend,
-        skill_target: skillTarget,
-        is_used: false,
-        created_at: new Date().toISOString(),
-      });
-
-      if (error) {
-        console.error('Queue insert error:', error);
-      }
-    }
-
-    console.log('✅ Lesson queue ready');
-  } catch (error) {
-    console.error('Queue generation failed:', error);
-  }
-}
-
-export async function getNextLessonFromQueue({
-  childId,
-  category,
-}: {
-  childId: string;
-  category: string;
-}) {
-  try {
-    const today = getTodayDateString();
-    const now = new Date().toISOString();
-    const userId = await getAuthenticatedUserId();
-
-    const { data: queuedLessons, error } = await supabase
-      .from('lesson_queue')
-      .select('*')
-      .eq('child_id', childId)
-      .eq('category', category)
-      .eq('is_used', false)
-      .order('lesson_number', { ascending: true })
-      .limit(10);
-
-    if (error) {
-      console.error('Get lesson queue error:', error);
-      return null;
-    }
-
-    if (!queuedLessons || queuedLessons.length === 0) {
-      console.log('No unused queued lessons found.');
-      return null;
-    }
-
-    for (const queuedLesson of queuedLessons) {
-      if (!queuedLesson?.lesson_payload) continue;
-
-      const { data: existingInstance } = await supabase
-        .from('daily_lesson_instances')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('child_id', childId)
-        .eq('lesson_date', today)
-        .eq('category', category)
-        .eq('lesson_number', queuedLesson.lesson_number)
-        .maybeSingle();
-
-      if (existingInstance) {
-        await supabase
-          .from('lesson_queue')
-          .update({
-            is_used: true,
-            used_at: now,
-          })
-          .eq('id', queuedLesson.id);
-
-        if (existingInstance.status !== 'completed') {
-          return {
-            ...queuedLesson,
-            id: existingInstance.id,
-            lesson_payload: existingInstance.lesson_payload,
-            lesson_number: existingInstance.lesson_number,
-          };
-        }
-
-        continue;
-      }
-
-      const { data: instance, error: instanceError } = await supabase
-        .from('daily_lesson_instances')
-        .insert({
-          user_id: userId,
-          child_id: childId,
-          lesson_date: today,
-          category,
-          lesson_number: queuedLesson.lesson_number,
-          lesson_payload: queuedLesson.lesson_payload,
-          source: queuedLesson.source || 'ai',
-          status: 'started',
-          started_at: now,
-          last_opened_at: now,
-          is_resumed: false,
-          resumed_from_date: null,
-          created_at: now,
-          updated_at: now,
-        })
-        .select()
-        .single();
-
-      if (instanceError) {
-        console.error(
-          'Create lesson instance from queue error:',
-          instanceError
-        );
-
-        await supabase
-          .from('lesson_queue')
-          .update({
-            is_used: true,
-            used_at: now,
-          })
-          .eq('id', queuedLesson.id);
-
-        continue;
-      }
-
-      await supabase
-        .from('lesson_queue')
-        .update({
-          is_used: true,
-          used_at: now,
-        })
-        .eq('id', queuedLesson.id);
-
-      return {
-        ...queuedLesson,
-        id: instance.id,
-        lesson_payload: instance.lesson_payload,
-        lesson_number: instance.lesson_number,
-      };
-    }
-
-    console.log('No usable queued lesson found after skipping duplicates.');
-    return null;
-  } catch (error) {
-    console.error('getNextLessonFromQueue error:', error);
-    return null;
-  }
-}
-
-export async function getCachedDailyLesson(params: {
-  childId: string;
-  category: string;
-}): Promise<CachedDailyLessonRow | null> {
-  const { childId, category } = params;
-
-  const { data, error } = await supabase
-    .from('daily_generated_lessons')
-    .select('*')
-    .eq('child_id', childId)
-    .eq('category', category)
-    .eq('lesson_date', getTodayDateString())
-    .maybeSingle();
-
-  if (error) {
-    console.error('getCachedDailyLesson error:', error);
-    return null;
-  }
-
-  return (data as CachedDailyLessonRow | null) ?? null;
-}
 
 export async function getNextLessonNumber(params: {
   childId: string;
@@ -1769,199 +1380,6 @@ export async function getNextLessonNumber(params: {
   return lastNumber + 1;
 }
 
-export async function getTodayLessonInstance(params: {
-  childId: string;
-  category: string;
-}): Promise<DailyLessonInstanceRow | null> {
-  const { childId, category } = params;
-  const userId = await getAuthenticatedUserId();
-
-  const { data, error } = await supabase
-    .from('daily_lesson_instances')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('child_id', childId)
-    .eq('category', category)
-    .eq('lesson_date', getTodayDateString())
-    .in('status', ['generated', 'started', 'unsuccessful'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error('getTodayLessonInstance error:', error);
-    return null;
-  }
-
-  return (data as DailyLessonInstanceRow | null) ?? null;
-}
-
-export async function getMostRecentIncompleteLesson(params: {
-  childId: string;
-  category: string;
-}): Promise<DailyLessonInstanceRow | null> {
-  const { childId, category } = params;
-  const userId = await getAuthenticatedUserId();
-
-  const { data, error } = await supabase
-    .from('daily_lesson_instances')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('child_id', childId)
-    .eq('category', category)
-    .in('status', ['generated', 'started', 'unsuccessful'])
-    .order('lesson_date', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    console.error('getMostRecentIncompleteLesson error:', error);
-    return null;
-  }
-
-  return ((data as DailyLessonInstanceRow[] | null) || [])[0] || null;
-}
-
-export async function createOrUpdateTodayLessonInstance({
-  childId,
-  category,
-  lessonNumber,
-  lesson,
-  source,
-}: {
-  childId: string;
-  category: string;
-  lessonNumber: number;
-  lesson: Lesson;
-  source: 'ai' | 'fallback';
-}): Promise<DailyLessonInstanceRow | null> {
-  const userId = await getAuthenticatedUserId();
-  const today = getTodayDateString();
-  const now = new Date().toISOString();
-
-const { data, error } = await supabase
-  .from('daily_lesson_instances')
-  .insert({
-    user_id: userId,
-    child_id: childId,
-    lesson_date: today,
-    category,
-    lesson_number: lessonNumber,
-    lesson_payload: lesson,
-    source,
-    status: 'generated',
-    last_opened_at: now,
-    is_resumed: false,
-    resumed_from_date: null,
-    created_at: now,
-    updated_at: now,
-  })
-  .select()
-  .single();
-
-  if (error) {
-    console.error('createOrUpdateTodayLessonInstance error:', error);
-    return null;
-  }
-
-  return data as DailyLessonInstanceRow;
-}
-
-export async function createResumedLessonInstance(params: {
-  childId: string;
-  category: string;
-  lessonNumber: number;
-  lesson: Lesson;
-  source: 'ai' | 'fallback';
-  resumedFromDate: string;
-}): Promise<DailyLessonInstanceRow | null> {
-  const userId = await getAuthenticatedUserId();
-  const today = getTodayDateString();
-  const now = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from('daily_lesson_instances')
-    .upsert(
-      {
-        user_id: userId,
-        child_id: params.childId,
-        lesson_date: today,
-        category: params.category,
-        lesson_number: params.lessonNumber,
-        lesson_payload: params.lesson,
-        source: params.source,
-        status: 'started',
-        started_at: now,
-        last_opened_at: now,
-        is_resumed: true,
-        resumed_from_date: params.resumedFromDate,
-      },
-      {
-        onConflict: 'user_id,child_id,category,lesson_date',
-      }
-    )
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createResumedLessonInstance error:', error);
-    return null;
-  }
-
-  return data as DailyLessonInstanceRow;
-}
-
-export async function markLessonInstanceOpened(
-  instanceId: string
-): Promise<void> {
-  const now = new Date().toISOString();
-
-  const { error } = await supabase
-    .from('daily_lesson_instances')
-    .update({
-      status: 'started',
-      started_at: now,
-      last_opened_at: now,
-    })
-    .eq('id', instanceId);
-
-  if (error) {
-    console.error('markLessonInstanceOpened error:', error);
-  }
-}
-
-export async function completeLessonInstance(params: {
-  instanceId: string;
-  status: 'completed' | 'unsuccessful';
-  performanceScore?: number | null;
-  notes?: string | null;
-}): Promise<void> {
-  const {
-    instanceId,
-    status,
-    performanceScore = null,
-    notes = null,
-  } = params;
-
-  const updates: Record<string, any> = {
-    status,
-    performance_score: performanceScore,
-    notes,
-    last_opened_at: new Date().toISOString(),
-  };
-
-  if (status === 'completed') {
-    updates.completed_at = new Date().toISOString();
-  }
-
-  const { error } = await supabase
-    .from('daily_lesson_instances')
-    .update(updates)
-    .eq('id', instanceId);
-
-  if (error) {
-    console.error('completeLessonInstance error:', error);
-  }
-}
 
 export async function getLessonStreak(
   childId: string

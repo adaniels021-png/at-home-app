@@ -21,22 +21,22 @@ export type SavedParentReflection = {
 };
 
 const STORAGE_KEY = 'aba_at_home_parent_reflections';
+const MAX_REFLECTIONS = 30;
 
-export async function getSavedParentReflections(): Promise<
-  SavedParentReflection[]
-> {
+// Mutex Lock Queue protects local disk against concurrent write race conditions
+let writeQueuePromise: Promise<unknown> = Promise.resolve();
+
+export async function getSavedParentReflections(): Promise<SavedParentReflection[]> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-
     if (!raw) return [];
 
     const parsed = JSON.parse(raw);
-
     if (!Array.isArray(parsed)) return [];
 
     return parsed;
   } catch (error) {
-    console.log('Error loading parent reflections:', error);
+    console.error('CRITICAL: Error loading parent reflections from disk:', error);
     return [];
   }
 }
@@ -44,52 +44,72 @@ export async function getSavedParentReflections(): Promise<
 export async function saveParentReflection(
   reflection: Omit<SavedParentReflection, 'id' | 'createdAt'>
 ): Promise<SavedParentReflection[]> {
-  try {
-    const current = await getSavedParentReflections();
+  // Chain operations onto our mutex promise sequentially
+  return new Promise((resolve, reject) => {
+    writeQueuePromise = writeQueuePromise
+      .catch(() => {})
+      .then(async () => {
+        try {
+          const current = await getSavedParentReflections();
 
-    const newReflection: SavedParentReflection = {
-      ...reflection,
-      id: `${reflection.type}-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
+          // Deep copy nested structures to isolate memory allocations safely
+          const safeCompletedSteps = reflection.completedSteps 
+            ? [...reflection.completedSteps] 
+            : undefined;
 
-    const updated = [newReflection, ...current].slice(0, 30);
+          const newReflection: SavedParentReflection = {
+            ...reflection,
+            completedSteps: safeCompletedSteps,
+            id: `${reflection.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, 
+            
+            // Hardened unique hash postfix
+            createdAt: new Date().toISOString(),
+          };
 
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
-    return updated;
-  } catch (error) {
-    console.log('Error saving parent reflection:', error);
-    return getSavedParentReflections();
-  }
+          const updated = [newReflection, ...current].slice(0, MAX_REFLECTIONS);
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          
+          resolve(updated);
+          return updated;
+        } catch (error) {
+          console.error('CRITICAL: Storage write failed inside saveParentReflection engine:', error);
+          // Reject explicitly so client forms don't trick parents into thinking data saved when disk is full
+          reject(new Error('Storage limit reached or disk write permission denied.'));
+        }
+      })
+      .catch((err) => {
+        console.error('Mutex sync queue recovery exception dropped:', err);
+        reject(err);
+      });
+  });
 }
 
-export async function getParentReflectionById(
-  id: string
-): Promise<SavedParentReflection | null> {
+export async function getParentReflectionById(id: string): Promise<SavedParentReflection | null> {
   try {
     const reflections = await getSavedParentReflections();
-
     return reflections.find((item) => item.id === id) || null;
   } catch (error) {
-    console.log('Error loading reflection detail:', error);
+    console.error('Error loading targeted reflection entry details:', error);
     return null;
   }
 }
 
-export async function deleteParentReflection(
-  id: string
-): Promise<SavedParentReflection[]> {
-  try {
-    const current = await getSavedParentReflections();
+export async function deleteParentReflection(id: string): Promise<SavedParentReflection[]> {
+  return new Promise((resolve, reject) => {
+    writeQueuePromise = writeQueuePromise
+      .catch(() => {})
+      .then(async () => {
+        try {
+          const current = await getSavedParentReflections();
+          const updated = current.filter((item) => item.id !== id);
 
-    const updated = current.filter((item) => item.id !== id);
-
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
-    return updated;
-  } catch (error) {
-    console.log('Error deleting parent reflection:', error);
-    return getSavedParentReflections();
-  }
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          resolve(updated);
+          return updated;
+        } catch (error) {
+          console.error('CRITICAL: Failed to delete target reflection data segment:', error);
+          reject(error);
+        }
+      });
+  });
 }

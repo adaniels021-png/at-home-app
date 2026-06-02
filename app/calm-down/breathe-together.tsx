@@ -1,3 +1,4 @@
+import { saveCalmToolkitLog } from '@/lib/calmToolkitInsights';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -31,35 +32,36 @@ export default function BreatheTogetherScreen() {
   const [afterCalm, setAfterCalm] = useState<number | null>(null);
   const [helped, setHelped] = useState(false);
 
+  const coachText = useMemo(() => {
+    if (phase === 'Ready') return 'Start by calming your own body first.';
+    if (phase === 'Breathe in') return 'Breathe in slowly. Let your child copy you if they can.';
+    if (phase === 'Hold') return 'Pause softly. No pressure. Just stay calm nearby.';
+    return 'Breathe out slowly, like blowing bubbles.';
+  }, [phase]);
+
   const resultMessage = useMemo(() => {
     if (!beforeCalm || !afterCalm) return '';
 
     if (afterCalm > beforeCalm) {
-      return 'Great job. Your child seems more calm than before. This may be a helpful strategy to try again.';
+      return 'This helped. Your child seemed more regulated after trying it.';
     }
 
     if (afterCalm === beforeCalm) {
-      return 'Good effort. Calm strategies can take practice. Try another round or switch to a quiet space.';
+      return 'Good try. This may need more time, or your child may need a quieter space first.';
     }
 
-    return 'That is okay. This strategy may not be the best fit right now. Try Sensory Reset or Quiet Space next.';
+    return 'That is okay. This may not be the right strategy for this moment. Try Quiet Space or Sensory Reset next.';
   }, [beforeCalm, afterCalm]);
 
   useEffect(() => {
     if (!isRunning) return;
 
-    if (count > 1) {
-      timerRef.current = setTimeout(() => {
-        setCount((prev) => prev - 1);
-      }, 1000);
-
-      return () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-      };
-    }
-
     timerRef.current = setTimeout(() => {
-      moveToNextPhase();
+      if (count > 1) {
+        setCount((prev) => prev - 1);
+      } else {
+        moveToNextPhase();
+      }
     }, 1000);
 
     return () => {
@@ -110,7 +112,6 @@ export default function BreatheTogetherScreen() {
     setCycles(0);
     setAfterCalm(null);
     setHelped(false);
-
     animateCircle(1.45, 4000);
   }
 
@@ -119,9 +120,7 @@ export default function BreatheTogetherScreen() {
     setPhase('Ready');
     setCount(4);
 
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+    if (timerRef.current) clearTimeout(timerRef.current);
 
     circleAnim.stopAnimation();
 
@@ -132,310 +131,142 @@ export default function BreatheTogetherScreen() {
     }).start();
   }
 
-  function handleCirclePress() {
-    if (isRunning) {
-      stopBreathing();
-    } else {
-      startBreathing();
-    }
-  }
-
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color="#0F172A"
-          />
-
-          <Text style={styles.backText}>
-            Calm Down Toolkit
-          </Text>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={22} color="#0F172A" />
+          <Text style={styles.backText}>Calm Down Toolkit</Text>
         </TouchableOpacity>
 
-        <View style={styles.headerCard}>
-          <View style={styles.headerGlow} />
+        <View style={styles.heroCard}>
+          <View pointerEvents="none" style={styles.heroGlowOne} />
+          <View pointerEvents="none" style={styles.heroGlowTwo} />
 
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name="leaf-outline"
-              size={30}
-              color="#047857"
-            />
+          <View style={styles.heroTopRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="leaf-outline" size={30} color="#FFFFFF" />
+            </View>
+
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>CO-REGULATION</Text>
+            </View>
           </View>
 
-          <Text style={styles.title}>
-            Breathe Together
-          </Text>
+          <Text style={styles.title}>Breathe Together</Text>
 
           <Text style={styles.subtitle}>
-            Sit close, keep your voice soft, and breathe slowly together.
+            Slow your body first. Your calm voice, slower breathing, and steady presence can help your child feel safer.
           </Text>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>
-            Before calm level
-          </Text>
+        <View style={styles.scriptCard}>
+          <Ionicons name="chatbubble-ellipses-outline" size={22} color="#047857" />
 
-          <Text style={styles.helperText}>
-            How calm does your child seem right now?
-          </Text>
-
-          <View style={styles.levelRow}>
-            {calmLevels.map((level) => (
-              <Pressable
-                key={level}
-                onPress={() => setBeforeCalm(level)}
-                style={[
-                  styles.levelButton,
-                  beforeCalm === level &&
-                    styles.levelButtonSelected,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.levelText,
-                    beforeCalm === level &&
-                      styles.levelTextSelected,
-                  ]}
-                >
-                  {level}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <View style={styles.levelLabels}>
-            <Text style={styles.labelSmall}>
-              Not calm
-            </Text>
-
-            <Text style={styles.labelSmall}>
-              Very calm
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scriptTitle}>Parent script</Text>
+            <Text style={styles.scriptText}>
+              “You’re safe. I’m right here. Let’s breathe together.”
             </Text>
           </View>
         </View>
+
+        <CalmLevelCard
+          title="Before calm level"
+          helper="How calm does your child seem right now?"
+          selected={beforeCalm}
+          onSelect={setBeforeCalm}
+        />
 
         <View style={styles.breathingCard}>
           <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
+            <View style={[styles.liveDot, isRunning && styles.liveDotActive]} />
             <Text style={styles.liveText}>
-              Guided Regulation
+              {isRunning ? 'Breathing in progress' : 'Ready when you are'}
             </Text>
           </View>
 
-          <Text style={styles.sectionTitle}>
-            Guided breathing
-          </Text>
-
-          <Pressable
-            style={styles.circleWrap}
-            onPress={handleCirclePress}
-          >
-            <Animated.View
-              style={[
-                styles.breathCircle,
-                {
-                  transform: [
-                    { scale: circleAnim },
-                  ],
-                },
-              ]}
-            >
+          <Pressable style={styles.circleWrap} onPress={isRunning ? stopBreathing : startBreathing}>
+            <Animated.View style={[styles.breathCircle, { transform: [{ scale: circleAnim }] }]}>
               <View style={styles.innerCircle}>
-                <Text style={styles.phaseText}>
-                  {phase}
-                </Text>
-
-                <Text style={styles.countText}>
-                  {isRunning
-                    ? count
-                    : 'Tap start'}
-                </Text>
+                <Text style={styles.phaseText}>{phase}</Text>
+                <Text style={styles.countText}>{isRunning ? count : 'Start'}</Text>
               </View>
             </Animated.View>
           </Pressable>
 
-          <Text style={styles.coachText}>
-            {phase === 'Ready'
-              ? 'Tap the circle or press Start when you are ready.'
-              : phase === 'Breathe in'
-                ? 'Slowly breathe in through your nose.'
-                : phase === 'Hold'
-                  ? 'Pause softly. No pressure.'
-                  : 'Slowly breathe out like you are blowing bubbles.'}
-          </Text>
+          <Text style={styles.coachText}>{coachText}</Text>
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={startBreathing}
-            >
-              <Ionicons
-                name="play"
-                size={18}
-                color="#FFFFFF"
-              />
-
-              <Text style={styles.primaryButtonText}>
-                Start
-              </Text>
+  style={styles.primaryButton}
+  onPress={startBreathing}
+  disabled={isRunning}
+>
+              <Ionicons name="play" size={18} color="#FFFFFF" />
+              <Text style={styles.primaryButtonText}>Start</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={stopBreathing}
-            >
-              <Ionicons
-                name="stop"
-                size={18}
-                color="#047857"
-              />
-
-              <Text style={styles.secondaryButtonText}>
-                Stop
-              </Text>
+            <TouchableOpacity style={styles.secondaryButton} onPress={stopBreathing}>
+              <Ionicons name="stop" size={18} color="#047857" />
+              <Text style={styles.secondaryButtonText}>Stop</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {cycles}
-              </Text>
-
-              <Text style={styles.statLabel}>
-                Completed rounds
-              </Text>
+              <Text style={styles.statValue}>{cycles}</Text>
+              <Text style={styles.statLabel}>Rounds</Text>
             </View>
 
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {phase}
-              </Text>
-
-              <Text style={styles.statLabel}>
-                Current phase
-              </Text>
+              <Text style={styles.statValue}>{phase}</Text>
+              <Text style={styles.statLabel}>Current step</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>
-            After calm level
+        <CalmLevelCard
+          title="After calm level"
+          helper="How calm does your child seem after trying this?"
+          selected={afterCalm}
+          onSelect={setAfterCalm}
+        />
+
+        <TouchableOpacity
+          style={[styles.helpedButton, helped && styles.helpedButtonSelected]}
+          onPress={async () => {
+            const nextHelped = !helped;
+            setHelped(nextHelped);
+
+            if (nextHelped) {
+            await saveCalmToolkitLog({
+            toolType: 'breathe-together',
+             trigger: 'big-emotions',
+            toolsUsed: ['Breathe Together'],
+           helped: true,
+          });
+        }
+      }}
+        >
+          <Ionicons name={helped ? 'heart' : 'heart-outline'} size={20} color={helped ? '#FFFFFF' : '#047857'} />
+          <Text style={[styles.helpedText, helped && styles.helpedTextSelected]}>
+            This helped
           </Text>
-
-          <Text style={styles.helperText}>
-            How calm does your child seem after trying this?
-          </Text>
-
-          <View style={styles.levelRow}>
-            {calmLevels.map((level) => (
-              <Pressable
-                key={level}
-                onPress={() => setAfterCalm(level)}
-                style={[
-                  styles.levelButton,
-                  afterCalm === level &&
-                    styles.levelButtonSelected,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.levelText,
-                    afterCalm === level &&
-                      styles.levelTextSelected,
-                  ]}
-                >
-                  {level}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.helpedButton,
-              helped &&
-                styles.helpedButtonSelected,
-            ]}
-            onPress={() => setHelped(!helped)}
-          >
-            <Ionicons
-              name={
-                helped
-                  ? 'heart'
-                  : 'heart-outline'
-              }
-              size={20}
-              color={
-                helped
-                  ? '#FFFFFF'
-                  : '#047857'
-              }
-            />
-
-            <Text
-              style={[
-                styles.helpedText,
-                helped &&
-                  styles.helpedTextSelected,
-              ]}
-            >
-              This helped
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
         {!!resultMessage && (
           <View style={styles.resultCard}>
-            <View style={styles.resultIconWrap}>
-              <Ionicons
-                name="sparkles-outline"
-                size={24}
-                color="#047857"
-              />
-            </View>
-
-            <Text style={styles.resultTitle}>
-              Personal result
-            </Text>
-
-            <Text style={styles.resultText}>
-              {resultMessage}
-            </Text>
-
-            {helped && (
-              <View style={styles.successBox}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={18}
-                  color="#047857"
-                />
-
-                <Text style={styles.savedText}>
-                  Marked as helpful. This can become one of your go-to calming tools.
-                </Text>
-              </View>
-            )}
+            <Ionicons name="sparkles-outline" size={24} color="#047857" />
+            <Text style={styles.resultTitle}>Personal result</Text>
+            <Text style={styles.resultText}>{resultMessage}</Text>
           </View>
         )}
 
         <View style={styles.tipCard}>
-          <Text style={styles.tipTitle}>
-            Parent tip
-          </Text>
-
+          <Text style={styles.tipTitle}>Parent tip</Text>
           <Text style={styles.tipText}>
-            Do not force eye contact or perfect breathing. The goal is connection,
-            safety, and slowing the moment down.
+            Do not force perfect breathing, eye contact, or talking. The goal is safety, connection, and slowing the moment down.
           </Text>
         </View>
       </ScrollView>
@@ -443,76 +274,156 @@ export default function BreatheTogetherScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F0FDF4',
-  },
+function CalmLevelCard({
+  title,
+  helper,
+  selected,
+  onSelect,
+}: {
+  title: string;
+  helper: string;
+  selected: number | null;
+  onSelect: (value: number) => void;
+}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.helperText}>{helper}</Text>
 
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+      <View style={styles.levelRow}>
+        {calmLevels.map((level) => (
+          <Pressable
+            key={level}
+            onPress={() => onSelect(level)}
+            style={[styles.levelButton, selected === level && styles.levelButtonSelected]}
+          >
+            <Text style={[styles.levelText, selected === level && styles.levelTextSelected]}>
+              {level}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={styles.levelLabels}>
+        <Text style={styles.labelSmall}>Not calm</Text>
+        <Text style={styles.labelSmall}>Very calm</Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#F7F8FC' },
+  container: { padding: 20, paddingBottom: 42 },
 
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   backText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0F172A',
     marginLeft: 4,
   },
 
-  headerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 32,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
+  heroCard: {
     overflow: 'hidden',
-  },
-
-  headerGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -30,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: '#DCFCE7',
-    opacity: 0.55,
-  },
-
-  iconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#DCFCE7',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#047857',
+    borderRadius: 30,
+    padding: 22,
     marginBottom: 14,
   },
 
-  title: {
-    fontSize: 30,
+  heroGlowOne: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    top: -90,
+    right: -70,
+  },
+
+  heroGlowTwo: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(187,247,208,0.22)',
+    bottom: -80,
+    left: -55,
+  },
+
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+  },
+
+  heroBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '900',
-    color: '#064E3B',
-    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+
+  title: {
+    color: '#FFFFFF',
+    fontSize: 29,
+    fontWeight: '900',
   },
 
   subtitle: {
-    fontSize: 15,
-    color: '#475569',
-    textAlign: 'center',
-    marginTop: 8,
+    color: '#D1FAE5',
+    marginTop: 9,
     lineHeight: 22,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  scriptCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 24,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  scriptTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#064E3B',
+  },
+
+  scriptText: {
+    marginTop: 4,
+    color: '#047857',
+    lineHeight: 20,
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   card: {
@@ -521,62 +432,26 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
-  },
-
-  breathingCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 32,
-    padding: 22,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    alignItems: 'center',
-  },
-
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-  },
-
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-    marginRight: 8,
-  },
-
-  liveText: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#047857',
+    borderColor: '#E2E8F0',
   },
 
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '900',
     color: '#0F172A',
     marginBottom: 6,
   },
 
   helperText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
     marginBottom: 14,
     lineHeight: 20,
+    fontWeight: '700',
   },
 
   levelRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 8,
   },
 
@@ -618,18 +493,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  breathingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    alignItems: 'center',
+  },
+
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#94A3B8',
+    marginRight: 8,
+  },
+
+  liveDotActive: {
+    backgroundColor: '#10B981',
+  },
+
+  liveText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#047857',
+  },
+
   circleWrap: {
-    height: 260,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 12,
     width: '100%',
   },
 
   breathCircle: {
-    width: 170,
-    height: 170,
-    borderRadius: 85,
+    width: 168,
+    height: 168,
+    borderRadius: 84,
     backgroundColor: '#DCFCE7',
     borderWidth: 8,
     borderColor: '#86EFAC',
@@ -638,17 +552,14 @@ const styles = StyleSheet.create({
     shadowColor: '#10B981',
     shadowOpacity: 0.18,
     shadowRadius: 18,
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
+    shadowOffset: { width: 0, height: 10 },
     elevation: 6,
   },
 
   innerCircle: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     backgroundColor: '#F0FDF4',
     alignItems: 'center',
     justifyContent: 'center',
@@ -662,17 +573,17 @@ const styles = StyleSheet.create({
   },
 
   countText: {
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: '900',
     color: '#047857',
     marginTop: 4,
   },
 
   coachText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 21,
     marginBottom: 18,
     fontWeight: '700',
   },
@@ -722,26 +633,26 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 18,
+    marginTop: 16,
     width: '100%',
   },
 
   statCard: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
+    borderRadius: 18,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
   },
 
   statValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     color: '#064E3B',
     marginBottom: 4,
+    textAlign: 'center',
   },
 
   statLabel: {
@@ -752,7 +663,6 @@ const styles = StyleSheet.create({
   },
 
   helpedButton: {
-    marginTop: 16,
     height: 54,
     borderRadius: 20,
     borderWidth: 1,
@@ -761,6 +671,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
   },
 
   helpedButtonSelected: {
@@ -780,55 +691,26 @@ const styles = StyleSheet.create({
 
   resultCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 22,
+    borderRadius: 26,
+    padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#86EFAC',
-  },
-
-  resultIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: '#ECFDF5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+    borderColor: '#BBF7D0',
   },
 
   resultTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '900',
     color: '#064E3B',
-    marginBottom: 8,
+    marginTop: 10,
+    marginBottom: 6,
   },
 
   resultText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#334155',
-    lineHeight: 22,
+    lineHeight: 21,
     fontWeight: '700',
-  },
-
-  successBox: {
-    marginTop: 14,
-    backgroundColor: '#ECFDF5',
-    borderRadius: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  savedText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#047857',
-    lineHeight: 19,
   },
 
   tipCard: {

@@ -405,7 +405,6 @@ export default function CustomizeRoutineScreen() {
         .eq('routine_period', selectedTime)
         .eq('day_type', selectedDayType),
         10000,
-      'Routine save took too long. Please check your connection.'
       );
 
       if (deleteError) throw deleteError;
@@ -424,7 +423,6 @@ export default function CustomizeRoutineScreen() {
       const { error: insertError } = await withTimeout(
         supabase.from('custom_routines').insert(payload),
         10000,
-        'Routine save took too long. Please check your connection.'
         );
 
       if (insertError) {

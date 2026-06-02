@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { generateProgressRecommendations } from '../../lib/aiService';
+import { generateProgressSummary } from '../../lib/aiService';
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
 
@@ -125,20 +125,13 @@ export default function ProgressScreen() {
       setRecommendationsLoading(true);
 
       try {
-        const result = await generateProgressRecommendations({
-          childName,
-          lessonLogs: lessons.map((log) => ({
-            category: log.category,
-            performance: log.performance,
-            completed_at: log.completed_at,
-          })),
-          routineLogs: routines.map((log) => ({
-            routine_period: log.routine_period,
-            completed_at: log.completed_at,
-          })),
-        });
+        const summary = await generateProgressSummary(selectedChild.id);
 
-        setAiRecommendations(result?.recommendations || []);
+setAiRecommendations(
+  summary?.summary
+    ? [summary.summary]
+    : []
+);
       } catch (error) {
         console.error('Recommendation load error:', error);
         setAiRecommendations([]);

@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+
+import { useChild } from '../lib/SelectedChildContext';
 import { supabase } from '../lib/supabase';
 
 type ChildRecord = {
@@ -11,6 +13,7 @@ type ChildRecord = {
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { setSelectedChild } = useChild() as any;
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
@@ -25,16 +28,7 @@ export default function OnboardingScreen() {
           error: sessionError,
         } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          console.error('Onboarding session error:', sessionError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/auth');
-          return;
-        }
-
-        if (!session?.user?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
+        if (sessionError || !session?.user?.id) {
           hasNavigatedRef.current = true;
           router.replace('/auth');
           return;
@@ -44,14 +38,13 @@ export default function OnboardingScreen() {
 
         const { data: children, error: childError } = await supabase
           .from('children')
-          .select('id, child_name, name')
+          .select('*')
           .eq('parent_id', userId)
           .order('created_at', { ascending: true })
           .limit(1);
 
         if (childError) {
           console.error('Onboarding child lookup error:', childError);
-          if (!mounted || hasNavigatedRef.current) return;
           hasNavigatedRef.current = true;
           router.replace('/onboarding/add-child');
           return;
@@ -60,10 +53,13 @@ export default function OnboardingScreen() {
         const firstChild = (children?.[0] || null) as ChildRecord | null;
 
         if (!firstChild?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
           hasNavigatedRef.current = true;
           router.replace('/onboarding/add-child');
           return;
+        }
+
+        if (typeof setSelectedChild === 'function') {
+          setSelectedChild(firstChild);
         }
 
         const { data: assessment, error: assessmentError } = await supabase
@@ -74,27 +70,16 @@ export default function OnboardingScreen() {
           .limit(1)
           .maybeSingle();
 
-        if (assessmentError) {
-          console.error('Onboarding assessment lookup error:', assessmentError);
-          if (!mounted || hasNavigatedRef.current) return;
+        if (assessmentError || !assessment?.id) {
           hasNavigatedRef.current = true;
           router.replace('/onboarding/assessment');
           return;
         }
 
-        if (!assessment?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/assessment');
-          return;
-        }
-
-        if (!mounted || hasNavigatedRef.current) return;
         hasNavigatedRef.current = true;
         router.replace('/(tabs)');
       } catch (error) {
         console.error('Onboarding routing error:', error);
-        if (!mounted || hasNavigatedRef.current) return;
         hasNavigatedRef.current = true;
         router.replace('/auth');
       }
@@ -105,7 +90,7 @@ export default function OnboardingScreen() {
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, setSelectedChild]);
 
   return (
     <View style={styles.container}>

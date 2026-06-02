@@ -78,6 +78,9 @@ export default function DailyLessonsScreen() {
 
   const loadRequestRef = useRef(0);
 
+const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const retryCountRef = useRef(0);
+
   const [started, setStarted] = useState(false);
 
   const [selectedCategory, setSelectedCategory] =
@@ -88,6 +91,8 @@ export default function DailyLessonsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+
+  const [preparingLesson, setPreparingLesson] = useState(false);
 
   const [lessonNumber, setLessonNumber] = useState(1);
 
@@ -134,19 +139,14 @@ export default function DailyLessonsScreen() {
       return true;
     }
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
-
-    const { count, error } = await supabase
-      .from('lesson_instances')
-      .select('id', { count: 'exact', head: true })
-      .eq('child_id', selectedChild.id)
-      .in('status', ['completed', 'success'])
-      .gte('completed_at', startOfToday.toISOString())
-      .lte('completed_at', endOfToday.toISOString());
+const { count, error } = await supabase
+  .from('daily_lesson_instances')
+  .select('id', { count: 'exact', head: true })
+  .eq('child_id', selectedChild.id)
+  .eq('status', 'completed')
+  .eq('lesson_date', todayStr);
 
     if (error) {
       console.log('Free lesson limit check error:', error);
@@ -199,8 +199,51 @@ export default function DailyLessonsScreen() {
       if (loadRequestRef.current !== requestId) return;
 
       if (!lessonRow?.lesson_payload) {
-        throw new Error('No lesson was returned.');
-      }
+  console.log('SCREEN: no lesson payload returned:', lessonRow);
+
+  console.log('SCREEN: loading lesson for:', {
+  childId: selectedChild.id,
+  childName,
+  category: requestCategory,
+  isPro,
+});
+
+  setLessonData(null);
+
+  ensureLessonQueue({
+    childId: selectedChild.id,
+    childName,
+    category: requestCategory,
+    isPro,
+  }).catch((error) => {
+    console.log('Background lesson preparation failed:', error);
+  });
+
+  if (retryTimerRef.current) {
+    clearTimeout(retryTimerRef.current);
+  }
+
+  if (retryCountRef.current < 3) {
+    setPreparingLesson(true);
+    retryCountRef.current++;
+
+    retryTimerRef.current = setTimeout(() => {
+      void loadLesson();
+    }, 5000);
+
+    return;
+  }
+
+  setPreparingLesson(false);
+  retryCountRef.current = 0;
+
+  Alert.alert(
+    'Lesson still preparing',
+    'The app could not open a lesson yet. Please tap Check Again or restart the app.'
+  );
+
+  return;
+}
 
       const lesson = {
         ...lessonRow.lesson_payload,
@@ -287,18 +330,16 @@ export default function DailyLessonsScreen() {
           : 20;
 
       await completeLesson({
-        lessonId: lessonData.id,
-        childId: selectedChild.id,
-        category: selectedCategory,
-        performanceScore,
-        promptLevel,
-        behaviorResponse,
-        consistencyLevel,
-        status:
-          status === 'success'
-            ? 'completed'
-            : 'unsuccessful',
-      });
+  lessonId: lessonData.id,
+  childId: selectedChild.id,
+  category: selectedCategory,
+  performanceScore,
+  promptLevel,
+  behaviorResponse,
+  consistencyLevel,
+  status: status === 'success' ? 'completed' : 'unsuccessful',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+});
 
       if (
         !isPro &&
@@ -382,23 +423,37 @@ export default function DailyLessonsScreen() {
     }
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadLesson();
-  };
+ const handleRefresh = async () => {
+  retryCountRef.current = 0;
+
+  if (retryTimerRef.current) {
+    clearTimeout(retryTimerRef.current);
+  }
+
+  setRefreshing(true);
+  await loadLesson();
+};
 
   useEffect(() => {
-    if (!selectedChild?.id) {
-      setLoading(false);
-      return;
-    }
+  if (!selectedChild?.id) {
+    setLoading(false);
+    return;
+  }
 
-    void loadLesson();
-  }, [
-    selectedChild?.id,
-    selectedCategory,
-    loadLesson,
-  ]);
+  void loadLesson();
+}, [
+  selectedChild?.id,
+  selectedCategory,
+  loadLesson,
+]);
+
+useEffect(() => {
+  return () => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+    }
+  };
+}, []);
 
   const lockedPreviewLessons =
     useMemo<LockedPreviewLesson[]>(() => {
@@ -485,20 +540,27 @@ export default function DailyLessonsScreen() {
         />
 
         <CategorySelector
-          selectedCategory={
-            selectedCategory
-          }
-          onSelectCategory={(
-            category
-          ) => {
-            setLessonData(null);
-            setSelectedCategory(
-              category
-            );
-          }}
-        />
+  selectedCategory={selectedCategory}
+  onSelectCategory={(category) => {
+    retryCountRef.current = 0;
 
-        {dailyLimitReached ? (
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+    }
+
+    setStarted(false);
+    setPreparingLesson(false);
+    setLessonData(null);
+    setSelectedCategory(category);
+  }}
+/>
+
+        {!dailyLimitReached && !preparingLesson && !lessonData ? (
+  <PreparingLessonCard
+    selectedCategory={selectedCategory}
+    onRefresh={() => void loadLesson()}
+  />
+) : dailyLimitReached ? (
           <DailyLimitView
             selectedCategory={
               selectedCategory
@@ -518,75 +580,40 @@ export default function DailyLessonsScreen() {
               void loadLesson()
             }
           />
-        ) : !started ? (
-          <LessonStartCard
+        ) : preparingLesson ? (
+  <PreparingLessonCard
+    selectedCategory={selectedCategory}
+    onRefresh={() => void loadLesson()}
+  />
+) : !started ? (
+  <LessonStartCard
             lessonData={lessonData}
-            lessonNumber={
-              lessonNumber
-            }
-            selectedCategory={
-              selectedCategory
-            }
-            onStart={() =>
-              setStarted(true)
-            }
+            lessonNumber={lessonNumber}
+            selectedCategory={selectedCategory}
+           childName={childName}
+           onStart={() => setStarted(true)}
           />
         ) : (
           <GuidedLessonView
-            lessonData={lessonData}
-            lessonNumber={
-              lessonNumber
-            }
-            selectedCategory={
-              selectedCategory
-            }
-            completionRating={
-              completionRating
-            }
-            setCompletionRating={
-              setCompletionRating
-            }
-            promptLevel={promptLevel}
-            setPromptLevel={
-              setPromptLevel
-            }
-            behaviorResponse={
-              behaviorResponse
-            }
-            setBehaviorResponse={
-              setBehaviorResponse
-            }
-            consistencyLevel={
-              consistencyLevel
-            }
-            setConsistencyLevel={
-              setConsistencyLevel
-            }
-            isCompleting={
-              isCompleting
-            }
-            onTryAgain={() =>
-              void handleLogLesson(
-                'unsuccessful'
-              )
-            }
-            onComplete={() =>
-              void handleLogLesson(
-                'success'
-              )
-            }
-            showLockedPreviews={
-              showLockedPreviews
-            }
-            lockedPreviewLessons={
-              lockedPreviewLessons
-            }
-            onUpgrade={() =>
-              router.push(
-                '/subscription'
-              )
-            }
-          />
+  lessonData={lessonData}
+  lessonNumber={lessonNumber}
+  selectedCategory={selectedCategory}
+  childName={childName}
+  completionRating={completionRating}
+  setCompletionRating={setCompletionRating}
+  promptLevel={promptLevel}
+  setPromptLevel={setPromptLevel}
+  behaviorResponse={behaviorResponse}
+  setBehaviorResponse={setBehaviorResponse}
+  consistencyLevel={consistencyLevel}
+  setConsistencyLevel={setConsistencyLevel}
+  isCompleting={isCompleting}
+  onTryAgain={() => void handleLogLesson('unsuccessful')}
+  onComplete={() => void handleLogLesson('success')}
+  showLockedPreviews={showLockedPreviews}
+  lockedPreviewLessons={lockedPreviewLessons}
+  onUpgrade={() => router.push('/subscription')}
+/>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -675,7 +702,7 @@ function PlanBanner({
 
         <View style={styles.proBannerTop}>
           <View style={styles.proBannerIconWrap}>
-            <Ionicons name="sparkles" size={20} color="#7C3AED" />
+            <Ionicons name="sparkles" size={18} color="#7C3AED" />
           </View>
 
           <View style={{ flex: 1 }}>
@@ -684,7 +711,7 @@ function PlanBanner({
             </Text>
 
             <Text style={styles.proBannerPremiumSubtitle}>
-              Unlimited AI-powered ABA lessons unlocked
+               Unlimited guided learning unlocked
             </Text>
           </View>
         </View>
@@ -695,10 +722,6 @@ function PlanBanner({
             <Text style={styles.proFeatureText}>Unlimited Lessons</Text>
           </View>
 
-          <View style={styles.proFeatureChip}>
-            <Ionicons name="flash" size={14} color="#5B21B6" />
-            <Text style={styles.proFeatureText}>Adaptive Learning</Text>
-          </View>
         </View>
       </View>
     );
@@ -784,6 +807,41 @@ function CategorySelector({
   );
 }
 
+function PreparingLessonCard({
+  selectedCategory,
+  onRefresh,
+}: {
+  selectedCategory: string;
+  onRefresh: () => void;
+}) {
+  return (
+    <View style={styles.preparingCard}>
+      <View pointerEvents="none" style={styles.preparingGlow} />
+
+      <View style={styles.preparingIconWrap}>
+        <ActivityIndicator size="small" color="#4F46E5" />
+      </View>
+
+      <Text style={styles.preparingTitle}>Preparing your lesson</Text>
+
+      <Text style={styles.preparingText}>
+        We’re creating a full {selectedCategory} lesson with step-by-step parent guidance. This may take a moment the first time.
+      </Text>
+
+      <View style={styles.preparingMiniRow}>
+        <Ionicons name="sparkles-outline" size={16} color="#7C3AED" />
+        <Text style={styles.preparingMiniText}>
+          Personalized lesson is being added to your queue
+        </Text>
+      </View>
+
+      <AnimatedPressable style={styles.preparingRefreshButton} onPress={onRefresh}>
+        <Text style={styles.preparingRefreshText}>Check Again</Text>
+      </AnimatedPressable>
+    </View>
+  );
+}
+
 function DailyLimitView({
   selectedCategory,
   lockedPreviewLessons,
@@ -833,105 +891,6 @@ function DailyLimitView({
   );
 }
 
-function ActiveLessonView({
-  lessonData,
-  lessonNumber,
-  selectedCategory,
-  completionRating,
-  setCompletionRating,
-  promptLevel,
-  setPromptLevel,
-  behaviorResponse,
-  setBehaviorResponse,
-  consistencyLevel,
-  setConsistencyLevel,
-  isCompleting,
-  onTryAgain,
-  onComplete,
-  showLockedPreviews,
-  lockedPreviewLessons,
-  onUpgrade,
-  performanceProfile,
-}: any) {
-  return (
-    <View>
-      <LessonHero
-        lessonData={lessonData}
-        lessonNumber={lessonNumber}
-        selectedCategory={selectedCategory}
-      />
-
-      <SummaryRow
-        leftTitle="Setting"
-        leftValue={lessonData?.setting || 'Home'}
-        rightTitle="Skill"
-        rightValue={lessonData?.focus_skill || selectedCategory}
-      />
-
-      <LessonSection title="Materials" icon="cube-outline" tint="#EEF2FF" iconColor="#4F46E5" items={lessonData?.materials} />
-      <LessonSection title="Setup" icon="construct-outline" tint="#ECFDF5" iconColor="#059669" items={lessonData?.setup} />
-      <LessonSection title="Teaching Steps" icon="list-outline" tint="#FFF7ED" iconColor="#EA580C" items={lessonData?.teaching_steps} numbered />
-      <LessonSection title="Prompting Hierarchy" icon="hand-left-outline" tint="#FDF2F8" iconColor="#DB2777" items={lessonData?.prompting_hierarchy} numbered />
-      <LessonSection title="Reinforcement" icon="star-outline" tint="#F3E8FF" iconColor="#7C3AED" items={lessonData?.reinforcement} />
-      <LessonSection title="Error Correction" icon="refresh-outline" tint="#EFF6FF" iconColor="#2563EB" items={lessonData?.error_correction} />
-      <LessonSection title="Generalization" icon="shuffle-outline" tint="#ECFEFF" iconColor="#0891B2" items={lessonData?.generalization} />
-
-      {lessonData?.parent_coaching_note && (
-        <GoalCard icon="person-circle-outline" iconColor="#7C3AED" title="Parent Coaching Tip" text={lessonData.parent_coaching_note} />
-      )}
-
-      {lessonData?.lesson_variation && (
-        <GoalCard icon="shuffle-outline" iconColor="#0891B2" title="Try It Another Way" text={lessonData.lesson_variation} />
-      )}
-
-      <GoalCard
-        icon="ribbon-outline"
-        iconColor="#F59E0B"
-        title="Success Goal"
-        text={lessonData?.success_criteria || 'Complete a few successful practice opportunities.'}
-      />
-
-      <RatingCard completionRating={completionRating} setCompletionRating={setCompletionRating} performanceProfile={performanceProfile} />
-
-      <BehaviorCheckCard
-        promptLevel={promptLevel}
-        setPromptLevel={setPromptLevel}
-        behaviorResponse={behaviorResponse}
-        setBehaviorResponse={setBehaviorResponse}
-        consistencyLevel={consistencyLevel}
-        setConsistencyLevel={setConsistencyLevel}
-      />
-
-      <BehaviorMessageCard
-        promptLevel={promptLevel}
-        behaviorResponse={behaviorResponse}
-        consistencyLevel={consistencyLevel}
-        message={getBehaviorAwareMessage({
-        promptLevel,
-        behaviorResponse,
-        consistencyLevel,
-     })}
-   />
-
-      <CompletionButtons
-        isCompleting={isCompleting}
-        onTryAgain={onTryAgain}
-        onComplete={onComplete}
-      />
-
-      {showLockedPreviews && (
-        <>
-          <ProUnlockCard onUpgrade={onUpgrade} />
-          <LockedPreviewSection
-            title="Blurred Upcoming Lessons"
-            lockedPreviewLessons={lockedPreviewLessons}
-            onUpgrade={onUpgrade}
-          />
-        </>
-      )}
-    </View>
-  );
-}
 
 function LessonStartCard({
   lessonData,
@@ -946,17 +905,28 @@ function LessonStartCard({
   return (
     <View>
       <LessonHero
-        lessonData={lessonData}
-        lessonNumber={lessonNumber}
-        selectedCategory={selectedCategory}
-      />
+  lessonData={lessonData}
+  lessonNumber={lessonNumber}
+  selectedCategory={selectedCategory}
+/>
 
-      <SummaryRow
-        leftTitle="Setting"
-        leftValue={lessonData?.setting || 'Home'}
-        rightTitle="Skill"
-        rightValue={lessonData?.focus_skill || selectedCategory}
-      />
+     <View style={styles.singleSummaryWrap}>
+  <View
+    style={[
+      styles.summaryCard,
+      {
+        backgroundColor: '#ECFDF5',
+        width: '100%',
+      },
+    ]}
+  >
+    <Text style={styles.summaryLabel}>Skill Focus</Text>
+
+    <Text style={styles.summaryValue}>
+      {lessonData?.focus_skill || selectedCategory}
+    </Text>
+  </View>
+</View>
 
       <View style={styles.premiumStartCard}>
         <View pointerEvents="none" style={styles.premiumStartGlow} />
@@ -1075,77 +1045,97 @@ const steps = rawSteps
   const finishedSteps = stepIndex >= steps.length;
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === steps.length - 1;
-  const progressPercent = Math.min(((stepIndex + 1) / steps.length) * 100, 100);
+  const progressPercent =
+  steps.length > 0
+    ? Math.min(((stepIndex + 1) / steps.length) * 100, 100)
+    : 0;
 
   if (finishedSteps) {
-    return (
-      <View>
-        <View style={styles.reviewHeroCard}>
-          <View pointerEvents="none" style={styles.reviewHeroGlow} />
+  return (
+    <View>
+      <View style={styles.reviewHeroCard}>
+        <View pointerEvents="none" style={styles.reviewHeroGlow} />
+        <View pointerEvents="none" style={styles.reviewHeroGlowTwo} />
 
+        <View style={styles.reviewHeroTopRow}>
           <View style={styles.reviewIconWrap}>
-            <Ionicons name="checkmark-circle" size={34} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={30} color="#10B981" />
           </View>
 
-          <Text style={styles.reviewHeroTitle}>Great work today</Text>
-
-          <Text style={styles.reviewHeroText}>
-            Take a quick moment to log how the lesson went.
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.reviewHeroTitle}>Great work today</Text>
+            <Text style={styles.reviewHeroText}>
+              Take a quick moment to save how this lesson went.
+            </Text>
+          </View>
         </View>
 
-        <RatingCard
-          completionRating={completionRating}
-          setCompletionRating={setCompletionRating}
-        />
+        <View style={styles.reviewMiniRow}>
+          <View style={styles.reviewMiniChip}>
+            <Ionicons name="time-outline" size={14} color="#047857" />
+            <Text style={styles.reviewMiniText}>Lesson finished</Text>
+          </View>
 
-        <BehaviorCheckCard
-          promptLevel={promptLevel}
-          setPromptLevel={setPromptLevel}
-          behaviorResponse={behaviorResponse}
-          setBehaviorResponse={setBehaviorResponse}
-          consistencyLevel={consistencyLevel}
-          setConsistencyLevel={setConsistencyLevel}
-        />
-
-        <BehaviorMessageCard
-          promptLevel={promptLevel}
-          behaviorResponse={behaviorResponse}
-          consistencyLevel={consistencyLevel}
-          message={getBehaviorAwareMessage({
-            promptLevel,
-            behaviorResponse,
-            consistencyLevel,
-          })}
-        />
-
-        <CompletionButtons
-          isCompleting={isCompleting}
-          onTryAgain={onTryAgain}
-          onComplete={onComplete}
-        />
-
-        {showLockedPreviews && (
-          <>
-            <ProUnlockCard onUpgrade={onUpgrade} />
-            <LockedPreviewSection
-              title="Blurred Upcoming Lessons"
-              lockedPreviewLessons={lockedPreviewLessons}
-              onUpgrade={onUpgrade}
-            />
-          </>
-        )}
+          <View style={styles.reviewMiniChip}>
+            <Ionicons name="analytics-outline" size={14} color="#047857" />
+            <Text style={styles.reviewMiniText}>Ready to log</Text>
+          </View>
+        </View>
       </View>
-    );
-  }
+
+      <RatingCard
+        completionRating={completionRating}
+        setCompletionRating={setCompletionRating}
+      />
+
+      <BehaviorCheckCard
+        promptLevel={promptLevel}
+        setPromptLevel={setPromptLevel}
+        behaviorResponse={behaviorResponse}
+        setBehaviorResponse={setBehaviorResponse}
+        consistencyLevel={consistencyLevel}
+        setConsistencyLevel={setConsistencyLevel}
+      />
+
+      <BehaviorMessageCard
+        promptLevel={promptLevel}
+        behaviorResponse={behaviorResponse}
+        consistencyLevel={consistencyLevel}
+        message={getBehaviorAwareMessage({
+          promptLevel,
+          behaviorResponse,
+          consistencyLevel,
+        })}
+      />
+
+      <CompletionButtons
+        isCompleting={isCompleting}
+        onTryAgain={onTryAgain}
+        onComplete={onComplete}
+      />
+
+      {showLockedPreviews && (
+        <>
+          <ProUnlockCard onUpgrade={onUpgrade} />
+          <LockedPreviewSection
+            title="Blurred Upcoming Lessons"
+            lockedPreviewLessons={lockedPreviewLessons}
+            onUpgrade={onUpgrade}
+          />
+        </>
+      )}
+    </View>
+  );
+}
 
   return (
     <View>
       <LessonHero
-        lessonData={lessonData}
-        lessonNumber={lessonNumber}
-        selectedCategory={selectedCategory}
-      />
+  lessonData={lessonData}
+  lessonNumber={lessonNumber}
+  selectedCategory={selectedCategory}
+/>
+        
 
       <View style={styles.guidedProgressCard}>
         <View style={styles.guidedProgressTop}>
@@ -1235,8 +1225,8 @@ function FormattedLessonStep({ text }: { text: string }) {
     ?.replace(/Parent does:/gi, '\nParent does:')
     ?.replace(/Child should do:/gi, '\nChild should do:')
     ?.replace(/Child does:/gi, '\nChild does:')
-    ?.replace(/How to prompt:/gi, '\nHow to prompt:')
-    ?.replace(/How to reinforce:/gi, '\nHow to reinforce:')
+    ?.replace(/Prompt:/gi, '\nPrompt:')
+    ?.replace(/Reinforce:/gi, '\nReinforce:')
     ?.trim();
 
   const sections = cleaned
@@ -1247,25 +1237,65 @@ function FormattedLessonStep({ text }: { text: string }) {
   return (
     <View>
       {sections.map((section, index) => {
-        const isHeader =
-          section.toLowerCase().startsWith('step') ||
-          section.toLowerCase().startsWith('parent says:') ||
-          section.toLowerCase().startsWith('parent does:') ||
-          section.toLowerCase().startsWith('child should do:') ||
-          section.toLowerCase().startsWith('child does:') ||
-          section.toLowerCase().startsWith('how to prompt:') ||
-          section.toLowerCase().startsWith('how to reinforce:');
+        const lower = section.toLowerCase();
+
+        let label = '';
+        let content = '';
+        let labelColor = '#111827';
+
+        const stepMatch = section.match(/^(Step\s+\d+:)/i);
+
+        if (stepMatch) {
+          const stepLabel = stepMatch[1];
+          const remaining = section.replace(stepLabel, '').trim();
+
+          return (
+            <Text key={index} style={styles.guidedStepParagraph}>
+              <Text style={styles.guidedBlackStepLabel}>
+                {stepLabel + ' '}
+              </Text>
+              <Text>{remaining}</Text>
+            </Text>
+          );
+        }
+
+        if (lower.startsWith('parent says:')) {
+          label = 'Parent says:';
+          content = section.replace(/parent says:/i, '').trim();
+          labelColor = '#7C3AED';
+        } else if (lower.startsWith('parent does:')) {
+          label = 'Parent does:';
+          content = section.replace(/parent does:/i, '').trim();
+          labelColor = '#2563EB';
+        } else if (lower.startsWith('child does:') || lower.startsWith('child should do:')) {
+          label = lower.startsWith('child should do:') ? 'Child should do:' : 'Child does:';
+          content = section
+            .replace(/child does:/i, '')
+            .replace(/child should do:/i, '')
+            .trim();
+          labelColor = '#059669';
+        } else if (lower.startsWith('prompt:')) {
+          label = 'Prompt:';
+          content = section.replace(/prompt:/i, '').trim();
+          labelColor = '#EA580C';
+        } else if (lower.startsWith('reinforce:')) {
+          label = 'Reinforce:';
+          content = section.replace(/reinforce:/i, '').trim();
+          labelColor = '#DB2777';
+        } else {
+          return (
+            <Text key={index} style={styles.guidedStepParagraph}>
+              {section}
+            </Text>
+          );
+        }
 
         return (
-          <Text
-            key={index}
-            style={
-              isHeader
-                ? styles.guidedStepSectionHeader
-                : styles.guidedStepParagraph
-            }
-          >
-            {section}
+          <Text key={index} style={styles.guidedStepParagraph}>
+            <Text style={[styles.guidedInlineLabel, { color: labelColor }]}>
+              {label + ' '}
+            </Text>
+            <Text>{content}</Text>
           </Text>
         );
       })}
@@ -1296,10 +1326,17 @@ function LessonHero({ lessonData, lessonNumber, selectedCategory }: any) {
           {cleanLessonTitle(lessonData?.lesson_name, selectedCategory)}
         </Text>
 
-        <Text style={styles.heroDesc}>
-          {lessonData?.objective ||
-            'A structured lesson to support your child’s development today.'}
-        </Text>
+        <View style={styles.heroChipRow}>
+          <View style={styles.heroMiniChip}>
+            <Ionicons name="time-outline" size={13} color="#FFFFFF" />
+            <Text style={styles.heroMiniChipText}>5–10 min</Text>
+          </View>
+
+          <View style={styles.heroMiniChip}>
+            <Ionicons name="home-outline" size={13} color="#FFFFFF" />
+            <Text style={styles.heroMiniChipText}>At home</Text>
+          </View>
+        </View>
       </View>
     </FadeInView>
   );
@@ -1691,19 +1728,19 @@ function LockedPreviewSection({ title, lockedPreviewLessons, onUpgrade }: any) {
 }
 
 const styles = StyleSheet.create({
-    premiumStartCard: {
+  premiumStartCard: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#FFFFFF',
-  borderRadius: 30,
-  padding: 20,
+  borderRadius: 28,
+  padding: 18,
   marginBottom: 18,
   borderWidth: 1,
-  borderColor: '#DCE3EE',
+  borderColor: '#E2E8F0',
   shadowColor: '#0F172A',
   shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.06,
-  shadowRadius: 16,
+  shadowOpacity: 0.05,
+  shadowRadius: 14,
   elevation: 3,
 },
 
@@ -1727,56 +1764,64 @@ premiumStartGlowTwo: {
   left: -45,
 },
 
-  premiumStartHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  premiumIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  premiumStartTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  premiumStartSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 19,
-  },
+premiumStartHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 14,
+},
+
+premiumIconCircle: {
+  width: 44,
+  height: 44,
+  borderRadius: 16,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 11,
+},
+
+premiumStartTitle: {
+  fontSize: 17,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+premiumStartSubtitle: {
+  marginTop: 3,
+  fontSize: 12.5,
+  color: '#64748B',
+  lineHeight: 18,
+  fontWeight: '700',
+},
   quickInfoRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 18,
-  },
-  quickInfoCard: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  quickInfoLabel: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  quickInfoValue: {
-    marginTop: 2,
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
+  flexDirection: 'row',
+  gap: 10,
+  marginBottom: 14,
+},
+
+quickInfoCard: {
+  flex: 1,
+  backgroundColor: '#F8FAFC',
+  borderRadius: 16,
+  padding: 12,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+quickInfoLabel: {
+  marginTop: 6,
+  fontSize: 11,
+  fontWeight: '800',
+  color: '#64748B',
+},
+
+quickInfoValue: {
+  marginTop: 1,
+  fontSize: 13,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
   previewSection: {
     backgroundColor: '#ECFDF5',
     borderRadius: 18,
@@ -1818,20 +1863,22 @@ premiumStartGlowTwo: {
     lineHeight: 20,
     fontWeight: '700',
   },
+  
   startLessonButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  startLessonButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    marginLeft: 8,
-  },
+  backgroundColor: '#5B3FF4',
+  borderRadius: 17,
+  paddingVertical: 14,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+
+startLessonButtonText: {
+  color: '#FFFFFF',
+  fontSize: 14,
+  fontWeight: '900',
+  marginLeft: 8,
+},
 
   guidedProgressCard: {
     backgroundColor: '#FFFFFF',
@@ -1867,14 +1914,6 @@ premiumStartGlowTwo: {
     backgroundColor: '#4F46E5',
     borderRadius: 999,
   },
-guidedStepCard: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 24,
-  padding: 18,
-  marginBottom: 18,
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-},
 
 guidedStepHeader: {
   flexDirection: 'row',
@@ -1882,34 +1921,65 @@ guidedStepHeader: {
   marginBottom: 14,
 },
 
+guidedStepCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 28,
+  padding: 20,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.05,
+  shadowRadius: 16,
+  elevation: 3,
+},
+
 guidedStepNumber: {
-  width: 40,
-  height: 40,
-  borderRadius: 12,
-  backgroundColor: '#4F46E5',
+  width: 44,
+  height: 44,
+  borderRadius: 14,
+  backgroundColor: '#5B3FF4',
   alignItems: 'center',
   justifyContent: 'center',
   marginRight: 12,
 },
 
-guidedStepNumberText: {
-  color: '#FFFFFF',
-  fontSize: 16,
-  fontWeight: '900',
-},
-
 guidedStepTitle: {
-  fontSize: 17,
+  fontSize: 18,
   color: '#0F172A',
   fontWeight: '900',
 },
 
 guidedStepSubtitle: {
   marginTop: 2,
-  fontSize: 13,
+  fontSize: 12.5,
   color: '#64748B',
   lineHeight: 18,
+  fontWeight: '700',
+},
+
+guidedStepSectionHeader: {
+  fontSize: 14,
+  lineHeight: 22,
+  fontWeight: '900',
+  color: '#111827',
+  marginTop: 14,
+  marginBottom: 6,
+},
+
+guidedStepParagraph: {
+  fontSize: 15,
+  lineHeight: 25,
+  color: '#475569',
   fontWeight: '600',
+  marginBottom: 12,
+},
+
+guidedStepNumberText: {
+  color: '#FFFFFF',
+  fontSize: 16,
+  fontWeight: '900',
 },
 
 guidedStepText: {
@@ -1950,34 +2020,38 @@ guidedStepText: {
     lineHeight: 20,
     fontWeight: '700',
   },
-  guidedNavRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  guidedBackButton: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
+ guidedNavRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 6,
+},
+
+guidedBackButton: {
+  width: 110,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 18,
+  paddingVertical: 16,
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#CBD5E1',
+},
+
+guidedNextButton: {
+  width: 170,
+  backgroundColor: '#4F46E5',
+  borderRadius: 18,
+  paddingVertical: 16,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
   guidedBackButtonText: {
     color: '#475569',
     fontWeight: '800',
     fontSize: 14,
   },
-  guidedNextButton: {
-    flex: 1.4,
-    backgroundColor: '#4F46E5',
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
+  
   guidedNextButtonText: {
     color: '#FFFFFF',
     fontWeight: '800',
@@ -1992,44 +2066,89 @@ guidedStepText: {
   },
   tryLaterLink: {
     alignItems: 'center',
-    paddingVertical: 8,
-    marginBottom: 18,
+    paddingVertical: 4,
+    marginBottom: 6,
   },
   tryLaterLinkText: {
     color: '#64748B',
     fontWeight: '800',
     fontSize: 13,
   },
-  container: { flex: 1, backgroundColor: '#F4F7FB' },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  container: {
+  flex: 1,
+  backgroundColor: '#F7F8FC',
+},
+
+scrollContent: {
+  padding: 20,
+  paddingBottom: 105,
+},
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   loadingText: { marginTop: 12, color: '#64748B', fontWeight: '600' },
   emptyTitle: { fontSize: 22, fontWeight: '800', color: '#111827', marginTop: 14 },
   emptyText: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 21 },
 
-  header: { marginBottom: 18 },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A' },
-  headerSubtitle: { marginTop: 6, fontSize: 14, color: '#64748B' },
+  header: {
+  marginBottom: 14,
+},
+
+headerTitle: {
+  fontSize: 26,
+  fontWeight: '900',
+  color: '#0F172A',
+  letterSpacing: -0.7,
+},
+
+headerSubtitle: {
+  marginTop: 4,
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+  color: '#64748B',
+},
 
 
-  categoryWrap: { marginBottom: 18 },
-  categoryChip: { backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 18, marginRight: 10, borderWidth: 1, borderColor: '#E2E8F0' },
-  categoryChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  categoryChipText: { color: '#475569', fontWeight: '700', fontSize: 13 },
-  categoryChipTextActive: { color: '#FFFFFF' },
+  categoryWrap: {
+  marginBottom: 12,
+},
 
-  heroCard: {
+categoryChip: {
+  backgroundColor: '#FFFFFF',
+  paddingVertical: 8,
+  paddingHorizontal: 13,
+  borderRadius: 15,
+  marginRight: 8,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+categoryChipText: {
+  color: '#475569',
+  fontWeight: '800',
+  fontSize: 11.5,
+},
+
+categoryChipActive: {
+  backgroundColor: '#5B3FF4',
+  borderColor: '#5B3FF4',
+},
+
+categoryChipTextActive: {
+  color: '#FFFFFF',
+},
+
+heroCard: {
   position: 'relative',
   overflow: 'hidden',
-  backgroundColor: '#4F46E5',
-  borderRadius: 32,
-  padding: 24,
-  marginBottom: 18,
-  shadowColor: '#4F46E5',
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.2,
-  shadowRadius: 22,
-  elevation: 5,
+  backgroundColor: '#5B3FF4',
+  borderRadius: 24,
+  padding: 14,
+  marginBottom: 10,
+  shadowColor: '#5B3FF4',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.16,
+  shadowRadius: 14,
+  elevation: 3,
 },
 
 heroGlowOne: {
@@ -2056,7 +2175,7 @@ heroTopRow: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: 16,
+  marginBottom: 10,
 },
 
 heroBadge: {
@@ -2084,23 +2203,44 @@ heroSparkleIcon: {
 
 heroTitle: {
   color: '#FFFFFF',
-  fontSize: 24,
+  fontSize: 18,
   fontWeight: '900',
-  marginBottom: 10,
-  letterSpacing: -0.4,
+  marginBottom: 2,
+  letterSpacing: -0.3,
 },
 
 heroDesc: {
-  color: '#E0E7FF',
-  fontSize: 15,
-  lineHeight: 23,
+  color: '#EDE9FE',
+  fontSize: 12.5,
+  lineHeight: 19,
   fontWeight: '700',
 },
 
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-  summaryCard: { width: '48%', borderRadius: 20, paddingVertical: 14, paddingHorizontal: 14 },
-  summaryLabel: { fontSize: 12, color: '#475569', fontWeight: '700', marginBottom: 4 },
-  summaryValue: { fontSize: 15, color: '#0F172A', fontWeight: '800' },
+  summaryRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 14,
+},
+
+summaryCard: {
+  width: '48%',
+  borderRadius: 18,
+  paddingVertical: 12,
+  paddingHorizontal: 13,
+},
+
+summaryLabel: {
+  fontSize: 11,
+  color: '#64748B',
+  fontWeight: '800',
+  marginBottom: 3,
+},
+
+summaryValue: {
+  fontSize: 14,
+  color: '#0F172A',
+  fontWeight: '900',
+},
 
   sectionCard: { backgroundColor: '#FFFFFF', borderRadius: 26, padding: 20, marginBottom: 18, borderWidth: 1, borderColor: '#DCE3EE' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
@@ -2249,22 +2389,6 @@ lockedSectionTitle: {
   color: '#1E293B',
   marginBottom: 12,
 },
-guidedStepSectionHeader: {
-  fontSize: 15,
-  lineHeight: 24,
-  fontWeight: '900',
-  color: '#0F172A',
-  marginTop: 12,
-  marginBottom: 6,
-},
-
-guidedStepParagraph: {
-  fontSize: 14,
-  lineHeight: 23,
-  color: '#334155',
-  fontWeight: '600',
-  marginBottom: 10,
-},
 
 screenGlowTop: {
   position: 'absolute',
@@ -2300,16 +2424,12 @@ proBannerPremium: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#FFFFFF',
-  borderRadius: 28,
-  padding: 20,
-  marginBottom: 18,
+  borderRadius: 20,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  marginBottom: 10,
   borderWidth: 1,
   borderColor: '#E9D5FF',
-  shadowColor: '#7C3AED',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.08,
-  shadowRadius: 18,
-  elevation: 3,
 },
 
 proBannerGlow: {
@@ -2328,33 +2448,30 @@ proBannerTop: {
 },
 
 proBannerIconWrap: {
-  width: 52,
-  height: 52,
-  borderRadius: 18,
+  width: 36,
+  height: 36,
+  borderRadius: 12,
   backgroundColor: '#F5F3FF',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: 14,
+  marginRight: 10,
 },
 
 proBannerPremiumTitle: {
-  fontSize: 18,
+  fontSize: 14,
   fontWeight: '900',
   color: '#1E1B4B',
 },
 
 proBannerPremiumSubtitle: {
-  marginTop: 4,
-  fontSize: 13,
+  marginTop: 1,
+  fontSize: 12,
   color: '#6D28D9',
-  lineHeight: 20,
   fontWeight: '700',
 },
 
 proFeatureRow: {
-  flexDirection: 'row',
-  marginTop: 18,
-  gap: 10,
+  display: 'none',
 },
 
 proFeatureChip: {
@@ -2362,7 +2479,7 @@ proFeatureChip: {
   alignItems: 'center',
   backgroundColor: '#F5F3FF',
   borderRadius: 999,
-  paddingVertical: 10,
+  paddingVertical: 8,
   paddingHorizontal: 14,
 },
 
@@ -2377,16 +2494,12 @@ freeBannerPremium: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#FFFFFF',
-  borderRadius: 28,
-  padding: 20,
-  marginBottom: 18,
+  borderRadius: 22,
+  paddingVertical: 12,
+  paddingHorizontal: 14,
+  marginBottom: 12,
   borderWidth: 1,
   borderColor: '#FED7AA',
-  shadowColor: '#EA580C',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.06,
-  shadowRadius: 18,
-  elevation: 2,
 },
 
 freeBannerGlow: {
@@ -2405,26 +2518,25 @@ freeBannerTop: {
 },
 
 freeBannerIconWrap: {
-  width: 52,
-  height: 52,
-  borderRadius: 18,
+  width: 42,
+  height: 42,
+  borderRadius: 14,
   backgroundColor: '#FFF7ED',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: 14,
+  marginRight: 12,
 },
 
 freeBannerPremiumTitle: {
-  fontSize: 18,
+  fontSize: 15,
   fontWeight: '900',
   color: '#7C2D12',
 },
 
 freeBannerPremiumSubtitle: {
-  marginTop: 4,
-  fontSize: 13,
+  marginTop: 2,
+  fontSize: 12,
   color: '#C2410C',
-  lineHeight: 20,
   fontWeight: '700',
 },
 
@@ -2432,8 +2544,8 @@ freeUsageRow: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginTop: 20,
-  marginBottom: 10,
+  marginTop: 12,
+  marginBottom: 7,
 },
 
 freeUsageText: {
@@ -2449,7 +2561,7 @@ freeUsageCount: {
 },
 
 freeProgressTrack: {
-  height: 10,
+  height: 7,
   backgroundColor: '#FFEDD5',
   borderRadius: 999,
   overflow: 'hidden',
@@ -2549,9 +2661,8 @@ reviewHeroCard: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#FFFFFF',
-  borderRadius: 30,
-  padding: 24,
-  alignItems: 'center',
+  borderRadius: 28,
+  padding: 18,
   marginBottom: 18,
   borderWidth: 1,
   borderColor: '#BBF7D0',
@@ -2572,36 +2683,49 @@ reviewHeroGlow: {
   right: -60,
 },
 
+reviewHeroGlowTwo: {
+  position: 'absolute',
+  width: 140,
+  height: 140,
+  borderRadius: 70,
+  backgroundColor: 'rgba(79,70,229,0.06)',
+  bottom: -70,
+  left: -50,
+},
+
+reviewHeroTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
 reviewIconWrap: {
-  width: 66,
-  height: 66,
-  borderRadius: 24,
+  width: 58,
+  height: 58,
+  borderRadius: 20,
   backgroundColor: '#ECFDF5',
   alignItems: 'center',
   justifyContent: 'center',
-  marginBottom: 14,
+  marginRight: 14,
 },
 
 reviewHeroTitle: {
-  fontSize: 23,
+  fontSize: 21,
   fontWeight: '900',
   color: '#064E3B',
-  textAlign: 'center',
 },
 
 reviewHeroText: {
-  marginTop: 8,
-  fontSize: 14,
-  lineHeight: 22,
+  marginTop: 4,
+  fontSize: 13,
+  lineHeight: 20,
   color: '#047857',
   fontWeight: '700',
-  textAlign: 'center',
 },
 
 reviewMiniRow: {
   flexDirection: 'row',
   gap: 10,
-  marginTop: 18,
+  marginTop: 16,
 },
 
 reviewMiniChip: {
@@ -2609,8 +2733,8 @@ reviewMiniChip: {
   alignItems: 'center',
   backgroundColor: '#ECFDF5',
   borderRadius: 999,
-  paddingVertical: 9,
-  paddingHorizontal: 12,
+  paddingVertical: 8,
+  paddingHorizontal: 11,
 },
 
 reviewMiniText: {
@@ -2823,5 +2947,145 @@ primaryButtonPremiumText: {
   fontWeight: '900',
   fontSize: 14,
   marginLeft: 8,
+},
+
+heroMoreButton: {
+  marginTop: 10,
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: 'rgba(255,255,255,0.16)',
+  paddingVertical: 7,
+  paddingHorizontal: 12,
+  borderRadius: 999,
+},
+
+heroMoreText: {
+  color: '#FFFFFF',
+  fontSize: 12,
+  fontWeight: '900',
+  marginRight: 4,
+},
+
+heroChipRow: {
+  flexDirection: 'row',
+  gap: 7,
+  marginTop: 8,
+},
+
+heroMiniChip: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: 'rgba(255,255,255,0.16)',
+  paddingVertical: 7,
+  paddingHorizontal: 10,
+  borderRadius: 999,
+},
+
+heroMiniChipText: {
+  marginLeft: 5,
+  color: '#FFFFFF',
+  fontSize: 11,
+  fontWeight: '900',
+},
+
+singleSummaryWrap: {
+  marginBottom: 14,
+},
+
+guidedInlineLabel: {
+  fontWeight: '900',
+},
+
+guidedBlackStepLabel: {
+  color: '#111827',
+  fontWeight: '900',
+},
+
+preparingCard: {
+  position: 'relative',
+  overflow: 'hidden',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 30,
+  padding: 24,
+  alignItems: 'center',
+  marginTop: 8,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+  shadowColor: '#7C3AED',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.08,
+  shadowRadius: 18,
+  elevation: 3,
+},
+
+preparingGlow: {
+  position: 'absolute',
+  width: 190,
+  height: 190,
+  borderRadius: 95,
+  backgroundColor: 'rgba(124,58,237,0.08)',
+  top: -90,
+  right: -70,
+},
+
+preparingIconWrap: {
+  width: 64,
+  height: 64,
+  borderRadius: 22,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 14,
+},
+
+preparingTitle: {
+  fontSize: 22,
+  fontWeight: '900',
+  color: '#0F172A',
+  textAlign: 'center',
+},
+
+preparingText: {
+  marginTop: 8,
+  textAlign: 'center',
+  color: '#64748B',
+  lineHeight: 22,
+  fontSize: 14,
+  fontWeight: '700',
+},
+
+preparingMiniRow: {
+  marginTop: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F5F3FF',
+  borderRadius: 999,
+  paddingVertical: 9,
+  paddingHorizontal: 13,
+},
+
+preparingMiniText: {
+  marginLeft: 7,
+  color: '#6D28D9',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+preparingRefreshButton: {
+  marginTop: 18,
+  backgroundColor: '#4F46E5',
+  borderRadius: 18,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
+  width: '100%',
+  alignItems: 'center',
+},
+
+preparingRefreshText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+  fontSize: 14,
 },
 });

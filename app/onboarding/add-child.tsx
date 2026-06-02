@@ -14,10 +14,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { runInBackground } from '../../lib/performance';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
-import { runInBackground, withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
 export default function AddChild() {
@@ -86,131 +86,92 @@ export default function AddChild() {
     }
   };
 
-  const handleSave = async () => {
-    const trimmedCaregiverName = caregiverName.trim();
-    const trimmedCaregiverRelationship = caregiverRelationship.trim();
-    const trimmedName = name.trim();
-    const trimmedAge = age.trim();
+  const timeout = (ms: number) =>
+  new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Request timed out. Check Supabase/RLS or internet connection.')), ms)
+  );
 
-    if (isFirstChild && (!trimmedCaregiverName || !trimmedCaregiverRelationship)) {
-      Alert.alert(
-        'Missing Caregiver Info',
-        'Please enter your name and relationship to the child.'
-      );
-      return;
-    }
+const handleSave = async () => {
+  if (saving) return;
 
-    if (!trimmedName || !trimmedAge) {
-      Alert.alert('Missing Info', 'Please provide a child name and age.');
-      return;
-    }
+  const trimmedCaregiverName = caregiverName.trim();
+  const trimmedCaregiverRelationship = caregiverRelationship.trim();
+  const trimmedName = name.trim();
+  const trimmedAge = age.trim();
 
-    const parsedAge = Number.parseInt(trimmedAge, 10);
+  if (isFirstChild && (!trimmedCaregiverName || !trimmedCaregiverRelationship)) {
+    Alert.alert('Missing Caregiver Info', 'Please enter your name and relationship to the child.');
+    return;
+  }
 
-    if (Number.isNaN(parsedAge) || parsedAge <= 0 || parsedAge > 21) {
-      Alert.alert('Invalid Age', 'Please enter a valid age between 1 and 21.');
-      return;
-    }
+  if (!trimmedName || !trimmedAge) {
+    Alert.alert('Missing Info', 'Please provide a child name and age.');
+    return;
+  }
 
-    if (!hasProAccess && childCount >= 1) {
-      Alert.alert(
-        'Pro Feature',
-        'Your free plan includes 1 child profile. Upgrade to Pro to add another child.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.replace('/subscription') },
-        ]
-      );
+  const parsedAge = Number.parseInt(trimmedAge, 10);
 
-      return;
-    }
+  if (Number.isNaN(parsedAge) || parsedAge <= 0 || parsedAge > 21) {
+    Alert.alert('Invalid Age', 'Please enter a valid age between 1 and 21.');
+    return;
+  }
 
-    setSaving(true);
+  setSaving(true);
 
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+  try {
+    console.log('ADD CHILD: getting user');
 
-      if (userError) throw userError;
+    const userResult: any = await Promise.race([
+      supabase.auth.getUser(),
+      timeout(8000),
+    ]);
 
-      if (!user?.id) {
-        throw new Error('No active account found. Please log in again.');
-      }
+    const user = userResult?.data?.user;
+    const userError = userResult?.error;
 
-      if (isFirstChild) {
-        const { error: metadataError } = await supabase.auth.updateUser({
-          data: {
-            full_name: trimmedCaregiverName,
-            caregiver_name: trimmedCaregiverName,
-            relationship_to_child: trimmedCaregiverRelationship,
-            caregiver_role: trimmedCaregiverRelationship,
-          },
-        });
+    if (userError) throw userError;
+    if (!user?.id) throw new Error('No active account found. Please log in again.');
 
-        if (metadataError) throw metadataError;
+    console.log('ADD CHILD: inserting child');
 
-        const { error: profileError } = await supabase.from('profiles').upsert(
-          {
-            id: user.id,
-            full_name: trimmedCaregiverName,
-            caregiver_name: trimmedCaregiverName,
-            relationship_to_child: trimmedCaregiverRelationship,
-            caregiver_role: trimmedCaregiverRelationship,
-            email: user.email || null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        );
+    const childResult: any = await Promise.race([
+      supabase
+        .from('children')
+        .insert({
+          parent_id: user.id,
+          child_name: trimmedName,
+          name: trimmedName,
+          age: parsedAge,
+          child_age: String(parsedAge),
+          caregiver_relationship: trimmedCaregiverRelationship || 'Caregiver',
+        })
+        .select('*')
+        .single(),
+      timeout(8000),
+    ]);
 
-        if (profileError) throw profileError;
-      }
+    if (childResult?.error) throw childResult.error;
 
-      const { data, error } = await withTimeout(
-        supabase
-          .from('children')
-          .insert({
-            parent_id: user.id,
-            child_name: trimmedName,
-            name: trimmedName,
-            age: parsedAge,
-            child_age: String(parsedAge),
-            caregiver_relationship:
-              trimmedCaregiverRelationship ||
-              selectedChild?.caregiver_relationship ||
-              'Caregiver',
-          })
-          .select('*')
-          .single(),
-        10000,
-        'Creating child profile took too long. Please check your connection.'
-      );
+    console.log('ADD CHILD SUCCESS:', childResult.data);
 
-      if (error) throw error;
+if (typeof setSelectedChild === 'function') {
+  setSelectedChild(childResult.data);
+}
 
-      if (typeof setSelectedChild === 'function') {
-        setSelectedChild(data);
-      }
+router.replace('/onboarding/assessment' as any);
 
-      runInBackground(async () => {
-        if (typeof refreshChildren === 'function') {
-          await refreshChildren();
-        }
-      }, 'Refresh children after add child');
-
-      router.replace('/onboarding/assessment');
-    } catch (error: any) {
-      console.error('Add child error:', error);
-
-      Alert.alert(
-        'Could Not Create Profile',
-        error?.message || 'Something went wrong while creating this child profile.'
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+runInBackground(async () => {
+  if (typeof refreshChildren === 'function') {
+    await refreshChildren();
+  }
+}, 'Refresh children after add child');
+  } catch (error: any) {
+    console.error('ADD CHILD FAILED:', error);
+    Alert.alert('Could Not Create Profile', error?.message || 'Something went wrong.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (subscriptionLoading || !checkedAccess) {
     return (
@@ -239,7 +200,11 @@ export default function AddChild() {
           </TouchableOpacity>
 
           <View style={styles.stepBadge}>
-  <Text style={styles.stepBadgeText}>STEP 1 OF 3</Text>
+  <Text style={styles.stepBadgeText}>STEP 1 OF 4</Text>
+</View>
+
+<View style={styles.progressTrack}>
+  <View style={styles.progressFill} />
 </View>
 
         <View style={styles.header}>
@@ -379,10 +344,10 @@ export default function AddChild() {
             </View>
 
             <Text style={styles.infoText}>
-              After the profile is created, the app will open the child assessment.
-              That assessment will help personalize lessons, routines, PECS cards,
-              worksheets, behavior supports, and progress tracking.
-            </Text>
+              Next, we'll learn about your child's communication,
+              routines, learning style, and support needs so ABA at Home
+              can create a personalized starting plan.
+          </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -600,5 +565,19 @@ stepBadgeText: {
   fontSize: 11,
   fontWeight: '900',
   letterSpacing: 0.5,
+},
+
+progressTrack: {
+  height: 8,
+  backgroundColor: '#E5E7EB',
+  borderRadius: 999,
+  marginBottom: 20,
+},
+
+progressFill: {
+  width: '25%',
+  height: '100%',
+  borderRadius: 999,
+  backgroundColor: '#4F46E5',
 },
 });

@@ -132,15 +132,12 @@ export default function ReportsScreen() {
         const recommendationResult = await generateProgressRecommendations({
           childName,
           lessonLogs: lessons.map((log) => ({
-            category: log.category,
-            performance: log.performance,
-            completed_at: log.completed_at,
-          })),
-          routineLogs: routines.map((log) => ({
-            routine_period: log.routine_period,
-            completed_at: log.completed_at,
-          })),
-        });
+          category: log.category,
+         success: log.status === 'success' || log.performance === 'success',
+
+  })),
+
+});
 
         setRecommendations(recommendationResult.recommendations || []);
       } catch (error) {

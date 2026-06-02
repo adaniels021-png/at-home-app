@@ -12,7 +12,43 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const RESOURCE_SECTIONS = [
+type ResourceItem = {
+  title: string;
+  description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route?: string;
+  url?: string;
+  color?: string;
+  bg?: string;
+};
+
+type ResourceSection = {
+  title: string;
+  items: ResourceItem[];
+};
+
+const RESOURCE_SECTIONS: ResourceSection[] = [
+  {
+    title: 'ABA at Home Tools',
+    items: [
+      {
+        title: 'Baby Signs',
+        description: 'Simple signs for everyday needs and routines.',
+        icon: 'hand-left-outline',
+        route: '/communication/sign-guide',
+        color: '#10B981',
+        bg: '#ECFDF5',
+      },
+      {
+        title: 'Parent Hub',
+        description: 'Quick ABA tips for supporting communication at home.',
+        icon: 'school-outline',
+        route: '/communication/parent-training-hub',
+        color: '#4F46E5',
+        bg: '#EEF2FF',
+      },
+    ],
+  },
   {
     title: 'Parent Training',
     items: [
@@ -110,23 +146,40 @@ export default function ResourcesLibraryScreen() {
               <TouchableOpacity
                 key={item.title}
                 style={styles.resourceCard}
-                onPress={() => void openUrl(item.url)}
-                activeOpacity={0.9}
+               onPress={() => {
+  if (item.route) {
+    router.push(item.route as any);
+    return;
+  }
+
+  if (item.url) {
+    void openUrl(item.url);
+  }
+}}
               >
-                <View style={styles.resourceIconWrap}>
-                  <Ionicons
-                    name={item.icon as keyof typeof Ionicons.glyphMap}
-                    size={20}
-                    color="#4F46E5"
-                  />
-                </View>
+                <View
+  style={[
+    styles.resourceIconWrap,
+    { backgroundColor: item.bg || '#EEF2FF' },
+  ]}
+>
+  <Ionicons
+    name={item.icon as keyof typeof Ionicons.glyphMap}
+    size={20}
+    color={item.color || '#4F46E5'}
+  />
+</View>
 
                 <View style={styles.resourceTextWrap}>
                   <Text style={styles.resourceTitle}>{item.title}</Text>
                   <Text style={styles.resourceDescription}>{item.description}</Text>
                 </View>
 
-                <Ionicons name="open-outline" size={18} color="#64748B" />
+                <Ionicons
+                  name={item.route ? 'chevron-forward' : 'open-outline'}
+                  size={18}
+                  color="#64748B"
+                />
               </TouchableOpacity>
             ))}
           </View>

@@ -97,6 +97,39 @@ const DEFAULT_ROUTINES: Record<TimePeriod, RoutineItem[]> = {
   ],
 };
 
+const ROUTINE_THEME: Record<
+  TimePeriod,
+  {
+    hero: string;
+    soft: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    tip: string;
+  }
+> = {
+  morning: {
+    hero: '#F59E0B',
+    soft: '#FEF3C7',
+    icon: 'sunny-outline',
+    title: 'Good Morning',
+    tip: 'Try showing the first routine step before giving a verbal direction. Visual first, words second.',
+  },
+  afternoon: {
+    hero: '#3B82F6',
+    soft: '#DBEAFE',
+    icon: 'partly-sunny-outline',
+    title: 'Good Afternoon',
+    tip: 'Before switching activities, give a simple warning like “First cleanup, then play.”',
+  },
+  evening: {
+    hero: '#4338CA',
+    soft: '#E0E7FF',
+    icon: 'moon-outline',
+    title: 'Good Evening',
+    tip: 'Keep bedtime language short and predictable. Repeating the same calm phrase can help transitions.',
+  },
+};
+
 function getFallbackDayType(dayType: DayType): DayType {
   return dayType === 'saturday' || dayType === 'sunday'
     ? 'weekends'
@@ -169,6 +202,12 @@ const openProRoute = (path: string) => {
   const childName = useMemo(() => {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
+
+const theme = ROUTINE_THEME[selectedTime];
+
+const routineTitle = `${childName}'s ${
+  selectedTime.charAt(0).toUpperCase() + selectedTime.slice(1)
+}`;
 
   const currentRoutine: RoutineItem[] = useMemo(() => {
     if (customRoutineRows.length > 0) {
@@ -266,77 +305,79 @@ const openProRoute = (path: string) => {
   };
 
   const handleToggleTask = async (taskName: string) => {
-    if (!selectedChild?.id) {
-      Alert.alert('No Child Selected', 'Please select a child profile first.');
+  if (!selectedChild?.id) {
+    Alert.alert('No Child Selected', 'Please select a child profile first.');
+    return;
+  }
+
+  const existingLog = getTaskLog(taskName);
+  setSavingTask(taskName);
+
+  try {
+    if (existingLog) {
+      setTodayLogs((prev) => prev.filter((log) => log.id !== existingLog.id));
+
+      if (!existingLog.id.startsWith('local-')) {
+        const deleteResult = (await withTimeout(
+          supabase
+            .from('routine_logs')
+            .delete()
+            .eq('id', existingLog.id)
+            .then((res) => res)
+        )) as any;
+
+        if (deleteResult.error) throw deleteResult.error;
+      }
+
       return;
     }
 
-    const existingLog = getTaskLog(taskName);
+    const now = new Date().toISOString();
 
-    setSavingTask(taskName);
+    const payload = {
+      child_id: selectedChild.id,
+      routine_period: selectedTime,
+      day_type: selectedDayType,
+      routine_name: `${selectedTime} routine`,
+      task_name: taskName,
+      completed: true,
+      completed_at: now,
+    };
 
-    try {
-      if (existingLog) {
-        setTodayLogs((prev) => prev.filter((log) => log.id !== existingLog.id));
+    const optimisticLog: RoutineLogRow = {
+      id: `local-${Date.now()}`,
+      child_id: selectedChild.id,
+      routine_period: selectedTime,
+      day_type: selectedDayType,
+      routine_name: `${selectedTime} routine`,
+      task_name: taskName,
+      completed: true,
+      completed_at: now,
+      created_at: now,
+    };
 
-        if (!existingLog.id.startsWith('local-')) {
-          const { error } = await withTimeout(
-            supabase.from('routine_logs').delete().eq('id', existingLog.id),
-            8000,
-            'Removing routine progress took too long.'
-          );
+    setTodayLogs((prev) => [optimisticLog, ...prev]);
 
-          if (error) throw error;
-        }
+    const insertResult = (await withTimeout(
+      supabase
+        .from('routine_logs')
+        .insert([payload])
+        .then((res) => res)
+    )) as any;
 
-        return;
-      }
+    if (insertResult.error) throw insertResult.error;
+  } catch (error: any) {
+    console.error('Routine toggle error:', error);
+    Alert.alert(
+      'Routine Error',
+      error?.message || 'Could not update task completion.'
+    );
 
-      const now = new Date().toISOString();
-
-      const payload = {
-        child_id: selectedChild.id,
-        routine_period: selectedTime,
-        day_type: selectedDayType,
-        routine_name: `${selectedTime} routine`,
-        task_name: taskName,
-        completed: true,
-        completed_at: now,
-      };
-
-      const optimisticLog: RoutineLogRow = {
-        id: `local-${Date.now()}`,
-        child_id: selectedChild.id,
-        routine_period: selectedTime,
-        day_type: selectedDayType,
-        routine_name: `${selectedTime} routine`,
-        task_name: taskName,
-        completed: true,
-        completed_at: now,
-        created_at: now,
-      };
-
-      setTodayLogs((prev) => [optimisticLog, ...prev]);
-
-      const { error } = await withTimeout(
-        supabase.from('routine_logs').insert([payload]),
-        8000,
-        'Saving routine progress took too long.'
-      );
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Routine toggle error:', error);
-      Alert.alert(
-        'Routine Error',
-        error?.message || 'Could not update task completion.'
-      );
-
-      await loadRoutineData();
-    } finally {
-      setSavingTask(null);
-    }
-  };
+    await loadRoutineData();
+  } finally {
+    setSavingTask(null);
+  }
+};
 
   const handleResetRoutine = async () => {
     if (!selectedChild?.id) return;
@@ -427,45 +468,81 @@ const openProRoute = (path: string) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Daily Routines</Text>
-          <Text style={styles.subtitle}>
-            Track structured routines for {childName} and log when each task is completed.
-          </Text>
-        </View>
+        <View style={[styles.heroCard, { backgroundColor: theme.hero }]}>
+  <View style={styles.heroBadge}>
+    <Ionicons name={theme.icon} size={14} color="#FFFFFF" />
+    <Text style={styles.heroBadgeText}>DAILY ROUTINE</Text>
+  </View>
 
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <Ionicons name="checkmark-done-circle-outline" size={18} color="#4F46E5" />
-            <Text style={styles.summaryTitle}>Today’s Routine Progress</Text>
-          </View>
-          <Text style={styles.summaryText}>
-            {completedCount} of {currentRoutine.length} tasks completed for the {selectedTime} routine.
-          </Text>
-          <Text style={styles.summarySubtext}>
-            {customRoutineRows.length > 0
-              ? 'Using your saved custom routine with your order and pictures.'
-              : 'Using the default routine.'}
-          </Text>
-        </View>
+  <Text style={styles.heroTitle}>{routineTitle}</Text>
 
-        <View style={styles.timeRow}>
-          {(['morning', 'afternoon', 'evening'] as TimePeriod[]).map((time) => {
-            const active = selectedTime === time;
+  <Text style={styles.heroSubtitle}>
+  {theme.title}. Help {childName} move through the day with simple visual steps.
+</Text>
 
-            return (
-              <TouchableOpacity
-                key={time}
-                style={[styles.timeBtn, active && styles.timeBtnActive]}
-                onPress={() => setSelectedTime(time)}
-              >
-                <Text style={[styles.timeText, active && styles.timeTextActive]}>
-                  {time.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+  <View style={styles.heroProgressPill}>
+    <Ionicons name="checkmark-done-circle-outline" size={17} color="#4F46E5" />
+    <Text style={styles.heroProgressText}>
+      {completedCount} of {currentRoutine.length} completed
+    </Text>
+  </View>
+
+<View style={styles.progressTrack}>
+  <View
+    style={[
+      styles.progressFill,
+      {
+        width: `${
+          currentRoutine.length
+            ? Math.round((completedCount / currentRoutine.length) * 100)
+            : 0
+        }%`,
+      },
+    ]}
+  />
+</View>
+</View>
+
+        <View style={styles.segmentedWrap}>
+  {(['morning', 'afternoon', 'evening'] as TimePeriod[]).map((time) => {
+    const active = selectedTime === time;
+
+    return (
+      <TouchableOpacity
+        key={time}
+        style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+        onPress={() => setSelectedTime(time)}
+        activeOpacity={0.85}
+      >
+        <Ionicons
+          name={
+            time === 'morning'
+              ? 'sunny-outline'
+              : time === 'afternoon'
+                ? 'partly-sunny-outline'
+                : 'moon-outline'
+          }
+          size={16}
+          color={active ? '#FFFFFF' : '#4F46E5'}
+        />
+        <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+          {time.charAt(0).toUpperCase() + time.slice(1)}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
+
+<View style={[styles.parentTipCard, { backgroundColor: theme.soft }]}>
+  <View style={styles.parentTipHeader}>
+    <Ionicons name="bulb-outline" size={18} color={theme.hero} />
+    <Text style={[styles.parentTipTitle, { color: theme.hero }]}>
+      Parent Support Tip
+    </Text>
+  </View>
+
+  <Text style={styles.parentTipText}>{theme.tip}</Text>
+</View>
 
         <View style={styles.dayDropdownWrap}>
           <TouchableOpacity
@@ -522,88 +599,7 @@ const openProRoute = (path: string) => {
           ) : null}
         </View>
 
-        <TouchableOpacity style={styles.resetBtn} onPress={handleResetRoutine}>
-          <Ionicons name="refresh-outline" size={14} color="#DC2626" />
-          <Text style={styles.resetBtnText}>Reset Today</Text>
-        </TouchableOpacity>
-
-        <View style={styles.cardContainer}>
-          {currentRoutine.map((item, index) => {
-            const completedLog = getTaskLog(item.label);
-            const completed = !!completedLog;
-            const saving = savingTask === item.label;
-
-            return (
-              <View key={`${item.label}-${index}`} style={styles.routineCard}>
-                <View style={styles.routineTopRow}>
-                  <View style={styles.routineLeft}>
-                    <View style={styles.visualWrap}>
-                      {item.imageUrl ? (
-                        <Image
-                          source={{ uri: item.imageUrl }}
-                          style={styles.taskImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.iconWrap,
-                            completed && styles.iconWrapCompleted,
-                          ]}
-                        >
-                          <Ionicons
-                            name={completed ? 'checkmark-circle' : item.icon}
-                            size={26}
-                            color={completed ? '#10B981' : '#4F46E5'}
-                          />
-                        </View>
-                      )}
-                    </View>
-
-                    <View style={styles.taskTextWrap}>
-                      <Text style={styles.routineText}>{item.label}</Text>
-
-                      {item.isCustomImage ? (
-                        <Text style={styles.photoTag}>Custom photo</Text>
-                      ) : null}
-
-                      {completedLog ? (
-                       <Text style={styles.completedTimeText}>Completed today</Text>
-                    ) : (
-                       <Text style={styles.pendingText}>Not completed yet</Text>
-                    )}
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.checkBtn,
-                      completed && styles.checkBtnCompleted,
-                    ]}
-                    onPress={() => handleToggleTask(item.label)}
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <ActivityIndicator size="small" color="#4F46E5" />
-                    ) : completed ? (
-                      <Text style={styles.uncheckBtnText}>Undo</Text>
-                    ) : (
-                      <Text style={styles.checkBtnText}>Check Off</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-
-                {index !== currentRoutine.length - 1 && (
-                  <View style={styles.arrowWrap}>
-                    <Ionicons name="arrow-down" size={20} color="#CBD5F5" />
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={styles.topActionRow}>
+         <View style={styles.topActionRow}>
   <TouchableOpacity
     style={styles.secondaryActionBtn}
     onPress={() => openProRoute('/routines/customize')}
@@ -614,7 +610,7 @@ const openProRoute = (path: string) => {
       color="#4F46E5"
     />
     <Text style={styles.secondaryActionBtnText}>
-      {hasProAccess ? 'Customize Routine' : 'Customize Routine Pro'}
+      {hasProAccess ? 'Customize' : 'Customize Pro'}
     </Text>
   </TouchableOpacity>
 
@@ -628,32 +624,113 @@ const openProRoute = (path: string) => {
       color="#FFFFFF"
     />
     <Text style={styles.primaryActionBtnText}>
-      {hasProAccess ? 'Print Routine' : 'Print Routine Pro'}
+      {hasProAccess ? 'Print' : 'Print Pro'}
     </Text>
   </TouchableOpacity>
 </View>
 
-        <View style={styles.infoCard}>
-          <View style={styles.infoHeader}>
-            <Ionicons name="analytics-outline" size={18} color="#4F46E5" />
-            <Text style={styles.infoTitle}>Routine Tracking</Text>
-          </View>
-          <Text style={styles.infoText}>
-            Routine completion can now support progress summaries, printable charts, and parent-friendly daily structure.
-          </Text>
-        </View>
+        <TouchableOpacity style={styles.resetBtn} onPress={handleResetRoutine}>
+          <Ionicons name="refresh-outline" size={14} color="#DC2626" />
+          <Text style={styles.resetBtnText}>Reset Today</Text>
+        </TouchableOpacity>
 
-        <View style={styles.tipBox}>
-          <View style={styles.tipHeader}>
-            <Ionicons name="bulb" size={18} color="#F59E0B" />
-            <Text style={styles.tipTitle}>ABA Tip</Text>
+        <View style={styles.cardContainer}>
+  <Text style={styles.flowSectionTitle}>Today’s Visual Routine</Text>
+
+  {currentRoutine.map((item, index) => {
+    const completedLog = getTaskLog(item.label);
+    const completed = !!completedLog;
+    const saving = savingTask === item.label;
+
+    return (
+      <View
+        key={`${item.label}-${index}`}
+        style={[styles.routineCard, completed && styles.routineCardCompleted]}
+      >
+        <View style={styles.flowRow}>
+          <View style={styles.stepRail}>
+            <View
+              style={[
+                styles.stepCircle,
+                completed && styles.stepCircleCompleted,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.stepNumber,
+                  completed && styles.stepNumberCompleted,
+                ]}
+              >
+                {index + 1}
+              </Text>
+            </View>
+
+            {index !== currentRoutine.length - 1 ? (
+              <View style={styles.stepLine} />
+            ) : null}
           </View>
 
-          <Text style={styles.tipText}>
-            Use consistent routines daily. Pair each step with a visual cue or PECS-style picture
-            to help your child anticipate transitions.
-          </Text>
+          <View style={styles.routineTopRow}>
+            <View style={styles.routineLeft}>
+              <View style={styles.visualWrap}>
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.taskImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.iconWrap,
+                      completed && styles.iconWrapCompleted,
+                    ]}
+                  >
+                    <Ionicons
+                      name={completed ? 'checkmark-circle' : item.icon}
+                      size={26}
+                      color={completed ? '#10B981' : '#4F46E5'}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.taskTextWrap}>
+                <Text style={styles.routineText}>{item.label}</Text>
+
+                {item.isCustomImage ? (
+                  <Text style={styles.photoTag}>Custom photo</Text>
+                ) : null}
+
+                {completedLog ? (
+                  <Text style={styles.completedTimeText}>✓ Completed</Text>
+                ) : (
+                  <Text style={styles.pendingText}>Not completed yet</Text>
+                )}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.checkBtn, completed && styles.checkBtnCompleted]}
+              onPress={() => handleToggleTask(item.label)}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#4F46E5" />
+              ) : (
+                <Ionicons
+                  name={completed ? 'checkmark' : 'add'}
+                  size={22}
+                  color={completed ? '#FFFFFF' : '#4F46E5'}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
+      </View>
+    );
+  })}
+</View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -699,86 +776,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 21,
-  },
-
-  header: {
-    marginBottom: 18,
-  },
-
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-
-  subtitle: {
-    marginTop: 6,
-    color: '#64748B',
-    lineHeight: 20,
-  },
-
-  summaryCard: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 20,
-  },
-
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-
-  summaryTitle: {
-    marginLeft: 8,
-    fontWeight: '800',
-    color: '#3730A3',
-    fontSize: 15,
-  },
-
-  summaryText: {
-    color: '#4338CA',
-    lineHeight: 20,
-    fontSize: 14,
-  },
-
-  summarySubtext: {
-    marginTop: 6,
-    color: '#6366F1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-
-  timeBtn: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  timeBtnActive: {
-    backgroundColor: '#4F46E5',
-  },
-
-  timeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#4F46E5',
-  },
-
-  timeTextActive: {
-    color: '#FFFFFF',
   },
 
   dayDropdownWrap: {
@@ -829,9 +826,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
 
-  dayDropdownItemActive: {
-    backgroundColor: '#EEF2FF',
-  },
+ dayDropdownItemActive: {
+  backgroundColor: '#EEF2FF',
+},
 
   dayDropdownItemText: {
     color: '#475569',
@@ -866,21 +863,29 @@ const styles = StyleSheet.create({
   },
 
   cardContainer: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 25,
-  },
+  marginBottom: 25,
+},
 
-  routineCard: {
-    marginBottom: 14,
-  },
+routineCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 26,
+  padding: 16,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 7 },
+  elevation: 3,
+},
 
   routineTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
 
   routineLeft: {
     flexDirection: 'row',
@@ -894,14 +899,17 @@ const styles = StyleSheet.create({
   },
 
   iconWrap: {
-    backgroundColor: '#FFFFFF',
-    padding: 14,
-    borderRadius: 16,
-  },
+  width: 58,
+  height: 58,
+  borderRadius: 20,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
 
   iconWrapCompleted: {
-    backgroundColor: '#ECFDF5',
-  },
+  backgroundColor: '#DCFCE7',
+},
 
   taskImage: {
     width: 58,
@@ -915,10 +923,11 @@ const styles = StyleSheet.create({
   },
 
   routineText: {
-    fontWeight: '700',
-    color: '#1E293B',
-    fontSize: 15,
-  },
+  fontWeight: '900',
+  color: '#0F172A',
+  fontSize: 16,
+  letterSpacing: -0.2,
+},
 
   photoTag: {
     marginTop: 4,
@@ -928,50 +937,32 @@ const styles = StyleSheet.create({
   },
 
   completedTimeText: {
-    marginTop: 4,
-    color: '#059669',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  marginTop: 6,
+  alignSelf: 'flex-start',
+  backgroundColor: '#DCFCE7',
+  color: '#15803D',
+  fontSize: 12,
+  fontWeight: '800',
+  paddingVertical: 4,
+  paddingHorizontal: 9,
+  borderRadius: 999,
+},
 
   pendingText: {
-    marginTop: 4,
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  checkBtn: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    minWidth: 92,
-    alignItems: 'center',
-  },
+  marginTop: 6,
+  alignSelf: 'flex-start',
+  backgroundColor: '#F1F5F9',
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '800',
+  paddingVertical: 4,
+  paddingHorizontal: 9,
+  borderRadius: 999,
+},
 
   checkBtnCompleted: {
     backgroundColor: '#10B981',
     borderColor: '#10B981',
-  },
-
-  checkBtnText: {
-    color: '#4F46E5',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-
-  uncheckBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-
-  arrowWrap: {
-    marginTop: 10,
-    alignItems: 'center',
   },
 
   topActionRow: {
@@ -1014,54 +1005,211 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
+  heroCard: {
+  backgroundColor: '#4F46E5',
+  borderRadius: 32,
+  padding: 22,
+  marginBottom: 18,
+  shadowColor: '#4F46E5',
+  shadowOpacity: 0.24,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 5,
+},
 
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
+heroBadge: {
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: 'rgba(255,255,255,0.16)',
+  borderRadius: 999,
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  marginBottom: 12,
+},
 
-  infoTitle: {
-    marginLeft: 8,
-    fontWeight: '800',
-    color: '#1E293B',
-  },
+heroBadgeText: {
+  color: '#FFFFFF',
+  fontSize: 11,
+  fontWeight: '900',
+  marginLeft: 6,
+  letterSpacing: 0.4,
+},
 
-  infoText: {
-    color: '#64748B',
-    lineHeight: 20,
-  },
+heroTitle: {
+  fontSize: 30,
+  fontWeight: '900',
+  color: '#FFFFFF',
+  letterSpacing: -0.4,
+},
 
-  tipBox: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 20,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-  },
+heroSubtitle: {
+  marginTop: 8,
+  color: '#E0E7FF',
+  fontSize: 14,
+  lineHeight: 21,
+  fontWeight: '700',
+},
 
-  tipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
+heroProgressPill: {
+  marginTop: 16,
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingVertical: 9,
+  paddingHorizontal: 13,
+},
 
-  tipTitle: {
-    marginLeft: 8,
-    fontWeight: '800',
-    color: '#92400E',
-  },
+heroProgressText: {
+  marginLeft: 7,
+  color: '#4F46E5',
+  fontWeight: '900',
+  fontSize: 13,
+},
 
-  tipText: {
-    color: '#B45309',
-    lineHeight: 20,
-  },
+progressTrack: {
+  marginTop: 14,
+  height: 9,
+  backgroundColor: 'rgba(255,255,255,0.24)',
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+
+progressFill: {
+  height: '100%',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+},
+
+segmentedWrap: {
+  flexDirection: 'row',
+  backgroundColor: '#E2E8F0',
+  borderRadius: 20,
+  padding: 5,
+  marginBottom: 16,
+},
+
+segmentBtn: {
+  flex: 1,
+  borderRadius: 16,
+  paddingVertical: 11,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+
+segmentBtnActive: {
+  backgroundColor: '#4F46E5',
+},
+
+segmentText: {
+  marginLeft: 6,
+  fontSize: 12,
+  fontWeight: '900',
+  color: '#4F46E5',
+},
+
+segmentTextActive: {
+  color: '#FFFFFF',
+},
+
+routineCardCompleted: {
+  borderColor: '#BBF7D0',
+  backgroundColor: '#F0FDF4',
+  shadowColor: '#10B981',
+  shadowOpacity: 0.08,
+},
+
+checkBtn: {
+  width: 48,
+  height: 48,
+  borderRadius: 18,
+  backgroundColor: '#EEF2FF',
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+parentTipCard: {
+  borderRadius: 22,
+  padding: 16,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: 'rgba(15,23,42,0.06)',
+},
+
+parentTipHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+
+parentTipTitle: {
+  marginLeft: 8,
+  fontSize: 14,
+  fontWeight: '900',
+},
+
+parentTipText: {
+  color: '#334155',
+  fontSize: 13,
+  lineHeight: 20,
+  fontWeight: '700',
+},
+
+flowSectionTitle: {
+  fontSize: 17,
+  fontWeight: '900',
+  color: '#0F172A',
+  marginBottom: 12,
+  letterSpacing: -0.2,
+},
+
+flowRow: {
+  flexDirection: 'row',
+  alignItems: 'stretch',
+},
+
+stepRail: {
+  width: 34,
+  alignItems: 'center',
+  marginRight: 10,
+},
+
+stepCircle: {
+  width: 30,
+  height: 30,
+  borderRadius: 999,
+  backgroundColor: '#EEF2FF',
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+stepCircleCompleted: {
+  backgroundColor: '#10B981',
+  borderColor: '#10B981',
+},
+
+stepNumber: {
+  color: '#4F46E5',
+  fontSize: 13,
+  fontWeight: '900',
+},
+
+stepNumberCompleted: {
+  color: '#FFFFFF',
+},
+
+stepLine: {
+  flex: 1,
+  width: 2,
+  backgroundColor: '#CBD5E1',
+  marginTop: 6,
+  borderRadius: 999,
+},
 });

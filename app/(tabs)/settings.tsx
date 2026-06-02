@@ -261,18 +261,34 @@ export default function SettingsScreen() {
             />
           </Section>
 
+
           <Section title="Child Profiles">
-            <SettingItem
-              icon="add-circle-outline"
-              label="Add Child"
-              sub={hasProAccess ? undefined : '1st Free'}
+              <SettingItem
+               icon="add-circle-outline"
+               label="Add Child"
+               sub={hasProAccess ? undefined : '1st Free'}
               helper="Create or add another child profile"
               onPress={() => openRoute('/onboarding/add-child')}
             />
 
+           <SettingItem
+               icon="refresh-circle-outline"
+                label="Reassess Child Profile"
+                helper="Update lessons and recommendations based on current needs"
+                onPress={() => openRoute('/onboarding/assessment')}
+            />
+
             <SettingItem
-              icon="trash-outline"
-              label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
+                icon="people-outline"
+                label="Manage Caregivers"
+                sub={hasProAccess ? undefined : 'Pro'}
+                helper="Invite another caregiver to access this child’s profile"
+                onPress={() => openPremiumRoute('/settings/manage-caregivers')}
+            />
+
+           <SettingItem
+               icon="trash-outline"
+               label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
               helper={
                 selectedChild
                   ? `Permanently delete ${childName} and related app data`

@@ -192,16 +192,13 @@ const styles = {
 
     justifyContent: 'center' as const,
 
-    overflow: 'hidden',
+    overflow: 'hidden' as const,
 
   },
 
-  image: {
-
-    width: '100%',
-
-    height: '100%',
-
+ image: {
+  width: '100%' as const,
+  height: '100%' as const,
   },
 
   label: {

@@ -79,7 +79,9 @@ export default function ProgressScreen() {
         {/* Child Header Card */}
         <View style={styles.summaryCard}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{selectedChild?.child_name[0]}</Text>
+            <Text style={styles.avatarText}>
+              {(selectedChild?.child_name || selectedChild?.name || '?').charAt(0)}
+          </Text>
           </View>
           <Text style={styles.summaryTitle}>{selectedChild?.child_name}'s Growth</Text>
           <View style={styles.badgeRow}>

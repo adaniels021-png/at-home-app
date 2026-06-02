@@ -16,6 +16,7 @@ import ProfileSwitcher from '../../components/ProfileSwitcher';
 import WeeklyProgressInsights from '../../components/WeeklyProgressInsights';
 import { generateProgressSummary } from '../../lib/aiService';
 import { ensureLessonQueue } from '../../lib/lessonQueue';
+import { isReassessmentDue } from '../../lib/reassessment';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
@@ -108,7 +109,11 @@ export default function Dashboard() {
   const { selectedChild, loading: childLoading } = useChild();
   const { isPro } = useSubscription();
 
-  const featuredItemWidth = `${100 / layout.gridColumns - 2}%`;
+  const reassessmentDue = isReassessmentDue(
+  (selectedChild as any)?.next_reassessment_due_at
+);
+
+  const featuredItemWidth = `${100 / layout.gridColumns - 2}%` as `${number}%`;
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -458,26 +463,27 @@ useEffect(() => {
 
           <WeeklyProgressInsights />
 
-          {!hasAssessment ? (
-            <TouchableOpacity
-              style={styles.assessmentPromptCard}
-              onPress={() => router.push('/onboarding/assessment')}
-            >
-              <View style={styles.heroTopRow}>
-                <View style={styles.heroBadge}>
-                  <Text style={styles.heroBadgeText}>SETUP NEEDED</Text>
-                </View>
+          {hasAssessment && reassessmentDue === true ? (
+  <TouchableOpacity
+    style={styles.reassessmentCard}
+    onPress={() => router.push('/onboarding/assessment' as any)}
+    activeOpacity={0.9}
+  >
+    <View style={styles.reassessmentIconWrap}>
+      <Ionicons name="refresh-circle-outline" size={24} color="#D97706" />
+    </View>
 
-                <Ionicons name="clipboard-outline" size={18} color="#FFFFFF" />
-              </View>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.reassessmentTitle}>Reassessment Recommended</Text>
+      <Text style={styles.reassessmentText}>
+        It has been about 30 days since the last assessment. Update {childName}'s
+        profile so lessons stay current.
+      </Text>
+    </View>
 
-              <Text style={styles.heroTitle}>Complete Assessment</Text>
-
-              <Text style={styles.heroDesc}>
-                Finish the onboarding assessment to personalize lessons, routines, PECS, worksheets, and progress tracking.
-              </Text>
-            </TouchableOpacity>
-          ) : null}
+    <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+  </TouchableOpacity>
+) : null}
 
           <View style={styles.focusProgressRow}>
             <View style={styles.compactFocusCard}>
@@ -743,7 +749,7 @@ function FeaturedToolCard({
   accent,
   onPress,
 }: {
-  itemWidth: string;
+  itemWidth: `${number}%`;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;
@@ -1252,4 +1258,39 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
+
+reassessmentCard: {
+  backgroundColor: '#FFFBEB',
+  borderRadius: 22,
+  padding: 16,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+reassessmentIconWrap: {
+  width: 48,
+  height: 48,
+  borderRadius: 16,
+  backgroundColor: '#FEF3C7',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+reassessmentTitle: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#92400E',
+},
+
+reassessmentText: {
+  marginTop: 3,
+  fontSize: 12.5,
+  color: '#B45309',
+  fontWeight: '700',
+  lineHeight: 18,
+},
 });

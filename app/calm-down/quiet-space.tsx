@@ -1,4 +1,6 @@
 import { saveCalmStrategy } from '@/lib/calmStrategiesStorage';
+import { saveCalmToolkitLog } from '@/lib/calmToolkitInsights';
+import { useChild } from '@/lib/SelectedChildContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
@@ -86,6 +88,7 @@ const supportMatchesByTrigger: Record<string, string[]> = {
 export default function QuietSpaceScreen() {
   const router = useRouter();
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [selectedTriggerIds, setSelectedTriggerIds] = useState<string[]>([]);
   const [selectedSupportIds, setSelectedSupportIds] = useState<string[]>([]);
@@ -93,6 +96,8 @@ export default function QuietSpaceScreen() {
   const [savedPreference, setSavedPreference] = useState<string | null>(null);
   const [timerStarted, setTimerStarted] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(120);
+
+  const { selectedChild } = useChild() as any;
 
   const selectedSupports = useMemo(() => {
     return quietSupports.filter((support) => selectedSupportIds.includes(support.id));
@@ -161,10 +166,13 @@ export default function QuietSpaceScreen() {
       ])
     ).start();
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           setTimerStarted(false);
           return 0;
         }
@@ -175,45 +183,75 @@ export default function QuietSpaceScreen() {
   }
 
   function resetQuietTimer() {
-    setTimerStarted(false);
-    setTimerSeconds(120);
-    pulseAnim.stopAnimation();
-    pulseAnim.setValue(1);
+  setTimerStarted(false);
+  setTimerSeconds(120);
+
+  if (intervalRef.current) {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
   }
+
+  pulseAnim.stopAnimation();
+  pulseAnim.setValue(1);
+}
 
   async function saveQuietPreferences() {
-    const helpfulSupports = quietSupports.filter((support) =>
-      mostHelpfulIds.includes(support.id)
-    );
+  const helpfulSupports = quietSupports.filter((support) =>
+    mostHelpfulIds.includes(support.id)
+  );
 
-    const supportsToSave =
-      helpfulSupports.length > 0 ? helpfulSupports : selectedSupports;
+  const supportsToSave =
+    helpfulSupports.length > 0 ? helpfulSupports : selectedSupports;
 
-    const preferenceText = supportsToSave
-      .map((support) => support.title)
-      .join(' + ');
+  const preferenceText = supportsToSave
+    .map((support) => support.title)
+    .join(' + ');
 
-    if (!preferenceText) return;
+  if (!preferenceText) return;
 
-    setSavedPreference(preferenceText);
+  setSavedPreference(preferenceText);
 
-    await saveCalmStrategy({
-      type: 'quiet-space',
-      title: 'Quiet Space',
-      subtitle: preferenceText,
-      icon: 'moon-outline',
-      color: '#4338CA',
-      bg: '#EEF2FF',
-    });
-  }
+  await saveCalmStrategy({
+    type: 'quiet-space',
+    title: 'Quiet Space',
+    subtitle: preferenceText,
+    icon: 'moon-outline',
+    color: '#4338CA',
+    bg: '#EEF2FF',
+  });
 
-  function resetTool() {
-    setSelectedTriggerIds([]);
-    setSelectedSupportIds([]);
-    setMostHelpfulIds([]);
-    setSavedPreference(null);
-    resetQuietTimer();
-  }
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'quiet-space',
+    strategyName: preferenceText,
+    helped: true,
+    toolsUsed: supportsToSave.map((support) => support.title),
+    trigger: selectedTriggerIds.join(', '),
+  });
+}
+
+async function markQuietSpaceNotHelpful() {
+  const preferenceText = selectedSupports
+    .map((support) => support.title)
+    .join(' + ');
+
+  await saveCalmToolkitLog({
+    childId: selectedChild?.id,
+    toolType: 'quiet-space',
+    strategyName: preferenceText || 'Quiet Space',
+    helped: false,
+    toolsUsed: selectedSupports.map((support) => support.title),
+    trigger: selectedTriggerIds.join(', '),
+  });
+}
+
+function resetTool() {
+  setSelectedTriggerIds([]);
+  setSelectedSupportIds([]);
+  setMostHelpfulIds([]);
+  setSavedPreference(null);
+  resetQuietTimer();
+}
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -466,6 +504,18 @@ export default function QuietSpaceScreen() {
             </View>
           )}
         </View>
+
+        <TouchableOpacity
+  style={[
+    styles.notHelpfulButton,
+    selectedSupports.length === 0 && styles.disabledButton,
+  ]}
+  disabled={selectedSupports.length === 0}
+  onPress={markQuietSpaceNotHelpful}
+>
+  <Ionicons name="thumbs-down-outline" size={18} color="#4338CA" />
+  <Text style={styles.notHelpfulButtonText}>Not helpful this time</Text>
+</TouchableOpacity>
 
         <View style={styles.parentTipCard}>
           <Text style={styles.parentTipTitle}>Quiet Space reminder</Text>
@@ -858,4 +908,23 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#4338CA',
   },
+
+  notHelpfulButton: {
+  marginTop: 10,
+  minHeight: 52,
+  borderRadius: 18,
+  backgroundColor: '#EEF2FF',
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+notHelpfulButtonText: {
+  marginLeft: 8,
+  color: '#4338CA',
+  fontWeight: '900',
+  fontSize: 15,
+},
 });

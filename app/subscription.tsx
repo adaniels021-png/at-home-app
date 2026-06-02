@@ -78,7 +78,8 @@ export default function SubscriptionScreen() {
   const [plansLoading, setPlansLoading] = useState(true);
   const [checkingPlan, setCheckingPlan] = useState(true);
 
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('monthly');
+  const [selectedPlan, setSelectedPlan] =
+  useState<PlanType>('yearly');
   const [currentPlan, setCurrentPlan] = useState<CurrentPlan>(
     isPro ? 'monthly' : 'free'
   );
@@ -102,10 +103,13 @@ export default function SubscriptionScreen() {
     void loadCurrentPlan();
   }, []);
 
-  useEffect(() => {
-    if (currentPlan === 'monthly') setSelectedPlan('yearly');
-    if (currentPlan === 'free') setSelectedPlan('monthly');
-  }, [currentPlan]);
+ useEffect(() => {
+  if (currentPlan === 'monthly') {
+    setSelectedPlan('yearly');
+  } else if (currentPlan === 'free') {
+    setSelectedPlan('monthly');
+  }
+}, [currentPlan]);
 
   const openTerms = async () => {
     try {
@@ -201,30 +205,30 @@ export default function SubscriptionScreen() {
     }
   };
 
-  const selectedPlanDetails = useMemo(() => {
-    if (selectedPlan === 'yearly') {
-      return {
-        title: 'Yearly Pro',
-        price: yearlyPlan.priceString,
-        subtext: yearlyPlan.subtext,
-        badge: currentPlan === 'monthly' ? 'UPGRADE' : 'BEST VALUE',
-        cta:
-          currentPlan === 'monthly'
-            ? 'Upgrade to Yearly Pro'
-            : 'Start Yearly Pro',
-        packageObject: yearlyPlan.packageObject,
-      };
-    }
-
+ const selectedPlanDetails = useMemo(() => {
+  if (selectedPlan === 'yearly') {
     return {
-      title: 'Monthly Pro',
-      price: monthlyPlan.priceString,
-      subtext: monthlyPlan.subtext,
-      badge: 'MOST POPULAR',
-      cta: 'Start Monthly Pro',
-      packageObject: monthlyPlan.packageObject,
+      title: 'Yearly Pro',
+      price: yearlyPlan.priceString,
+      subtext: yearlyPlan.subtext,
+      badge: currentPlan === 'monthly' ? 'UPGRADE' : 'BEST VALUE',
+      cta:
+        currentPlan === 'monthly'
+          ? 'Unlock Pro & Save'
+          : 'Unlock Pro & Save',
+      packageObject: yearlyPlan.packageObject,
     };
-  }, [selectedPlan, monthlyPlan, yearlyPlan, currentPlan]);
+  }
+
+  return {
+    title: 'Monthly Pro',
+    price: monthlyPlan.priceString,
+    subtext: monthlyPlan.subtext,
+    badge: 'MOST POPULAR',
+    cta: 'Unlock Pro Access',
+    packageObject: monthlyPlan.packageObject,
+  };
+}, [selectedPlan, monthlyPlan, yearlyPlan, currentPlan]);
 
   const handlePurchase = async () => {
     if (currentPlan === 'yearly') return;
@@ -397,10 +401,10 @@ export default function SubscriptionScreen() {
         ? 'You are currently on the Monthly Pro plan.'
         : 'Choose monthly or yearly Pro access.';
 
-  const showMonthlyPlan = currentPlan === 'free';
-  const showYearlyPlan = currentPlan !== 'yearly';
-  const showPurchaseButton = currentPlan !== 'yearly';
-  const cancelEnabled = currentPlan !== 'free';
+const showMonthlyPlan = currentPlan !== 'yearly';
+const showYearlyPlan = currentPlan !== 'yearly';
+const showPurchaseButton = currentPlan !== 'yearly';
+const cancelEnabled = currentPlan !== 'free';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -422,13 +426,12 @@ export default function SubscriptionScreen() {
           </View>
 
           <Text style={styles.title}>
-            Unlock More Support, More Lessons, More Progress
+            Help Your Child Learn More at Home
           </Text>
 
           <Text style={styles.subtitle}>
-            Go beyond one free lesson a day and unlock the full ABA at Home
-            experience for routines, printables, guided practice, and
-            personalized learning.
+            Get unlimited lessons, communication tools, routines,
+            worksheets, and parent support designed for everyday life.
           </Text>
 
           <View style={styles.heroStatsRow}>
@@ -444,6 +447,30 @@ export default function SubscriptionScreen() {
           </View>
         </View>
 
+        <View style={styles.familyBenefitCard}>
+  <Text style={styles.familyBenefitTitle}>
+    Why families choose Pro
+  </Text>
+
+  <Benefit
+    icon="chatbubble-ellipses-outline"
+    title="Build Communication"
+    text="Practice requesting, answering questions, and everyday communication skills."
+  />
+
+  <Benefit
+    icon="people-outline"
+    title="Support Daily Routines"
+    text="Create more successful mornings, meals, transitions, and bedtime routines."
+  />
+
+  <Benefit
+    icon="school-outline"
+    title="Practice Important Skills"
+    text="Access unlimited lessons and activities tailored to your child's needs."
+  />
+</View>
+
         <View style={styles.statusCard}>
           <Ionicons
             name={
@@ -458,17 +485,30 @@ export default function SubscriptionScreen() {
         </View>
 
         <View style={styles.featuresCard}>
-          <Text style={styles.sectionTitle}>Everything included in Pro</Text>
+          <Text style={styles.sectionTitle}>What unlocks with Pro</Text>
 
           <Feature text="Unlimited Daily Lessons" />
-          <Feature text="Full Access to Upcoming Lessons" />
+          <Feature text="Communication Activities" />
+          <Feature text="Printable Worksheets" />
+          <Feature text="PECS Communication Tools" />
+          <Feature text="Parent Support Toolkit" />
+          <Feature text="Routine Builders" />
           <Feature text="AI Activity Generator" />
-          <Feature text="Practice Mode" />
-          <Feature text="Routine Printables" />
-          <Feature text="Worksheets and PDF Exports" />
-          <Feature text="Custom PECS and Routine Tools" />
-          <Feature text="Premium Parent Support Experience" />
+          <Feature text="Future Pro Features Included" />
         </View>
+
+        <View style={styles.socialProofCard}>
+  <Ionicons
+    name="heart"
+    size={22}
+    color="#EC4899"
+  />
+
+  <Text style={styles.socialProofText}>
+    Built specifically for parents supporting children
+    with autism at home.
+  </Text>
+</View>
 
         <View style={styles.planSection}>
           <Text style={styles.sectionTitle}>
@@ -555,27 +595,6 @@ export default function SubscriptionScreen() {
             </View>
           ) : null}
         </View>
-
-        {showPurchaseButton ? (
-          <View style={styles.selectedPlanCard}>
-            <View style={styles.selectedPlanBadge}>
-              <Text style={styles.selectedPlanBadgeText}>
-                {selectedPlanDetails.badge}
-              </Text>
-            </View>
-
-            <Text style={styles.selectedPlanLabel}>Selected Plan</Text>
-            <Text style={styles.selectedPlanTitle}>
-              {selectedPlanDetails.title}
-            </Text>
-            <Text style={styles.selectedPlanPrice}>
-              {selectedPlanDetails.price}
-            </Text>
-            <Text style={styles.selectedPlanSubtext}>
-              {selectedPlanDetails.subtext}
-            </Text>
-          </View>
-        ) : null}
 
         {showPurchaseButton ? (
           <TouchableOpacity
@@ -709,6 +728,32 @@ function Feature({ text }: { text: string }) {
     <View style={styles.featureRow}>
       <Ionicons name="checkmark-circle" size={20} color="#7C3AED" />
       <Text style={styles.featureText}>{text}</Text>
+    </View>
+  );
+}
+
+function Benefit({
+  icon,
+  title,
+  text,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  text: string;
+}) {
+  return (
+    <View style={styles.benefitRow}>
+      <Ionicons name={icon} size={22} color="#4F46E5" />
+
+      <View style={{ flex: 1 }}>
+        <Text style={styles.benefitTitle}>
+          {title}
+        </Text>
+
+        <Text style={styles.benefitText}>
+          {text}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -1224,4 +1269,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 20,
   },
+
+  familyBenefitCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
+  padding: 18,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+familyBenefitTitle: {
+  fontSize: 17,
+  fontWeight: '800',
+  color: '#0F172A',
+  marginBottom: 14,
+},
+
+benefitRow: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: 12,
+  marginBottom: 14,
+},
+
+benefitTitle: {
+  fontSize: 14,
+  fontWeight: '900',
+  color: '#0F172A',
+  marginBottom: 3,
+},
+
+benefitText: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: '#64748B',
+  lineHeight: 19,
+},
+
+socialProofCard: {
+  backgroundColor: '#FFF1F2',
+  borderRadius: 20,
+  padding: 16,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#FECDD3',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
+
+socialProofText: {
+  flex: 1,
+  color: '#9F1239',
+  fontWeight: '800',
+  fontSize: 13,
+  lineHeight: 19,
+},
 });

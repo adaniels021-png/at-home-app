@@ -605,3 +605,22 @@ export async function toggleFavoriteActivity({
 
   return nextValue;
 }
+
+export async function saveGeneratedActivity(
+  childId: string,
+  activity: any,
+  currentSkill?: string,
+  currentLevel?: string
+) {
+  const normalized = normalizeActivity(activity);
+
+  const { error } = await supabase.from('saved_activities').insert({
+    child_id: childId,
+    activity_name: normalized.name,
+    activity_json: normalized,
+    is_saved: true,
+    is_favorite: false,
+  });
+
+  if (error) throw error;
+}

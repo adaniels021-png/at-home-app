@@ -20,8 +20,6 @@ export type Lesson = {
   abc_strategy?: string;
 };
 
-export type ABAActivity = z.infer<typeof activitySchema>;
-
 export type DailyABAActivity = {
   name: string;
   materials: string[];

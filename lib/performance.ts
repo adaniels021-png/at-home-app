@@ -5,13 +5,13 @@ export function runInBackground(task: () => Promise<void>, label = 'Background t
 }
 
 export async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs = 10000,
-  message = 'Request timed out.'
+  promiseLike: PromiseLike<T>,
+  timeoutMs = 10000
 ): Promise<T> {
-  const timeout = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error(message)), timeoutMs);
-  });
-
-  return Promise.race([promise, timeout]);
+  return Promise.race([
+    Promise.resolve(promiseLike),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+    ),
+  ]);
 }

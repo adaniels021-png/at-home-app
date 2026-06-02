@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  type DimensionValue,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -146,7 +147,11 @@ export default function CommunicationScreen() {
   const { selectedChild } = useChild() as any;
   const { isPro } = useSubscription();
 
-  const itemWidth = layout.isLargeTablet ? '23.5%' : layout.isTablet ? '31%' : '48%';
+  const itemWidth: DimensionValue = layout.isLargeTablet
+  ? '23.5%'
+  : layout.isTablet
+    ? '31%'
+    : '48%';
 
   const [mode, setMode] = useState<'library' | 'smart' | 'favorites' | 'public'>('library');
   const [selectedCategory, setSelectedCategory] = useState<CardCategory>('Needs');
@@ -274,32 +279,35 @@ export default function CommunicationScreen() {
     }, [loadAll])
   );
 
-  const logUsage = async (cardId: string, actionType: string) => {
-    if (!selectedChild?.id) return;
+  const logUsage = async (
+  cardId: string,
+  action: 'card_tap' | 'phrase_speak' | 'favorite_toggle'
+) => {
+  if (!selectedChild?.id) return;
 
-    setUsageMap((prev) => ({
-      ...prev,
-      [cardId]: (prev[cardId] || 0) + 1,
-    }));
+  setUsageMap((prev) => ({
+    ...prev,
+    [cardId]: (prev[cardId] || 0) + 1,
+  }));
 
-    const log = {
-      child_id: selectedChild.id,
-      card_id: cardId,
-      action_type: actionType,
-      created_at: new Date().toISOString(),
-    };
+  const log = {
+  child_id: selectedChild.id,
+  card_id: cardId,
+  action,
+  created_at: new Date().toISOString(),
+};
 
-    try {
-      const { error } = await supabase.from('pecs_card_usage').insert(log);
-      if (error) throw error;
-    } catch {
-      await queuePecsUsage(selectedChild.id, log);
-    }
-  };
+  try {
+    const { error } = await supabase.from('pecs_card_usage').insert(log);
+    if (error) throw error;
+  } catch {
+    await queuePecsUsage(selectedChild.id, log);
+  }
+};
 
   const handleCardPress = async (card: Card) => {
     setPhrase((prev) => [...prev, card.helperText || card.label]);
-    await logUsage(card.id, 'tap');
+    await logUsage(card.id, 'card_tap');
   };
 
   const openExpandedCard = async (card: Card) => {
@@ -316,7 +324,7 @@ export default function CommunicationScreen() {
 
     const text = phrase.join(' ');
     await speakWithSavedVoice(text);
-    await logUsage('phrase', 'speak_phrase');
+    await logUsage('phrase', 'phrase_speak');
   };
 
   const toggleFavorite = async (cardId: string) => {
@@ -431,10 +439,10 @@ export default function CommunicationScreen() {
               <Ionicons name="print-outline" size={18} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <Text style={styles.heroTitle}>Communication</Text>
+            <Text style={styles.heroTitle}>Communication Support</Text>
 
             <Text style={styles.heroSubtitle}>
-              Build phrases, use PECS visuals, and support real-world communication.
+              Build sentences, hear cards aloud, and use PECS visuals during everyday routines.
             </Text>
           </View>
 
@@ -461,14 +469,18 @@ export default function CommunicationScreen() {
               <TouchableOpacity
                 key={item}
                 style={[styles.modeChip, mode === item && styles.modeChipActive]}
-                onPress={() => {
+                onPress={async () => {
+                  try {
+                    await Haptics.selectionAsync();
+                  } catch {}
+
                   if (!isPro && (item === 'smart' || item === 'favorites')) {
                     router.push('/subscription');
                     return;
-                  }
+                }
 
-                  setMode(item);
-                }}
+                 setMode(item);
+              }}
               >
                 <Text style={[styles.modeText, mode === item && styles.modeTextActive]}>
                   {item === 'smart' ? 'SMART' : item.toUpperCase()}
@@ -477,21 +489,61 @@ export default function CommunicationScreen() {
             ))}
           </View>
 
-          <View style={styles.phraseBox}>
-            <Text style={styles.phraseText}>
-              {phrase.length ? phrase.join(' ') : 'Tap cards to enlarge and use'}
-            </Text>
+         <View style={styles.phraseBox}>
+  <View style={styles.phraseChipWrap}>
+    {phrase.length ? (
+      phrase.map((word, index) => (
+        <TouchableOpacity
+          key={`${word}-${index}`}
+          style={styles.phraseChip}
+          onPress={() =>
+            setPhrase((prev) => prev.filter((_, i) => i !== index))
+          }
+        >
+          <Text style={styles.phraseChipText}>{word}</Text>
+          <Ionicons name="close-circle" size={16} color="#64748B" />
+        </TouchableOpacity>
+      ))
+    ) : (
+      <Text style={styles.phrasePlaceholder}>
+        Tap cards to build a sentence
+      </Text>
+    )}
+  </View>
 
-            <View style={styles.phraseActions}>
-              <TouchableOpacity onPress={() => setPhrase([])}>
-                <Ionicons name="trash" size={21} color="#0F172A" />
-              </TouchableOpacity>
+  <View style={styles.quickActionRow}>
+  <TouchableOpacity
+    style={styles.quickActionBtn}
+    onPress={() => setPhrase([])}
+  >
+    <Ionicons name="trash-outline" size={18} color="#EF4444" />
+    <Text style={styles.quickActionText}>Clear</Text>
+  </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => void speakPhrase()}>
-                <Ionicons name="volume-high" size={21} color="#0F172A" />
-              </TouchableOpacity>
-            </View>
-          </View>
+  <TouchableOpacity
+    style={styles.quickActionBtn}
+    onPress={() => void speakPhrase()}
+  >
+    <Ionicons name="volume-high-outline" size={18} color="#4F46E5" />
+    <Text style={styles.quickActionText}>Speak</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.quickActionBtn}
+    onPress={() => {
+      if (!isPro) {
+        router.push('/subscription');
+        return;
+      }
+
+      setMode('favorites');
+    }}
+  >
+    <Ionicons name="star-outline" size={18} color="#F59E0B" />
+    <Text style={styles.quickActionText}>Favorites</Text>
+  </TouchableOpacity>
+</View>
+</View>
 
           {mode === 'library' && (
             <ScrollView
@@ -506,7 +558,13 @@ export default function CommunicationScreen() {
                     styles.categoryChip,
                     selectedCategory === category && styles.categoryChipActive,
                   ]}
-                  onPress={() => setSelectedCategory(category)}
+                  onPress={async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch {}
+
+  setSelectedCategory(category);
+}}
                 >
                   <Text
                     style={[
@@ -538,7 +596,7 @@ export default function CommunicationScreen() {
                   <TouchableOpacity
                     key={card.id}
                     style={[styles.card, { width: itemWidth }]}
-                    activeOpacity={0.9}
+                    activeOpacity={0.86}
                     onPress={() => void openExpandedCard(card)}
                     onLongPress={async () => {
                       await handleCardPress(card);
@@ -601,47 +659,32 @@ export default function CommunicationScreen() {
             </View>
           )}
 
-          <View style={styles.tipBox}>
-            <Text style={styles.tipTitle}>Therapy Tip</Text>
-            <Text style={styles.tipText}>
-              Tap a PECS card to enlarge it. Long press to quickly add and speak.
-            </Text>
-          </View>
+           <View style={styles.tipBox}>
+  <Text style={styles.tipTitle}>Parent Coaching Tip</Text>
+  <Text style={styles.tipText}>
+    Tap a PECS card to enlarge it. Long press to quickly add and speak.
+  </Text>
+</View>
 
-          <View style={styles.bottomWrap}>
-            <TouchableOpacity
-              style={styles.navBtn}
-              onPress={() => router.push('/communication/parent-training-hub')}
-            >
-              <Ionicons name="school" size={18} color="#FFFFFF" />
-              <Text style={styles.navText}>Parent Hub</Text>
-            </TouchableOpacity>
+<View style={{ marginTop: 18 }}>
+  <TouchableOpacity
+    style={[
+      styles.navBtn,
+      { backgroundColor: isPro ? '#0F172A' : '#CBD5E1' },
+    ]}
+    onPress={handleManagePecsPress}
+  >
+    <Ionicons
+      name={isPro ? 'create-outline' : 'lock-closed'}
+      size={18}
+      color="#FFFFFF"
+    />
+    <Text style={styles.navText}>
+      {isPro ? 'Manage PECS' : 'Unlock PECS'}
+    </Text>
+  </TouchableOpacity>
+</View>
 
-            <TouchableOpacity
-              style={[styles.navBtn, { backgroundColor: '#10B981' }]}
-              onPress={() => router.push('/communication/sign-guide')}
-            >
-              <Ionicons name="hand-left" size={18} color="#FFFFFF" />
-              <Text style={styles.navText}>Baby Signs</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.navBtn,
-                { backgroundColor: isPro ? '#0F172A' : '#CBD5E1' },
-              ]}
-              onPress={handleManagePecsPress}
-            >
-              <Ionicons
-                name={isPro ? 'create-outline' : 'lock-closed'}
-                size={18}
-                color="#FFFFFF"
-              />
-              <Text style={styles.navText}>
-                {isPro ? 'Manage PECS' : 'Unlock PECS'}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 
@@ -761,116 +804,137 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   content: {
-    paddingTop: 20,
-    paddingBottom: 44,
+    paddingTop: 18,
+    paddingBottom: 48,
   },
   contentInner: {
     width: '100%',
   },
   hero: {
     backgroundColor: '#4F46E5',
-    borderRadius: 26,
-    padding: 20,
-    paddingRight: 58,
+    borderRadius: 32,
+    padding: 22,
+    paddingRight: 62,
     marginBottom: 16,
     position: 'relative',
+    shadowColor: '#4F46E5',
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 5,
+    overflow: 'hidden',
   },
   printIconBtn: {
     position: 'absolute',
-    top: 14,
-    right: 14,
+    top: 16,
+    right: 16,
     zIndex: 20,
     backgroundColor: 'rgba(255,255,255,0.22)',
-    padding: 8,
-    borderRadius: 12,
+    padding: 9,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
     color: '#FFFFFF',
+    letterSpacing: -0.4,
   },
   heroSubtitle: {
-    marginTop: 8,
+    marginTop: 9,
     color: '#E0E7FF',
     fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
+    lineHeight: 21,
+    fontWeight: '700',
   },
   voiceSettingsCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 14,
+    borderRadius: 24,
+    padding: 15,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   voiceIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   voiceTitle: {
-    color: '#1E293B',
-    fontSize: 14,
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '900',
   },
   voiceSubtitle: {
-    marginTop: 3,
+    marginTop: 4,
     color: '#64748B',
     fontSize: 12,
-    fontWeight: '600',
+    lineHeight: 17,
+    fontWeight: '700',
   },
   modeRow: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: 14,
+    backgroundColor: '#E2E8F0',
+    padding: 5,
+    borderRadius: 20,
   },
   modeChip: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderRadius: 15,
     paddingVertical: 10,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: 0,
   },
   modeChipActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   modeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#4F46E5',
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#64748B',
+    letterSpacing: 0.3,
   },
   modeTextActive: {
-    color: '#FFFFFF',
+    color: '#4F46E5',
   },
   phraseBox: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 26,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-  },
-  phraseText: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
-    minHeight: 36,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 2,
   },
   phraseActions: {
     marginTop: 12,
-    paddingTop: 10,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#EEF2F7',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -880,21 +944,21 @@ const styles = StyleSheet.create({
   },
   categoryChip: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 999,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   categoryChipActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+    backgroundColor: '#312E81',
+    borderColor: '#312E81',
   },
   categoryText: {
     color: '#475569',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   categoryTextActive: {
     color: '#FFFFFF',
@@ -906,28 +970,39 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 26,
     padding: 12,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    minHeight: 225,
+    minHeight: 232,
     position: 'relative',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   favoriteIcon: {
     position: 'absolute',
     top: 12,
     right: 12,
     zIndex: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 12,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   printSelectIcon: {
     position: 'absolute',
     top: 12,
     left: 12,
     zIndex: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 12,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -936,13 +1011,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5',
   },
   visualPanel: {
-    height: 120,
-    borderRadius: 18,
+    height: 124,
+    borderRadius: 22,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
   },
   cardImage: {
     width: '100%',
@@ -950,7 +1027,7 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
@@ -958,44 +1035,46 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 12,
     color: '#64748B',
-    fontWeight: '600',
+    lineHeight: 17,
+    fontWeight: '700',
     textAlign: 'center',
   },
   emptyBox: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 18,
+    padding: 22,
+    borderRadius: 22,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   emptyTitle: {
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 16,
     color: '#0F172A',
   },
   emptyText: {
     marginTop: 6,
     color: '#64748B',
+    fontWeight: '600',
   },
   tipBox: {
     marginTop: 8,
-    backgroundColor: '#EEF2FF',
-    borderRadius: 18,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 22,
     padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4F46E5',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
   },
   tipTitle: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#312E81',
+    fontWeight: '900',
+    color: '#166534',
   },
   tipText: {
     marginTop: 6,
-    color: '#4338CA',
+    color: '#15803D',
     lineHeight: 20,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   bottomWrap: {
     marginTop: 18,
@@ -1003,18 +1082,23 @@ const styles = StyleSheet.create({
   },
   navBtn: {
     backgroundColor: '#4F46E5',
-    borderRadius: 20,
+    borderRadius: 22,
     paddingVertical: 16,
     paddingHorizontal: 18,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#4F46E5',
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   navText: {
     marginLeft: 8,
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   modalOverlay: {
     flex: 1,
@@ -1025,13 +1109,13 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 26,
     padding: 20,
     width: '88%',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
     marginBottom: 12,
   },
@@ -1042,7 +1126,7 @@ const styles = StyleSheet.create({
   },
   modalOptionText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#4F46E5',
   },
   modalCancel: {
@@ -1051,7 +1135,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     color: '#DC2626',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 14,
   },
   expandedOverlay: {
@@ -1064,7 +1148,7 @@ const styles = StyleSheet.create({
   expandedCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
+    borderRadius: 32,
     padding: 22,
     alignItems: 'center',
   },
@@ -1078,12 +1162,14 @@ const styles = StyleSheet.create({
   expandedImageWrap: {
     width: '100%',
     height: 300,
-    borderRadius: 24,
+    borderRadius: 28,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
   },
   expandedImage: {
     width: '100%',
@@ -1098,14 +1184,14 @@ const styles = StyleSheet.create({
   expandedHelper: {
     marginTop: 8,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#64748B',
     textAlign: 'center',
   },
   expandedRepeatBtn: {
     marginTop: 18,
     backgroundColor: '#EEF2FF',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -1121,7 +1207,7 @@ const styles = StyleSheet.create({
   expandedSpeakBtn: {
     marginTop: 12,
     backgroundColor: '#4F46E5',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 15,
     paddingHorizontal: 22,
     flexDirection: 'row',
@@ -1134,4 +1220,60 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontSize: 15,
   },
+
+  phraseChipWrap: {
+  minHeight: 46,
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  alignItems: 'center',
+},
+
+phraseChip: {
+  backgroundColor: '#EEF2FF',
+  borderRadius: 999,
+  paddingVertical: 9,
+  paddingHorizontal: 12,
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+
+phraseChipText: {
+  color: '#312E81',
+  fontSize: 14,
+  fontWeight: '900',
+  marginRight: 6,
+},
+
+phrasePlaceholder: {
+  color: '#94A3B8',
+  fontSize: 15,
+  fontWeight: '800',
+},
+
+quickActionRow: {
+  flexDirection: 'row',
+  gap: 10,
+  marginBottom: 16,
+},
+
+quickActionBtn: {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 18,
+  paddingVertical: 14,
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+quickActionText: {
+  marginTop: 4,
+  fontSize: 12,
+  fontWeight: '800',
+  color: '#475569',
+},
 });

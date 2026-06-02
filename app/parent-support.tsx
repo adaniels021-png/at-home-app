@@ -27,7 +27,7 @@ type SupportSection = {
   route:
     | '/parent-support/emotional-reset'
     | '/parent-support/journal'
-    | '/parent-support/support-feed'
+    | '/parent-support/daily-permission'
     | '/parent-support/parent-wins';
 };
 
@@ -70,8 +70,8 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     route: '/parent-support/journal',
   },
   {
-    id: 'support-feed',
-    title: 'Support Feed',
+    id: 'daily-permission',
+    title: 'Daily Permission',
     subtitle:
       'Encouragement, hard-day support, burnout reminders, and parent sensory overload tips.',
     icon: 'sparkles-outline',
@@ -80,7 +80,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     iconBg: '#FFE4E6',
     border: '#FECDD3',
     proOnly: true,
-    route: '/parent-support/support-feed',
+    route: '/parent-support/daily-permission',
   },
 ];
 
@@ -167,7 +167,7 @@ export default function ParentSupportScreen() {
               <Text style={styles.freeBannerTitle}>Parent Wins is free</Text>
               <Text style={styles.freeBannerText}>
                 Pro unlocks emotional reset, journaling, saved reflections, and
-                the support feed.
+                Daily Permission.
               </Text>
             </View>
           </View>

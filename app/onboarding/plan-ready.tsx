@@ -1,17 +1,76 @@
+import { ensureLessonQueue } from '@/lib/lessonQueue';
+import { useChild } from '@/lib/SelectedChildContext';
+import { useSubscription } from '@/lib/SubscriptionContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 export default function PlanReadyScreen() {
   const router = useRouter();
+
+  const { selectedChild } = useChild() as any;
+  const { isPro } = useSubscription();
+
+  useEffect(() => {
+  if (!selectedChild?.id) return;
+
+  const childName =
+    selectedChild.child_name ||
+    selectedChild.name ||
+    'your child';
+
+  let cancelled = false;
+
+  async function preloadLessons() {
+    try {
+      // Load the first lesson category immediately.
+      await ensureLessonQueue({
+        childId: selectedChild.id,
+        childName,
+        category: 'Communication',
+        isPro,
+      });
+
+      const remainingCategories = [
+        'Social',
+        'Play',
+        'Self-Help',
+        'Motor',
+      ];
+
+      for (const category of remainingCategories) {
+        if (cancelled) return;
+
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+
+        ensureLessonQueue({
+          childId: selectedChild.id,
+          childName,
+          category,
+          isPro,
+        }).catch((error) => {
+          console.log(`Background preloading ${category} lessons failed:`, error);
+        });
+      }
+    } catch (error) {
+      console.log('Initial lesson preload failed:', error);
+    }
+  }
+
+  void preloadLessons();
+
+  return () => {
+    cancelled = true;
+  };
+}, [selectedChild?.id, selectedChild?.child_name, selectedChild?.name, isPro]);
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -20,7 +79,7 @@ export default function PlanReadyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.stepBadge}>
-          <Text style={styles.stepBadgeText}>STEP 3 OF 3</Text>
+          <Text style={styles.stepBadgeText}>STEP 4 OF 4</Text>
         </View>
 
         <View style={styles.heroCard}>
@@ -64,7 +123,7 @@ export default function PlanReadyScreen() {
         <TouchableOpacity
           style={styles.primaryButton}
           activeOpacity={0.9}
-          onPress={() => router.replace('/daily-lessons' as any)}
+          onPress={() => router.replace('/(tabs)/daily-lessons' as any)}
         >
           <Ionicons name="book" size={19} color="#FFFFFF" />
           <Text style={styles.primaryButtonText}>Start First Lesson</Text>

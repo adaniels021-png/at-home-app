@@ -205,7 +205,12 @@ export default function ReassessmentScreen() {
         childAgeMonths
       );
 
-      setQuestions(generatedQuestions);
+      setQuestions(
+  generatedQuestions.map((question, index) => ({
+    ...question,
+    id: index + 1,
+  }))
+);
 
       const { data, error } = await supabase
         .from('reassessments')
