@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -17,12 +18,16 @@ import FadeInView from '../../components/FadeInView';
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
 
+
+
 const WEEKLY_PROGRESS_LAST_SEEN_KEY = 'weekly_progress_last_seen';
 export default function HomeScreen() {
   const router = useRouter();
   const childContext = useChild() as any;
-
   const selectedChild = childContext?.selectedChild;
+  const children = childContext?.children || [];
+
+const [showChildSelector, setShowChildSelector] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,36 +45,50 @@ export default function HomeScreen() {
     );
   }, [selectedChild]);
 
-  function getHomeGreeting() {
+  const childAge = useMemo(() => {
+  return selectedChild?.age || selectedChild?.child_age || null;
+}, [selectedChild]);
+
+const showToiletTraining =
+  selectedChild?.show_toilet_training !== false;
+
+function getHomeGreeting() {
   const hour = new Date().getHours();
 
   if (hour < 12) {
     return {
       title: 'Good morning ☀️',
-      message: 'A calm start can make today feel easier.',
+      message: 'Every new day is a chance to grow.',
+      image: require('../../assets/images/home-morning.png'),
     };
   }
 
   if (hour < 17) {
     return {
       title: 'Good afternoon 💜',
-      message: 'One small support at a time is still progress.',
+      message: 'Small steps still count.',
+      image: require('../../assets/images/home-afternoon.png'),
+    };
+  }
+
+  if (hour < 21) {
+    return {
+      title: 'Good evening 🌙',
+      message: 'You showed up today. That matters.',
+      image: require('../../assets/images/home-evening.png'),
     };
   }
 
   return {
-    title: 'Good evening 🌙',
-    message: 'You showed up today. That matters.',
+    title: 'Good night ⭐',
+    message: 'Progress happens one day at a time.',
+    image: require('../../assets/images/home-night.png'),
   };
 }
 
 const greetingCopy = useMemo(() => getHomeGreeting(), []);
 
-  const childAge = useMemo(() => {
-    return selectedChild?.age || selectedChild?.child_age || null;
-  }, [selectedChild]);
-
-  useEffect(() => {
+useEffect(() => {
   void fetchHomeData();
 }, [selectedChild?.id]);
 
@@ -141,6 +160,35 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
     }
   };
 
+  const hideToiletTrainingFromHome = () => {
+  if (!selectedChild?.id) return;
+
+  Alert.alert(
+    'Hide Toilet Training?',
+    'You can turn it back on later from the child profile/settings.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Hide',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await supabase
+            .from('children')
+            .update({ show_toilet_training: false })
+            .eq('id', selectedChild.id);
+
+          if (error) {
+            Alert.alert('Error', error.message);
+            return;
+          }
+
+          await childContext?.refreshChildren?.();
+        },
+      },
+    ]
+  );
+};
+
   if (loading && !refreshing) {
     return (
       <View style={styles.centered}>
@@ -150,6 +198,7 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
     );
   }
 
+  
     return (
       <SafeAreaView style={styles.container}>
        <View pointerEvents="none" style={styles.screenGlowTop} />
@@ -177,9 +226,9 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
     <View pointerEvents="none" style={styles.topHeroGlowOne} />
     <View pointerEvents="none" style={styles.topHeroGlowTwo} />
 
-    <View style={styles.topHeroRow}>
+    <View style={styles.topHeroHeader}>
       <View style={styles.topHeroIcon}>
-        <Ionicons name="sparkles" size={20} color="#4F46E5" />
+        <Ionicons name="sparkles" size={20} color="#6D28D9" />
       </View>
 
       <AnimatedPressable
@@ -190,39 +239,74 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
       </AnimatedPressable>
     </View>
 
-    <Text style={styles.topHeroTitle}>
-      {greetingCopy.title}
-    </Text>
+    <AnimatedPressable
+  style={styles.heroBadge}
+  onPress={() => setShowChildSelector(!showChildSelector)}
+>
+  <Text style={styles.heroBadgeText}>
+    ✨ {childName}
+    {childAge ? ` • ${childAge} yrs` : ''}
+    {'  ▾'}
+  </Text>
+</AnimatedPressable>
+
+{showChildSelector && (
+  <View style={styles.childSelectorCard}>
+    {children.map((child: any) => (
+      <AnimatedPressable
+        key={child.id}
+        style={styles.childSelectorItem}
+        onPress={() => {
+          childContext?.setSelectedChild?.(child);
+          setShowChildSelector(false);
+        }}
+      >
+        <Text style={styles.childSelectorName}>
+          {child.child_name || child.name}
+        </Text>
+
+        {selectedChild?.id === child.id && (
+          <Ionicons
+            name="checkmark-circle"
+            size={20}
+            color="#5B3FF4"
+          />
+        )}
+      </AnimatedPressable>
+    ))}
+
+    <AnimatedPressable
+      style={styles.addChildButton}
+      onPress={() => router.push('/onboarding/add-child')}
+    >
+      <Ionicons
+        name="add-circle-outline"
+        size={18}
+        color="#5B3FF4"
+      />
+
+      <Text style={styles.addChildText}>
+        Add Child
+      </Text>
+    </AnimatedPressable>
+  </View>
+)}
+
+    <Text style={styles.topHeroTitle}>{greetingCopy.title}</Text>
 
     <Text style={styles.topHeroMessage}>
-      {selectedChild
-        ? `${greetingCopy.message} Today’s plan is ready for ${childName}.`
-        : 'Set up your first child profile to begin.'}
-    </Text>
+  {selectedChild
+    ? `${greetingCopy.message} Today’s plan is ready for ${childName}.`
+    : 'Set up your first child profile to begin.'}
+</Text>
+
+    <Image
+  source={greetingCopy.image}
+  style={styles.heroImage}
+  resizeMode="cover"
+/>
   </View>
 </FadeInView>
-
-<FadeInView delay={120}>
-  <View style={styles.childSummaryCard}>
-            <View style={styles.childAvatar}>
-              <Ionicons name="person" size={21} color="#FFFFFF" />
-            </View>
-
-            <View>
-              <Text style={styles.childName}>
-                {selectedChild ? childName : 'No child selected'}
-              </Text>
-
-              <Text style={styles.childSubtext}>
-                {selectedChild && childAge
-                  ? `${childAge} years old`
-                  : selectedChild
-                    ? 'Child profile active'
-                    : 'Create a child profile to personalize the app'}
-              </Text>
-            </View>
-          </View>
-        </FadeInView>
 
         <FadeInView delay={130}>
           <AnimatedPressable
@@ -273,7 +357,39 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
           </AnimatedPressable>
         </FadeInView>
 
-        <FadeInView delay={180}>
+        {selectedChild && showToiletTraining ? (
+  <FadeInView delay={175}>
+    <AnimatedPressable
+      style={styles.toiletTrainingMiniCard}
+      onPress={() => router.push('/toilet-training')}
+    >
+      <View style={styles.toiletMiniIconWrap}>
+        <Ionicons name="water-outline" size={22} color="#2563EB" />
+      </View>
+
+      <View style={{ flex: 1 }}>
+        <Text style={styles.toiletMiniTitle}>Toilet Training</Text>
+        <Text style={styles.toiletMiniSubtitle}>
+          Potty logs, visual steps, and schedules
+        </Text>
+      </View>
+
+      <AnimatedPressable
+        style={styles.hideToiletButton}
+        onPress={(event: any) => {
+          event?.stopPropagation?.();
+          hideToiletTrainingFromHome();
+        }}
+      >
+        <Ionicons name="close" size={17} color="#2563EB" />
+      </AnimatedPressable>
+
+      <Ionicons name="chevron-forward" size={21} color="#2563EB" />
+    </AnimatedPressable>
+  </FadeInView>
+) : null}
+
+        <FadeInView delay={230}>
           <Text style={styles.sectionTitle}>Parent & Learning Tools</Text>
 
           <View style={styles.toolList}>
@@ -328,38 +444,38 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
             />
           </View>
         </FadeInView>
-                <FadeInView delay={230}>
-          <DropdownSection
-            title="Quick Access"
-            subtitle="Helpful tools in one place"
-            open={quickAccessOpen}
-            onPress={() => setQuickAccessOpen((current) => !current)}
-          >
-            <DropdownItem
-              icon="book-outline"
-              label="Daily Lessons"
-              onPress={() => router.push('/daily-lessons')}
-            />
+           <FadeInView delay={230}>
+  <DropdownSection
+    title="Family Tools"
+    subtitle="Caregiver tools and shortcuts"
+    open={quickAccessOpen}
+    onPress={() => setQuickAccessOpen((current) => !current)}
+  >
+    <DropdownItem
+      icon="book-outline"
+      label="Daily Lessons"
+      onPress={() => router.push('/daily-lessons')}
+    />
 
-            <DropdownItem
-              icon="calendar-outline"
-              label="Routine"
-              onPress={() => router.push('/routines')}
-            />
+    <DropdownItem
+      icon="calendar-outline"
+      label="Routine"
+      onPress={() => router.push('/routines')}
+    />
 
-            <DropdownItem
-              icon="chatbubbles-outline"
-              label="Communication"
-              onPress={() => router.push('/communication')}
-            />
+    <DropdownItem
+      icon="chatbubbles-outline"
+      label="Communication"
+      onPress={() => router.push('/communication')}
+    />
 
-            <DropdownItem
-              icon="people-outline"
-              label="Parent Wins"
-              onPress={() => router.push('/parent-support/parent-wins')}
-            />
-          </DropdownSection>
-        </FadeInView>
+    <DropdownItem
+      icon="people-outline"
+      label="Parent Wins"
+      onPress={() => router.push('/parent-support/parent-wins')}
+    />
+  </DropdownSection>
+</FadeInView>
 
         <FadeInView delay={280}>
           <DropdownSection
@@ -380,13 +496,16 @@ const greetingCopy = useMemo(() => getHomeGreeting(), []);
           <FadeInView delay={330}>
             <View style={styles.progressCard}>
               <View style={styles.progressHeader}>
-                <Ionicons name="heart-outline" size={19} color="#0F766E" />
+               <Ionicons
+  name="trending-up-outline"
+  size={18}
+  color="#0F766E"
+/>
                 <Text style={styles.progressTitle}>Weekly Check-In</Text>
               </View>
 
               <Text style={styles.progressText}>
-                Keep it simple. One short lesson, one calming support, or one
-                communication moment can still count as progress.
+                Small steps count. One lesson, one calming moment, or one successful communication is progress.
               </Text>
 
               <AnimatedPressable
@@ -532,39 +651,11 @@ const styles = StyleSheet.create({
   elevation: 2,
 },
 
-childAvatar: {
-  width: 50,
-  height: 50,
-  borderRadius: 18,
-  backgroundColor: '#5B3FF4',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginRight: 12,
-  shadowColor: '#5B3FF4',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.18,
-  shadowRadius: 10,
-  elevation: 3,
-},
-
-childName: {
-  color: '#0F172A',
-  fontSize: 16,
-  fontWeight: '900',
-},
-
-childSubtext: {
-  color: '#64748B',
-  fontSize: 12,
-  fontWeight: '700',
-  marginTop: 2,
-},
-
  lessonCard: {
   overflow: 'hidden',
   backgroundColor: '#5B3FF4',
   borderRadius: 28,
-  padding: 18,
+  padding: 22,
   marginBottom: 20,
   shadowColor: '#5B3FF4',
   shadowOffset: { width: 0, height: 10 },
@@ -598,7 +689,7 @@ lessonLabel: {
 
 lessonTitle: {
   color: '#FFFFFF',
-  fontSize: 18,
+  fontSize: 22,
   fontWeight: '900',
 },
 
@@ -632,8 +723,8 @@ lessonText: {
   },
 
  toolCard: {
-  borderRadius: 28,
-  padding: 15,
+  borderRadius: 30,
+  padding: 16,
   borderWidth: 1,
   flexDirection: 'row',
   alignItems: 'center',
@@ -646,9 +737,9 @@ lessonText: {
 },
 
 toolIconWrap: {
-  width: 56,
-  height: 56,
-  borderRadius: 21,
+  width: 76,
+  height: 76,
+  borderRadius: 26,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
@@ -736,10 +827,10 @@ toolSubtitle: {
     fontWeight: '800',
   },
 
-  progressCard: {
+ progressCard: {
   backgroundColor: '#ECFDF5',
-  borderRadius: 30,
-  padding: 20,
+  borderRadius: 28,
+  padding: 16,
   borderWidth: 1,
   borderColor: '#A7F3D0',
 
@@ -764,14 +855,14 @@ toolSubtitle: {
   },
 
   progressText: {
-    color: '#115E59',
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
+  color: '#115E59',
+  fontSize: 12,
+  lineHeight: 18,
+  fontWeight: '700',
+},
 
   progressDismiss: {
-    marginTop: 14,
+    marginTop: 10,
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
@@ -824,51 +915,52 @@ floatingBackgroundOrb: {
   top: -140,
   left: -120,
 },
+topHeroHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 18,
+  zIndex: 2,
+},
 
 topHeroGlowOne: {
   position: 'absolute',
-  width: 170,
-  height: 170,
-  borderRadius: 85,
-  backgroundColor: 'rgba(96,165,250,0.14)',
-  right: -60,
-  bottom: -70,
+  width: 190,
+  height: 190,
+  borderRadius: 95,
+  backgroundColor: 'rgba(124,58,237,0.10)',
+  right: -70,
+  top: -60,
 },
 
 topHeroGlowTwo: {
   position: 'absolute',
-  width: 120,
-  height: 120,
-  borderRadius: 60,
-  backgroundColor: 'rgba(139,92,246,0.10)',
-  top: -40,
-  left: -30,
+  width: 150,
+  height: 150,
+  borderRadius: 75,
+  backgroundColor: 'rgba(96,165,250,0.12)',
+  left: -55,
+  bottom: -70,
 },
 
-topHeroRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 16,
-},
 
 topHeroCard: {
   position: 'relative',
   overflow: 'hidden',
-  backgroundColor: '#EEF5FF',
-  borderRadius: 28,
-  paddingTop: 14,
-  paddingBottom: 15,
-  paddingHorizontal: 16,
+  backgroundColor: '#F3EEFF',
+  borderRadius: 34,
+  padding: 20,
+  minHeight: 365,
   marginTop: 2,
-  marginBottom: 10,
+  marginBottom: 12,
   borderWidth: 1,
-  borderColor: '#D6E6FF',
-  shadowColor: '#60A5FA',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.08,
-  shadowRadius: 14,
-  elevation: 2,
+  borderColor: '#E9D5FF',
+  shadowColor: '#7C3AED',
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.12,
+  shadowRadius: 22,
+  elevation: 4,
+  paddingBottom: 14,
 },
 
 topHeroIcon: {
@@ -881,18 +973,26 @@ topHeroIcon: {
 },
 
 topHeroTitle: {
-  fontSize: 22,
+  fontSize: 32,
+  lineHeight: 36,
   fontWeight: '900',
   color: '#0F172A',
-  letterSpacing: -0.6,
+  letterSpacing: -1,
 },
 
 topHeroMessage: {
-  marginTop: 5,
-  fontSize: 13,
-  lineHeight: 19,
+  marginTop: 7,
+  fontSize: 14,
+  lineHeight: 21,
   fontWeight: '800',
-  color: '#2563EB',
+  color: '#4F46E5',
+},
+
+heroImage: {
+  width: '100%',
+  height: 180,
+  borderRadius: 24,
+  marginTop: 10,
 },
 
 logoutGlassButton: {
@@ -907,5 +1007,258 @@ logoutGlassButton: {
   shadowOpacity: 0.08,
   shadowRadius: 10,
   elevation: 2,
+},
+
+featuredCalmCard: {
+  backgroundColor: '#ECFDF5',
+  borderRadius: 32,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '#A7F3D0',
+  marginBottom: 20,
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#10B981',
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.12,
+  shadowRadius: 20,
+  elevation: 4,
+},
+
+featuredCalmText: {
+  flex: 1,
+},
+
+featuredEyebrow: {
+  color: '#047857',
+  fontSize: 12,
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+  marginBottom: 5,
+},
+
+featuredCalmTitle: {
+  color: '#064E3B',
+  fontSize: 23,
+  fontWeight: '900',
+  marginBottom: 6,
+},
+
+featuredCalmSubtitle: {
+  color: '#047857',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '800',
+},
+
+featuredCalmIllustration: {
+  width: 86,
+  height: 86,
+  borderRadius: 28,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginHorizontal: 12,
+},
+
+heroBadge: {
+  alignSelf: 'flex-start',
+  backgroundColor: '#FFFFFF',
+  paddingHorizontal: 12,
+  paddingVertical: 7,
+  borderRadius: 999,
+  marginBottom: 12,
+  zIndex: 3,
+},
+
+heroBadgeText: {
+  color: '#6D28D9',
+  fontWeight: '800',
+  fontSize: 14,
+},
+
+childSelectorCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  paddingVertical: 6,
+  marginBottom: 14,
+
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 6,
+  },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 4,
+},
+
+childSelectorItem: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+},
+
+childSelectorName: {
+  fontSize: 15,
+  fontWeight: '700',
+  color: '#0F172A',
+},
+
+addChildButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+
+  borderTopWidth: 1,
+  borderTopColor: '#F1F5F9',
+},
+
+addChildText: {
+  marginLeft: 8,
+  color: '#5B3FF4',
+  fontWeight: '800',
+},
+
+toiletTrainingCard: {
+  position: 'relative',
+  overflow: 'hidden',
+  backgroundColor: '#EFF6FF',
+  borderRadius: 30,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '#BFDBFE',
+  marginBottom: 22,
+  shadowColor: '#2563EB',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.11,
+  shadowRadius: 18,
+  elevation: 4,
+},
+
+toiletGlow: {
+  position: 'absolute',
+  width: 160,
+  height: 160,
+  borderRadius: 80,
+  backgroundColor: 'rgba(37,99,235,0.08)',
+  right: -50,
+  top: -55,
+},
+
+toiletCardTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+
+toiletIconWrap: {
+  width: 62,
+  height: 62,
+  borderRadius: 23,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 13,
+},
+
+toiletEyebrow: {
+  color: '#1D4ED8',
+  fontSize: 11,
+  fontWeight: '900',
+  letterSpacing: 0.5,
+  marginBottom: 3,
+},
+toiletTitle: {
+  color: '#0F172A',
+  fontSize: 23,
+  fontWeight: '900',
+},
+
+toiletSubtitle: {
+  color: '#334155',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+  marginBottom: 13,
+},
+
+toiletChipRow: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+},
+
+toiletChip: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingHorizontal: 11,
+  paddingVertical: 7,
+  borderWidth: 1,
+  borderColor: '#DBEAFE',
+},
+
+toiletChipText: {
+  color: '#2563EB',
+  fontSize: 11,
+  fontWeight: '900',
+},
+
+hideToiletButton: {
+  width: 34,
+  height: 34,
+  borderRadius: 14,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 8,
+  borderWidth: 1,
+  borderColor: '#DBEAFE',
+},
+
+toiletTrainingMiniCard: {
+  backgroundColor: '#EFF6FF',
+  borderRadius: 24,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#BFDBFE',
+  marginBottom: 18,
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#2563EB',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.08,
+  shadowRadius: 14,
+  elevation: 3,
+},
+
+toiletMiniIconWrap: {
+  width: 52,
+  height: 52,
+  borderRadius: 18,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+toiletMiniTitle: {
+  color: '#0F172A',
+  fontSize: 16,
+  fontWeight: '900',
+},
+
+toiletMiniSubtitle: {
+  color: '#475569',
+  fontSize: 12.5,
+  fontWeight: '700',
+  marginTop: 3,
+  lineHeight: 17,
 },
 });

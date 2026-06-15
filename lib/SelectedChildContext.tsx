@@ -1,10 +1,20 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { supabase } from './supabase';
 
 type Child = {
   id: string;
   child_name?: string;
   name?: string;
+  parent_id?: string;
+  caregiver_role?: string;
+  caregiver_access_role?: string;
 };
 
 type ChildContextType = {
@@ -28,7 +38,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshChildren = async () => {
+  const refreshChildren = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -37,37 +47,86 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        console.error('Session error in child context:', sessionError);
+      if (sessionError || !session?.user?.id) {
         setChildProfiles([]);
         setSelectedChild(null);
         return;
       }
 
-      if (!session?.user?.id) {
-        setChildProfiles([]);
-        setSelectedChild(null);
-        return;
-      }
+      const userId = session.user.id;
 
-      const { data, error } = await supabase
+      const { data: ownedChildren, error: ownedError } = await supabase
         .from('children')
         .select('*')
-        .eq('parent_id', session.user.id)
+        .eq('parent_id', userId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        throw error;
+      if (ownedError) throw ownedError;
+
+      const { data: caregiverRows, error: caregiverError } = await supabase
+        .from('child_caregivers')
+        .select('child_id, role, status, owner_user_id')
+        .eq('caregiver_user_id', userId)
+        .eq('status', 'accepted');
+
+      if (caregiverError) throw caregiverError;
+
+      const sharedRows = (caregiverRows || []).filter(
+        (row: any) => row.role !== 'owner'
+      );
+
+      const sharedChildIds = sharedRows
+        .map((row: any) => row.child_id)
+        .filter(Boolean);
+
+      let sharedChildren: Child[] = [];
+
+      if (sharedChildIds.length > 0) {
+        const { data: sharedData, error: sharedError } = await supabase
+          .from('children')
+          .select('*')
+          .in('id', sharedChildIds)
+          .order('created_at', { ascending: true });
+
+        if (sharedError) throw sharedError;
+
+        sharedChildren = (sharedData || []).map((child: any) => {
+          const caregiverRow = sharedRows.find(
+            (row: any) => row.child_id === child.id
+          );
+
+          return {
+            ...child,
+            caregiver_access_role: caregiverRow?.role || 'caregiver',
+          };
+        });
       }
 
-      const nextChildren = (data || []) as Child[];
+      const mergedMap = new Map<string, Child>();
+
+      ((ownedChildren || []) as Child[]).forEach((child) => {
+        mergedMap.set(child.id, {
+          ...child,
+          caregiver_access_role: 'owner',
+        });
+      });
+
+      sharedChildren.forEach((child) => {
+        mergedMap.set(child.id, child);
+      });
+
+      const nextChildren = Array.from(mergedMap.values());
+
       setChildProfiles(nextChildren);
 
       setSelectedChild((prev) => {
         if (!nextChildren.length) return null;
 
-        if (prev) {
-          const stillExists = nextChildren.find((child) => child.id === prev.id);
+        if (prev?.id) {
+          const stillExists = nextChildren.find(
+            (child) => child.id === prev.id
+          );
+
           if (stillExists) return stillExists;
         }
 
@@ -80,7 +139,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refreshChildren();
@@ -88,28 +147,20 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        if (!session?.user?.id) {
-          setChildProfiles([]);
-          setSelectedChild(null);
-          setLoading(false);
-          return;
-        }
-
-        await refreshChildren();
-      } catch (error) {
-        console.error('Child context auth sync error:', error);
+      if (!session?.user?.id) {
         setChildProfiles([]);
         setSelectedChild(null);
-      } finally {
         setLoading(false);
+        return;
       }
+
+      await refreshChildren();
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [refreshChildren]);
 
   const value = useMemo(
     () => ({
@@ -119,10 +170,14 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       loading,
       refreshChildren,
     }),
-    [childProfiles, selectedChild, loading]
+    [childProfiles, selectedChild, loading, refreshChildren]
   );
 
-  return <ChildContext.Provider value={value}>{children}</ChildContext.Provider>;
+  return (
+    <ChildContext.Provider value={value}>
+      {children}
+    </ChildContext.Provider>
+  );
 }
 
 export const useChild = () => useContext(ChildContext);

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,10 +20,50 @@ import {
   hideParentWinPost,
   isCurrentUserParentWinsAdmin,
   ParentWinPost,
-  POSITIVE_REACTIONS,
   reactToParentWinPost,
-  reportParentWinPost,
+  reportParentWinPost
 } from '@/lib/parentWinsService';
+
+const MODERN_REACTIONS = ['💜 Helpful', '✨ Inspiring', '🤗 Relatable'];
+
+function AnimatedPostCard({
+  index,
+  children,
+}: {
+  index: number;
+  children: React.ReactNode;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        delay: index * 90,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 380,
+        delay: index * 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim, index]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 export default function ParentWinsScreen() {
   const router = useRouter();
@@ -224,8 +265,6 @@ export default function ParentWinsScreen() {
     }
   }
 
-  const featuredPost = posts.length > 0 ? posts[0] : null;
-
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.screen}>
@@ -237,59 +276,63 @@ export default function ParentWinsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.container}
         >
-          <View style={styles.hero}>
-            <View style={styles.heroGlowOne} />
-            <View style={styles.heroGlowTwo} />
+          <View style={styles.pageHeader}>
+  <TouchableOpacity
+    style={styles.headerButton}
+    onPress={() => router.back()}
+  >
+    <Ionicons name="chevron-back" size={24} color="#5B21B6" />
+  </TouchableOpacity>
 
-            <View style={styles.heroTopRow}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => router.back()}
-              >
-                <Ionicons name="chevron-back" size={22} color="#5B21B6" />
-              </TouchableOpacity>
+  <View style={styles.pageHeaderTextWrap}>
+    <Text style={styles.pageHeaderTitle}>Parent Wins</Text>
+    <Text style={styles.pageHeaderSubtitle}>
+      Small moments are worth celebrating.
+    </Text>
+  </View>
 
-              <View style={styles.heroTitleWrap}>
-                <Text style={styles.heroTitle}>Parent Wins</Text>
-                <Text style={styles.heroSubtitle}>
-                  Real progress. Real families. Real support.
-                </Text>
-              </View>
+  <TouchableOpacity
+    style={styles.headerButton}
+    onPress={() =>
+      Alert.alert(
+        'Notifications',
+        'Community notifications will appear here soon.'
+      )
+    }
+  >
+    <Ionicons name="notifications-outline" size={21} color="#5B21B6" />
+  </TouchableOpacity>
+</View>
 
-              <View style={styles.heroActions}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() =>
-                    Alert.alert(
-                      'Notifications',
-                      'Community notifications will appear here soon.'
-                    )
-                  }
-                >
-                  <Ionicons
-                    name="notifications-outline"
-                    size={20}
-                    color="#5B21B6"
-                  />
-                </TouchableOpacity>
+<View style={styles.heroImageCard}>
+  <Image
+    source={require('../../assets/images/parent-wins-hero.png')}
+    style={styles.heroImage}
+    resizeMode="cover"
+  />
 
-                {isAdmin ? (
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() =>
-                      router.push('/parent-support/admin-win-queue')
-                    }
-                  >
-                    <Ionicons
-                      name="shield-checkmark-outline"
-                      size={20}
-                      color="#D97706"
-                    />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </View>
-          </View>
+  <View style={styles.heroImageOverlay}>
+    <Text style={styles.heroImageTitle}>Parent Wins</Text>
+
+    <Text style={styles.heroImageSubtitle}>
+      Read encouragement from caregivers like you.
+    </Text>
+  </View>
+</View>
+
+{isAdmin ? (
+  <TouchableOpacity
+    style={styles.adminQueueButton}
+    onPress={() => router.push('/parent-support/admin-win-queue')}
+  >
+    <Ionicons
+  name="shield-checkmark-outline"
+  size={18}
+  color="#D97706"
+/>
+    <Text style={styles.adminQueueText}>Review Pending Wins</Text>
+  </TouchableOpacity>
+) : null}
 
           <View style={styles.promptCard}>
             <View style={styles.promptTopRow}>
@@ -307,7 +350,7 @@ export default function ParentWinsScreen() {
             </View>
 
             <TouchableOpacity style={styles.shareButton} onPress={openShareWin}>
-              <Ionicons name="heart-circle-outline" size={21} color="#FFFFFF" />
+              <Ionicons name="heart-circle-outline" size={21} color="#FFFEFF" />
               <Text style={styles.shareButtonText}>Share Your Win</Text>
             </TouchableOpacity>
 
@@ -319,29 +362,16 @@ export default function ParentWinsScreen() {
             </View>
           </View>
 
-          {featuredPost ? (
-            <View style={styles.featuredCard}>
-              <View style={styles.featuredGlow} />
-
-              <View style={styles.featuredLabelRow}>
-                <Ionicons name="star" size={16} color="#7C3AED" />
-                <Text style={styles.featuredLabel}>Today’s Inspiring Win</Text>
-              </View>
-
-              <Text style={styles.featuredText}>“{featuredPost.content}”</Text>
-
-              <Text style={styles.featuredMeta}>
-                {getPostMeta(featuredPost)}
-              </Text>
-            </View>
-          ) : null}
-
           <View style={styles.sectionHeaderRow}>
             <View>
               <Text style={styles.sectionTitle}>Community Board</Text>
               <Text style={styles.sectionSubtitle}>
-                Encouragement from caregivers like you.
+                 Encouragement from caregivers like you.
               </Text>
+
+            <Text style={styles.boardCount}>
+              {posts.length} wins shared this week
+            </Text>
             </View>
 
             <TouchableOpacity onPress={loadFeed} style={styles.refreshChip}>
@@ -374,64 +404,71 @@ export default function ParentWinsScreen() {
             </View>
           ) : (
             <View style={styles.postList}>
-              {posts.map((post) => (
-                <View key={post.id} style={styles.postCard}>
-                  <View style={styles.postTopRow}>
-                    <View style={styles.avatar}>
-                      <Ionicons name="person" size={18} color="#FFFFFF" />
-                    </View>
+  {posts.map((post, index) => (
+    <AnimatedPostCard key={post.id} index={index}>
+      <View style={styles.postCard}>
+        <View style={styles.postAccentBar} />
 
-                    <View style={styles.postIdentity}>
-                      <Text style={styles.displayName}>
-                        {getPostDisplayName(post)}
-                      </Text>
+        <View style={styles.postTopRow}>
+          <View style={styles.avatar}>
+            <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+          </View>
 
-                      <Text style={styles.postMeta}>{getPostMeta(post)}</Text>
-                    </View>
+          <View style={styles.postIdentity}>
+            <Text style={styles.displayName}>
+              {getPostDisplayName(post)}
+            </Text>
 
-                    <TouchableOpacity
-                      style={styles.menuButton}
-                      onPress={() => handlePostMenu(post.id)}
-                    >
-                      <Ionicons
-                        name="ellipsis-horizontal"
-                        size={20}
-                        color="#7C3AED"
-                      />
-                    </TouchableOpacity>
-                  </View>
+            <Text style={styles.postMeta}>{getPostMeta(post)}</Text>
+          </View>
 
-                  <Text style={styles.postContent}>“{post.content}”</Text>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => handlePostMenu(post.id)}
+          >
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={20}
+              color="#7C3AED"
+            />
+          </TouchableOpacity>
+        </View>
 
-                  <Text style={styles.reactionPrompt}>
-                    Send a little encouragement
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryBadgeText}>Caregiver Win</Text>
+        </View>
+
+        <Text style={styles.quoteMark}>“</Text>
+
+        <Text style={styles.postContent}>{post.content}</Text>
+
+        <View style={styles.reactionWrap}>
+          {MODERN_REACTIONS.map((reaction) => (
+            <Animated.View
+              key={reaction}
+              style={{ transform: [{ scale: reactionScale }] }}
+            >
+              <TouchableOpacity
+                style={styles.reactionButton}
+                onPress={() => handleReaction(post.id, reaction)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.reactionText}>{reaction}</Text>
+
+                <View style={styles.reactionCountBubble}>
+                  <Text style={styles.reactionCount}>
+                    {reactionCounts[post.id]?.[reaction] || 0}
                   </Text>
-
-                  <View style={styles.reactionWrap}>
-                    {POSITIVE_REACTIONS.map((reaction) => (
-                      <Animated.View
-                        key={reaction}
-                        style={{ transform: [{ scale: reactionScale }] }}
-                      >
-                        <TouchableOpacity
-                          style={styles.reactionButton}
-                          onPress={() => handleReaction(post.id, reaction)}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={styles.reactionText}>{reaction}</Text>
-
-                          <View style={styles.reactionCountBubble}>
-                            <Text style={styles.reactionCount}>
-                              {reactionCounts[post.id]?.[reaction] || 0}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      </Animated.View>
-                    ))}
-                  </View>
                 </View>
-              ))}
-            </View>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+    </AnimatedPostCard>
+  ))}
+</View>
+ 
           )}
         </Animated.ScrollView>
 
@@ -444,7 +481,7 @@ export default function ParentWinsScreen() {
             onPress={openShareWin}
             activeOpacity={0.88}
           >
-            <Ionicons name="add" size={30} color="#FFFFFF" />
+            <Ionicons name="add" size={30} color="#FFFEFF" />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -465,97 +502,20 @@ const styles = StyleSheet.create({
 
   container: {
     padding: 18,
-    paddingBottom: 120,
-  },
-
-  hero: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 30,
-    padding: 16,
-    marginBottom: 14,
-    backgroundColor: '#F5E8FF',
-    borderWidth: 1,
-    borderColor: '#E9D5FF',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 2,
-  },
-
-  heroGlowOne: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(255, 251, 235, 0.9)',
-    top: -80,
-    left: -50,
-  },
-
-  heroGlowTwo: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(196, 181, 253, 0.35)',
-    bottom: -70,
-    right: -40,
-  },
-
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(221, 214, 254, 0.9)',
-  },
-
-  heroTitleWrap: {
-    flex: 1,
-    paddingHorizontal: 12,
-  },
-
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#4C1D95',
-    letterSpacing: -0.4,
-  },
-
-  heroSubtitle: {
-    marginTop: 3,
-    fontSize: 12,
-    lineHeight: 17,
-    fontWeight: '700',
-    color: '#7C3AED',
-  },
-
-  heroActions: {
-    flexDirection: 'row',
-    gap: 8,
+    paddingBottom: 220,
   },
 
   promptCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFEFF',
     borderRadius: 26,
     padding: 15,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#EBDDFD',
     marginBottom: 14,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
     elevation: 2,
   },
 
@@ -618,7 +578,7 @@ const styles = StyleSheet.create({
   },
 
   shareButtonText: {
-    color: '#FFFFFF',
+    color: '#FFFEFF',
     fontWeight: '900',
     fontSize: 15,
     marginLeft: 8,
@@ -700,11 +660,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+ sectionHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 20,
+},
 
   sectionTitle: {
     fontSize: 20,
@@ -722,9 +682,9 @@ const styles = StyleSheet.create({
 
   refreshChip: {
     marginLeft: 'auto',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFEFF',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#EBDDFD',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -740,12 +700,12 @@ const styles = StyleSheet.create({
   },
 
   centered: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFEFF',
     borderRadius: 28,
     paddingVertical: 40,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#EBDDFD',
   },
 
   loadingText: {
@@ -756,12 +716,12 @@ const styles = StyleSheet.create({
   },
 
   emptyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFEFF',
     borderRadius: 30,
     padding: 26,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#EBDDFD',
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
@@ -806,27 +766,28 @@ const styles = StyleSheet.create({
   },
 
   emptyButtonText: {
-    color: '#FFFFFF',
+    color: '#FFFEFF',
     fontWeight: '900',
     fontSize: 14,
   },
 
   postList: {
-    gap: 14,
+    gap: 22,
   },
 
-  postCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 17,
-    borderWidth: 1,
-    borderColor: '#E9D5FF',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 15,
-    elevation: 2,
-  },
+ postCard: {
+  backgroundColor: '#FFFEFF',
+  borderRadius: 30,
+  padding: 22,
+  borderWidth: 1,
+  borderColor: '#EBDDFD',
+  shadowColor: '#7C3AED',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.09,
+  shadowRadius: 22,
+  elevation: 4,
+  overflow: 'hidden',
+},
 
   postTopRow: {
     flexDirection: 'row',
@@ -838,7 +799,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 17,
-    backgroundColor: '#A78BFA',
+    backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 11,
@@ -849,17 +810,25 @@ const styles = StyleSheet.create({
   },
 
   displayName: {
-    color: '#3B0764',
-    fontSize: 14,
-    fontWeight: '900',
-  },
+  color: '#3B0764',
+  fontSize: 15,
+  fontWeight: '900',
+},
 
-  postMeta: {
-    marginTop: 3,
-    color: '#7E22CE',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+postMeta: {
+  marginTop: 3,
+  color: '#7E22CE',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+postContent: {
+  color: '#2E1065',
+  fontSize: 20,
+  lineHeight: 30,
+  fontWeight: '900',
+  marginBottom: 15,
+},
 
   menuButton: {
     width: 36,
@@ -872,66 +841,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  postContent: {
-    color: '#3B0764',
-    fontSize: 18,
-    lineHeight: 27,
-    fontWeight: '800',
-    marginBottom: 15,
-  },
-
-  reactionPrompt: {
-    color: '#7E22CE',
-    fontSize: 12,
-    fontWeight: '900',
-    marginBottom: 9,
-  },
-
-  reactionWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
+ reactionWrap: {
+  flexDirection: 'row',
+  gap: 8,
+  marginTop: 12,
+},
 
   reactionButton: {
-    backgroundColor: '#F5F3FF',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  flex: 1,
+  minHeight: 40,
+  backgroundColor: '#F5F3FF',
+  borderRadius: 999,
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
 
   reactionText: {
-    color: '#5B21B6',
-    fontSize: 12,
-    fontWeight: '900',
-  },
+  color: '#5B21B6',
+  fontSize: 11,
+  fontWeight: '900',
+},
 
   reactionCountBubble: {
-    marginLeft: 6,
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
+  marginLeft: 6,
+  minWidth: 20,
+  height: 20,
+  borderRadius: 10,
+  backgroundColor: '#7C3AED',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 5,
+},
 
   reactionCount: {
-    color: '#FFFFFF',
+    color: '#FFFEFF',
     fontSize: 11,
     fontWeight: '900',
   },
 
   fabWrap: {
-    position: 'absolute',
-    right: 22,
-    bottom: 26,
-  },
+  position: 'absolute',
+  right: 22,
+  bottom: 40,
+},
 
   fab: {
     width: 62,
@@ -948,4 +905,145 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#F5E8FF',
   },
+
+  heroImageCard: {
+  height: 240,
+  borderRadius: 32,
+  overflow: 'hidden',
+  marginBottom: 18,
+  backgroundColor: '#F5E8FF',
+
+  shadowColor: '#7C3AED',
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.12,
+  shadowRadius: 20,
+  elevation: 4,
+},
+
+heroImage: {
+  width: '100%',
+  height: '100%',
+},
+
+heroImageOverlay: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  paddingHorizontal: 22,
+  paddingBottom: 22,
+  paddingTop: 70,
+  backgroundColor: 'rgba(15,23,42,0.42)',
+},
+
+heroImageTitle: {
+  color: '#FFFEFF',
+  fontSize: 26,
+  fontWeight: '900',
+  marginBottom: 4,
+},
+
+heroImageSubtitle: {
+  color: '#F8FAFC',
+  fontSize: 14,
+  lineHeight: 20,
+  fontWeight: '800',
+},
+
+pageHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 14,
+},
+
+headerButton: {
+  width: 46,
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: '#FFFEFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#EBDDFD',
+},
+
+pageHeaderTextWrap: {
+  flex: 1,
+  paddingHorizontal: 12,
+},
+
+pageHeaderTitle: {
+  color: '#3B0764',
+  fontSize: 22,
+  fontWeight: '900',
+},
+
+pageHeaderSubtitle: {
+  marginTop: 2,
+  color: '#7C3AED',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+adminQueueButton: {
+  backgroundColor: '#FFFBEB',
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+  borderRadius: 18,
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  flexDirection: 'row',
+  alignItems: 'center',
+  alignSelf: 'flex-start',
+  marginBottom: 14,
+},
+
+adminQueueText: {
+  marginLeft: 7,
+  color: '#92400E',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+categoryBadge: {
+  alignSelf: 'flex-start',
+  backgroundColor: '#F5F3FF',
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+  borderRadius: 999,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  marginBottom: 12,
+},
+
+categoryBadgeText: {
+  color: '#6D28D9',
+  fontSize: 11,
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+},
+
+boardCount: {
+  marginTop: 8,
+  color: '#92400E',
+  fontSize: 13,
+  fontWeight: '900',
+},
+
+postAccentBar: {
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  bottom: 0,
+  width: 6,
+  backgroundColor: '#8B5CF6',
+},
+
+quoteMark: {
+  color: '#DDD6FE',
+  fontSize: 34,
+  fontWeight: '900',
+  marginBottom: -14,
+},
 });

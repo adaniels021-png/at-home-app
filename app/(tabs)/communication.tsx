@@ -425,26 +425,54 @@ export default function CommunicationScreen() {
       >
         <View style={[styles.contentInner, { maxWidth: layout.maxContentWidth }]}>
           <View style={styles.hero}>
-            <TouchableOpacity
-              style={styles.printIconBtn}
-              onPress={() => {
-                if (!isPro) {
-                  router.push('/subscription');
-                  return;
-                }
+  <View style={styles.heroBubbleOne} />
+  <View style={styles.heroBubbleTwo} />
 
-                setShowPrintModal(true);
-              }}
-            >
-              <Ionicons name="print-outline" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
+  <View style={styles.heroIconCircle}>
+    <Ionicons
+      name="chatbubbles-outline"
+      size={32}
+      color="rgba(255,255,255,0.28)"
+    />
+  </View>
 
-            <Text style={styles.heroTitle}>Communication Support</Text>
+  <TouchableOpacity
+    style={styles.printIconBtn}
+    onPress={() => {
+      if (!isPro) {
+        router.push('/subscription');
+        return;
+      }
 
-            <Text style={styles.heroSubtitle}>
-              Build sentences, hear cards aloud, and use PECS visuals during everyday routines.
-            </Text>
-          </View>
+      setShowPrintModal(true);
+    }}
+  >
+    <Ionicons name="print-outline" size={18} color="#FFFFFF" />
+  </TouchableOpacity>
+
+  <Text style={styles.heroTitle}>Communication Support</Text>
+
+  <Text style={styles.heroSubtitle}>
+    Build sentences, hear cards aloud, and use PECS visuals during everyday routines.
+  </Text>
+</View>
+
+<View style={styles.statsRow}>
+  <View style={styles.statPill}>
+    <Ionicons name="albums-outline" size={16} color="#4F46E5" />
+    <Text style={styles.statText}>{allCards.length} Cards</Text>
+  </View>
+
+  <View style={styles.statPill}>
+    <Ionicons name="star-outline" size={16} color="#F59E0B" />
+    <Text style={styles.statText}>{favoriteIds.length} Saved</Text>
+  </View>
+
+  <View style={styles.statPill}>
+    <Ionicons name="volume-high-outline" size={16} color="#0F766E" />
+    <Text style={styles.statText}>Voice</Text>
+  </View>
+</View>
 
           <TouchableOpacity
             style={styles.voiceSettingsCard}
@@ -805,25 +833,25 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 18,
-    paddingBottom: 48,
+    paddingBottom: 140,
   },
   contentInner: {
     width: '100%',
   },
   hero: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 32,
-    padding: 22,
-    paddingRight: 62,
-    marginBottom: 16,
-    position: 'relative',
-    shadowColor: '#4F46E5',
-    shadowOpacity: 0.24,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 5,
-    overflow: 'hidden',
-  },
+  backgroundColor: '#4F46E5',
+  borderRadius: 32,
+  padding: 22,
+  paddingRight: 74,
+  marginBottom: 14,
+  position: 'relative',
+  shadowColor: '#4F46E5',
+  shadowOpacity: 0.24,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 5,
+  overflow: 'hidden',
+},
   printIconBtn: {
     position: 'absolute',
     top: 16,
@@ -1275,5 +1303,69 @@ quickActionText: {
   fontSize: 12,
   fontWeight: '800',
   color: '#475569',
+},
+
+heroBubbleOne: {
+  position: 'absolute',
+  width: 160,
+  height: 160,
+  borderRadius: 80,
+  backgroundColor: 'rgba(255,255,255,0.10)',
+  right: -42,
+  top: -48,
+},
+
+heroBubbleTwo: {
+  position: 'absolute',
+  width: 105,
+  height: 105,
+  borderRadius: 53,
+  backgroundColor: 'rgba(255,255,255,0.08)',
+  left: -30,
+  bottom: -35,
+},
+
+heroIconCircle: {
+  position: 'absolute',
+  right: 34,
+  top: 30,
+  width: 60,
+  height: 60,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255,255,255,0.14)',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.18)',
+},
+
+statsRow: {
+  flexDirection: 'row',
+  gap: 10,
+  marginBottom: 14,
+},
+
+statPill: {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 18,
+  paddingVertical: 12,
+  paddingHorizontal: 8,
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.04,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 1,
+},
+
+statText: {
+  marginTop: 5,
+  fontSize: 11,
+  fontWeight: '900',
+  color: '#475569',
+  textAlign: 'center',
 },
 });

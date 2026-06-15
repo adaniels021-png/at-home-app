@@ -451,7 +451,7 @@ setAiRecommendations(
 
           <TouchableOpacity
             style={styles.reassessmentButton}
-            onPress={() => router.push('/reassessment' as any)}
+            onPress={() => router.push('/onboarding/assessment' as any)}
           >
             <Text style={styles.reassessmentButtonText}>
               {isReassessmentDue ? 'Start Check-In' : 'View / Update'}

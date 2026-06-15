@@ -438,67 +438,86 @@ export default function RoutinePrintablesScreen() {
   };
 
   const handlePrint = async (mode: 'single' | 'all') => {
-    setExporting(true);
-    try {
-      const html = buildHtml(mode);
-      await Print.printAsync({ html });
-    } catch (error: any) {
-      console.error('Routine print error:', error);
-      Alert.alert('Print Failed', error?.message || 'Could not open the print dialog.');
-    } finally {
-      setExporting(false);
+  setExporting(true);
+
+  try {
+    const uri = await createPdf(mode);
+    const canShare = await Sharing.isAvailableAsync();
+
+    if (!canShare) {
+      Alert.alert(
+        'PDF Created',
+        'The routine PDF was created, but sharing is not available on this device.'
+      );
+      return;
     }
-  };
 
-  const handleSharePdf = async (mode: 'single' | 'all') => {
-    setExporting(true);
-    try {
-      const uri = await createPdf(mode);
-      const canShare = await Sharing.isAvailableAsync();
+    await Sharing.shareAsync(uri, {
+      mimeType: 'application/pdf',
+      dialogTitle:
+        mode === 'single'
+          ? `${prettyPeriodLabel(selectedPeriod)} Routine`
+          : 'All Routine Charts',
+    });
+  } catch (error: any) {
+    console.error('Routine PDF error:', error);
+    Alert.alert('PDF Error', error?.message || 'Could not create the routine PDF.');
+  } finally {
+    setExporting(false);
+  }
+};
 
-      if (!canShare) {
-        Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
-        return;
-      }
+const handleSharePdf = async (mode: 'single' | 'all') => {
+  setExporting(true);
 
-      await Sharing.shareAsync(uri, {
-        mimeType: 'application/pdf',
-        dialogTitle:
-          mode === 'single'
-            ? `${prettyPeriodLabel(selectedPeriod)} Routine`
-            : 'All Routine Charts',
-      });
-    } catch (error: any) {
-      console.error('Routine share error:', error);
-      Alert.alert('Share Failed', error?.message || 'Could not share the routine PDF.');
-    } finally {
-      setExporting(false);
+  try {
+    const uri = await createPdf(mode);
+    const canShare = await Sharing.isAvailableAsync();
+
+    if (!canShare) {
+      Alert.alert('Sharing Unavailable', 'Sharing is not available on this device.');
+      return;
     }
-  };
 
-  const handleEmailPdf = async (mode: 'single' | 'all') => {
-    setExporting(true);
-    try {
-      const uri = await createPdf(mode);
+    await Sharing.shareAsync(uri, {
+      mimeType: 'application/pdf',
+      dialogTitle:
+        mode === 'single'
+          ? `${prettyPeriodLabel(selectedPeriod)} Routine`
+          : 'All Routine Charts',
+    });
+  } catch (error: any) {
+    console.error('Routine share error:', error);
+    Alert.alert('Share Failed', error?.message || 'Could not share the routine PDF.');
+  } finally {
+    setExporting(false);
+  }
+};
 
-      await MailComposer.composeAsync({
-        subject:
-          mode === 'single'
-            ? `${prettyPeriodLabel(selectedPeriod)} Routine Chart - ABA at Home`
-            : `Routine Charts - ABA at Home`,
-        body:
-          mode === 'single'
-            ? `Hi,\n\nAttached is the printable ${prettyPeriodLabel(selectedPeriod).toLowerCase()} routine chart for ${childName}.\n\nSent from ABA at Home.`
-            : `Hi,\n\nAttached are the printable routine charts for ${childName}.\n\nSent from ABA at Home.`,
-        attachments: [uri],
-      });
-    } catch (error: any) {
-      console.error('Routine email error:', error);
-      Alert.alert('Email Failed', error?.message || 'Could not open email for this PDF.');
-    } finally {
-      setExporting(false);
-    }
-  };
+const handleEmailPdf = async (mode: 'single' | 'all') => {
+  setExporting(true);
+
+  try {
+    const uri = await createPdf(mode);
+
+    await MailComposer.composeAsync({
+      subject:
+        mode === 'single'
+          ? `${prettyPeriodLabel(selectedPeriod)} Routine Chart - ABA at Home`
+          : 'Routine Charts - ABA at Home',
+      body:
+        mode === 'single'
+          ? `Hi,\n\nAttached is the printable ${prettyPeriodLabel(selectedPeriod).toLowerCase()} routine chart for ${childName}.\n\nSent from ABA at Home.`
+          : `Hi,\n\nAttached are the printable routine charts for ${childName}.\n\nSent from ABA at Home.`,
+      attachments: [uri],
+    });
+  } catch (error: any) {
+    console.error('Routine email error:', error);
+    Alert.alert('Email Failed', error?.message || 'Could not open email for this PDF.');
+  } finally {
+    setExporting(false);
+  }
+};
 
   if (!selectedChild) {
     return (
@@ -645,7 +664,7 @@ export default function RoutinePrintablesScreen() {
                   <>
                     <Ionicons name="print-outline" size={18} color="#FFFFFF" />
                     <Text style={styles.primaryBtnText}>
-                      Print {prettyPeriodLabel(selectedPeriod)}
+                     Create PDF
                     </Text>
                   </>
                 )}
@@ -681,7 +700,7 @@ export default function RoutinePrintablesScreen() {
                 disabled={exporting}
               >
                 <Ionicons name="albums-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryBtnText}>Print Morning + Afternoon + Evening</Text>
+                <Text style={styles.primaryBtnText}>Create Full Routine PDF</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

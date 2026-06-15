@@ -131,6 +131,55 @@ export default function SensoryResetScreen() {
     return 'That is okay. These tools may not be the best fit right now. Try Quiet Space or Breathe Together next.';
   }, [beforeLevel, afterLevel]);
 
+  const sensoryRecommendations = useMemo(() => {
+  if (!beforeLevel) {
+    return {
+      title: 'Choose a regulation level first',
+      text: 'Tell us how regulated your child feels, then ABA at Home will suggest the best sensory starting point.',
+      recommendedToolIds: [],
+    };
+  }
+
+  if (beforeLevel <= 2) {
+    return {
+      title: 'Start with firm calming input',
+      text: 'Your child seems highly dysregulated. Start with 1 calming pressure or comfort tool before adding movement.',
+      recommendedToolIds: ['deep-pressure', 'fidget'],
+    };
+  }
+
+  if (beforeLevel === 3) {
+    return {
+      title: 'Try gentle movement or pressure',
+      text: 'Your child may need organized body input. Pick 1–2 tools and give each one time to work.',
+      recommendedToolIds: ['wall-push', 'deep-pressure', 'movement'],
+    };
+  }
+
+  return {
+    title: 'Use a light sensory reset',
+    text: 'Your child seems closer to regulated. A simple pause, water break, or stretch may be enough.',
+    recommendedToolIds: ['water', 'stretch'],
+  };
+}, [beforeLevel]);
+
+const recommendedTools = useMemo(() => {
+  return sensoryTools.filter((tool) =>
+    sensoryRecommendations.recommendedToolIds.includes(tool.id)
+  );
+}, [sensoryRecommendations]);
+
+const completedSteps = useMemo(() => {
+  let count = 0;
+
+  if (beforeLevel) count += 1;
+  if (selectedTools.length > 0) count += 1;
+  if (completed) count += 1;
+  if (afterLevel) count += 1;
+
+  return count;
+}, [beforeLevel, selectedTools.length, completed, afterLevel]);
+
   function toggleTool(id: string) {
     setCompleted(false);
     setSavedPlan(null);
@@ -227,24 +276,54 @@ async function markNotHelpful() {
           <View style={styles.levelRow}>
             {regulationLevels.map((level) => (
               <Pressable
-                key={level}
-                onPress={() => setBeforeLevel(level)}
-                style={[
-                  styles.levelButton,
-                  beforeLevel === level && styles.levelButtonSelected,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.levelText,
-                    beforeLevel === level && styles.levelTextSelected,
-                  ]}
-                >
-                  {level}
-                </Text>
-              </Pressable>
+  key={level}
+  onPress={() => setBeforeLevel(level)}
+  style={[
+    styles.levelButton,
+    beforeLevel === level && styles.levelButtonSelected,
+  ]}
+>
+  <Text
+    style={[
+      styles.levelText,
+      beforeLevel === level && styles.levelTextSelected,
+    ]}
+  >
+    {level}
+  </Text>
+</Pressable>
             ))}
           </View>
+
+           <View style={styles.progressTracker}>
+  {[1, 2, 3, 4].map((step) => {
+    const active = completedSteps >= step;
+
+    return (
+      <View key={step} style={styles.progressStepWrap}>
+        <View style={[styles.progressDot, active && styles.progressDotActive]}>
+          <Text
+            style={[
+              styles.progressDotText,
+              active && styles.progressDotTextActive,
+            ]}
+          >
+            {step}
+          </Text>
+        </View>
+
+        {step < 4 ? (
+          <View
+            style={[
+              styles.progressLine,
+              active && styles.progressLineActive,
+            ]}
+          />
+        ) : null}
+      </View>
+    );
+  })}
+</View>
 
           <View style={styles.levelLabels}>
             <Text style={styles.labelSmall}>Highly dysregulated</Text>
@@ -256,16 +335,67 @@ async function markNotHelpful() {
           <Text style={styles.stepLabel}>Step 2</Text>
           <Text style={styles.sectionTitle}>Choose sensory tools</Text>
           <Text style={styles.helperText}>Select anything you want to try.</Text>
+          
 
-          {selectedTools.length > 0 && (
-            <View style={styles.selectedSummary}>
-              <Text style={styles.selectedSummaryTitle}>Your reset plan</Text>
+          <View style={styles.resetPlanPreview}>
+  <View style={styles.resetPlanIcon}>
+    <Ionicons name="sparkles-outline" size={24} color="#B45309" />
+  </View>
 
-              <Text style={styles.selectedSummaryText}>
-                {selectedTools.map((tool) => tool.title).join(', ')}
-              </Text>
-            </View>
-          )}
+  <View style={{ flex: 1 }}>
+    <Text style={styles.resetPlanPreviewTitle}>
+      {sensoryRecommendations.title}
+    </Text>
+
+    <Text style={styles.resetPlanPreviewText}>
+      {sensoryRecommendations.text}
+    </Text>
+  </View>
+</View>
+
+{recommendedTools.length > 0 ? (
+  <View style={styles.recommendedToolWrap}>
+    {recommendedTools.map((tool) => {
+      const selected = selectedToolIds.includes(tool.id);
+
+      return (
+        <Pressable
+          key={tool.id}
+          onPress={() => toggleTool(tool.id)}
+          style={[
+            styles.recommendedToolChip,
+            selected && styles.recommendedToolChipSelected,
+          ]}
+        >
+          <Ionicons
+            name={tool.icon}
+            size={17}
+            color={selected ? '#FFFFFF' : '#B45309'}
+          />
+
+          <Text
+            style={[
+              styles.recommendedToolChipText,
+              selected && styles.recommendedToolChipTextSelected,
+            ]}
+          >
+            {tool.title}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
+) : null}
+
+{selectedTools.length > 0 ? (
+  <View style={styles.selectedSummary}>
+    <Text style={styles.selectedSummaryTitle}>Your reset plan</Text>
+
+    <Text style={styles.selectedSummaryText}>
+      {selectedTools.map((tool) => tool.title).join(', ')}
+    </Text>
+  </View>
+) : null}
 
           <View style={styles.toolGrid}>
   {sensorySections.map((section) => {
@@ -395,105 +525,100 @@ async function markNotHelpful() {
           <Text style={styles.helperText}>
             How regulated does your child seem after trying the reset?
           </Text>
-
-          <View style={styles.levelRow}>
-            {regulationLevels.map((level) => (
-              <Pressable
-                key={level}
-                onPress={() => setAfterLevel(level)}
-                style={[
-                  styles.levelButton,
-                  afterLevel === level && styles.levelButtonSelected,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.levelText,
-                    afterLevel === level && styles.levelTextSelected,
-                  ]}
-                >
-                  {level}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
           <View style={styles.levelLabels}>
             <Text style={styles.labelSmall}>Still dysregulated</Text>
             <Text style={styles.labelSmall}>More regulated</Text>
           </View>
 
-          <View style={styles.feedbackRow}>
-            <TouchableOpacity
-  style={[
-    styles.feedbackButton,
-    helpfulStatus === 'not_helpful' && styles.feedbackButtonNotHelpful,
-    selectedTools.length === 0 && styles.disabledButton,
-  ]}
-  disabled={selectedTools.length === 0}
-  onPress={markNotHelpful}
->
-              <Ionicons
-                name="thumbs-up-outline"
-                size={20}
-                color={helpfulStatus === 'helpful' ? '#FFFFFF' : '#15803D'}
-              />
+<View style={styles.feedbackRow}>
+  <TouchableOpacity
+    style={[
+      styles.feedbackButton,
+      helpfulStatus === 'helpful' && styles.feedbackButtonHelpful,
+      (!afterLevel || selectedTools.length === 0) && styles.disabledButton,
+    ]}
+    disabled={!afterLevel || selectedTools.length === 0}
+    onPress={savePlanAsHelpful}
+  >
+    <Ionicons
+      name="thumbs-up-outline"
+      size={20}
+      color={helpfulStatus === 'helpful' ? '#FFFFFF' : '#15803D'}
+    />
 
-              <Text
-                style={[
-                  styles.feedbackButtonText,
-                  helpfulStatus === 'helpful' && styles.feedbackButtonTextActive,
-                ]}
-              >
-                Yes, this helped
-              </Text>
-            </TouchableOpacity>
+    <Text
+      style={[
+        styles.feedbackButtonText,
+        helpfulStatus === 'helpful' && styles.feedbackButtonTextActive,
+      ]}
+    >
+      Yes, this helped
+    </Text>
+  </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.feedbackButton,
-                helpfulStatus === 'not_helpful' && styles.feedbackButtonNotHelpful,
-              ]}
-              onPress={markNotHelpful}
-            >
-              <Ionicons
-                name="thumbs-down-outline"
-                size={20}
-                color={helpfulStatus === 'not_helpful' ? '#FFFFFF' : '#B45309'}
-              />
+  <TouchableOpacity
+    style={[
+      styles.feedbackButton,
+      helpfulStatus === 'not_helpful' && styles.feedbackButtonNotHelpful,
+      (!afterLevel || selectedTools.length === 0) && styles.disabledButton,
+    ]}
+    disabled={!afterLevel || selectedTools.length === 0}
+    onPress={markNotHelpful}
+  >
+    <Ionicons
+      name="thumbs-down-outline"
+      size={20}
+      color={helpfulStatus === 'not_helpful' ? '#FFFFFF' : '#B45309'}
+    />
 
-              <Text
-                style={[
-                  styles.feedbackButtonText,
-                  helpfulStatus === 'not_helpful' &&
-                    styles.feedbackButtonTextActive,
-                ]}
-              >
-                Not this time
-              </Text>
-            </TouchableOpacity>
-          </View>
+    <Text
+      style={[
+        styles.feedbackButtonText,
+        helpfulStatus === 'not_helpful' && styles.feedbackButtonTextActive,
+      ]}
+    >
+      Not this time
+    </Text>
+  </TouchableOpacity>
+</View>
+
+</View>
+
+        {!!resultMessage && beforeLevel && afterLevel ? (
+  <View
+    style={[
+      styles.resultCard,
+      afterLevel > beforeLevel && styles.resultCardPositive,
+    ]}
+  >
+    <Ionicons
+      name={afterLevel > beforeLevel ? 'checkmark-circle' : 'sparkles-outline'}
+      size={26}
+      color={afterLevel > beforeLevel ? '#15803D' : '#B45309'}
+    />
+
+    <Text style={styles.resultTitle}>
+      {afterLevel > beforeLevel ? 'Nice work!' : 'Personal result'}
+    </Text>
+
+    <Text style={styles.resultText}>
+      {afterLevel > beforeLevel
+        ? `Your child improved from ${beforeLevel} → ${afterLevel}. This sensory plan may be worth saving.`
+        : resultMessage}
+    </Text>
+
+    {savedPlan && (
+      <View style={styles.savedPlanBox}>
+        <Ionicons name="bookmark-outline" size={18} color="#92400E" />
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.savedPlanTitle}>Saved to Quick Access</Text>
+          <Text style={styles.savedPlanText}>{savedPlan}</Text>
         </View>
-
-        {!!resultMessage && (
-          <View style={styles.resultCard}>
-            <Ionicons name="sparkles-outline" size={24} color="#B45309" />
-
-            <Text style={styles.resultTitle}>Personal result</Text>
-            <Text style={styles.resultText}>{resultMessage}</Text>
-
-            {savedPlan && (
-              <View style={styles.savedPlanBox}>
-                <Ionicons name="bookmark-outline" size={18} color="#92400E" />
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.savedPlanTitle}>Saved to Quick Access</Text>
-                  <Text style={styles.savedPlanText}>{savedPlan}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
+      </View>
+    )}
+  </View>
+) : null}
 
         <TouchableOpacity style={styles.resetButton} onPress={resetTool}>
           <Ionicons name="refresh-outline" size={18} color="#B45309" />
@@ -822,9 +947,9 @@ const styles = StyleSheet.create({
   },
 
   feedbackButtonHelpful: {
-    backgroundColor: '#15803D',
-    borderColor: '#15803D',
-  },
+  backgroundColor: '#15803D',
+  borderColor: '#15803D',
+},
 
   feedbackButtonNotHelpful: {
     backgroundColor: '#B45309',
@@ -942,5 +1067,133 @@ accordionBody: {
   padding: 12,
   paddingTop: 0,
   gap: 12,
+},
+
+resetPlanPreview: {
+  backgroundColor: '#FFF7ED',
+  borderRadius: 22,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#FDBA74',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 14,
+},
+
+resetPlanIcon: {
+  width: 46,
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: '#FEF3C7',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+resetPlanPreviewTitle: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#92400E',
+},
+
+resetPlanPreviewText: {
+  marginTop: 4,
+  color: '#475569',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+},
+
+progressTracker: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+progressStepWrap: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+progressDot: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: '#FEF3C7',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+progressDotActive: {
+  backgroundColor: '#B45309',
+},
+
+progressDotText: {
+  color: '#B45309',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+progressDotTextActive: {
+  color: '#FFFFFF',
+},
+
+progressLine: {
+  width: 34,
+  height: 3,
+  borderRadius: 999,
+  backgroundColor: '#FDE68A',
+  marginHorizontal: 5,
+},
+
+progressLineActive: {
+  backgroundColor: '#B45309',
+},
+
+recommendedToolWrap: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginBottom: 14,
+},
+
+recommendedToolChip: {
+  minHeight: 42,
+  borderRadius: 999,
+  paddingHorizontal: 12,
+  paddingVertical: 9,
+  borderWidth: 1,
+  borderColor: '#FDBA74',
+  backgroundColor: '#FFF7ED',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+},
+
+recommendedToolChipSelected: {
+  backgroundColor: '#B45309',
+  borderColor: '#B45309',
+},
+
+recommendedToolChipText: {
+  color: '#92400E',
+  fontSize: 12.5,
+  fontWeight: '900',
+},
+
+recommendedToolChipTextSelected: {
+  color: '#FFFFFF',
+},
+
+resultCardPositive: {
+  backgroundColor: '#F0FDF4',
+  borderColor: '#BBF7D0',
 },
 });

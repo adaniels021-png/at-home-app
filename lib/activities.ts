@@ -1,20 +1,49 @@
 import { generateDailyABAActivities } from './aiService';
 import { supabase } from './supabase';
 
-export type ActivitySetting = 'home' | 'community' | 'either';
+export type ActivitySetting = 'home' | 'community' | 'outdoor' | 'either';
 export type ActivityDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
+export type AdventureCategory =
+  | 'home'
+  | 'outdoor'
+  | 'community'
+  | 'sensory'
+  | 'creative'
+  | 'calm'
+  | 'movement'
+  | 'surprise';
+
+export type AdventureFeedback = 'loved' | 'good' | 'not_today';
+
 export type DailyActivity = {
+  id?: string;
   name: string;
-  setting: ActivitySetting;
-  difficulty: ActivityDifficulty;
-  goal: string;
-  materials: string[];
-  instructions: string[];
-  success_criteria: string;
-  parent_tip: string;
+  title?: string;
+
+  category?: AdventureCategory | string;
+  setting?: ActivitySetting;
+  difficulty?: ActivityDifficulty;
+
+  location?: string;
+  time?: string;
+  description?: string;
+
+  try_this?: string[];
+  tryThis?: string[];
+
+  why_it_helps?: string;
+  whyItHelps?: string;
+
+  parent_tip?: string;
   sensory_note?: string;
   community_option?: string;
+
+  // Keep these optional so old saved/generated activities do not crash.
+  goal?: string;
+  materials?: string[];
+  instructions?: string[];
+  success_criteria?: string;
 };
 
 export type SavedActivityRow = {
@@ -24,6 +53,8 @@ export type SavedActivityRow = {
   activity_json: DailyActivity;
   is_saved: boolean;
   is_favorite: boolean;
+  completed?: boolean;
+  feedback?: AdventureFeedback;
   created_at?: string;
   updated_at?: string;
 };
@@ -42,6 +73,7 @@ function safeArray(value: any): string[] {
         if (item?.text) return String(item.text).trim();
         if (item?.step) return String(item.step).trim();
         if (item?.name) return String(item.name).trim();
+        if (item?.title) return String(item.title).trim();
         return String(item ?? '').trim();
       })
       .filter(Boolean);
@@ -55,6 +87,60 @@ function safeArray(value: any): string[] {
   }
 
   return [];
+}
+
+function normalizeCategory(value: any): AdventureCategory {
+  const category = safeString(value).toLowerCase();
+
+  if (
+    category === 'home' ||
+    category === 'outdoor' ||
+    category === 'community' ||
+    category === 'sensory' ||
+    category === 'creative' ||
+    category === 'calm' ||
+    category === 'movement' ||
+    category === 'surprise'
+  ) {
+    return category;
+  }
+
+  return 'surprise';
+}
+
+function normalizeSetting(value: any): ActivitySetting {
+  if (value === 'home' || value === 'community' || value === 'outdoor') {
+    return value;
+  }
+
+  return 'either';
+}
+
+function normalizeDifficulty(value: any): ActivityDifficulty {
+  if (value === 'advanced' || value === 'intermediate') {
+    return value;
+  }
+
+  return 'beginner';
+}
+
+function buildTryThisFallback(activity: any, childName = 'your child') {
+  const instructions = safeArray(
+    activity?.try_this ||
+      activity?.tryThis ||
+      activity?.ideas ||
+      activity?.steps ||
+      activity?.instructions ||
+      activity?.teaching_steps
+  );
+
+  if (instructions.length >= 2) return instructions.slice(0, 4);
+
+  return [
+    `Follow ${childName}'s interest and keep the activity playful.`,
+    'Pause, smile, and give your child time to join in their own way.',
+    'Celebrate small moments like looking, pointing, laughing, helping, or trying.',
+  ];
 }
 
 export function getTodayLocalDateString() {
@@ -72,74 +158,92 @@ export function getTimeGreeting() {
   return 'Good evening';
 }
 
-export async function safePregenerateActivityQueue({
-  childId,
-  childName,
-}: {
-  childId: string;
-  childName: string;
-}) {
-  try {
-    return;
-  } catch (error) {
-    console.error('Pregenerate activity queue error:', error);
-  }
-}
-  
-  export function buildActivityId(activity: any, index: number) {
-  return (
-    activity?.id ||
-    `${activity?.name || 'activity'}-${index}`
-  );
+export function buildActivityId(activity: any, index: number) {
+  return activity?.id || `${activity?.name || activity?.title || 'adventure'}-${index}`;
 }
 
-export function normalizeActivity(activity: any, index = 0): DailyActivity {
-  const materials = safeArray(activity?.materials);
-  const instructions = safeArray(
-    activity?.instructions || activity?.steps || activity?.teaching_steps
+export function safeStringArray(value: any): string[] {
+  return safeArray(value);
+}
+
+export function normalizeActivity(
+  activity: any,
+  index = 0,
+  childName = 'your child'
+): DailyActivity {
+  const name = safeString(
+    activity?.name || activity?.title,
+    `Daily Adventure ${index + 1}`
   );
+
+  const title = safeString(activity?.title || activity?.name, name);
+  const category = normalizeCategory(activity?.category || activity?.type);
+  const tryThis = buildTryThisFallback(activity, childName);
 
   return {
-    name: safeString(activity?.name || activity?.title, `Activity ${index + 1}`),
-    setting:
-      activity?.setting === 'community' || activity?.setting === 'either'
-        ? activity.setting
-        : 'home',
-    difficulty:
-      activity?.difficulty === 'advanced' ||
-      activity?.difficulty === 'intermediate'
-        ? activity.difficulty
-        : 'beginner',
-    goal: safeString(
-      activity?.goal || activity?.objective,
-      'Practice communication, play, attention, or daily living skills in a fun way.'
+    id: safeString(activity?.id),
+    name,
+    title,
+
+    category,
+    setting: normalizeSetting(activity?.setting),
+    difficulty: normalizeDifficulty(activity?.difficulty),
+
+    location: safeString(
+      activity?.location || activity?.where,
+      category === 'community'
+        ? 'Community outing'
+        : category === 'outdoor'
+          ? 'Backyard, park, or neighborhood'
+          : 'Home or everyday family space'
     ),
-    materials:
-      materials.length > 0
-        ? materials
-        : ['Preferred toy or item', 'Simple household item', 'Small reinforcer'],
-    instructions:
-      instructions.length >= 3
-        ? instructions
-        : [
-            'Set up the activity in a calm and simple space.',
-            'Show your child what to do using simple language.',
-            'Wait 3–5 seconds for your child to respond.',
-            'Prompt gently if needed.',
-            'Praise or reward any attempt right away.',
-          ],
-    success_criteria: safeString(
-      activity?.success_criteria || activity?.successCriteria,
-      'Your child participates with support for 2–5 minutes.'
+
+    time: safeString(
+      activity?.time || activity?.estimated_time || activity?.duration,
+      '5–10 minutes'
     ),
+
+    description: safeString(
+      activity?.description || activity?.summary,
+      'A simple, playful idea you can try together in a low-pressure way.'
+    ),
+
+    try_this: tryThis,
+    tryThis,
+
+    why_it_helps: safeString(
+      activity?.why_it_helps ||
+        activity?.whyItHelps ||
+        activity?.benefit ||
+        activity?.developmental_benefit ||
+        activity?.parent_tip ||
+        activity?.goal ||
+        activity?.success_criteria,
+      'Supports communication, attention, confidence, connection, and everyday development through play.'
+    ),
+
+    whyItHelps: safeString(
+      activity?.whyItHelps ||
+        activity?.why_it_helps ||
+        activity?.benefit ||
+        activity?.developmental_benefit,
+      'Supports communication, attention, confidence, connection, and everyday development through play.'
+    ),
+
     parent_tip: safeString(
       activity?.parent_tip || activity?.parentTip,
-      'Keep it short, fun, and end after a successful attempt.'
+      'Keep it playful, flexible, and short. The goal is connection, not perfection.'
     ),
+
     sensory_note: safeString(activity?.sensory_note || activity?.sensoryNote),
     community_option: safeString(
       activity?.community_option || activity?.communityOption
     ),
+
+    materials: safeArray(activity?.materials),
+    instructions: safeArray(activity?.instructions || activity?.steps),
+    goal: safeString(activity?.goal || activity?.objective),
+    success_criteria: safeString(activity?.success_criteria || activity?.successCriteria),
   };
 }
 
@@ -148,97 +252,152 @@ export function normalizeActivities(value: any): DailyActivity[] {
   return value.map((item, index) => normalizeActivity(item, index));
 }
 
-export function safeStringArray(value: any): string[] {
-  if (!value) return [];
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => {
-        if (typeof item === 'string') return item.trim();
-        if (item?.description) return String(item.description).trim();
-        if (item?.text) return String(item.text).trim();
-        if (item?.step) return String(item.step).trim();
-        if (item?.name) return String(item.name).trim();
-        return String(item ?? '').trim();
-      })
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return value
-      .split(/\n|\. /)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-}
-
 export function buildFallbackActivities(childName = 'your child'): DailyActivity[] {
   return [
     {
-      name: 'Treasure Hunt Requests',
+      name: 'Bubble Chase',
+      title: 'Bubble Chase',
+      category: 'outdoor',
+      setting: 'outdoor',
+      difficulty: 'beginner',
+      location: 'Backyard, park, or sidewalk',
+      time: '5–10 minutes',
+      description:
+        'Blow bubbles and turn it into a playful chase, pop, and laugh adventure.',
+      try_this: [
+        `Let ${childName} pop bubbles with hands, feet, or a bubble wand.`,
+        'Pause before blowing more bubbles and see how your child asks for more.',
+        'Try big bubbles, tiny bubbles, fast bubbles, and slow bubbles.',
+      ],
+      why_it_helps:
+        'Supports movement, shared attention, communication, and joyful connection through play.',
+      parent_tip: 'Follow your child’s energy. This can be active or calm.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
+    },
+    {
+      name: 'Toy Rescue Mission',
+      title: 'Toy Rescue Mission',
+      category: 'home',
       setting: 'home',
       difficulty: 'beginner',
-      goal: 'Practice requesting, pointing, looking, or using words/signs to ask for items.',
-      materials: ['Favorite toy', 'Snack', 'Small basket or bag'],
-      instructions: [
-        `Hide 3 favorite items around the room where ${childName} can partially see them.`,
-        'Point to one item and say, “What do you want?” or “Find it!”',
-        'Wait 3–5 seconds for a reach, point, look, sign, sound, or word.',
-        'Prompt the request if needed, then immediately give access to the item.',
-        'Celebrate each find with praise and a short play moment.',
+      location: 'Living room or play area',
+      time: '5 minutes',
+      description:
+        'Pretend toys are stuck around the room and need help getting back home.',
+      try_this: [
+        'Pick 3–5 toys to “rescue.”',
+        'Give each toy a silly voice, sound, or name.',
+        'Celebrate when each toy makes it back to its basket, shelf, or bed.',
       ],
-      success_criteria: `${childName} makes 3 request attempts with support.`,
-      parent_tip: 'Accept any clear communication attempt, not only full words.',
-      sensory_note: 'Use calm hiding spots if your child becomes overstimulated.',
-      community_option: 'Try this at the park by looking for a bench, tree, slide, or ball.',
+      why_it_helps:
+        'Builds pretend play, cooperation, clean-up routines, and following everyday directions without feeling like a chore.',
+      parent_tip: 'Make it silly instead of serious.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
     },
     {
-      name: 'Grocery Store Color Mission',
+      name: 'Grocery Store Helper',
+      title: 'Grocery Store Helper',
+      category: 'community',
       setting: 'community',
-      difficulty: 'intermediate',
-      goal: 'Practice color recognition, scanning, and following simple directions.',
-      materials: ['Grocery cart', 'Real store items or pretend food at home'],
-      instructions: [
-        'Choose one color, such as red.',
-        `Ask ${childName} to help find something red on a shelf, in the cart, or at home.`,
-        'Point to two choices if needed and say, “Which one is red?”',
-        'Praise any correct look, touch, point, or answer.',
-        'Repeat with 2–3 colors, keeping it playful and short.',
-      ],
-      success_criteria: `${childName} identifies or points to 3 colored items with support.`,
-      parent_tip: 'Use real-life errands as short learning moments, not long lessons.',
-      sensory_note: 'Use quieter aisles or practice at home if the store is too loud.',
-      community_option: 'Use this at Target, the grocery store, library, or park.',
-    },
-    {
-      name: 'Animal Movement Copycat',
-      setting: 'either',
       difficulty: 'beginner',
-      goal: 'Practice imitation, motor planning, attention, and social play.',
-      materials: ['Open floor space', 'Animal pictures or stuffed animals'],
-      instructions: [
-        'Pick one animal and model the movement, such as hopping like a bunny.',
-        `Say, “${childName}, do this!” and show the movement again.`,
-        'Help your child copy using a gesture, model, or gentle prompt if needed.',
-        'Give big praise for any attempt.',
-        'Try 3 animals, such as bunny, bear, frog, or bird.',
+      location: 'Grocery store, Target, or quick errand',
+      time: '10–15 minutes',
+      description:
+        'Let your child be your special helper during a simple shopping trip.',
+      try_this: [
+        'Ask your child to help find one color, one fruit, or one box.',
+        'Let them place a safe item in the cart.',
+        'Praise helping, waiting, looking, or staying nearby.',
       ],
-      success_criteria: `${childName} imitates or attempts 3 animal movements.`,
-      parent_tip: 'Silly activities are still learning. Fun increases engagement.',
-      sensory_note: 'Choose slower movements if your child needs calming input.',
-      community_option: 'Try animal walks at the park or while waiting in line.',
+      why_it_helps:
+        'Supports real-world language, attention, patience, and community participation.',
+      parent_tip: 'Keep it short and choose one small helper job.',
+      sensory_note: 'Use quieter aisles or shorter trips if the store feels overwhelming.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
     },
   ];
 }
 
-export async function getNextActivitiesFromQueue({
+export function buildDailyAdventurePrompt({
+  childName,
+  count = 3,
+  setting = 'either',
+  recentTitles = [],
+}: {
+  childName: string;
+  count?: number;
+  setting?: ActivitySetting;
+  recentTitles?: string[];
+}) {
+  const settingText =
+    setting === 'community'
+      ? 'Focus on community activities like stores, parks, libraries, errands, car rides, waiting rooms, or playgrounds.'
+      : setting === 'home'
+        ? 'Focus on at-home activities using simple everyday items.'
+        : setting === 'outdoor'
+          ? 'Focus on outdoor activities like parks, sidewalks, playgrounds, backyards, and neighborhood walks.'
+          : 'Include a mix of at-home, outdoor, community, sensory, calm, movement, and creative activities.';
+
+  return `
+Generate ${count} Daily Adventures for ${childName}.
+
+These should NOT feel like lessons, therapy, ABA programs, worksheets, drills, or formal teaching.
+
+They should feel like playful family activities parents can do naturally at home, outside, or in the community.
+
+${settingText}
+
+Each activity must include:
+- name
+- title
+- category: one of home, outdoor, community, sensory, creative, calm, movement
+- location
+- time
+- description
+- try_this: 3 simple playful ideas
+- why_it_helps
+
+Avoid:
+- goals
+- measurable objectives
+- "child will"
+- trials
+- prompts
+- data collection language
+- clinical wording
+- lesson-style instructions
+- materials lists unless truly needed
+
+Do not repeat or closely copy these recent activities:
+${recentTitles.length ? recentTitles.map((title) => `- ${title}`).join('\n') : '- None'}
+
+Tone:
+Warm, parent-friendly, practical, playful, autism-friendly, and low-pressure.
+`;
+}
+
+export async function safePregenerateActivityQueue({
   childId,
+  childName,
 }: {
   childId: string;
+  childName: string;
 }) {
-  return null;
+  try {
+    await pregenerateActivityQueue({
+      childId,
+      childName,
+      count: 5,
+    });
+  } catch (error) {
+    console.error('Pregenerate Daily Adventures queue error:', error);
+  }
 }
 
 export async function getChildActivityContext(childId: string) {
@@ -273,6 +432,41 @@ export async function getChildActivityContext(childId: string) {
   };
 }
 
+export async function getRecentAdventureTitles({
+  childId,
+  limit = 30,
+}: {
+  childId: string;
+  limit?: number;
+}): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('daily_fun_activities')
+      .select('activities_json')
+      .eq('child_id', childId)
+      .order('activity_date', { ascending: false })
+      .limit(14);
+
+    if (error) throw error;
+
+    const titles: string[] = [];
+
+    (data || []).forEach((row: any) => {
+      if (Array.isArray(row.activities_json)) {
+        row.activities_json.forEach((activity: any) => {
+          const title = safeString(activity?.title || activity?.name);
+          if (title && !titles.includes(title)) titles.push(title);
+        });
+      }
+    });
+
+    return titles.slice(0, limit);
+  } catch (error) {
+    console.error('getRecentAdventureTitles error:', error);
+    return [];
+  }
+}
+
 export async function generateCreativeDailyActivities({
   childId,
   childName,
@@ -288,22 +482,27 @@ export async function generateCreativeDailyActivities({
 }): Promise<DailyActivity[]> {
   try {
     const context = await getChildActivityContext(childId);
+    const recentTitles = await getRecentAdventureTitles({ childId });
 
     const generated = await generateDailyABAActivities({
       childName,
       location:
         setting === 'community'
-          ? 'Community outings such as store, park, library, car, or errands'
+          ? 'Community outings'
           : setting === 'home'
             ? 'Home'
-            : 'Home and community',
+            : setting === 'outdoor'
+              ? 'Outdoor'
+              : 'Home, outdoor, and community',
       skillFocus: `
-Create creative, fun ABA-style activities for children with autism.
-Activities should feel like play, errands, movement games, sensory-friendly games, social games, or daily routine practice.
-Avoid boring worksheet-style tasks.
-Include home and community options.
-Difficulty level: ${difficulty}.
-Focus on communication, play, imitation, following directions, waiting, turn-taking, requesting, tolerance, sensory-friendly participation, and independence.
+${buildDailyAdventurePrompt({
+  childName,
+  count,
+  setting,
+  recentTitles,
+})}
+
+Difficulty should be parent-friendly and ${difficulty}, but do not label the activity like a formal lesson.
 `,
       assessmentContext: context.assessmentContext,
       recentLessons: context.recentLessons,
@@ -347,6 +546,14 @@ export async function getQueuedActivities({
     console.error('getQueuedActivities error:', error);
     return null;
   }
+}
+
+export async function getNextActivitiesFromQueue({
+  childId,
+}: {
+  childId: string;
+}) {
+  return getQueuedActivities({ childId });
 }
 
 export async function pregenerateActivityQueue({
@@ -519,11 +726,12 @@ export async function getSavedActivityState({
 }): Promise<{
   savedNames: string[];
   favoriteNames: string[];
+  completedNames: string[];
 }> {
   try {
     const { data, error } = await supabase
       .from('saved_activities')
-      .select('activity_name, is_saved, is_favorite')
+      .select('activity_name, is_saved, is_favorite, completed')
       .eq('child_id', childId);
 
     if (error) throw error;
@@ -535,12 +743,16 @@ export async function getSavedActivityState({
       favoriteNames: (data || [])
         .filter((row: any) => row.is_favorite)
         .map((row: any) => row.activity_name),
+      completedNames: (data || [])
+        .filter((row: any) => row.completed)
+        .map((row: any) => row.activity_name),
     };
   } catch (error) {
     console.error('getSavedActivityState error:', error);
     return {
       savedNames: [],
       favoriteNames: [],
+      completedNames: [],
     };
   }
 }
@@ -604,6 +816,34 @@ export async function toggleFavoriteActivity({
   if (error) throw error;
 
   return nextValue;
+}
+
+export async function saveActivityFeedback({
+  childId,
+  activity,
+  feedback,
+}: {
+  childId: string;
+  activity: DailyActivity;
+  feedback: AdventureFeedback;
+}) {
+  const { error } = await supabase.from('saved_activities').upsert(
+    [
+      {
+        child_id: childId,
+        activity_name: activity.name,
+        activity_json: activity,
+        is_saved: true,
+        completed: true,
+        feedback,
+      },
+    ],
+    {
+      onConflict: 'child_id,activity_name',
+    }
+  );
+
+  if (error) throw error;
 }
 
 export async function saveGeneratedActivity(

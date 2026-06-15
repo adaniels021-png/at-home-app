@@ -18,6 +18,11 @@ import { useSubscription } from '../../lib/SubscriptionContext';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
+import {
+  canCustomizeRoutines,
+  canLogProgress,
+} from '../../lib/caregiverPermissions';
+
 type TimePeriod = 'morning' | 'afternoon' | 'evening';
 type DayType =
   | 'everyday'
@@ -108,26 +113,26 @@ const ROUTINE_THEME: Record<
   }
 > = {
   morning: {
-    hero: '#F59E0B',
-    soft: '#FEF3C7',
-    icon: 'sunny-outline',
-    title: 'Good Morning',
-    tip: 'Try showing the first routine step before giving a verbal direction. Visual first, words second.',
-  },
-  afternoon: {
-    hero: '#3B82F6',
-    soft: '#DBEAFE',
-    icon: 'partly-sunny-outline',
-    title: 'Good Afternoon',
-    tip: 'Before switching activities, give a simple warning like “First cleanup, then play.”',
-  },
-  evening: {
-    hero: '#4338CA',
-    soft: '#E0E7FF',
-    icon: 'moon-outline',
-    title: 'Good Evening',
-    tip: 'Keep bedtime language short and predictable. Repeating the same calm phrase can help transitions.',
-  },
+  hero: '#F59E0B',
+  soft: '#FEF3C7',
+  icon: 'sunny-outline',
+  title: 'Good Morning',
+  tip: 'Try showing the first routine step before giving a verbal direction. Visual first, words second.',
+},
+afternoon: {
+  hero: '#0EA5E9',
+  soft: '#E0F2FE',
+  icon: 'partly-sunny-outline',
+  title: 'Good Afternoon',
+  tip: 'Before switching activities, give a simple warning like “First cleanup, then play.”',
+},
+evening: {
+  hero: '#8B5CF6',
+  soft: '#F3E8FF',
+  icon: 'moon-outline',
+  title: 'Good Evening',
+  tip: 'Keep bedtime language short and predictable. Repeating the same calm phrase can help transitions.',
+},
 };
 
 function getFallbackDayType(dayType: DayType): DayType {
@@ -168,16 +173,36 @@ export default function RoutinesScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
 
-const { isPro, adminMode } = useSubscription();
-const hasProAccess = isPro || adminMode;
+  const role = selectedChild?.caregiver_access_role;
+  const canCustomize = canCustomizeRoutines(role);
+  const canTrack = canLogProgress(role);
+
+  const { isPro, adminMode } = useSubscription();
+  const hasProAccess = isPro || adminMode;
 
 const openProRoute = (path: string) => {
-  if (!hasProAccess) {
+  if (!hasProAccess || !canCustomize) {
     router.push('/subscription');
     return;
   }
 
   router.push(path as any);
+};
+
+
+const openPracticeMode = () => {
+  if (!hasProAccess) {
+    router.push('/subscription');
+    return;
+  }
+
+  router.push({
+    pathname: '/routines/practice',
+    params: {
+      selectedTime,
+      selectedDayType,
+    },
+  });
 };
 
   const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
@@ -310,6 +335,14 @@ const routineTitle = `${childName}'s ${
     return;
   }
 
+  if (!canTrack) {
+  Alert.alert(
+    'Permission Needed',
+    'This caregiver does not have permission to log routine progress.'
+  );
+  return;
+}
+
   const existingLog = getTaskLog(taskName);
   setSavingTask(taskName);
 
@@ -428,15 +461,59 @@ const routineTitle = `${childName}'s ${
     );
   };
 
-  const completedCount = currentRoutine.filter((item) =>
-    isTaskCompleted(item.label)
-  ).length;
+ const completedCount = currentRoutine.filter((item) =>
+  isTaskCompleted(item.label)
+).length;
+
+const currentStepIndex = currentRoutine.findIndex(
+  (item) => !isTaskCompleted(item.label)
+);
+
+const routineComplete =
+  currentRoutine.length > 0 && completedCount === currentRoutine.length;
+
+const firstTask =
+  routineComplete
+    ? null
+    : currentStepIndex >= 0
+      ? currentRoutine[currentStepIndex]
+      : null;
+
+const secondTask =
+  routineComplete
+    ? null
+    : currentStepIndex >= 0
+      ? currentRoutine[currentStepIndex + 1] || null
+      : null;
+
+const getStepLabel = (index: number) => {
+  if (index === 0) return 'FIRST';
+  if (index === 1) return 'THEN';
+  return `${index + 1}`;
+};
+
+const getStepCircleStyle = (index: number, completed: boolean) => {
+  if (completed) return styles.timelineCircleCompleted;
+  if (index === 0) return styles.timelineCircleFirst;
+  if (index === 1) return styles.timelineCircleThen;
+  return null;
+};
+
+const getStepTextStyle = (index: number, completed: boolean) => {
+  if (completed) return styles.timelineNumberCompleted;
+  if (index === 0) return styles.timelineNumberFirst;
+  if (index === 1) return styles.timelineNumberThen;
+  return null;
+};
 
   if (!selectedChild) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.backgroundBlobOne} />
+        <View style={styles.backgroundBlobTwo} />
+        <View style={styles.backgroundBlobThree} />     
         <View style={styles.centered}>
-          <Ionicons name="calendar-outline" size={34} color="#94A3B8" />
+          <Ionicons name="calendar-outline" size={40} color="#94A3B8" />
           <Text style={styles.emptyTitle}>No child selected</Text>
           <Text style={styles.emptyText}>
             Please select or create a child profile to track routines.
@@ -455,6 +532,27 @@ const routineTitle = `${childName}'s ${
     );
   }
 
+ const getPreviewVisual = (task?: RoutineItem, completed = false) => {
+  if (completed) {
+    return (
+      <View style={styles.firstThenIconBox}>
+        <Ionicons name="trophy-outline" size={32} color="#F59E0B" />
+      </View>
+    );
+  }
+  if (!task) return null;
+
+  if (task.imageUrl) {
+    return <Image source={{ uri: task.imageUrl }} style={styles.firstThenImage} />;
+  }
+
+  return (
+    <View style={styles.firstThenIconBox}>
+      <Ionicons name={task.icon} size={28} color="#4F46E5" />
+    </View>
+  );
+};
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -468,39 +566,51 @@ const routineTitle = `${childName}'s ${
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.heroCard, { backgroundColor: theme.hero }]}>
-  <View style={styles.heroBadge}>
-    <Ionicons name={theme.icon} size={14} color="#FFFFFF" />
-    <Text style={styles.heroBadgeText}>DAILY ROUTINE</Text>
+        <View style={styles.routineHeroCard}>
+  <View style={styles.routineHeroTopRow}>
+    <View>
+      <View style={[styles.routineHeroBadge, { backgroundColor: theme.soft }]}>
+        <Ionicons name={theme.icon} size={15} color={theme.hero} />
+        <Text style={[styles.routineHeroBadgeText, { color: theme.hero }]}>
+          DAILY ROUTINE
+        </Text>
+      </View>
+
+      <Text style={styles.routineHeroTitle}>{routineTitle}</Text>
+
+      <Text style={styles.routineHeroSubtitle}>
+        {theme.title}. {currentRoutine.length} visual steps are ready for {childName}.
+      </Text>
+    </View>
+
+    <View style={[styles.routineHeroIllustration, { backgroundColor: theme.soft }]}>
+      <Ionicons name={theme.icon} size={40} color={theme.hero} />
+    </View>
   </View>
 
-  <Text style={styles.heroTitle}>{routineTitle}</Text>
-
-  <Text style={styles.heroSubtitle}>
-  {theme.title}. Help {childName} move through the day with simple visual steps.
-</Text>
-
-  <View style={styles.heroProgressPill}>
-    <Ionicons name="checkmark-done-circle-outline" size={17} color="#4F46E5" />
-    <Text style={styles.heroProgressText}>
-      {completedCount} of {currentRoutine.length} completed
-    </Text>
+  <View style={styles.routineProgressRow}>
+    <View style={styles.routineProgressPill}>
+      <Ionicons name="checkmark-done-circle-outline" size={17} color="#4F46E5" />
+      <Text style={styles.routineProgressText}>
+        {completedCount} of {currentRoutine.length} completed
+      </Text>
+    </View>
   </View>
 
-<View style={styles.progressTrack}>
-  <View
-    style={[
-      styles.progressFill,
-      {
-        width: `${
-          currentRoutine.length
-            ? Math.round((completedCount / currentRoutine.length) * 100)
-            : 0
-        }%`,
-      },
-    ]}
-  />
-</View>
+  <View style={styles.progressTrackLight}>
+    <View
+      style={[
+        styles.progressFillLight,
+        {
+          width: `${
+            currentRoutine.length
+              ? Math.round((completedCount / currentRoutine.length) * 100)
+              : 0
+          }%`,
+        },
+      ]}
+    />
+  </View>
 </View>
 
         <View style={styles.segmentedWrap}>
@@ -535,7 +645,7 @@ const routineTitle = `${childName}'s ${
 
 <View style={[styles.parentTipCard, { backgroundColor: theme.soft }]}>
   <View style={styles.parentTipHeader}>
-    <Ionicons name="bulb-outline" size={18} color={theme.hero} />
+    <Ionicons name="bulb-outline" size={14} color={theme.hero} />
     <Text style={[styles.parentTipTitle, { color: theme.hero }]}>
       Parent Support Tip
     </Text>
@@ -599,6 +709,32 @@ const routineTitle = `${childName}'s ${
           ) : null}
         </View>
 
+        <TouchableOpacity
+  style={styles.childModeStartCard}
+  onPress={openPracticeMode}
+  activeOpacity={0.88}
+>
+  <View style={styles.childModeIcon}>
+    <Ionicons
+      name={hasProAccess ? 'play-circle' : 'lock-closed-outline'}
+      size={30}
+      color="#4F46E5"
+    />
+  </View>
+
+  <View style={{ flex: 1 }}>
+    <Text style={styles.childModeTitle}>
+      {hasProAccess ? 'Start Child Mode' : 'Child Mode Pro'}
+    </Text>
+
+    <Text style={styles.childModeSubtitle}>
+      Large pictures, spoken steps, and first/then support.
+    </Text>
+  </View>
+
+  <Ionicons name="chevron-forward" size={22} color="#4F46E5" />
+</TouchableOpacity>
+
          <View style={styles.topActionRow}>
   <TouchableOpacity
     style={styles.secondaryActionBtn}
@@ -629,108 +765,156 @@ const routineTitle = `${childName}'s ${
   </TouchableOpacity>
 </View>
 
-        <TouchableOpacity style={styles.resetBtn} onPress={handleResetRoutine}>
-          <Ionicons name="refresh-outline" size={14} color="#DC2626" />
-          <Text style={styles.resetBtnText}>Reset Today</Text>
-        </TouchableOpacity>
+{routineComplete ? (
+  <View style={styles.routineCompleteCard}>
+    <View style={styles.routineCompleteIcon}>
+      <Ionicons name="trophy-outline" size={28} color="#F59E0B" />
+    </View>
 
-        <View style={styles.cardContainer}>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.routineCompleteTitle}>Routine Complete!</Text>
+      <Text style={styles.routineCompleteText}>
+        Amazing job, {childName}! Today’s routine is finished.
+      </Text>
+    </View>
+  </View>
+) : null}
+
+       <View style={styles.timelineContainer}>
   <Text style={styles.flowSectionTitle}>Today’s Visual Routine</Text>
 
   {currentRoutine.map((item, index) => {
     const completedLog = getTaskLog(item.label);
     const completed = !!completedLog;
     const saving = savingTask === item.label;
+    const isLast = index === currentRoutine.length - 1;
+    const isCurrentStep = index === currentStepIndex;
 
     return (
-      <View
-        key={`${item.label}-${index}`}
-        style={[styles.routineCard, completed && styles.routineCardCompleted]}
-      >
-        <View style={styles.flowRow}>
-          <View style={styles.stepRail}>
+      <View key={`${item.label}-${index}`} style={styles.timelineItem}>
+        <View style={styles.timelineRail}>
+          <View
+            style={[
+              styles.timelineCircle,
+              getStepCircleStyle(index, completed),
+              ]}
+          >
+            <Text
+              style={[
+                styles.timelineNumber,
+                getStepTextStyle(index, completed),
+                ]}
+            >
+              {getStepLabel(index)}
+            </Text>
+          </View>
+
+          {!isLast ? (
             <View
               style={[
-                styles.stepCircle,
-                completed && styles.stepCircleCompleted,
+                styles.timelineLine,
+                completed && styles.timelineLineCompleted,
               ]}
-            >
-              <Text
+            />
+          ) : null}
+        </View>
+
+       <View
+  style={[
+    styles.timelineCard,
+    completed && styles.timelineCardCompleted,
+    isCurrentStep && [
+      styles.timelineCardCurrent,
+      {
+        borderColor: theme.hero,
+        shadowColor: theme.hero,
+      },
+    ],
+  ]}
+>
+          <View style={styles.timelineImageWrap}>
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={styles.timelineImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View
                 style={[
-                  styles.stepNumber,
-                  completed && styles.stepNumberCompleted,
+                  styles.timelineIconWrap,
+                  completed && styles.timelineIconWrapCompleted,
                 ]}
               >
-                {index + 1}
-              </Text>
-            </View>
-
-            {index !== currentRoutine.length - 1 ? (
-              <View style={styles.stepLine} />
-            ) : null}
-          </View>
-
-          <View style={styles.routineTopRow}>
-            <View style={styles.routineLeft}>
-              <View style={styles.visualWrap}>
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.taskImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.iconWrap,
-                      completed && styles.iconWrapCompleted,
-                    ]}
-                  >
-                    <Ionicons
-                      name={completed ? 'checkmark-circle' : item.icon}
-                      size={26}
-                      color={completed ? '#10B981' : '#4F46E5'}
-                    />
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.taskTextWrap}>
-                <Text style={styles.routineText}>{item.label}</Text>
-
-                {item.isCustomImage ? (
-                  <Text style={styles.photoTag}>Custom photo</Text>
-                ) : null}
-
-                {completedLog ? (
-                  <Text style={styles.completedTimeText}>✓ Completed</Text>
-                ) : (
-                  <Text style={styles.pendingText}>Not completed yet</Text>
-                )}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.checkBtn, completed && styles.checkBtnCompleted]}
-              onPress={() => handleToggleTask(item.label)}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator size="small" color="#4F46E5" />
-              ) : (
                 <Ionicons
-                  name={completed ? 'checkmark' : 'add'}
-                  size={22}
-                  color={completed ? '#FFFFFF' : '#4F46E5'}
+                  name={completed ? 'checkmark-circle' : item.icon}
+                  size={40}
+                  color={completed ? '#10B981' : '#4F46E5'}
                 />
-              )}
-            </TouchableOpacity>
+              </View>
+            )}
           </View>
+
+         <View style={styles.timelineTextWrap}>
+  {isCurrentStep && (
+    <View style={styles.currentStepIndicator}>
+      <View style={styles.pulseDot} />
+      <Text style={styles.currentStepIndicatorText}>CURRENT STEP</Text>
+    </View>
+  )}
+
+  <Text style={styles.timelineTitle}>{item.label}</Text>
+
+  {item.isCustomImage ? (
+    <Text style={styles.photoTag}>Custom photo</Text>
+  ) : null}
+
+  {completed ? (
+    <Text style={styles.completedTimeText}>Done</Text>
+  ) : (
+    <Text style={styles.pendingText}>Ready</Text>
+  )}
+</View>
+
+          <TouchableOpacity
+            style={[
+              styles.timelineCheckBtn,
+              completed && styles.timelineCheckBtnCompleted,
+            ]}
+            onPress={() => handleToggleTask(item.label)}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#4F46E5" />
+            ) : (
+              <Ionicons
+                name={completed ? 'checkmark' : 'add'}
+                size={24}
+                color={completed ? '#FFFFFF' : '#4F46E5'}
+              />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     );
   })}
 </View>
+<TouchableOpacity
+  style={[
+    styles.resetBtn,
+    {
+      alignSelf: 'center',
+      marginTop: 8,
+      marginBottom: 20,
+    },
+  ]}
+  onPress={handleResetRoutine}
+>
+  <Ionicons name="refresh-outline" size={14} color="#DC2626" />
+  <Text style={styles.resetBtnText}>Reset Today’s Routine</Text>
+</TouchableOpacity>
+
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -738,22 +922,23 @@ const routineTitle = `${childName}'s ${
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
+  flex: 1,
+  backgroundColor: '#F1F5F9',
+  overflow: 'hidden',
+},
 
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
+  paddingHorizontal: 20,
+  paddingTop: 20,
+  paddingBottom: 170,
+},
 
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F1F5F9',
   },
 
   loadingText: {
@@ -1134,29 +1319,30 @@ checkBtn: {
 },
 
 parentTipCard: {
-  borderRadius: 22,
-  padding: 16,
-  marginBottom: 16,
+  borderRadius: 16,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  marginBottom: 12,
   borderWidth: 1,
-  borderColor: 'rgba(15,23,42,0.06)',
+  borderColor: 'rgba(15,23,42,0.05)',
 },
 
 parentTipHeader: {
   flexDirection: 'row',
   alignItems: 'center',
-  marginBottom: 8,
+  marginBottom: 4,
 },
 
 parentTipTitle: {
-  marginLeft: 8,
-  fontSize: 14,
+  marginLeft: 6,
+  fontSize: 12,
   fontWeight: '900',
 },
 
 parentTipText: {
   color: '#334155',
-  fontSize: 13,
-  lineHeight: 20,
+  fontSize: 11,
+  lineHeight: 15,
   fontWeight: '700',
 },
 
@@ -1211,5 +1397,479 @@ stepLine: {
   backgroundColor: '#CBD5E1',
   marginTop: 6,
   borderRadius: 999,
+},
+
+routineHeroCard: {
+  backgroundColor: 'rgba(255,255,255,0.92)',
+  borderRadius: 28,
+  padding: 18,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 7 },
+  elevation: 3,
+},
+
+routineHeroIllustration: {
+  width: 64,
+  height: 64,
+  borderRadius: 22,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+routineHeroTitle: {
+  fontSize: 25,
+  fontWeight: '900',
+  color: '#0F172A',
+  letterSpacing: -0.4,
+},
+
+routineHeroTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 14,
+},
+
+routineHeroBadge: {
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderRadius: 999,
+  paddingHorizontal: 11,
+  paddingVertical: 7,
+  marginBottom: 12,
+},
+
+routineHeroBadgeText: {
+  fontSize: 11,
+  fontWeight: '900',
+  marginLeft: 6,
+  letterSpacing: 0.4,
+},
+
+
+routineHeroSubtitle: {
+  marginTop: 8,
+  color: '#64748B',
+  fontSize: 14,
+  lineHeight: 21,
+  fontWeight: '700',
+  maxWidth: 240,
+},
+
+routineProgressRow: {
+  marginTop: 18,
+  flexDirection: 'row',
+},
+
+routineProgressPill: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#EEF2FF',
+  borderRadius: 999,
+  paddingVertical: 9,
+  paddingHorizontal: 13,
+},
+
+routineProgressText: {
+  marginLeft: 7,
+  color: '#4F46E5',
+  fontWeight: '900',
+  fontSize: 13,
+},
+
+progressTrackLight: {
+  marginTop: 14,
+  height: 9,
+  backgroundColor: '#E2E8F0',
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+
+progressFillLight: {
+  height: '100%',
+  backgroundColor: '#4F46E5',
+  borderRadius: 999,
+},
+
+childModeStartCard: {
+  backgroundColor: '#4F46E5',
+  borderRadius: 26,
+  padding: 18,
+  marginBottom: 16,
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#4F46E5',
+  shadowOpacity: 0.18,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 4,
+},
+
+childModeIcon: {
+  width: 56,
+  height: 56,
+  borderRadius: 20,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+},
+
+childModeTitle: {
+  color: '#FFFFFF',
+  fontSize: 19,
+  fontWeight: '900',
+},
+
+childModeSubtitle: {
+  marginTop: 4,
+  color: '#E0E7FF',
+  fontSize: 12.5,
+  lineHeight: 18,
+  fontWeight: '700',
+},
+
+timelineContainer: {
+  marginBottom: 40,
+},
+
+timelineItem: {
+  flexDirection: 'row',
+  alignItems: 'stretch',
+  marginBottom: 18,
+},
+
+timelineRail: {
+  width: 26,
+  alignItems: 'center',
+  marginRight: 8,
+},
+
+timelineCircle: {
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: '#EEF2FF',
+  borderWidth: 1.5,
+  borderColor: '#C7D2FE',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2,
+},
+
+timelineNumber: {
+  color: '#4F46E5',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+timelineCard: {
+  flex: 1,
+  backgroundColor: 'rgba(255,255,255,0.96)',
+  borderRadius: 28,
+  padding: 12,
+  borderWidth: 1,
+  borderColor: '#E0E7FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#6366F1',
+  shadowOpacity: 0.10,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 4,
+  minHeight: 96
+},
+
+timelineImage: {
+  width: 56,
+  height: 56,
+  borderRadius: 16,
+  backgroundColor: '#E2E8F0',
+},
+
+timelineIconWrap: {
+  width: 56,
+  height: 56,
+  borderRadius: 16,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+timelineTitle: {
+  color: '#0F172A',
+  fontSize: 22,
+  fontWeight: '900',
+  letterSpacing: -0.3,
+},
+
+timelineCircleCompleted: {
+  backgroundColor: '#10B981',
+  borderColor: '#10B981',
+},
+
+timelineNumberCompleted: {
+  color: '#FFFFFF',
+},
+
+timelineLine: {
+  flex: 1,
+  width: 3,
+  backgroundColor: '#CBD5E1',
+  marginTop: 8,
+  borderRadius: 999,
+},
+
+timelineLineCompleted: {
+  backgroundColor: '#10B981',
+},
+
+timelineCardCompleted: {
+  backgroundColor: '#F0FDF4',
+  borderColor: '#10B981',
+  transform: [{ scale: 0.98 }]
+},
+
+timelineImageWrap: {
+  marginRight: 14,
+},
+
+timelineIconWrapCompleted: {
+  backgroundColor: '#DCFCE7',
+},
+
+timelineTextWrap: {
+  flex: 1,
+  paddingRight: 8,
+},
+
+timelineCheckBtn: {
+  width: 48,
+  height: 48,
+  borderRadius: 18,
+  backgroundColor: '#EEF2FF',
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+timelineCheckBtnCompleted: {
+  backgroundColor: '#10B981',
+  borderColor: '#10B981',
+},
+
+timelineCardCurrent: {
+  borderWidth: 1.5,
+  backgroundColor: '#FFFBEB',
+  shadowOpacity: 0.25,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 8,
+},
+
+firstThenPreviewCard: {
+  backgroundColor: '#FFFBEB',
+  borderRadius: 30,
+  padding: 16,
+  marginBottom: 18,
+  borderWidth: 1.5,
+  borderColor: '#C7D2FE',
+  shadowColor: '#4F46E5',
+  shadowOpacity: 0.1,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 4,
+},
+
+firstThenHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 14,
+},
+
+firstThenHeaderText: {
+  marginLeft: 8,
+  color: '#4F46E5',
+  fontSize: 15,
+  fontWeight: '900',
+},
+
+firstThenContentRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+firstThenPreviewBlock: {
+  flex: 1,
+  backgroundColor: '#F8FAFC',
+  borderRadius: 24,
+  paddingVertical: 14,
+  paddingHorizontal: 10,
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+firstThenPreviewLabel: {
+  color: '#4F46E5',
+  fontSize: 12,
+  fontWeight: '900',
+  marginBottom: 8,
+},
+
+firstThenPreviewText: {
+  color: '#0F172A',
+  fontSize: 15,
+  fontWeight: '900',
+  textAlign: 'center',
+  marginTop: 8,
+},
+
+routineCompleteCard: {
+  backgroundColor: '#FFFBEB',
+  borderRadius: 26,
+  padding: 16,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+routineCompleteIcon: {
+  width: 58,
+  height: 58,
+  borderRadius: 22,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+},
+
+routineCompleteTitle: {
+  color: '#92400E',
+  fontSize: 18,
+  fontWeight: '900',
+},
+
+routineCompleteText: {
+  marginTop: 4,
+  color: '#78350F',
+  fontSize: 13,
+  lineHeight: 18,
+  fontWeight: '700',
+},
+
+timelineCircleFirst: {
+  backgroundColor: '#DBEAFE',
+  borderColor: '#60A5FA',
+},
+
+timelineCircleThen: {
+  backgroundColor: '#EDE9FE',
+  borderColor: '#8B5CF6',
+},
+
+timelineNumberFirst: {
+  color: '#2563EB',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+timelineNumberThen: {
+  color: '#7C3AED',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+firstThenImage: {
+  width: 62,
+  height: 62,
+  borderRadius: 18,
+  backgroundColor: '#E2E8F0',
+},
+
+firstThenIconBox: {
+  width: 62,
+  height: 62,
+  borderRadius: 18,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+firstThenArrowCircle: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: '#4F46E5',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginHorizontal: 10,
+},
+
+backgroundBlobOne: {
+  position: 'absolute',
+  top: -90,
+  right: -80,
+  width: 230,
+  height: 230,
+  borderRadius: 115,
+  backgroundColor: '#F3E8FF',
+  opacity: 0.9,
+},
+
+backgroundBlobTwo: {
+  position: 'absolute',
+  top: 260,
+  left: -100,
+  width: 200,
+  height: 200,
+  borderRadius: 100,
+  backgroundColor: '#E0F2FE',
+  opacity: 0.65,
+},
+
+backgroundBlobThree: {
+  position: 'absolute',
+  bottom: 120,
+  right: -90,
+  width: 220,
+  height: 220,
+  borderRadius: 110,
+  backgroundColor: '#FEF3C7',
+  opacity: 0.65,
+},
+
+currentStepIndicator: {
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#EEF2FF',
+  paddingHorizontal: 9,
+  paddingVertical: 5,
+  borderRadius: 999,
+  marginBottom: 6,
+},
+
+pulseDot: {
+  width: 7,
+  height: 7,
+  borderRadius: 999,
+  backgroundColor: '#F59E0B',
+  marginRight: 6,
+},
+
+currentStepIndicatorText: {
+  color: '#4F46E5',
+  fontSize: 10,
+  fontWeight: '900',
 },
 });

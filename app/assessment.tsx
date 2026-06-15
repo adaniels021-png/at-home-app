@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { generateAssessmentQuestions } from '../lib/aiService';
+import { canRunAssessments } from '../lib/caregiverPermissions';
 import { useChild } from '../lib/SelectedChildContext';
 import { supabase } from '../lib/supabase';
 
@@ -171,7 +172,8 @@ function buildChangeItems(
 export default function ReassessmentScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
-
+  const role = selectedChild?.caregiver_access_role;
+  const canAssess = canRunAssessments(role);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -231,30 +233,43 @@ export default function ReassessmentScreen() {
   };
 
   const currentQuestion = questions[currentIndex];
-  const selectedAnswer = currentQuestion ? answers[String(currentQuestion.id)] : undefined;
-  const isLastQuestion = currentIndex === questions.length - 1;
-  const progressPercent =
-    questions.length > 0 ? Math.round(((currentIndex + 1) / questions.length) * 100) : 0;
+const selectedAnswer = currentQuestion
+  ? answers[String(currentQuestion.id)]
+  : undefined;
 
-  const comparisonItems = useMemo(() => {
-    return buildChangeItems(
-      questions,
-      answers,
-      previousReassessment?.responses || null
-    );
-  }, [questions, answers, previousReassessment]);
+const isLastQuestion = currentIndex === questions.length - 1;
 
-  const improvedCount = useMemo(
-    () => comparisonItems.filter((item) => item.direction === 'improved').length,
-    [comparisonItems]
+const progressPercent =
+  questions.length > 0
+    ? Math.round(((currentIndex + 1) / questions.length) * 100)
+    : 0;
+
+const comparisonItems = useMemo(() => {
+  return buildChangeItems(
+    questions,
+    answers,
+    previousReassessment?.responses || null
   );
+}, [questions, answers, previousReassessment]);
 
-  const regressedCount = useMemo(
-    () => comparisonItems.filter((item) => item.direction === 'regressed').length,
-    [comparisonItems]
-  );
+const improvedCount = useMemo(
+  () =>
+    comparisonItems.filter(
+      (item) => item.direction === 'improved'
+    ).length,
+  [comparisonItems]
+);
 
-  const changedCount = comparisonItems.length;
+const regressedCount = useMemo(
+  () =>
+    comparisonItems.filter(
+      (item) => item.direction === 'regressed'
+    ).length,
+  [comparisonItems]
+);
+
+const changedCount = comparisonItems.length;
+
 
   const handleSelectAnswer = (value: string) => {
     if (!currentQuestion) return;
@@ -289,6 +304,13 @@ export default function ReassessmentScreen() {
   };
 
   const handleSaveReassessment = async () => {
+    if (!canAssess) {
+  Alert.alert(
+    'Parent Access Only',
+    'Only a parent or account owner can complete or update assessments.'
+  );
+  return;
+}
     if (!selectedChild?.id) return;
 
     if (Object.keys(answers).length !== questions.length) {
@@ -347,6 +369,29 @@ export default function ReassessmentScreen() {
       </SafeAreaView>
     );
   }
+
+  if (!canAssess) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.centered}>
+        <Ionicons
+          name="lock-closed-outline"
+          size={42}
+          color="#94A3B8"
+        />
+
+        <Text style={styles.emptyTitle}>
+          Parent Access Only
+        </Text>
+
+        <Text style={styles.emptyText}>
+          Assessments can only be completed by the child's
+          parent or account owner.
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
 
   if (loading || !currentQuestion) {
     return (

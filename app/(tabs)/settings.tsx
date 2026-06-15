@@ -11,6 +11,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  canAddChild,
+  canDeleteChildProfile,
+  canDeleteOwnAccount,
+  canManageCaregivers,
+  canManageLessonReminders,
+  canManagePecs,
+  canManageSubscription,
+  canRunAssessments,
+} from '../../lib/caregiverPermissions';
 import { deleteChildProfile } from '../../lib/deleteChildProfile';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
@@ -44,8 +54,20 @@ export default function SettingsScreen() {
   const [adminTapCount, setAdminTapCount] = useState(0);
   const [showAdminMode, setShowAdminMode] = useState(false);
   const [deletingChild, setDeletingChild] = useState(false);
+  
 
   const hasProAccess = isPro || adminMode;
+
+  const role = selectedChild?.caregiver_access_role;
+
+const allowAddChild = canAddChild(role);
+const allowDeleteChild = canDeleteChildProfile(role);
+const allowManageCaregivers = canManageCaregivers(role);
+const allowManageSubscription = canManageSubscription(role);
+const allowManagePecs = canManagePecs(role);
+const allowLessonReminders = canManageLessonReminders(role);
+const allowRunAssessments = canRunAssessments(role);
+const allowDeleteOwnAccount = canDeleteOwnAccount(role);
 
   const childName =
     selectedChild?.child_name ||
@@ -253,64 +275,86 @@ export default function SettingsScreen() {
             />
 
             <SettingItem
-              icon="trash-outline"
-              label="Delete Account"
-              helper="Permanently delete your account and app data"
-              destructive
-              onPress={handleDeleteAccount}
-            />
+  icon="trash-outline"
+  label="Delete Account"
+  sub={!allowDeleteOwnAccount ? 'Owner only' : undefined}
+  helper="Permanently delete your account and app data"
+  destructive
+  disabled={!allowDeleteOwnAccount}
+  onPress={handleDeleteAccount}
+/>
           </Section>
 
 
-          <Section title="Child Profiles">
-              <SettingItem
-               icon="add-circle-outline"
-               label="Add Child"
-               sub={hasProAccess ? undefined : '1st Free'}
-              helper="Create or add another child profile"
-              onPress={() => openRoute('/onboarding/add-child')}
-            />
+         <Section title="Child Profiles">
+  <SettingItem
+    icon="add-circle-outline"
+    label="Add Child"
+    sub={!allowAddChild ? 'Owner only' : hasProAccess ? undefined : '1st Free'}
+    helper="Create or add another child profile"
+    disabled={!allowAddChild}
+    onPress={() => openRoute('/onboarding/add-child')}
+  />
 
-           <SettingItem
-               icon="refresh-circle-outline"
-                label="Reassess Child Profile"
-                helper="Update lessons and recommendations based on current needs"
-                onPress={() => openRoute('/onboarding/assessment')}
-            />
+  <SettingItem
+  icon="refresh-circle-outline"
+  label="Reassess Child Profile"
+  sub={!allowRunAssessments ? 'Parent only' : undefined}
+  helper="Update lessons and recommendations based on current needs"
+  disabled={!allowRunAssessments}
+  onPress={() => openRoute('/onboarding/assessment')}
+/>
 
-            <SettingItem
-                icon="people-outline"
-                label="Manage Caregivers"
-                sub={hasProAccess ? undefined : 'Pro'}
-                helper="Invite another caregiver to access this child’s profile"
-                onPress={() => openPremiumRoute('/settings/manage-caregivers')}
-            />
+  <SettingItem
+    icon="stats-chart-outline"
+    label="View Progress"
+    helper="See lesson history, weekly growth, and recent wins"
+    onPress={() => openRoute('/(tabs)/progress')}
+  />
 
-           <SettingItem
-               icon="trash-outline"
-               label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
-              helper={
-                selectedChild
-                  ? `Permanently delete ${childName} and related app data`
-                  : 'No child profile selected'
-              }
-              destructive
-              disabled={deletingChild}
-              onPress={handleDeleteChild}
-            />
-          </Section>
+  <SettingItem
+    icon="people-outline"
+    label="Manage Caregivers"
+    sub={
+      !allowManageCaregivers
+        ? 'Owner only'
+        : hasProAccess
+        ? undefined
+        : 'Pro'
+    }
+    helper="Invite another caregiver to access this child’s profile"
+    disabled={!allowManageCaregivers}
+    onPress={() => openPremiumRoute('/settings/manage-caregivers')}
+  />
+
+  <SettingItem
+    icon="trash-outline"
+    label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
+    helper={
+      selectedChild
+        ? `Permanently delete ${childName} and related app data`
+        : 'No child profile selected'
+    }
+    destructive
+    disabled={deletingChild || !allowDeleteChild}
+    sub={!allowDeleteChild ? 'Owner only' : undefined}
+    onPress={handleDeleteChild}
+  />
+</Section>
 
           <Section title="Subscription">
             <SettingItem
-              icon="card-outline"
-              label={isPro ? 'Manage Subscription' : 'View Subscription Options'}
-              helper={
-                isPro
-                  ? 'Change plans or cancel through Apple'
-                  : 'Choose monthly or yearly Pro access'
-              }
-              onPress={() => router.push('/subscription')}
-            />
+  icon="card-outline"
+  label={isPro ? 'Manage Subscription' : 'View Subscription Options'}
+  sub={!allowManageSubscription ? 'Owner only' : undefined}
+  helper={
+    isPro
+      ? 'Change plans or cancel through Apple'
+      : 'Choose monthly or yearly Pro access'
+  }
+  disabled={!allowManageSubscription}
+  onPress={() => router.push('/subscription')}
+/>
           </Section>
 
           <Section title="Legal">
@@ -338,12 +382,13 @@ export default function SettingsScreen() {
             />
 
             <SettingItem
-              icon="images-outline"
-              label="Manage PECS Cards"
-              sub={hasProAccess ? undefined : 'Pro'}
-              helper="Create, edit, and organize PECS cards"
-              onPress={() => openPremiumRoute('/manage-pecs')}
-            />
+  icon="images-outline"
+  label="Manage PECS Cards"
+  sub={!allowManagePecs ? 'Parent only' : hasProAccess ? undefined : 'Pro'}
+  helper="Create, edit, and organize PECS cards"
+  disabled={!allowManagePecs}
+  onPress={() => openPremiumRoute('/manage-pecs')}
+/>
 
             <SettingItem
               icon="document-text-outline"
@@ -355,12 +400,14 @@ export default function SettingsScreen() {
           </Section>
 
           <Section title="App Preferences">
-            <SettingItem
-              icon="notifications-outline"
-              label="Daily Lesson Reminders"
-              helper="Set parent practice reminders"
-              onPress={() => openRoute('/settings/daily-reminders')}
-            />
+           <SettingItem
+  icon="notifications-outline"
+  label="Daily Lesson Reminders"
+  sub={!allowLessonReminders ? 'Parent only' : undefined}
+  helper="Set parent practice reminders"
+  disabled={!allowLessonReminders}
+  onPress={() => openRoute('/settings/daily-reminders')}
+/>
 
             <SettingItem
               icon="volume-high-outline"
@@ -429,113 +476,129 @@ function SettingItem({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { paddingTop: 20, paddingBottom: 44 },
-  contentInner: { width: '100%' },
+  container: { 
+  flex: 1, 
+  backgroundColor: '#FFF7ED',
+},
 
-  headerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 20,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
+content: { 
+  paddingTop: 20, 
+  paddingBottom: 120,
+},
 
-  title: { fontSize: 31, fontWeight: '900', color: '#0F172A' },
+headerCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 32,
+  padding: 22,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.08,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 3,
+},
 
-  subtitle: {
-    color: '#64748B',
-    marginTop: 8,
-    lineHeight: 21,
-    fontWeight: '600',
-  },
+title: { 
+  fontSize: 34, 
+  fontWeight: '900', 
+  color: '#2E1065',
+},
 
-  statusPill: {
-    marginTop: 14,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
+subtitle: {
+  color: '#7C3AED',
+  marginTop: 8,
+  lineHeight: 22,
+  fontWeight: '700',
+},
 
-  statusPillText: {
-    marginLeft: 6,
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '900',
-  },
+statusPill: {
+  marginTop: 16,
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F5F3FF',
+  borderRadius: 999,
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+},
 
-  statusPillTextPro: { color: '#6D28D9' },
+sectionTitle: {
+  fontSize: 19,
+  fontWeight: '900',
+  marginBottom: 10,
+  color: '#2E1065',
+},
 
-  section: { marginBottom: 24 },
+sectionBox: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 28,
+  overflow: 'hidden',
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+},
 
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginBottom: 10,
-    color: '#1E293B',
-  },
+item: {
+  paddingVertical: 18,
+  paddingHorizontal: 18,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F3E8FF',
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
 
-  sectionBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
+iconWrap: {
+  width: 48,
+  height: 48,
+  borderRadius: 18,
+  backgroundColor: '#F5F3FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+},
 
-  item: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+itemText: {
+  fontWeight: '900',
+  color: '#1E1B4B',
+  fontSize: 15,
+},
+
+helperText: {
+  marginTop: 4,
+  color: '#64748B',
+  fontSize: 13,
+  fontWeight: '700',
+  lineHeight: 18,
+},
+
+proCard: {
+  backgroundColor: '#FFF7ED',
+  padding: 18,
+  borderRadius: 28,
+  marginBottom: 22,
+  borderWidth: 1,
+  borderColor: '#FDBA74',
+},
+
+activeProCard: {
+  backgroundColor: '#F5F3FF',
+  padding: 18,
+  borderRadius: 28,
+  marginBottom: 22,
+  borderWidth: 1,
+  borderColor: '#C4B5FD',
+},
 
   disabledItem: { opacity: 0.6 },
-
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingRight: 10,
-  },
-
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  destructiveIconWrap: { backgroundColor: '#FEE2E2' },
-
-  itemTextWrap: { flex: 1 },
-
-  itemText: {
-    fontWeight: '900',
-    color: '#1E293B',
-    fontSize: 14,
-  },
-
-  destructiveText: { color: '#DC2626' },
-
-  helperText: {
-    marginTop: 3,
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 17,
-  },
 
   itemRight: {
     flexDirection: 'row',
@@ -549,14 +612,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  proCard: {
-    backgroundColor: '#FFF7ED',
-    padding: 16,
-    borderRadius: 24,
-    marginBottom: 22,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-  },
+  
 
   proTopRow: {
     flexDirection: 'row',
@@ -599,15 +655,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  activeProCard: {
-    backgroundColor: '#F5F3FF',
-    padding: 16,
-    borderRadius: 24,
-    marginBottom: 22,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
-  },
-
+  
   activeProTitle: {
     fontWeight: '900',
     color: '#6D28D9',
@@ -689,4 +737,42 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontSize: 12,
   },
+
+  contentInner: { 
+  width: '100%' 
+},
+
+statusPillText: {
+  marginLeft: 6,
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+statusPillTextPro: { 
+  color: '#6D28D9' 
+},
+
+section: { 
+  marginBottom: 26 
+},
+
+itemLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
+  paddingRight: 10,
+},
+
+destructiveIconWrap: { 
+  backgroundColor: '#FEE2E2' 
+},
+
+itemTextWrap: { 
+  flex: 1 
+},
+
+destructiveText: { 
+  color: '#DC2626' 
+},
 });

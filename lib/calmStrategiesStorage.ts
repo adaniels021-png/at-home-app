@@ -47,6 +47,10 @@ export async function saveCalmStrategy(
   strategy: Omit<SavedCalmStrategy, 'id' | 'createdAt'>
 ): Promise<SavedCalmStrategy[]> {
   try {
+    if (strategy.type === 'simple-words') {
+      return getSavedCalmStrategies();
+    }
+
     const currentStrategies = await getSavedCalmStrategies();
 
     const newStrategy: SavedCalmStrategy = {

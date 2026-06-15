@@ -288,6 +288,12 @@ export async function getApprovedParentWins() {
 }
 
 export async function getPendingParentWins() {
+  const isAdmin = await isCurrentUserParentWinsAdmin();
+
+  if (!isAdmin) {
+    throw new Error('Admin access required.');
+  }
+
   const { data, error } = await supabase
     .from('parent_win_posts')
     .select('*')
@@ -300,6 +306,12 @@ export async function getPendingParentWins() {
 }
 
 export async function approveParentWinPost(postId: string) {
+  const isAdmin = await isCurrentUserParentWinsAdmin();
+
+  if (!isAdmin) {
+    throw new Error('Admin access required.');
+  }
+
   const now = new Date().toISOString();
 
   const { error } = await supabase
@@ -310,19 +322,27 @@ export async function approveParentWinPost(postId: string) {
       expires_at: getExpirationDate(5),
       updated_at: now,
     })
-    .eq('id', postId);
+    .eq('id', postId)
+    .eq('status', 'pending');
 
   if (error) throw error;
 }
 
 export async function rejectParentWinPost(postId: string) {
+  const isAdmin = await isCurrentUserParentWinsAdmin();
+
+  if (!isAdmin) {
+    throw new Error('Admin access required.');
+  }
+
   const { error } = await supabase
     .from('parent_win_posts')
     .update({
       status: 'rejected',
       updated_at: new Date().toISOString(),
     })
-    .eq('id', postId);
+    .eq('id', postId)
+    .eq('status', 'pending');
 
   if (error) throw error;
 }

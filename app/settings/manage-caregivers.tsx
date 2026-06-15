@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { canManageCaregivers } from '../../lib/caregiverPermissions';
 import { useChild } from '../../lib/SelectedChildContext';
+import { useSubscription } from '../../lib/SubscriptionContext';
 import { supabase } from '../../lib/supabase';
 
 type Caregiver = {
@@ -27,8 +29,14 @@ export default function ManageCaregiversScreen() {
   const router = useRouter();
 
   const { selectedChild } = useChild() as any;
+  const { isPro, adminMode } = useSubscription();
+  const hasProAccess = isPro || adminMode;
+
+  const role = selectedChild?.caregiver_access_role;
+  const canInvite = canManageCaregivers(role);
 
   const [loading, setLoading] = useState(true);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
 
   const loadCaregivers = async () => {
@@ -36,6 +44,11 @@ export default function ManageCaregiversScreen() {
       setLoading(false);
       return;
     }
+
+    if (!canInvite) {
+  setLoading(false);
+  return;
+}
 
     try {
       setLoading(true);
@@ -45,6 +58,15 @@ export default function ManageCaregiversScreen() {
         .select('*')
         .eq('child_id', selectedChild.id)
         .order('created_at', { ascending: true });
+
+        const { data: invites } = await supabase
+  .from('caregiver_invites')
+  .select('*')
+  .eq('child_id', selectedChild.id)
+  .eq('status', 'pending')
+  .order('created_at', { ascending: false });
+
+setPendingInvites(invites || []);
 
       if (error) throw error;
 
@@ -62,10 +84,47 @@ export default function ManageCaregiversScreen() {
   };
 
   useFocusEffect(
-    useCallback(() => {
-      void loadCaregivers();
-    }, [selectedChild?.id])
+  useCallback(() => {
+    void loadCaregivers();
+  }, [selectedChild?.id, canInvite])
+);
+
+  const cancelInvite = (inviteId: string) => {
+  Alert.alert(
+    'Cancel Invite',
+    'Are you sure you want to cancel this invitation?',
+    [
+      { text: 'Keep', style: 'cancel' },
+      {
+        text: 'Cancel Invite',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase
+              .from('caregiver_invites')
+              .delete()
+              .eq('id', inviteId);
+
+            if (error) throw error;
+
+            setPendingInvites((current) =>
+              current.filter((item) => item.id !== inviteId)
+            );
+
+            await loadCaregivers();
+          } catch (error: any) {
+            console.error('Cancel invite error:', error);
+
+            Alert.alert(
+              'Cancel Failed',
+              error?.message || 'Could not cancel invite.'
+            );
+          }
+        },
+      },
+    ]
   );
+};
 
   const removeCaregiver = (caregiver: Caregiver) => {
     Alert.alert(
@@ -108,6 +167,29 @@ export default function ManageCaregiversScreen() {
     selectedChild?.name ||
     'Child';
 
+    if (!canInvite) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.restrictedCard}>
+        <Ionicons name="lock-closed-outline" size={42} color="#94A3B8" />
+
+        <Text style={styles.restrictedTitle}>Owner Only</Text>
+
+        <Text style={styles.restrictedText}>
+          Only the child profile owner can manage caregivers or invitations.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.restrictedButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.restrictedButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -143,6 +225,47 @@ export default function ManageCaregiversScreen() {
           </Text>
         </View>
 
+        <TouchableOpacity
+  style={styles.inviteButton}
+  onPress={() => {
+  if (!canInvite) {
+    Alert.alert(
+      'Not Available',
+      'Only the child profile owner can invite caregivers.'
+    );
+    return;
+  }
+
+  if (!hasProAccess) {
+    router.push('/subscription');
+    return;
+  }
+
+  router.push('/settings/invite-caregiver');
+}}
+>
+  <Ionicons
+    name={hasProAccess ? 'person-add' : 'lock-closed-outline'}
+    size={20}
+    color="#FFFFFF"
+  />
+
+  <Text style={styles.inviteButtonText}>
+    {hasProAccess ? 'Invite Caregiver' : 'Invite Caregiver Pro'}
+  </Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={styles.acceptInviteButton}
+  onPress={() => router.push('/settings/accept-caregiver-invite')}
+>
+  <Ionicons name="key-outline" size={20} color="#4F46E5" />
+
+  <Text style={styles.acceptInviteButtonText}>
+    Accept an Invite
+  </Text>
+</TouchableOpacity>
+
         <View style={styles.infoCard}>
           <Ionicons
             name="information-circle-outline"
@@ -155,12 +278,9 @@ export default function ManageCaregiversScreen() {
           </Text>
         </View>
 
-        {loading ? (
+                {loading ? (
           <View style={styles.centered}>
-            <ActivityIndicator
-              size="large"
-              color="#4F46E5"
-            />
+            <ActivityIndicator size="large" color="#4F46E5" />
 
             <Text style={styles.loadingText}>
               Loading caregivers...
@@ -175,51 +295,101 @@ export default function ManageCaregiversScreen() {
             />
 
             <Text style={styles.emptyTitle}>
-              Multi-Caregiver Sync Coming Soon
+              No Caregivers Yet
             </Text>
 
             <Text style={styles.emptyText}>
-              We’re preparing this feature carefully so shared family data stays private, secure, and easy to manage.
+              Invite a parent, caregiver, or therapist to help support your child’s progress.
             </Text>
           </View>
         ) : (
-          caregivers.map((caregiver) => (
-            <View
-              key={caregiver.id}
-              style={styles.caregiverCard}
-            >
-              <View style={styles.avatar}>
-                <Ionicons
-                  name="person"
-                  size={20}
-                  color="#4F46E5"
-                />
-              </View>
+  caregivers.map((caregiver) => (
+    <View
+      key={caregiver.id}
+      style={styles.caregiverCard}
+    >
+      <View style={styles.avatar}>
+        <Ionicons
+          name="person"
+          size={20}
+          color="#4F46E5"
+        />
+      </View>
 
-              <View style={styles.caregiverInfo}>
-                <Text style={styles.roleText}>
-                  {caregiver.role}
-                </Text>
+      <View style={styles.caregiverInfo}>
+        <Text style={styles.roleText}>
+          {caregiver.role}
+        </Text>
 
-                <Text style={styles.statusText}>
-                  Status: {caregiver.status}
-                </Text>
-              </View>
+        <Text style={styles.statusText}>
+          Status: {caregiver.status}
+        </Text>
+      </View>
 
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeCaregiver(caregiver)}
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={18}
-                  color="#DC2626"
-                />
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-      </ScrollView>
+      {role === 'owner' && caregiver.role !== 'owner' && (
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => removeCaregiver(caregiver)}
+        >
+          <Ionicons
+            name="trash-outline"
+            size={18}
+            color="#DC2626"
+          />
+        </TouchableOpacity>
+      )}
+    </View>
+  ))
+)}
+
+
+                
+  {pendingInvites.length > 0 && (
+  <>
+    <Text style={styles.sectionTitle}>
+      Pending Invitations
+    </Text>
+
+    {pendingInvites.map((invite) => (
+      <View
+        key={invite.id}
+        style={styles.pendingInviteCard}
+      >
+        <Ionicons
+          name="mail-outline"
+          size={20}
+          color="#4F46E5"
+        />
+
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.pendingEmail}>
+            {invite.invited_email}
+          </Text>
+
+          <Text style={styles.pendingRole}>
+            {invite.role}
+          </Text>
+
+          <Text style={styles.pendingCode}>
+            Code: {invite.invite_code}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => cancelInvite(invite.id)}
+        >
+          <Ionicons
+            name="trash-outline"
+            size={18}
+            color="#DC2626"
+          />
+        </TouchableOpacity>
+      </View>
+    ))}
+  </>
+)}
+        </ScrollView>
     </SafeAreaView>
   );
 }
@@ -364,4 +534,113 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  inviteButton: {
+  backgroundColor: '#4F46E5',
+  borderRadius: 20,
+  paddingVertical: 14,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  marginBottom: 16,
+},
+
+inviteButtonText: {
+  marginLeft: 8,
+  color: '#FFFFFF',
+  fontWeight: '900',
+  fontSize: 15,
+},
+
+sectionTitle: {
+  fontSize: 18,
+  fontWeight: '900',
+  color: '#0F172A',
+  marginTop: 24,
+  marginBottom: 12,
+},
+
+pendingInviteCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+
+pendingEmail: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+pendingRole: {
+  marginTop: 4,
+  color: '#64748B',
+  fontWeight: '700',
+},
+
+pendingCode: {
+  marginTop: 4,
+  color: '#4F46E5',
+  fontWeight: '800',
+},
+
+acceptInviteButton: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  paddingVertical: 14,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+
+acceptInviteButtonText: {
+  marginLeft: 8,
+  color: '#4F46E5',
+  fontWeight: '900',
+  fontSize: 15,
+},
+
+restrictedCard: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 28,
+},
+
+restrictedTitle: {
+  marginTop: 14,
+  fontSize: 22,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+restrictedText: {
+  marginTop: 8,
+  color: '#64748B',
+  fontSize: 14,
+  fontWeight: '700',
+  textAlign: 'center',
+  lineHeight: 21,
+},
+
+restrictedButton: {
+  marginTop: 22,
+  backgroundColor: '#4F46E5',
+  borderRadius: 18,
+  paddingVertical: 13,
+  paddingHorizontal: 22,
+},
+
+restrictedButtonText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+},
 });

@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSubscription } from '../lib/SubscriptionContext';
 
 import { useChild } from '../lib/SelectedChildContext';
+import { canManagePecs } from '../lib/caregiverPermissions';
 import { supabase } from '../lib/supabase';
 
 type PecsCard = {
@@ -67,6 +68,8 @@ const DEFAULT_PECS = [
 export default function ManagePECS() {
   const router = useRouter();
   const { selectedChild } = useChild();
+  const role = selectedChild?.caregiver_access_role;
+  const canEditPecs = canManagePecs(role);
 
   const [cards, setCards] = useState<PecsCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,13 +135,14 @@ export default function ManagePECS() {
     }
   };
 
-const { isPro } = useSubscription();
+const { isPro, adminMode } = useSubscription();
+const hasProAccess = isPro || adminMode;
 
 useEffect(() => {
-  if (!isPro) {
+  if (!hasProAccess) {
     router.replace('/subscription');
   }
-}, [isPro]);
+}, [hasProAccess, router]);
 
   const seedDefaultCards = async (userId: string, childId: string) => {
     const defaultRows = DEFAULT_PECS.map((item) => ({
@@ -440,6 +444,29 @@ useEffect(() => {
       </View>
     </View>
   );
+
+  if (!canEditPecs) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.restrictedCard}>
+        <Ionicons name="lock-closed-outline" size={42} color="#94A3B8" />
+
+        <Text style={styles.restrictedTitle}>Parent Access Only</Text>
+
+        <Text style={styles.restrictedText}>
+          Only the child profile owner or second parent can create, edit, or organize PECS cards.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.restrictedButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.restrictedButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
 
   if (!selectedChild) {
     return (
@@ -914,4 +941,40 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
   },
+
+  restrictedCard: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 28,
+},
+
+restrictedTitle: {
+  marginTop: 14,
+  fontSize: 22,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+restrictedText: {
+  marginTop: 8,
+  color: '#64748B',
+  fontSize: 14,
+  fontWeight: '700',
+  textAlign: 'center',
+  lineHeight: 21,
+},
+
+restrictedButton: {
+  marginTop: 22,
+  backgroundColor: '#4F46E5',
+  borderRadius: 18,
+  paddingVertical: 13,
+  paddingHorizontal: 22,
+},
+
+restrictedButtonText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+},
 });

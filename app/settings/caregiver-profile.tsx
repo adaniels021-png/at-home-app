@@ -7,12 +7,15 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
+import { canEditChildProfile } from '../../lib/caregiverPermissions';
+import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
 
 function withTimeout<T>(
@@ -30,11 +33,15 @@ function withTimeout<T>(
 
 export default function CaregiverProfileScreen() {
   const router = useRouter();
-
+  const { selectedChild, refreshChildren } = useChild() as any;
+  const role = selectedChild?.caregiver_access_role;
+  const canEditChild = canEditChildProfile(role);
+  
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showToiletTraining, setShowToiletTraining] = useState(true);
 
   useEffect(() => {
     void loadProfile();
@@ -78,6 +85,8 @@ export default function CaregiverProfileScreen() {
           metadata.relationship_to_child ||
           ''
       );
+      setShowToiletTraining(selectedChild?.show_toilet_training !== false);
+
     } catch (error: any) {
       console.error('Load caregiver profile error:', error);
       Alert.alert(
@@ -88,6 +97,52 @@ export default function CaregiverProfileScreen() {
       setLoading(false);
     }
   };
+
+  const toggleToiletTraining = async (value: boolean) => {
+
+    if (!canEditChild) {
+  Alert.alert(
+    'Parent Access Only',
+    'Only a parent or account owner can change child settings.'
+  );
+  return;
+}
+
+  if (!selectedChild?.id) {
+    Alert.alert('No Child Selected', 'Please select a child profile first.');
+    return;
+  }
+
+  setShowToiletTraining(value);
+
+  try {
+    const { error } = await withTimeout(
+      supabase
+        .from('children')
+        .update({
+          show_toilet_training: value,
+        })
+        .eq('id', selectedChild.id),
+      10000,
+      'Updating toilet training setting took too long. Please try again.'
+    );
+
+    if (error) throw error;
+
+    if (typeof refreshChildren === 'function') {
+      await refreshChildren();
+    }
+  } catch (error: any) {
+    console.error('Toggle toilet training error:', error);
+
+    setShowToiletTraining(!value);
+
+    Alert.alert(
+      'Update Failed',
+      error?.message || 'Could not update toilet training setting.'
+    );
+  }
+};
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -227,6 +282,24 @@ export default function CaregiverProfileScreen() {
           <Text style={styles.helperText}>
             This may appear on Parent Wins as “Mom of 5-year-old” or similar.
           </Text>
+
+          <View style={styles.settingCard}>
+  <View style={{ flex: 1 }}>
+    <Text style={styles.settingTitle}>Toilet Training Tools</Text>
+
+    <Text style={styles.settingDescription}>
+      Show toilet training on the home screen for this child.
+    </Text>
+  </View>
+
+  <Switch
+  value={showToiletTraining}
+  onValueChange={toggleToiletTraining}
+  disabled={!canEditChild}
+  trackColor={{ false: '#CBD5E1', true: '#BFDBFE' }}
+  thumbColor={showToiletTraining ? '#2563EB' : '#F8FAFC'}
+/>
+</View>
 
           <TouchableOpacity
             style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
@@ -368,4 +441,29 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginLeft: 8,
   },
+
+  settingCard: {
+  backgroundColor: '#F8FAFC',
+  borderRadius: 18,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 18,
+},
+
+settingTitle: {
+  fontSize: 14,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+settingDescription: {
+  marginTop: 4,
+  fontSize: 12.5,
+  color: '#64748B',
+  lineHeight: 18,
+  fontWeight: '700',
+},
 });

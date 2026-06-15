@@ -4,9 +4,13 @@ import {
 } from '@/lib/calmToolkitInsights';
 import { useChild } from '@/lib/SelectedChildContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  ImageBackground,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -98,6 +102,8 @@ const TOOLS: Tool[] = [
     route: '/calm-down/simple-words',
   },
 ];
+
+const calmHeroImage = require('../../assets/images/calm-down-hero.png');
 
 const MOMENTS: MomentType[] = [
   {
@@ -192,14 +198,84 @@ const MOMENTS: MomentType[] = [
   },
 ];
 
+function AnimatedMomentCard({
+  moment,
+  active,
+  onPress,
+}: {
+  moment: MomentType;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+  void Haptics.selectionAsync();
+
+  Animated.sequence([
+    Animated.timing(scale, {
+      toValue: 1.025,
+      duration: 90,
+      useNativeDriver: true,
+    }),
+    Animated.timing(scale, {
+      toValue: 1,
+      duration: 120,
+      useNativeDriver: true,
+    }),
+  ]).start();
+
+  onPress();
+};
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={handlePress}
+        style={[
+          styles.momentCard,
+          {
+            backgroundColor: active ? moment.bg : '#FFFFFF',
+            borderColor: active ? moment.border : '#E9D5FF',
+          },
+          active && styles.momentCardActive,
+        ]}
+      >
+        <View style={[styles.momentIconWrap, { backgroundColor: moment.bg }]}>
+          <Ionicons name={moment.icon} size={23} color={moment.color} />
+        </View>
+
+        <View style={styles.momentTextWrap}>
+          <Text style={styles.momentTitle}>{moment.title}</Text>
+          <Text style={styles.momentSubtitle}>{moment.subtitle}</Text>
+        </View>
+
+        {active ? (
+  <Text style={[styles.selectedLabel, { color: moment.color }]}>
+    Selected
+  </Text>
+) : null}
+
+        <Ionicons
+          name={active ? 'checkmark-circle' : 'chevron-forward'}
+          size={22}
+          color={active ? moment.color : '#94A3B8'}
+        />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 export default function CalmDownScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
   const [savedStrategies, setSavedStrategies] = useState<SavedCalmStrategy[]>([]);
   const [emergencyMode, setEmergencyMode] = useState(false);
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
-  const [recentPlan, setRecentPlan] = useState<any>(null);
   const [showAllTools, setShowAllTools] = useState(false);
+  const [recentPlan, setRecentPlan] = useState<any>(null);
+  const recommendationOpacity = useRef(new Animated.Value(0)).current;
+  const recommendationTranslateY = useRef(new Animated.Value(14)).current;
   const [whatsHelpingMost, setWhatsHelpingMost] = useState<{
   name: string;
   count: number;
@@ -217,8 +293,6 @@ export default function CalmDownScreen() {
 
   const recent = await getRecentlyHelpfulCalmPlan();
 
-console.log('RECENT PLAN:', recent);
-
 setRecentPlan(recent);
 
   if (selectedChild?.id) {
@@ -233,13 +307,49 @@ const selectedMoment = useMemo(() => {
     return MOMENTS.find((item) => item.id === selectedMomentId) || null;
   }, [selectedMomentId]);
 
-  const recommendedTools = useMemo(() => {
-    if (!selectedMoment) return [];
+  useEffect(() => {
+  Animated.parallel([
+    Animated.timing(recommendationOpacity, {
+      toValue: selectedMoment ? 1 : 0.65,
+      duration: 220,
+      useNativeDriver: true,
+    }),
+    Animated.timing(recommendationTranslateY, {
+      toValue: selectedMoment ? 0 : 14,
+      duration: 220,
+      useNativeDriver: true,
+    }),
+  ]).start();
+}, [selectedMoment]);
 
-    return selectedMoment.recommendedToolIds
-      .map((id) => TOOLS.find((tool) => tool.id === id))
-      .filter(Boolean) as Tool[];
-  }, [selectedMoment]);
+ const recommendedTools = useMemo(() => {
+  if (!selectedMoment) return [];
+
+  return selectedMoment.recommendedToolIds
+    .map((id) => TOOLS.find((tool) => tool.id === id))
+    .filter(Boolean) as Tool[];
+}, [selectedMoment]);
+
+const childName = selectedChild?.name || 'your child';
+
+const smartInsightText = useMemo(() => {
+  if (whatsHelpingMost && whatsHelpingMost.count >= 3) {
+    return `${whatsHelpingMost.name} has helped ${childName} ${whatsHelpingMost.count} times recently.`;
+  }
+
+  if (recentPlan) {
+    const recentHelpful =
+      recentPlan.toolsUsed?.join(', ') ||
+      recentPlan.phraseUsed ||
+      recentPlan.strategyName ||
+      recentPlan.toolType ||
+      'a calming plan';
+
+    return `Last time, ${recentHelpful} helped.`;
+  }
+
+  return `Choose what is happening and we’ll suggest a calm first step for ${childName}.`;
+}, [whatsHelpingMost, recentPlan, childName]);
 
 const emergencyTools = useMemo(() => {
   if (whatsHelpingMost?.name) {
@@ -272,27 +382,38 @@ const emergencyTools = useMemo(() => {
           <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </TouchableOpacity>
 
-        <View style={styles.hero}>
-          <View pointerEvents="none" style={styles.heroGlowOne} />
-          <View pointerEvents="none" style={styles.heroGlowTwo} />
+       <ImageBackground
+  source={calmHeroImage}
+  style={styles.heroImage}
+  imageStyle={styles.heroImageStyle}
+  resizeMode="cover"
+>
+  <View style={styles.heroTopShade} />
+  <View style={styles.heroBottomShade} />
 
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroIcon}>
-              <Ionicons name="heart-circle-outline" size={34} color="#FFFFFF" />
-            </View>
+  <View style={styles.heroOverlay}>
+    <Text style={styles.heroTitle}>Calm Down Toolkit</Text>
 
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>PARENT-LED</Text>
-            </View>
-          </View>
+    <Text style={styles.heroChildText}>
+      Supporting {childName} through tough moments
+    </Text>
 
-          <Text style={styles.heroTitle}>Calm Down Toolkit</Text>
+    <Text style={styles.heroText}>
+      Get a calmer first step, simple words, and tools that fit the moment.
+    </Text>
+  </View>
+</ImageBackground>
 
-          <Text style={styles.heroText}>
-            Choose what is happening right now. The app will suggest a calmer first step,
-            simple words to use, and tools that fit the moment.
-          </Text>
-        </View>
+<View style={styles.smartCard}>
+  <View style={styles.smartIcon}>
+    <Ionicons name="sparkles-outline" size={20} color="#7C3AED" />
+  </View>
+
+  <View style={{ flex: 1 }}>
+    <Text style={styles.smartTitle}>Recommended Today</Text>
+    <Text style={styles.smartText}>{smartInsightText}</Text>
+  </View>
+</View>
 
 <TouchableOpacity
   style={styles.heroEmergencyButton}
@@ -352,137 +473,188 @@ const emergencyTools = useMemo(() => {
     ))}
   </View>
 ) : null}
-        
 
-        {whatsHelpingMost && whatsHelpingMost.count >= 3 ? (
-  <View style={styles.insightCard}>
-    <Ionicons name="heart-outline" size={22} color="#4F46E5" />
 
-    <View style={{ flex: 1 }}>
-      <Text style={styles.insightTitle}>What's Helping Most</Text>
-
-      <Text style={styles.insightText}>
-        {whatsHelpingMost.name} has helped {whatsHelpingMost.count} time
-        {whatsHelpingMost.count === 1 ? '' : 's'} recently.
-      </Text>
-    </View>
-  </View>
-) : null}
-
-        <Text style={styles.sectionTitle}>What’s happening right now?</Text>
+       <View style={styles.sectionHeaderCard}>
+  <Text style={styles.sectionEyebrow}>Choose the moment</Text>
+  <Text style={styles.sectionTitle}>What’s happening right now?</Text>
+  <Text style={styles.sectionSubtitle}>
+    Pick the closest situation and we’ll guide you to the best first step.
+  </Text>
+</View>
 
         <View style={styles.momentGrid}>
           {MOMENTS.map((moment) => {
             const active = selectedMomentId === moment.id;
 
             return (
-              <TouchableOpacity
-                key={moment.id}
-                activeOpacity={0.9}
-                style={[
-                  styles.momentCard,
-                  {
-                    backgroundColor: active ? moment.bg : '#FFFFFF',
-                    borderColor: active ? moment.border : '#E2E8F0',
-                  },
-                ]}
-                onPress={() =>
-                   setSelectedMomentId(
-                   selectedMomentId === moment.id ? null : moment.id
-           )
-          }
-              >
-                <View style={[styles.momentIconWrap, { backgroundColor: moment.bg }]}>
-                  <Ionicons name={moment.icon} size={23} color={moment.color} />
-                </View>
-
-                <View style={styles.momentTextWrap}>
-                  <Text style={styles.momentTitle}>{moment.title}</Text>
-                  <Text style={styles.momentSubtitle}>{moment.subtitle}</Text>
-                </View>
-
-                <Ionicons
-                  name={active ? 'checkmark-circle' : 'chevron-forward'}
-                  size={21}
-                  color={active ? moment.color : '#94A3B8'}
-                />
-              </TouchableOpacity>
-            );
+  <AnimatedMomentCard
+    key={moment.id}
+    moment={moment}
+    active={active}
+    onPress={() =>
+      setSelectedMomentId(selectedMomentId === moment.id ? null : moment.id)
+    }
+  />
+);
           })}
         </View>
 
-        {selectedMoment ? (
-          <View style={styles.recommendationCard}>
-            <View style={styles.recommendationHeader}>
-              <View style={[styles.recommendationIcon, { backgroundColor: selectedMoment.bg }]}>
-                <Ionicons name={selectedMoment.icon} size={24} color={selectedMoment.color} />
-              </View>
+      <Animated.View
+  style={{
+    opacity: recommendationOpacity,
+    transform: [{ translateY: recommendationTranslateY }],
+  }}
+>
+  {selectedMoment ? (
+    <View style={styles.recommendationCard}>
+      <View style={styles.recommendationHeader}>
+        <View
+          style={[
+            styles.recommendationIcon,
+            { backgroundColor: selectedMoment.bg },
+          ]}
+        >
+          <Ionicons
+            name={selectedMoment.icon}
+            size={24}
+            color={selectedMoment.color}
+          />
+        </View>
 
-              <View style={{ flex: 1 }}>
-                <Text style={styles.recommendationEyebrow}>Recommended response</Text>
-                <Text style={styles.recommendationTitle}>{selectedMoment.title}</Text>
-              </View>
-            </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.recommendationEyebrow}>
+            Recommended response
+          </Text>
+          <Text style={styles.recommendationTitle}>
+            {selectedMoment.title}
+          </Text>
+        </View>
+      </View>
 
-            <View style={styles.firstStepBox}>
-              <Text style={styles.firstStepLabel}>First step</Text>
-              <Text style={styles.firstStepText}>{selectedMoment.firstStep}</Text>
-            </View>
+      <View style={styles.firstStepBox}>
+        <Text style={styles.firstStepLabel}>First step</Text>
+        <Text style={styles.firstStepText}>
+          {selectedMoment.firstStep}
+        </Text>
+      </View>
 
-          <Text style={styles.miniSectionTitle}>Say This</Text>
+      <Text style={styles.miniSectionTitle}>Say This</Text>
 
-<View style={styles.scriptChipContainer}>
-  {selectedMoment.parentScript.map((line) => (
-    <View key={line} style={styles.scriptChip}>
-      <Text style={styles.scriptChipText}>
-        “{line}”
-      </Text>
-    </View>
-  ))}
-</View>
-
-            <Text style={styles.miniSectionTitle}>Avoid</Text>
-
-<View style={styles.avoidCompact}>
-  {selectedMoment.avoid.map((line) => (
-    <Text key={line} style={styles.avoidCompactText}>
-      • {line}
-    </Text>
-  ))}
-</View>
-
-            <Text style={styles.miniSectionTitle}>Suggested tools</Text>
-
-<View style={styles.suggestedToolChips}>
-  {recommendedTools.map((tool) => (
-    <TouchableOpacity
-      key={tool.id}
-      activeOpacity={0.9}
-      style={[
-        styles.suggestedToolChip,
-        {
-          backgroundColor: tool.bg,
-          borderColor: tool.border,
-        },
-      ]}
-      onPress={() => router.push(tool.route)}
-    >
-      <Ionicons name={tool.icon} size={18} color={tool.color} />
-      <Text style={[styles.suggestedToolChipText, { color: tool.color }]}>
-        {tool.title}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
+      <View style={styles.scriptChipContainer}>
+        {selectedMoment.parentScript.map((line) => (
+          <View key={line} style={styles.scriptChip}>
+            <Text style={styles.scriptChipText}>“{line}”</Text>
           </View>
-        ) : (
-          <View style={styles.startPromptCard}>
-            <Ionicons name="sparkles-outline" size={22} color="#4F46E5" />
-            <Text style={styles.startPromptText}>
-              Select a situation above to get a simple parent-friendly calm down plan.
+        ))}
+      </View>
+
+      <Text style={styles.miniSectionTitle}>Avoid</Text>
+
+      <View style={styles.avoidCompact}>
+        {selectedMoment.avoid.map((line) => (
+          <Text key={line} style={styles.avoidCompactText}>
+            • {line}
+          </Text>
+        ))}
+      </View>
+
+      <Text style={styles.miniSectionTitle}>Suggested tools</Text>
+
+      <View style={styles.suggestedToolChips}>
+        {recommendedTools.map((tool) => (
+          <TouchableOpacity
+            key={tool.id}
+            activeOpacity={0.9}
+            style={[
+              styles.suggestedToolChip,
+              {
+                backgroundColor: tool.bg,
+                borderColor: tool.border,
+              },
+            ]}
+            onPress={() => router.push(tool.route)}
+          >
+            <Ionicons name={tool.icon} size={18} color={tool.color} />
+            <Text
+              style={[
+                styles.suggestedToolChipText,
+                { color: tool.color },
+              ]}
+            >
+              {tool.title}
             </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  ) : null}
+</Animated.View>
+
+
+    <TouchableOpacity
+  style={styles.dropdownHeader}
+  activeOpacity={0.9}
+  onPress={() => setShowAllTools((prev) => !prev)}
+>
+  <View>
+    <Text style={styles.dropdownTitle}>Explore Calm Tools</Text>
+    <Text style={styles.dropdownSubtitle}>
+      Breathing, quiet space, sensory reset, and simple words
+    </Text>
+  </View>
+
+  <Ionicons
+    name={showAllTools ? 'chevron-up' : 'chevron-down'}
+    size={22}
+    color="#64748B"
+  />
+</TouchableOpacity>
+
+{showAllTools ? (
+  <View style={styles.toolList}>
+    {TOOLS.map((tool) => (
+      <TouchableOpacity
+        key={tool.id}
+        activeOpacity={0.9}
+        style={[
+          styles.toolCard,
+          {
+            backgroundColor: tool.bg,
+            borderColor: tool.border,
+          },
+        ]}
+        onPress={() => router.push(tool.route)}
+      >
+        <View pointerEvents="none" style={styles.toolGlow} />
+
+        <View style={styles.toolLeft}>
+          <View style={styles.toolIconWrap}>
+            <Ionicons name={tool.icon} size={25} color={tool.color} />
           </View>
-        )}
+
+          <View style={styles.toolTextWrap}>
+            <View style={[styles.toolTag, { backgroundColor: tool.color + '14' }]}>
+              <Text style={[styles.toolTagText, { color: tool.color }]}>
+                {tool.tag}
+              </Text>
+            </View>
+
+            <Text style={[styles.toolTitle, { color: tool.color }]}>
+              {tool.title}
+            </Text>
+
+            <Text style={styles.toolSubtitle}>{tool.subtitle}</Text>
+          </View>
+        </View>
+
+        <View style={[styles.arrowWrap, { backgroundColor: tool.color + '15' }]}>
+          <Ionicons name="chevron-forward" size={18} color={tool.color} />
+        </View>
+      </TouchableOpacity>
+    ))}
+  </View>
+) : null}
 
  <TouchableOpacity
   style={styles.myPlansCard}
@@ -508,92 +680,6 @@ const emergencyTools = useMemo(() => {
   <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
 </TouchableOpacity>
 
-<TouchableOpacity
-  style={styles.dropdownHeader}
-  activeOpacity={0.9}
-  onPress={() => setShowAllTools((prev) => !prev)}
->
-  <View>
-    <Text style={styles.dropdownTitle}>Explore all tools</Text>
-    <Text style={styles.dropdownSubtitle}>
-      Breathing, quiet space, sensory reset, and simple words
-    </Text>
-  </View>
-
-  <Ionicons
-    name={showAllTools ? 'chevron-up' : 'chevron-down'}
-    size={22}
-    color="#64748B"
-  />
-</TouchableOpacity>
-
-  <View style={styles.recentlyHelpfulCard}>
-  <View style={styles.recentlyHelpfulIcon}>
-    <Ionicons name="sparkles-outline" size={22} color="#4F46E5" />
-  </View>
-
-  <View style={{ flex: 1 }}>
-    <Text style={styles.recentlyHelpfulTitle}>Recently Helpful</Text>
-
-    <Text style={styles.recentlyHelpfulText}>
-      {recentPlan
-        ? `Last time, ${
-            recentPlan.toolsUsed?.join(', ') ||
-            recentPlan.phraseUsed ||
-            recentPlan.strategyName ||
-            recentPlan.toolType ||
-            'this calming plan'
-          } helped.`
-        : 'Helpful strategies will appear here after you save one.'}
-    </Text>
-  </View>
-  </View>
-
-{showAllTools ? (
-  <View style={styles.toolList}>
-    {TOOLS.map((tool) => (
-      
-            <TouchableOpacity
-              key={tool.id}
-              activeOpacity={0.9}
-              style={[
-                styles.toolCard,
-                {
-                  backgroundColor: tool.bg,
-                  borderColor: tool.border,
-                },
-              ]}
-              onPress={() => router.push(tool.route)}
-            >
-              <View pointerEvents="none" style={styles.toolGlow} />
-
-              <View style={styles.toolLeft}>
-                <View style={styles.toolIconWrap}>
-                  <Ionicons name={tool.icon} size={25} color={tool.color} />
-                </View>
-
-                <View style={styles.toolTextWrap}>
-                  <View style={[styles.toolTag, { backgroundColor: tool.color + '14' }]}>
-                    <Text style={[styles.toolTagText, { color: tool.color }]}>
-                      {tool.tag}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.toolTitle, { color: tool.color }]}>
-                    {tool.title}
-                  </Text>
-
-                  <Text style={styles.toolSubtitle}>{tool.subtitle}</Text>
-                </View>
-              </View>
-
-              <View style={[styles.arrowWrap, { backgroundColor: tool.color + '15' }]}>
-                <Ionicons name="chevron-forward" size={18} color={tool.color} />
-              </View>
-            </TouchableOpacity>
-                    ))}
-        </View>
-) : null}
 
         <View style={styles.noteCard}>
           <Ionicons name="information-circle-outline" size={20} color="#2563EB" />
@@ -610,123 +696,64 @@ const emergencyTools = useMemo(() => {
 
 const styles = StyleSheet.create({
   safe: {
-    flex: 1,
-    backgroundColor: '#F7F8FC',
-  },
+  flex: 1,
+  backgroundColor: '#FFF7ED',
+},
 
-  content: {
-    padding: 20,
-    paddingBottom: 42,
-  },
+content: {
+  padding: 20,
+  paddingBottom: 80,
+},
 
-  backBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
+backBtn: {
+  width: 48,
+  height: 48,
+  borderRadius: 18,
+  backgroundColor: 'rgba(255,255,255,0.92)',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
 
-  hero: {
-    overflow: 'hidden',
-    backgroundColor: '#5B3FF4',
-    borderRadius: 30,
-    padding: 22,
-    marginBottom: 18,
-    shadowColor: '#5B3FF4',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    elevation: 3,
-  },
+sectionTitle: {
+  fontSize: 24,
+  fontWeight: '900',
+  color: '#2E1065',
+},
 
-  heroGlowOne: {
-    position: 'absolute',
-    width: 230,
-    height: 230,
-    borderRadius: 115,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -95,
-    right: -70,
-  },
-
-  heroGlowTwo: {
-    position: 'absolute',
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: 'rgba(196,181,253,0.22)',
-    bottom: -85,
-    left: -55,
-  },
-
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-
-  heroIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
-  },
-
-  heroBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-
-  heroText: {
-    color: '#EDE9FE',
-    marginTop: 9,
-    lineHeight: 22,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginBottom: 14,
-  },
-
-  momentGrid: {
-    gap: 12,
-    marginBottom: 18,
-  },
-
- momentCard: {
+momentCard: {
   borderRadius: 22,
   padding: 13,
-  borderWidth: 1,
+  borderWidth: 1.5,
   flexDirection: 'row',
   alignItems: 'center',
+  backgroundColor: '#FFFFFF',
+},
+
+recommendationCard: {
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 30,
+  padding: 18,
+  marginBottom: 24,
+  borderWidth: 1.5,
+  borderColor: '#E9D5FF',
+  shadowColor: '#7C3AED',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.08,
+  shadowRadius: 16,
+  elevation: 3,
+},
+
+ momentGrid: {
+  gap: 10,
+  marginBottom: 18,
 },
 
 momentIconWrap: {
@@ -756,20 +783,6 @@ momentTextWrap: {
   flex: 1,
   paddingRight: 10,
 },
-
-  recommendationCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 18,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04,
-    shadowRadius: 14,
-    elevation: 2,
-  },
 
   recommendationHeader: {
     flexDirection: 'row',
@@ -832,165 +845,6 @@ momentTextWrap: {
     color: '#0F172A',
     marginBottom: 9,
     marginTop: 2,
-  },
-
-  scriptLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F3FF',
-    borderRadius: 16,
-    padding: 11,
-    marginBottom: 8,
-  },
-
-  scriptText: {
-    marginLeft: 8,
-    color: '#5B21B6',
-    fontWeight: '900',
-    fontSize: 13,
-  },
-
-  avoidLine: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#FEF2F2',
-    borderRadius: 16,
-    padding: 11,
-    marginBottom: 8,
-  },
-
-  avoidText: {
-    flex: 1,
-    marginLeft: 8,
-    color: '#991B1B',
-    fontWeight: '700',
-    fontSize: 12.5,
-    lineHeight: 18,
-  },
-
-  suggestedToolList: {
-    gap: 10,
-  },
-
-  startPromptCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  startPromptText: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: '700',
-  },
-
-  quickAccessHeader: {
-    marginBottom: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  quickSubtitle: {
-    color: '#64748B',
-    fontWeight: '700',
-    marginTop: 2,
-    fontSize: 12.5,
-  },
-
-  proBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#111827',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-
-  proBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '900',
-    marginLeft: 4,
-  },
-
-  savedList: {
-    gap: 12,
-    marginBottom: 24,
-  },
-
-  savedCard: {
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  savedIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-
-  savedCardTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
-
-  savedCardSubtitle: {
-    color: '#475569',
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 19,
-  },
-
-  emptyQuickAccess: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    padding: 20,
-    marginBottom: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  emptyIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 19,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-
-  emptyText: {
-    textAlign: 'center',
-    color: '#64748B',
-    fontWeight: '700',
-    lineHeight: 20,
-    marginTop: 7,
-    fontSize: 13,
   },
 
   toolList: {
@@ -1092,16 +946,6 @@ momentTextWrap: {
     fontSize: 13,
   },
 
-    myPlansCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
 
   myPlansIcon: {
     width: 52,
@@ -1126,92 +970,21 @@ momentTextWrap: {
     fontWeight: '700',
   },
 
-  dropdownHeader: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-
-  dropdownTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-
-  dropdownSubtitle: {
-    marginTop: 3,
-    fontSize: 12.5,
-    color: '#64748B',
-    fontWeight: '700',
-  },
-
-  insightCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  insightTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginLeft: 10,
-  },
-
-  insightText: {
-    marginTop: 3,
-    marginLeft: 10,
-    fontSize: 12.5,
-    color: '#64748B',
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-
-  recentlyHelpfulCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  recentlyHelpfulIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  recentlyHelpfulTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-
-  recentlyHelpfulText: {
-    marginTop: 3,
-    color: '#64748B',
-    fontSize: 12.5,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
+ myPlansCard: {
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 26,
+  padding: 16,
+  marginBottom: 20,
+  borderWidth: 1.5,
+  borderColor: '#E9D5FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.07,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+},
 
 emergencySafetyBox: {
   backgroundColor: '#FEF2F2',
@@ -1288,7 +1061,7 @@ heroEmergencyButton: {
   justifyContent: 'center',
   paddingHorizontal: 14,
   gap: 8,
-  marginBottom: 18,
+  marginBottom: 16,
   borderWidth: 1,
   borderColor: '#FECACA',
 },
@@ -1362,5 +1135,174 @@ suggestedToolChip: {
 suggestedToolChipText: {
   fontSize: 12.5,
   fontWeight: '900',
+},
+
+momentCardActive: {
+  backgroundColor: '#F5F3FF',
+  borderColor: '#A78BFA',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.18,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 4,
+},
+
+selectedLabel: {
+  marginTop: 5,
+  fontSize: 11,
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+},
+
+dropdownHeader: {
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 26,
+  padding: 16,
+  marginBottom: 14,
+  borderWidth: 1.5,
+  borderColor: '#E9D5FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.06,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
+
+dropdownTitle: {
+  fontSize: 17,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+dropdownSubtitle: {
+  marginTop: 3,
+  fontSize: 12.5,
+  color: '#64748B',
+  fontWeight: '700',
+},
+
+heroImage: {
+  height: 265,
+  borderRadius: 32,
+  overflow: 'hidden',
+  marginBottom: 14,
+  backgroundColor: '#F8FAFC',
+},
+
+heroImageStyle: {
+  borderRadius: 32,
+},
+
+heroTopShade: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  height: '45%',
+  backgroundColor: 'rgba(15, 23, 42, 0.08)',
+},
+
+heroBottomShade: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: '68%',
+  backgroundColor: 'rgba(15, 23, 42, 0.42)',
+},
+
+heroOverlay: {
+  flex: 1,
+  justifyContent: 'flex-end',
+  padding: 24,
+  paddingBottom: 28,
+},
+
+heroTitle: {
+  color: '#FFFFFF',
+  fontSize: 31,
+  fontWeight: '900',
+  letterSpacing: -0.6,
+},
+
+heroChildText: {
+  color: '#FDE68A',
+  marginTop: 4,
+  fontSize: 13,
+  fontWeight: '900',
+},
+
+heroText: {
+  color: '#F8FAFC',
+  marginTop: 7,
+  lineHeight: 22,
+  fontSize: 14,
+  fontWeight: '800',
+},
+
+smartCard: {
+  backgroundColor: 'rgba(255,255,255,0.96)',
+  borderRadius: 24,
+  padding: 15,
+  marginBottom: 14,
+  borderWidth: 1.5,
+  borderColor: '#E9D5FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#7C3AED',
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
+
+smartIcon: {
+  width: 44,
+  height: 44,
+  borderRadius: 16,
+  backgroundColor: '#F5F3FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+smartTitle: {
+  fontSize: 14,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+smartText: {
+  marginTop: 3,
+  color: '#64748B',
+  fontSize: 12.5,
+  fontWeight: '700',
+  lineHeight: 18,
+},
+
+sectionHeaderCard: {
+  marginTop: 10,
+  marginBottom: 14,
+},
+
+sectionEyebrow: {
+  color: '#7C3AED',
+  fontSize: 12,
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+  marginBottom: 4,
+},
+
+sectionSubtitle: {
+  marginTop: 4,
+  color: '#64748B',
+  fontSize: 13,
+  fontWeight: '700',
+  lineHeight: 19,
 },
 });

@@ -25,8 +25,6 @@ type SubscriptionContextType = {
 };
 
 const ADMIN_MODE_KEY = 'ABA_AT_HOME_ADMIN_MODE';
-
-// Turn this to true ONLY for quick dev override
 const DEV_FORCE_PRO = false;
 
 const SubscriptionContext = createContext<SubscriptionContextType>({
@@ -43,18 +41,64 @@ export function SubscriptionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [revenueCatIsPro, setRevenueCatIsPro] = useState<boolean>(false);
-  const [adminMode, setAdminMode] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [revenueCatIsPro, setRevenueCatIsPro] = useState(false);
+  const [ownerInheritedPro, setOwnerInheritedPro] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // FINAL PRO VALUE (this is what your app uses)
-  const isPro = DEV_FORCE_PRO || adminMode || revenueCatIsPro;
+  const isPro = DEV_FORCE_PRO || adminMode || revenueCatIsPro || ownerInheritedPro;
 
   const setIsPro = (value: boolean) => {
     setRevenueCatIsPro(value);
   };
 
-  // ✅ Load Admin Mode from storage
+  const saveCurrentUserProStatus = async (userId: string, proActive: boolean) => {
+    await supabase.from('user_subscription_status').upsert(
+      {
+        user_id: userId,
+        is_pro: proActive,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    );
+  };
+
+  const checkInheritedOwnerPro = async (userId: string) => {
+    const { data: caregiverRows, error: caregiverError } = await supabase
+      .from('child_caregivers')
+      .select('owner_user_id, caregiver_user_id, status')
+      .eq('caregiver_user_id', userId)
+      .eq('status', 'accepted');
+
+    if (caregiverError) throw caregiverError;
+
+    const ownerIds = Array.from(
+      new Set(
+        (caregiverRows || [])
+          .map((row: any) => row.owner_user_id)
+          .filter((ownerId: string) => ownerId && ownerId !== userId)
+      )
+    );
+
+    if (ownerIds.length === 0) {
+      setOwnerInheritedPro(false);
+      return;
+    }
+
+    const { data: ownerStatuses, error: ownerStatusError } = await supabase
+      .from('user_subscription_status')
+      .select('user_id, is_pro')
+      .in('user_id', ownerIds);
+
+    if (ownerStatusError) throw ownerStatusError;
+
+    const ownerHasPro = (ownerStatuses || []).some(
+      (status: any) => status.is_pro === true
+    );
+
+    setOwnerInheritedPro(ownerHasPro);
+  };
+
   useEffect(() => {
     const loadAdminMode = async () => {
       try {
@@ -68,7 +112,6 @@ export function SubscriptionProvider({
     void loadAdminMode();
   }, []);
 
-  // ✅ Toggle Admin Mode
   const toggleAdminMode = async () => {
     try {
       const nextValue = !adminMode;
@@ -79,13 +122,13 @@ export function SubscriptionProvider({
     }
   };
 
-  // ✅ Refresh subscription from RevenueCat
   const refreshSubscription = async () => {
     try {
       setLoading(true);
 
       if (DEV_FORCE_PRO) {
         setRevenueCatIsPro(true);
+        setOwnerInheritedPro(true);
         return;
       }
 
@@ -94,51 +137,45 @@ export function SubscriptionProvider({
         error,
       } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Subscription session error:', error);
+      if (error || !session?.user?.id) {
         setRevenueCatIsPro(false);
+        setOwnerInheritedPro(false);
         return;
       }
 
-      if (!session?.user?.id) {
-        setRevenueCatIsPro(false);
-        return;
-      }
+      const userId = session.user.id;
 
       await configureRevenueCat();
-      await logInRevenueCat(session.user.id);
+      await logInRevenueCat(userId);
 
       const customerInfo = await getCustomerInfo();
       const proActive = hasProAccess(customerInfo);
 
       setRevenueCatIsPro(proActive);
+
+      await saveCurrentUserProStatus(userId, proActive);
+      await checkInheritedOwnerPro(userId);
     } catch (error) {
       console.error('Subscription refresh error:', error);
       setRevenueCatIsPro(false);
+      setOwnerInheritedPro(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Initial load + auth sync
   useEffect(() => {
     let isMounted = true;
 
     const initialize = async () => {
       try {
-        if (DEV_FORCE_PRO) {
-          if (isMounted) {
-            setRevenueCatIsPro(true);
-            setLoading(false);
-          }
-          return;
-        }
-
         await refreshSubscription();
       } catch (error) {
         console.error('Subscription init error:', error);
+
         if (isMounted) {
           setRevenueCatIsPro(false);
+          setOwnerInheritedPro(false);
           setLoading(false);
         }
       }
@@ -150,47 +187,30 @@ export function SubscriptionProvider({
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
-        if (DEV_FORCE_PRO) {
-          if (isMounted) {
-            setRevenueCatIsPro(true);
-            setLoading(false);
-          }
-          return;
-        }
-
         if (!session?.user?.id) {
           await logOutRevenueCat();
 
           if (isMounted) {
             setRevenueCatIsPro(false);
+            setOwnerInheritedPro(false);
             setLoading(false);
           }
+
           return;
         }
 
-        if (isMounted) {
-          setLoading(true);
-        }
+        if (isMounted) setLoading(true);
 
-        await configureRevenueCat();
-        await logInRevenueCat(session.user.id);
-
-        const customerInfo = await getCustomerInfo();
-        const proActive = hasProAccess(customerInfo);
-
-        if (isMounted) {
-          setRevenueCatIsPro(proActive);
-        }
+        await refreshSubscription();
       } catch (error) {
         console.error('Subscription auth sync error:', error);
 
         if (isMounted) {
           setRevenueCatIsPro(false);
+          setOwnerInheritedPro(false);
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     });
 
@@ -200,7 +220,6 @@ export function SubscriptionProvider({
     };
   }, []);
 
-  // ✅ Context value
   const value = useMemo(
     () => ({
       isPro,

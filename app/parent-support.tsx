@@ -4,6 +4,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -144,20 +145,23 @@ export default function ParentSupportScreen() {
           <View style={styles.headerSpacer} />
         </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
+        <View style={styles.heroImageContainer}>
+  <Image
+    source={require('../assets/images/parent-support-hero.png')}
+    style={styles.parentSupportHeroImage}
+    resizeMode="cover"
+  />
 
-          <View style={styles.heroIcon}>
-            <Ionicons name="heart-circle" size={36} color="#FFFFFF" />
-          </View>
+  <View style={styles.heroOverlay}>
+    <Text style={styles.heroOverlayTitle}>
+      Caregiver Support
+    </Text>
 
-          <Text style={styles.heroTitle}>Support for You</Text>
-
-          <Text style={styles.heroText}>
-            A calm caregiver space for hard moments, reflection, encouragement,
-            and emotional reset tools.
-          </Text>
-        </View>
+    <Text style={styles.heroOverlayText}>
+      Support, reflection, encouragement, and emotional reset tools for hard parenting days.
+    </Text>
+  </View>
+</View>
 
         {!hasProAccess ? (
           <View style={styles.freeBanner}>
@@ -348,47 +352,15 @@ const styles = StyleSheet.create({
     width: 42,
   },
 
-  heroCard: {
-    overflow: 'hidden',
-    backgroundColor: '#7C3AED',
-    borderRadius: 32,
-    padding: 24,
-    marginBottom: 18,
-  },
-
-  heroGlow: {
-    position: 'absolute',
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -70,
-    right: -55,
-  },
-
   heroIcon: {
-    width: 62,
-    height: 62,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-
-  heroText: {
-    color: '#EDE9FE',
-    fontSize: 15,
-    lineHeight: 23,
-    fontWeight: '700',
-  },
+  width: 62,
+  height: 62,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255,255,255,0.18)',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 16,
+},
 
   freeBanner: {
     backgroundColor: '#F5F3FF',
@@ -550,4 +522,51 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '700',
   },
+
+heroImageContainer: {
+  height: 280,
+  borderRadius: 32,
+  overflow: 'hidden',
+  marginBottom: 24,
+
+  shadowColor: '#7C3AED',
+  shadowOffset: {
+    width: 0,
+    height: 12,
+  },
+  shadowOpacity: 0.12,
+  shadowRadius: 20,
+  elevation: 4,
+},
+
+parentSupportHeroImage: {
+  width: '100%',
+  height: '100%',
+},
+
+heroOverlay: {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+
+  paddingHorizontal: 24,
+  paddingVertical: 22,
+
+  backgroundColor: 'rgba(15,23,42,0.18)',
+},
+
+heroOverlayTitle: {
+  color: '#FFFFFF',
+  fontSize: 30,
+  fontWeight: '900',
+  marginBottom: 6,
+},
+
+heroOverlayText: {
+  color: '#F8FAFC',
+  fontSize: 15,
+  lineHeight: 22,
+  fontWeight: '700',
+},
 });

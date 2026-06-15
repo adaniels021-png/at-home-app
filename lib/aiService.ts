@@ -5,7 +5,6 @@ import {
   toStringArray,
 } from './aiCore';
 import {
-  DailyABAActivity,
   Lesson,
   LessonDifficultyLevel,
   LessonPerformanceProfile,
@@ -302,31 +301,78 @@ export async function generateProgressSummary(
   childId: string
 ): Promise<{ summary: string }> {
   try {
-    const { data: logs } = await supabase
+    const { data: logs, error } = await supabase
       .from('lesson_logs')
-      .select('*')
+      .select('category, performance_score, status, completed_at')
       .eq('child_id', childId)
       .order('completed_at', { ascending: false })
       .limit(20);
 
-    const { data, error } = await supabase.functions.invoke('ai-core', {
-      body: {
-        type: 'summary',
-        payload: { logs: logs || [] },
-      },
+    if (error) throw error;
+
+    const lessonLogs = logs || [];
+
+    if (!lessonLogs.length) {
+      return {
+        summary:
+          'Progress data is being collected this week. Complete a few lessons to see stronger weekly insights.',
+      };
+    }
+
+    const completedCount = lessonLogs.length;
+    const categoryCounts: Record<string, number> = {};
+
+    lessonLogs.forEach((log: any) => {
+      const category = log.category || 'Learning';
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     });
 
-    if (error) throw error;
+    const topCategory =
+      Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+      'Learning';
+
+    const highScoreCount = lessonLogs.filter(
+      (log: any) => Number(log.performance_score || 0) >= 80
+    ).length;
+
+    const steadyScoreCount = lessonLogs.filter((log: any) => {
+      const score = Number(log.performance_score || 0);
+      return score >= 60 && score < 80;
+    }).length;
+
+    const supportScoreCount = lessonLogs.filter((log: any) => {
+      const score = Number(log.performance_score || 0);
+      return score > 0 && score < 60;
+    }).length;
+
+    if (
+      supportScoreCount > highScoreCount &&
+      supportScoreCount >= steadyScoreCount
+    ) {
+      return {
+        summary: `${topCategory} has been the main focus recently. Some lessons looked challenging, so shorter steps, extra modeling, and immediate reinforcement may help.`,
+      };
+    }
+
+    if (
+      highScoreCount > supportScoreCount &&
+      highScoreCount >= steadyScoreCount
+    ) {
+      return {
+        summary: `${topCategory} has been the main focus recently. Your child may be ready for a small increase in independence or a slightly harder next step.`,
+      };
+    }
+
+    return {
+      summary: `${topCategory} has been the main focus recently. ${completedCount} recent lesson${completedCount === 1 ? '' : 's'} have been completed, and the current level looks steady for continued practice.`,
+    };
+  } catch (error) {
+    console.warn('Weekly summary fallback:', error);
 
     return {
       summary:
-        typeof data?.result === 'string' && data.result.trim()
-          ? data.result.trim()
-          : 'Progress data is being collected this week.',
+        'Progress data is being collected this week. Keep practicing short lessons and check back soon.',
     };
-  } catch (error) {
-    console.error('Weekly summary fallback:', error);
-    return { summary: 'Progress data is being collected this week.' };
   }
 }
 
@@ -772,46 +818,55 @@ export async function getRecentBehaviorPattern({
 function buildFallbackActivities(
   childName: string,
   count = 3
-): DailyABAActivity[] {
+): any[] {
   return [
     {
-      name: 'Requesting a Preferred Item',
-      materials: ['Preferred toy or snack', 'Small table or play area'],
-      instructions: [
-        `Sit near ${childName} with the preferred item visible but not immediately available.`,
-        'Wait 3–5 seconds to see if your child reaches, looks, points, vocalizes, signs, or uses a word.',
-        'Prompt the request if needed by modeling “want” or the item name.',
-        'Immediately give the item when your child makes any clear request attempt.',
-        'Repeat 3–5 times, keeping the activity short and positive.',
+      name: 'Bubble Chase',
+      title: 'Bubble Chase',
+      category: 'outdoor',
+      location: 'Backyard, park, or sidewalk',
+      time: '5–10 minutes',
+      description:
+        'Blow bubbles and turn it into a playful chase, pop, and laugh adventure.',
+      try_this: [
+        `Let ${childName} pop bubbles with hands, feet, or a bubble wand.`,
+        'Pause before blowing more bubbles and see how your child asks for more.',
+        'Try big bubbles, tiny bubbles, fast bubbles, and slow bubbles.',
       ],
-      success_criteria:
-        'Your child makes at least 3 request attempts with support as needed.',
+      why_it_helps:
+        'Supports movement, shared attention, communication, and joyful connection through play.',
     },
     {
-      name: 'Following a Simple Direction',
-      materials: ['One familiar toy', 'Small reinforcer or praise'],
-      instructions: [
-        `Sit with ${childName} in a calm space with one familiar toy nearby.`,
-        'Give one clear direction, such as “give me,” “put in,” or “clap hands.”',
-        'Wait 3–5 seconds for your child to respond.',
-        'If needed, model the action or gently guide the response.',
-        'Praise immediately when your child responds or tries.',
+      name: 'Toy Rescue Mission',
+      title: 'Toy Rescue Mission',
+      category: 'home',
+      location: 'Living room or play area',
+      time: '5 minutes',
+      description:
+        'Pretend toys are stuck around the room and need help getting back home.',
+      try_this: [
+        'Pick 3–5 toys to “rescue.”',
+        'Give each toy a silly voice, sound, or name.',
+        'Celebrate when each toy makes it back to its basket, shelf, or bed.',
       ],
-      success_criteria:
-        'Your child follows or attempts the direction 3 times during the activity.',
+      why_it_helps:
+        'Builds pretend play, cooperation, clean-up routines, and following everyday directions without feeling like a chore.',
     },
     {
-      name: 'Turn-Taking Play',
-      materials: ['Blocks, ball, puzzle, or simple toy'],
-      instructions: [
-        `Choose a simple toy and sit facing ${childName}.`,
-        'Take one short turn and say “my turn.”',
-        'Offer the toy to your child and say “your turn.”',
-        'Help your child take a turn if needed, then praise right away.',
-        'Continue for 3–5 turns, ending while your child is still engaged.',
+      name: 'Grocery Store Helper',
+      title: 'Grocery Store Helper',
+      category: 'community',
+      location: 'Grocery store, Target, or quick errand',
+      time: '10–15 minutes',
+      description:
+        'Let your child be your special helper during a simple shopping trip.',
+      try_this: [
+        'Ask your child to help find one color, one fruit, or one box.',
+        'Let them place a safe item in the cart.',
+        'Praise helping, waiting, looking, or staying nearby.',
       ],
-      success_criteria:
-        'Your child participates in at least 2 turn-taking exchanges with support.',
+      why_it_helps:
+        'Supports real-world language, attention, patience, and community participation.',
     },
   ].slice(0, count);
 }
@@ -820,7 +875,7 @@ function normalizeActivities(
   rawActivities: unknown,
   childName: string,
   count = 3
-): DailyABAActivity[] {
+): any[] {
   const fallback = buildFallbackActivities(childName, count);
 
   if (!Array.isArray(rawActivities)) return fallback;
@@ -830,14 +885,37 @@ function normalizeActivities(
 
     return {
       name: safeString(activity?.name || activity?.title, fallbackItem.name),
-      materials: safeStringArray(activity?.materials, fallbackItem.materials),
-      instructions: safeStringArray(
-        activity?.instructions || activity?.steps || activity?.teaching_steps,
-        fallbackItem.instructions
+      title: safeString(activity?.title || activity?.name, fallbackItem.title),
+      category: safeString(
+        activity?.category,
+        fallbackItem.category || 'surprise'
       ),
-      success_criteria: safeString(
-        activity?.success_criteria || activity?.successCriteria || activity?.goal,
-        fallbackItem.success_criteria
+      location: safeString(
+        activity?.location || activity?.where,
+        fallbackItem.location
+      ),
+      time: safeString(
+        activity?.time || activity?.duration || activity?.estimated_time,
+        fallbackItem.time
+      ),
+      description: safeString(
+        activity?.description || activity?.summary,
+        fallbackItem.description
+      ),
+      try_this: safeStringArray(
+        activity?.try_this ||
+          activity?.tryThis ||
+          activity?.ideas ||
+          activity?.instructions ||
+          activity?.steps,
+        fallbackItem.try_this
+      ).slice(0, 4),
+      why_it_helps: safeString(
+        activity?.why_it_helps ||
+          activity?.whyItHelps ||
+          activity?.benefit ||
+          activity?.success_criteria,
+        fallbackItem.why_it_helps
       ),
     };
   });
@@ -845,9 +923,10 @@ function normalizeActivities(
   const completeActivities = normalized.filter(
     (activity) =>
       activity.name &&
-      activity.materials.length > 0 &&
-      activity.instructions.length >= 3 &&
-      activity.success_criteria
+      activity.title &&
+      activity.description &&
+      activity.try_this.length >= 2 &&
+      activity.why_it_helps
   );
 
   return completeActivities.length
@@ -857,8 +936,8 @@ function normalizeActivities(
 
 export async function generateDailyABAActivities({
   childName,
-  location = 'Home',
-  skillFocus = 'Communication, play, routines, and daily living',
+  location = 'Home, outdoor, or community',
+  skillFocus = 'Fun family activities that naturally support development',
   assessmentContext = {},
   recentLessons = [],
   recentRoutines = [],
@@ -871,49 +950,72 @@ export async function generateDailyABAActivities({
   recentLessons?: any[];
   recentRoutines?: any[];
   count?: number;
-}): Promise<DailyABAActivity[]> {
+}): Promise<any[]> {
   const fallbackActivities = buildFallbackActivities(childName, count);
 
   try {
-
     const prompt = `
-Create exactly ${count} short ABA home activities for a parent.
+Create exactly ${count} Daily Adventures for a parent and child.
 
 Child name: ${childName}
-Location: ${location}
-Skill focus: ${skillFocus}
+Location preference: ${location}
+Personalization notes: ${skillFocus}
+
+These should NOT feel like:
+- ABA lessons
+- therapy programs
+- worksheets
+- drills
+- formal teaching
+- clinical activities
+
+These should feel like fun family activity ideas parents can do at home, outside, or in the community.
 
 Return ONLY valid compact JSON array. No markdown. No extra text.
 
-Each activity must follow this shape:
+Each Daily Adventure must follow this exact shape:
 {
   "name": "string",
-  "materials": ["string"],
-  "instructions": ["string"],
-  "success_criteria": "string"
+  "title": "string",
+  "category": "home | outdoor | community | sensory | creative | calm | movement",
+  "location": "string",
+  "time": "string",
+  "description": "string",
+  "try_this": ["string", "string", "string"],
+  "why_it_helps": "string"
 }
 
 Rules:
-- Exactly ${count} activities.
-- Each activity must have exactly 2 materials.
-- Each activity must have exactly 4 instructions.
-- Each instruction must be under 150 characters.
-- success_criteria must be under 180 characters.
-- Keep language parent-friendly and simple.
+- Exactly ${count} adventures.
+- Do not include materials.
+- Do not include instructions.
+- Do not include success_criteria.
+- Do not include goals.
+- Do not say "child will."
+- Do not mention trials, prompting, data collection, mastery, or success criteria.
+- Each title should sound playful and fun.
+- Each description should feel warm and parent-friendly.
+- Each try_this item should be simple, playful, and natural.
+- why_it_helps should explain development benefits without sounding clinical.
+- Use everyday family language.
+- Keep each try_this item under 130 characters.
+- Keep why_it_helps under 180 characters.
+- Make the ideas feel fresh and not repetitive.
 `;
 
     const parsed = await generateJsonWithEdgeFunction<any[]>(
-  prompt,
-  fallbackActivities,
-  'activities'
-);
+      prompt,
+      fallbackActivities,
+      'activities'
+    );
 
-return normalizeActivities(parsed, childName, count);
+    return normalizeActivities(parsed, childName, count);
   } catch (error) {
-    console.error('Generate daily ABA activities error:', error);
+    console.error('Generate Daily Adventures error:', error);
     return fallbackActivities;
   }
 }
+
 
 export async function generatePremiumLesson({
   childName,

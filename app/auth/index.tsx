@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +15,8 @@ import {
   View,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+
+const LOGIN_BG = require('../../assets/images/android-icon-background.png');
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -28,17 +32,11 @@ export default function AuthScreen() {
     const message = String(error?.message || '').toLowerCase();
 
     if (mode === 'login') {
-      if (
-        message.includes('invalid login credentials') ||
-        message.includes('invalid_credentials')
-      ) {
+      if (message.includes('invalid login credentials') || message.includes('invalid_credentials')) {
         return 'The email or password is incorrect. If you recently signed up, you may also need to verify your email first.';
       }
 
-      if (
-        message.includes('email not confirmed') ||
-        message.includes('email_not_confirmed')
-      ) {
+      if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
         return 'Your email is not confirmed yet. Please check your inbox and verify your email before logging in.';
       }
 
@@ -78,9 +76,7 @@ export default function AuthScreen() {
           password: cleanPassword,
         });
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         if (data?.session) {
           router.replace('/');
@@ -99,9 +95,7 @@ export default function AuthScreen() {
         password: cleanPassword,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.session) {
         router.replace('/');
@@ -112,11 +106,7 @@ export default function AuthScreen() {
     } catch (error: any) {
       console.warn('AUTH ERROR:', error?.message || error);
 
-      const friendlyMessage = getFriendlyAuthMessage(
-        error,
-        isSignUp ? 'signup' : 'login'
-      );
-
+      const friendlyMessage = getFriendlyAuthMessage(error, isSignUp ? 'signup' : 'login');
       Alert.alert(isSignUp ? 'Sign Up Error' : 'Login Error', friendlyMessage);
     } finally {
       setLoading(false);
@@ -127,10 +117,7 @@ export default function AuthScreen() {
     const cleanEmail = email.trim().toLowerCase();
 
     if (!cleanEmail) {
-      Alert.alert(
-        'Enter Email',
-        'Please enter your email address first so we can send a reset link.'
-      );
+      Alert.alert('Enter Email', 'Please enter your email address first so we can send a reset link.');
       return;
     }
 
@@ -138,52 +125,39 @@ export default function AuthScreen() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       Alert.alert(
         'Reset Email Sent',
         'If that email is registered, a password reset link has been sent to the inbox.'
       );
     } catch (error: any) {
-       console.warn('PASSWORD RESET ERROR:', error?.message || error);
-      Alert.alert(
-        'Reset Error',
-        error?.message || 'We could not send the reset email. Please try again.'
-      );
+      console.warn('PASSWORD RESET ERROR:', error?.message || error);
+      Alert.alert('Reset Error', error?.message || 'We could not send the reset email. Please try again.');
     } finally {
       setResetLoading(false);
     }
   }
 
   return (
+  <ImageBackground
+    source={LOGIN_BG}
+    style={styles.backgroundImage}
+    resizeMode="cover"
+  >
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={styles.innerContainer}>
-        <View style={styles.headerSection}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="heart" size={40} color="#4F46E5" />
-          </View>
-
-          <Text style={styles.title}>ABA at Home</Text>
-
-          <Text style={styles.subtitle}>
-            {isSignUp ? 'Create your parent account' : 'Welcome back'}
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
 
         <View style={styles.form}>
           <View style={styles.inputWrapper}>
-            <Ionicons
-              name="mail-outline"
-              size={20}
-              color="#64748B"
-              style={styles.inputIcon}
-            />
+            <Ionicons name="mail-outline" size={21} color="#64748B" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -197,12 +171,7 @@ export default function AuthScreen() {
           </View>
 
           <View style={styles.inputWrapper}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#64748B"
-              style={styles.inputIcon}
-            />
+            <Ionicons name="lock-closed-outline" size={21} color="#64748B" style={styles.inputIcon} />
             <TextInput
               style={styles.passwordInput}
               placeholder="Password"
@@ -214,15 +183,8 @@ export default function AuthScreen() {
               autoCorrect={false}
             />
 
-            <TouchableOpacity
-              onPress={() => setShowPassword((prev) => !prev)}
-              style={styles.eyeButton}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#64748B"
-              />
+            <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} style={styles.eyeButton}>
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color="#64748B" />
             </TouchableOpacity>
           </View>
 
@@ -242,14 +204,15 @@ export default function AuthScreen() {
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleAuth}
             disabled={loading}
+            activeOpacity={0.9}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isSignUp ? 'Create Account' : 'Login'}
-              </Text>
-            )}
+  <ActivityIndicator color="#FFFFFF" />
+) : (
+  <Text style={styles.buttonText}>
+    {isSignUp ? 'Create Account' : 'Login'}
+  </Text>
+)}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -257,55 +220,54 @@ export default function AuthScreen() {
             style={styles.toggleContainer}
             disabled={loading || resetLoading}
           >
-            <Text style={styles.toggleText}>
+          <Text style={styles.toggleText}>
               {isSignUp
-                ? 'Already have an account? Login'
-                : "Don't have an account? Sign Up"}
-            </Text>
+              ? 'Already have an account? '
+              : "Don't have an account? "}
+            <Text style={styles.toggleTextBold}>
+              {isSignUp ? 'Login' : 'Sign Up'}
+           </Text>
+         </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
-  );
+  </ImageBackground>
+);
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
 
-  innerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
+  scrollContent: {
+  flexGrow: 1,
+  paddingHorizontal: 24,
+  paddingTop: 375,
+  paddingBottom: 80,
+},
 
-  headerSection: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
+  logoSection: {
+  alignItems: 'center',
+  marginTop: 120,
+  marginBottom: 28,
+},
 
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
+  fontSize: 38,
+  fontWeight: '900',
+  color: '#0F172A',
+  textAlign: 'center',
+},
 
   subtitle: {
     fontSize: 16,
     color: '#64748B',
     marginTop: 8,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 
   form: {
@@ -315,62 +277,52 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 18,
     marginBottom: 16,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.9)',
+    minHeight: 58,
   },
 
   inputIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
 
   input: {
     flex: 1,
-    height: 50,
+    height: 56,
     fontSize: 16,
     color: '#1E293B',
+    fontWeight: '600',
   },
 
   passwordInput: {
     flex: 1,
-    height: 50,
+    height: 56,
     fontSize: 16,
     color: '#1E293B',
+    fontWeight: '600',
   },
 
   eyeButton: {
     paddingLeft: 10,
     paddingVertical: 8,
   },
-
-  forgotContainer: {
-    alignSelf: 'flex-end',
-    marginTop: -4,
-    marginBottom: 10,
-  },
+  
+forgotContainer: {
+  alignSelf: 'flex-end',
+  marginTop: -8,
+  marginBottom: 20,
+},
 
   forgotText: {
     color: '#4F46E5',
-    fontWeight: '700',
-    fontSize: 13,
+    fontWeight: '800',
+    fontSize: 14,
   },
 
-  button: {
-    backgroundColor: '#4F46E5',
-    height: 56,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
 
   buttonDisabled: {
     opacity: 0.7,
@@ -379,17 +331,41 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '900',
   },
 
   toggleContainer: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
+  marginTop: 20,
+  marginBottom: 80,
+  alignItems: 'center',
+},
 
   toggleText: {
-    color: '#4F46E5',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  color: '#475569',
+  fontWeight: '700',
+  fontSize: 16,
+},
+
+toggleTextBold: {
+  color: '#4F46E5',
+  fontWeight: '900',
+},
+
+  backgroundImage: {
+  flex: 1,
+},
+
+button: {
+  height: 62,
+  borderRadius: 18,
+  marginTop: 8,
+  backgroundColor: '#312E81',
+  justifyContent: 'center',
+  alignItems: 'center',
+  shadowColor: '#4F46E5',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.3,
+  shadowRadius: 12,
+  elevation: 5,
+},
 });

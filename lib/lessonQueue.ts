@@ -290,7 +290,7 @@ export async function getNextQueuedLesson({
   const { data: openInstance, error: openError } = await supabase
     .from('daily_lesson_instances')
     .select('*')
-    .eq('user_id', userId)
+    .eq('child_id', childId)
     .eq('child_id', childId)
     .eq('lesson_date', today)
     .eq('category', category)
@@ -315,7 +315,7 @@ export async function getNextQueuedLesson({
     const { data: queuedLesson, error: queueError } = await supabase
       .from('lesson_queue')
       .select('*')
-      .eq('user_id', userId)
+      .eq('child_id', childId)
       .eq('child_id', childId)
       .eq('category', category)
       .eq('is_used', false)
@@ -387,7 +387,7 @@ export async function getNextQueuedLesson({
     const { data: existingInstance, error: existingError } = await supabase
       .from('daily_lesson_instances')
       .select('*')
-      .eq('user_id', userId)
+      .eq('child_id', childId)
       .eq('child_id', childId)
       .eq('lesson_date', today)
       .eq('category', category)

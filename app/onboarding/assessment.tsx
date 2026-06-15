@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
+import { canRunAssessments } from '../../lib/caregiverPermissions';
 import { supabase } from '../../lib/supabase';
 
 type QuestionType = 'choice' | 'multi' | 'text';
@@ -397,6 +398,8 @@ function buildLessonProfile(
 export default function AssessmentScreen() {
   const router = useRouter();
   const { selectedChild, refreshChildren } = useChild() as any;
+  const role = selectedChild?.caregiver_access_role;
+  const canAssess = canRunAssessments(role);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
@@ -568,6 +571,29 @@ await supabase
       setSaving(false);
     }
   };
+
+  if (!canAssess) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.restrictedCard}>
+        <Ionicons name="lock-closed-outline" size={42} color="#94A3B8" />
+
+        <Text style={styles.restrictedTitle}>Parent Access Only</Text>
+
+        <Text style={styles.restrictedText}>
+          Only the child profile owner or second parent can complete or update the child assessment.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.restrictedButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.restrictedButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
 
   return (
     <SafeAreaView style={styles.container}>
@@ -901,4 +927,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+
+  restrictedCard: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 28,
+},
+
+restrictedTitle: {
+  marginTop: 14,
+  fontSize: 22,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+restrictedText: {
+  marginTop: 8,
+  color: '#64748B',
+  fontSize: 14,
+  fontWeight: '700',
+  textAlign: 'center',
+  lineHeight: 21,
+},
+
+restrictedButton: {
+  marginTop: 22,
+  backgroundColor: '#4F46E5',
+  borderRadius: 18,
+  paddingVertical: 13,
+  paddingHorizontal: 22,
+},
+
+restrictedButtonText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+},
 });

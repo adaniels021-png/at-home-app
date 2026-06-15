@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,8 @@ type QuietSupport = {
   icon: keyof typeof Ionicons.glyphMap;
   tip: string;
 };
+
+const quietSpaceImage = require('../../assets/images/calm-toolkit/quiet-space.png');
 
 const triggers: Trigger[] = [
   { id: 'sounds', title: 'Loud sounds', icon: 'volume-high-outline' },
@@ -85,6 +88,30 @@ const supportMatchesByTrigger: Record<string, string[]> = {
   screen: ['lower-sound', 'dim-lights'],
 };
 
+function getQuietPreviewText(selectedTriggerIds: string[]) {
+  if (selectedTriggerIds.length === 0) {
+    return 'Choose what feels overwhelming, and ABA at Home will build a simple quiet space plan.';
+  }
+
+  if (selectedTriggerIds.includes('sounds')) {
+    return 'Start by lowering sound, reducing talking, and creating a softer listening space.';
+  }
+
+  if (selectedTriggerIds.includes('lights')) {
+    return 'Start by dimming lights, moving away from brightness, and using softer surroundings.';
+  }
+
+  if (selectedTriggerIds.includes('people')) {
+    return 'Start by giving space and moving to a quieter area with fewer people nearby.';
+  }
+
+  if (selectedTriggerIds.includes('demands')) {
+    return 'Start by reducing questions, using fewer words, and allowing quiet waiting.';
+  }
+
+  return 'Start by creating a calmer space with less sound, fewer words, and lower stimulation.';
+}
+
 export default function QuietSpaceScreen() {
   const router = useRouter();
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -103,22 +130,47 @@ export default function QuietSpaceScreen() {
     return quietSupports.filter((support) => selectedSupportIds.includes(support.id));
   }, [selectedSupportIds]);
 
-  const suggestedSupports = useMemo(() => {
-    const supportIds = selectedTriggerIds.flatMap(
-      (triggerId) => supportMatchesByTrigger[triggerId] || []
-    );
+const suggestedSupports = useMemo(() => {
+  const supportIds = selectedTriggerIds.flatMap(
+    (triggerId) => supportMatchesByTrigger[triggerId] || []
+  );
 
-    const uniqueSupportIds = Array.from(new Set(supportIds));
+  const uniqueSupportIds = Array.from(new Set(supportIds));
 
-    return quietSupports.filter((support) => uniqueSupportIds.includes(support.id));
-  }, [selectedTriggerIds]);
+  return quietSupports.filter((support) =>
+    uniqueSupportIds.includes(support.id)
+  );
+}, [selectedTriggerIds]);
 
+const quietPreviewText = useMemo(() => {
+  return getQuietPreviewText(selectedTriggerIds);
+}, [selectedTriggerIds]);
   const timerDisplay = useMemo(() => {
     const minutes = Math.floor(timerSeconds / 60);
     const seconds = timerSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }, [timerSeconds]);
+
+  const timerComplete = timerSeconds === 0;
+
+const completedSteps = useMemo(() => {
+  let count = 0;
+
+  if (selectedTriggerIds.length > 0) count += 1;
+  if (suggestedSupports.length > 0) count += 1;
+  if (selectedSupportIds.length > 0) count += 1;
+  if (timerComplete) count += 1;
+  if (savedPreference) count += 1;
+
+  return count;
+}, [
+  selectedTriggerIds.length,
+  suggestedSupports.length,
+  selectedSupportIds.length,
+  timerComplete,
+  savedPreference,
+]);
 
   function toggleTrigger(id: string) {
     setSelectedTriggerIds((prev) =>
@@ -262,17 +314,48 @@ function resetTool() {
         </TouchableOpacity>
 
         <View style={styles.headerCard}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="moon-outline" size={30} color="#4338CA" />
-          </View>
+  <Image
+    source={quietSpaceImage}
+    style={styles.heroImage}
+    resizeMode="cover"
+  />
 
-          <Text style={styles.title}>Quiet Space</Text>
+  <View style={styles.headerTextRow}>
+    <View style={styles.iconCircleSmall}>
+      <Ionicons name="moon-outline" size={28} color="#4338CA" />
+    </View>
 
-          <Text style={styles.subtitle}>
-            Build a low-stimulation space with fewer words, softer surroundings,
-            and quiet waiting.
+    <View style={{ flex: 1 }}>
+      <Text style={styles.title}>Quiet Space</Text>
+
+      <Text style={styles.subtitle}>
+        Build a low-stimulation space with fewer words, softer surroundings,
+        and quiet waiting.
+      </Text>
+    </View>
+  </View>
+</View>
+<View style={styles.progressTracker}>
+  {[1, 2, 3, 4, 5].map((step) => {
+    const active = completedSteps >= step;
+
+    return (
+      <View key={step} style={styles.progressStepWrap}>
+        <View style={[styles.progressDot, active && styles.progressDotActive]}>
+          <Text style={[styles.progressDotText, active && styles.progressDotTextActive]}>
+            {step}
           </Text>
         </View>
+
+        {step < 5 ? (
+          <View style={[styles.progressLine, active && styles.progressLineActive]} />
+        ) : null}
+      </View>
+    );
+  })}
+</View>
+
+
 
         <View style={styles.card}>
           <Text style={styles.stepLabel}>Step 1</Text>
@@ -314,32 +397,76 @@ function resetTool() {
           </View>
         </View>
 
-        <View style={styles.suggestedPlanCard}>
-          <Text style={styles.stepLabel}>Step 2</Text>
-          <Text style={styles.sectionTitle}>Suggested quiet space plan</Text>
-          <Text style={styles.helperText}>
-            Based on what you selected, these supports may help reduce stimulation.
-          </Text>
+       <View style={styles.suggestedPlanCard}>
+  <View style={styles.stepHeaderRow}>
+    <Text style={styles.stepLabel}>Step 2</Text>
 
-          {suggestedSupports.length > 0 ? (
-            <View style={styles.suggestedList}>
-              {suggestedSupports.map((support) => (
-                <View key={support.id} style={styles.suggestedItem}>
-                  <Ionicons name={support.icon} size={20} color="#4338CA" />
+    <View style={styles.autoPlanPill}>
+      <Ionicons name="sparkles-outline" size={14} color="#4338CA" />
+      <Text style={styles.autoPlanText}>Auto plan</Text>
+    </View>
+  </View>
 
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.suggestedTitle}>{support.title}</Text>
-                    <Text style={styles.suggestedTip}>{support.tip}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>
-              Select what may be overwhelming first, then your suggested plan will appear here.
+  <Text style={styles.sectionTitle}>Your quiet space plan</Text>
+
+  <View style={styles.previewBox}>
+    <View style={styles.previewIcon}>
+      <Ionicons name="moon-outline" size={24} color="#4338CA" />
+    </View>
+
+    <View style={{ flex: 1 }}>
+      <Text style={styles.previewTitle}>
+        {selectedTriggerIds.length > 0 ? 'Plan created' : 'Ready to build'}
+      </Text>
+
+      <Text style={styles.previewText}>{quietPreviewText}</Text>
+    </View>
+  </View>
+
+  {suggestedSupports.length > 0 ? (
+    <>
+      <Text style={styles.planMiniTitle}>Suggested first supports</Text>
+
+      <View style={styles.suggestedChipWrap}>
+        {suggestedSupports.map((support) => (
+          <Pressable
+            key={support.id}
+            onPress={() => toggleSupport(support.id)}
+            style={[
+              styles.suggestedChip,
+              selectedSupportIds.includes(support.id) &&
+                styles.suggestedChipSelected,
+            ]}
+          >
+            <Ionicons
+              name={support.icon}
+              size={17}
+              color={
+                selectedSupportIds.includes(support.id)
+                  ? '#FFFFFF'
+                  : '#4338CA'
+              }
+            />
+
+            <Text
+              style={[
+                styles.suggestedChipText,
+                selectedSupportIds.includes(support.id) &&
+                  styles.suggestedChipTextSelected,
+              ]}
+            >
+              {support.title}
             </Text>
-          )}
-        </View>
+          </Pressable>
+        ))}
+      </View>
+    </>
+  ) : (
+    <Text style={styles.emptyText}>
+      Select what may be overwhelming first, then suggested supports will appear here.
+    </Text>
+  )}
+</View>
 
         <View style={styles.card}>
           <Text style={styles.stepLabel}>Step 3</Text>
@@ -434,75 +561,100 @@ function resetTool() {
               <Ionicons name="refresh-outline" size={18} color="#4338CA" />
               <Text style={styles.secondaryButtonText}>Reset timer</Text>
             </TouchableOpacity>
+
+            {timerComplete ? (
+  <View style={styles.completeBox}>
+    <Ionicons name="checkmark-circle" size={24} color="#4338CA" />
+
+    <View style={{ flex: 1 }}>
+      <Text style={styles.completeTitle}>Quiet time complete</Text>
+      <Text style={styles.completeText}>
+        Great job. Notice if breathing, body tension, or talking feels a little calmer.
+      </Text>
+    </View>
+  </View>
+) : null}
           </View>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, styles.stepFiveCard]}>
           <Text style={styles.stepLabel}>Step 5</Text>
-          <Text style={styles.sectionTitle}>What seemed most helpful?</Text>
-          <Text style={styles.helperText}>
-            Select what helped lower stimulation so you can save it for next time.
-          </Text>
+<Text style={styles.sectionTitle}>What helped most today?</Text>
 
-          <View style={styles.supportList}>
-            {selectedSupports.length > 0 ? (
-              selectedSupports.map((support) => {
-                const selected = mostHelpfulIds.includes(support.id);
+{timerComplete ? (
+  <>
+    <Text style={styles.helperText}>
+      Select what helped lower stimulation so you can save it for next time.
+    </Text>
 
-                return (
-                  <Pressable
-                    key={support.id}
-                    onPress={() => toggleHelpful(support.id)}
-                    style={[
-                      styles.helpfulCard,
-                      selected && styles.helpfulCardSelected,
-                    ]}
-                  >
-                    <Ionicons
-                      name={selected ? 'heart' : 'heart-outline'}
-                      size={21}
-                      color={selected ? '#FFFFFF' : '#4338CA'}
-                    />
+    <View style={styles.supportList}>
+      {selectedSupports.length > 0 ? (
+        selectedSupports.map((support) => {
+          const selected = mostHelpfulIds.includes(support.id);
 
-                    <Text
-                      style={[
-                        styles.helpfulText,
-                        selected && styles.helpfulTextSelected,
-                      ]}
-                    >
-                      {support.title}
-                    </Text>
-                  </Pressable>
-                );
-              })
-            ) : (
-              <Text style={styles.emptyText}>
-                Choose quiet space supports first, then come back here.
+          return (
+            <Pressable
+              key={support.id}
+              onPress={() => toggleHelpful(support.id)}
+              style={[
+                styles.helpfulCard,
+                selected && styles.helpfulCardSelected,
+              ]}
+            >
+              <Ionicons
+                name={selected ? 'heart' : 'heart-outline'}
+                size={21}
+                color={selected ? '#FFFFFF' : '#4338CA'}
+              />
+
+              <Text
+                style={[
+                  styles.helpfulText,
+                  selected && styles.helpfulTextSelected,
+                ]}
+              >
+                {support.title}
               </Text>
-            )}
-          </View>
+            </Pressable>
+          );
+        })
+      ) : (
+        <Text style={styles.emptyText}>
+          Choose quiet space supports first, then come back here.
+        </Text>
+      )}
+    </View>
 
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              selectedSupports.length === 0 && styles.disabledButton,
-            ]}
-            disabled={selectedSupports.length === 0}
-            onPress={saveQuietPreferences}
-          >
-            <Ionicons name="bookmark-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>Save quiet space preferences</Text>
-          </TouchableOpacity>
+    <TouchableOpacity
+      style={[
+        styles.saveButton,
+        selectedSupports.length === 0 && styles.disabledButton,
+      ]}
+      disabled={selectedSupports.length === 0}
+      onPress={saveQuietPreferences}
+    >
+      <Ionicons name="bookmark-outline" size={18} color="#FFFFFF" />
+      <Text style={styles.saveButtonText}>Save quiet space preferences</Text>
+    </TouchableOpacity>
 
-          {savedPreference && (
-            <View style={styles.savedBox}>
-              <Ionicons name="bookmark" size={20} color="#4338CA" />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.savedTitle}>Saved to Quick Access</Text>
-                <Text style={styles.savedText}>{savedPreference}</Text>
-              </View>
-            </View>
-          )}
+    {savedPreference && (
+      <View style={styles.savedBox}>
+        <Ionicons name="bookmark" size={20} color="#4338CA" />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.savedTitle}>Saved to Quick Access</Text>
+          <Text style={styles.savedText}>{savedPreference}</Text>
+        </View>
+      </View>
+    )}
+  </>
+) : (
+  <View style={styles.lockedBox}>
+    <Ionicons name="lock-closed-outline" size={22} color="#64748B" />
+    <Text style={styles.lockedText}>
+      Complete quiet time first, then you can save what helped most.
+    </Text>
+  </View>
+)}
         </View>
 
         <TouchableOpacity
@@ -555,14 +707,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   headerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 22,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
+  backgroundColor: '#F8FAFF',
+  borderRadius: 30,
+  padding: 14,
+  marginBottom: 18,
+  borderWidth: 1.5,
+  borderColor: '#C7D2FE',
+  shadowColor: '#4338CA',
+  shadowOpacity: 0.08,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 3,
+},
   iconCircle: {
     width: 64,
     height: 64,
@@ -572,21 +728,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#312E81',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#475569',
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 22,
-  },
+
+title: {
+  fontSize: 28,
+  fontWeight: '900',
+  color: '#312E81',
+},
+
+subtitle: {
+  fontSize: 14,
+  color: '#475569',
+  marginTop: 5,
+  lineHeight: 20,
+  fontWeight: '700',
+},
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFF',
     borderRadius: 24,
     padding: 18,
     marginBottom: 16,
@@ -594,15 +751,25 @@ const styles = StyleSheet.create({
     borderColor: '#E0E7FF',
   },
   suggestedPlanCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+  backgroundColor: '#FAF8FF',
+  borderRadius: 28,
+  padding: 18,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+
+  shadowColor: '#4338CA',
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: {
+    width: 0,
+    height: 6,
   },
+
+  elevation: 4,
+},
   timerCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFBFF',
     borderRadius: 28,
     padding: 20,
     marginBottom: 16,
@@ -650,18 +817,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionCardSelected: {
-    backgroundColor: '#4338CA',
-    borderColor: '#4338CA',
-  },
+  backgroundColor: '#4338CA',
+  borderColor: '#4338CA',
+},
+
+optionTextSelected: {
+  color: '#FFFFFF',
+},
   optionText: {
     flex: 1,
     marginLeft: 8,
     fontSize: 13,
     fontWeight: '900',
     color: '#312E81',
-  },
-  optionTextSelected: {
-    color: '#FFFFFF',
   },
   suggestedList: {
     gap: 12,
@@ -693,7 +861,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   supportCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF9F5',
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 22,
@@ -926,5 +1094,228 @@ notHelpfulButtonText: {
   color: '#4338CA',
   fontWeight: '900',
   fontSize: 15,
+},
+
+heroImage: {
+  width: '100%',
+  height: 155,
+  borderRadius: 24,
+  marginBottom: 16,
+},
+
+headerTextRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+iconCircleSmall: {
+  width: 58,
+  height: 58,
+  borderRadius: 22,
+  backgroundColor: '#E0E7FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+},
+
+progressTracker: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+progressStepWrap: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+progressDot: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: '#E0E7FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+progressDotActive: {
+  backgroundColor: '#4338CA',
+},
+
+progressDotText: {
+  color: '#4338CA',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+progressDotTextActive: {
+  color: '#FFFFFF',
+},
+
+progressLine: {
+  width: 26,
+  height: 3,
+  borderRadius: 999,
+  backgroundColor: '#C7D2FE',
+  marginHorizontal: 4,
+},
+
+progressLineActive: {
+  backgroundColor: '#4338CA',
+},
+
+stepFiveCard: {
+  backgroundColor: '#FFF9F5',
+},
+
+completeBox: {
+  marginTop: 16,
+  backgroundColor: '#EEF2FF',
+  borderRadius: 18,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: 10,
+},
+
+completeTitle: {
+  color: '#312E81',
+  fontSize: 15,
+  fontWeight: '900',
+},
+
+completeText: {
+  marginTop: 3,
+  color: '#475569',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+},
+
+lockedBox: {
+  backgroundColor: '#F8FAFC',
+  borderRadius: 18,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: '#CBD5E1',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+lockedText: {
+  flex: 1,
+  marginLeft: 10,
+  color: '#64748B',
+  fontSize: 14,
+  lineHeight: 20,
+  fontWeight: '800',
+},
+
+stepHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+autoPlanPill: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#E0E7FF',
+  borderRadius: 999,
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+},
+
+autoPlanText: {
+  marginLeft: 4,
+  color: '#4338CA',
+  fontSize: 11,
+  fontWeight: '900',
+},
+
+previewBox: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 14,
+},
+
+previewIcon: {
+  width: 46,
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: '#E0E7FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+previewTitle: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#312E81',
+},
+
+previewText: {
+  marginTop: 4,
+  color: '#475569',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+},
+
+planMiniTitle: {
+  fontSize: 13,
+  fontWeight: '900',
+  color: '#312E81',
+  marginBottom: 10,
+},
+
+suggestedChipWrap: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+},
+
+suggestedChip: {
+  minHeight: 42,
+  borderRadius: 999,
+  paddingHorizontal: 12,
+  paddingVertical: 9,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+  backgroundColor: '#EEF2FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+},
+
+suggestedChipSelected: {
+  backgroundColor: '#4338CA',
+  borderColor: '#4338CA',
+},
+
+suggestedChipText: {
+  color: '#312E81',
+  fontSize: 12.5,
+  fontWeight: '900',
+},
+
+suggestedChipTextSelected: {
+  color: '#FFFFFF',
 },
 });

@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { canCustomizeRoutines } from '../../lib/caregiverPermissions';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
@@ -150,6 +151,9 @@ function formatDayType(value: DayType) {
 export default function CustomizeRoutineScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
+  const role = selectedChild?.caregiver_access_role;
+  const canCustomize = canCustomizeRoutines(role);  
+
   const { isPro, adminMode, loading: subscriptionLoading } = useSubscription();
   const hasProAccess = isPro || adminMode;
 
@@ -172,13 +176,34 @@ export default function CustomizeRoutineScreen() {
     return formatDayType(selectedDayType);
   }, [selectedDayType]);
 
+  const firstTask = tasks[0];
+  const secondTask = tasks[1];
+
+  const customPhotoCount = tasks.filter((task) => task.image_url).length;
+
+  const periodLabel = formatPeriod(selectedTime);
+
   useEffect(() => {
   if (subscriptionLoading) return;
 
   if (!hasProAccess) {
     router.replace('/subscription');
+    return;
   }
-}, [hasProAccess, subscriptionLoading, router]);
+
+  if (selectedChild && !canCustomize) {
+    Alert.alert(
+      'Permission Needed',
+      'This caregiver does not have permission to customize routines.',
+      [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]
+    );
+  }
+}, [hasProAccess, subscriptionLoading, selectedChild, canCustomize, router]);
 
   useEffect(() => {
     if (selectedChild?.id) {
@@ -301,7 +326,7 @@ export default function CustomizeRoutineScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -577,12 +602,20 @@ export default function CustomizeRoutineScreen() {
               <Ionicons name="arrow-back" size={22} color="#0F172A" />
             </TouchableOpacity>
 
-            <View style={styles.header}>
-              <Text style={styles.title}>Customize Routine</Text>
-              <Text style={styles.subtitle}>
-                Create routines for school days, weekends, or specific days of the week.
-              </Text>
-            </View>
+            <View style={styles.heroCard}>
+  <View style={styles.heroBadge}>
+    <Ionicons name="create-outline" size={15} color="#4F46E5" />
+    <Text style={styles.heroBadgeText}>ROUTINE BUILDER</Text>
+  </View>
+
+  <Text style={styles.heroTitle}>
+    Customize {childName}'s Routine
+  </Text>
+
+  <Text style={styles.heroSubtitle}>
+    Build personalized visual routines with photos, simple steps, and flexible schedules.
+  </Text>
+</View>
 
             <View style={styles.timeRow}>
               {(['morning', 'afternoon', 'evening'] as TimePeriod[]).map((time) => {
@@ -601,6 +634,24 @@ export default function CustomizeRoutineScreen() {
                 );
               })}
             </View>
+
+            <View style={styles.firstThenPreviewCard}>
+  <View style={styles.firstThenPreviewBlock}>
+    <Text style={styles.firstThenPreviewLabel}>FIRST</Text>
+    <Text style={styles.firstThenPreviewText}>
+      {firstTask?.task_name || 'Add first step'}
+    </Text>
+  </View>
+
+  <Ionicons name="arrow-forward" size={20} color="#64748B" />
+
+  <View style={styles.firstThenPreviewBlock}>
+    <Text style={styles.firstThenPreviewLabel}>THEN</Text>
+    <Text style={styles.firstThenPreviewText}>
+      {secondTask?.task_name || 'Add next step'}
+    </Text>
+  </View>
+</View>
 
             <View style={styles.daySelectorCard}>
               <View style={styles.daySelectorHeader}>
@@ -644,7 +695,14 @@ export default function CustomizeRoutineScreen() {
             </View>
 
             <View style={styles.editorCard}>
-              <Text style={styles.cardTitle}>Add Task</Text>
+              <View style={styles.cardHeaderRow}>
+  <View>
+    <Text style={styles.cardTitle}>Add a Routine Step</Text>
+    <Text style={styles.cardHintSmall}>Keep each step short and child-friendly.</Text>
+  </View>
+
+  <Ionicons name="add-circle-outline" size={24} color="#4F46E5" />
+</View>
 
               <View style={styles.addRow}>
                 <TextInput
@@ -699,8 +757,22 @@ export default function CustomizeRoutineScreen() {
               />
             )}
           </View>
+          
 
           <View style={styles.bottomContent}>
+              <View style={styles.saveSummaryCard}>
+  <Text style={styles.saveSummaryTitle}>Ready to Save?</Text>
+
+  <Text style={styles.saveSummaryText}>
+    {periodLabel} routine for {selectedDayLabel}
+  </Text>
+
+  <View style={styles.saveSummaryRow}>
+    <Text style={styles.saveSummaryPill}>✓ {tasks.length} steps</Text>
+    <Text style={styles.saveSummaryPill}>✓ {customPhotoCount} photos</Text>
+  </View>
+</View>
+
             <TouchableOpacity
               style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
               onPress={() => void saveRoutine()}
@@ -778,9 +850,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  header: { marginBottom: 20 },
-  title: { fontSize: 28, fontWeight: '800', color: '#0F172A' },
-  subtitle: { marginTop: 6, color: '#64748B', lineHeight: 20 },
+  
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -912,13 +982,18 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   taskCard: {
-    borderWidth: 1,
-    borderColor: '#EEF2F7',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
-  },
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 26,
+  padding: 16,
+  marginBottom: 14,
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.06,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 3,
+},
   taskCardDragging: { opacity: 0.9, transform: [{ scale: 1.01 }] },
   taskTopRow: {
     flexDirection: 'row',
@@ -938,26 +1013,36 @@ const styles = StyleSheet.create({
   },
   taskNumberText: { color: '#4F46E5', fontWeight: '800', fontSize: 12 },
   defaultIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  taskPhoto: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    marginRight: 10,
-    backgroundColor: '#E2E8F0',
-  },
+  width: 72,
+  height: 72,
+  borderRadius: 22,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+ taskPhoto: {
+  width: 72,
+  height: 72,
+  borderRadius: 22,
+  marginRight: 12,
+  backgroundColor: '#E2E8F0',
+},
   taskNameWrap: { flex: 1 },
-  taskName: { color: '#1E293B', fontWeight: '700', fontSize: 14, flex: 1 },
-  taskMeta: { marginTop: 4, color: '#64748B', fontSize: 12, fontWeight: '600' },
+ taskName: {
+  color: '#0F172A',
+  fontWeight: '900',
+  fontSize: 17,
+  flex: 1,
+},
+taskMeta: {
+  marginTop: 5,
+  color: '#7C3AED',
+  fontSize: 12,
+  fontWeight: '800',
+},
   dragHandle: {
     width: 36,
     height: 36,
@@ -1013,4 +1098,139 @@ const styles = StyleSheet.create({
   infoHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   infoTitle: { marginLeft: 8, fontWeight: '800', color: '#3730A3' },
   infoText: { color: '#4338CA', lineHeight: 20, fontSize: 14 },
+
+  heroCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 32,
+  padding: 22,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.08,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 10 },
+  elevation: 4,
+},
+
+heroBadge: {
+  alignSelf: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#EEF2FF',
+  borderRadius: 999,
+  paddingHorizontal: 11,
+  paddingVertical: 7,
+  marginBottom: 12,
+},
+
+heroBadgeText: {
+  marginLeft: 6,
+  color: '#4F46E5',
+  fontSize: 11,
+  fontWeight: '900',
+  letterSpacing: 0.4,
+},
+
+heroTitle: {
+  color: '#0F172A',
+  fontSize: 30,
+  fontWeight: '900',
+  letterSpacing: -0.5,
+},
+
+heroSubtitle: {
+  marginTop: 8,
+  color: '#64748B',
+  fontSize: 14,
+  lineHeight: 21,
+  fontWeight: '700',
+},
+
+firstThenPreviewCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 26,
+  padding: 14,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+firstThenPreviewBlock: {
+  flex: 1,
+  backgroundColor: '#F8FAFC',
+  borderRadius: 20,
+  paddingVertical: 12,
+  paddingHorizontal: 10,
+  alignItems: 'center',
+},
+
+firstThenPreviewLabel: {
+  color: '#64748B',
+  fontSize: 11,
+  fontWeight: '900',
+  marginBottom: 4,
+},
+
+firstThenPreviewText: {
+  color: '#0F172A',
+  fontSize: 15,
+  fontWeight: '900',
+  textAlign: 'center',
+},
+
+cardHeaderRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+
+cardHintSmall: {
+  marginTop: 4,
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '700',
+},
+
+saveSummaryCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
+  padding: 16,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+saveSummaryTitle: {
+  color: '#0F172A',
+  fontSize: 17,
+  fontWeight: '900',
+},
+
+saveSummaryText: {
+  marginTop: 5,
+  color: '#64748B',
+  fontSize: 13,
+  fontWeight: '700',
+},
+
+saveSummaryRow: {
+  flexDirection: 'row',
+  gap: 8,
+  marginTop: 12,
+},
+
+saveSummaryPill: {
+  backgroundColor: '#EEF2FF',
+  color: '#4F46E5',
+  fontSize: 12,
+  fontWeight: '900',
+  paddingVertical: 7,
+  paddingHorizontal: 10,
+  borderRadius: 999,
+},
 });

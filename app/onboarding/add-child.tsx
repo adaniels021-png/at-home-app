@@ -27,9 +27,8 @@ export default function AddChild() {
   const children = childContext?.children || [];
   const refreshChildren = childContext?.refreshChildren;
   const setSelectedChild = childContext?.setSelectedChild;
-  const selectedChild = childContext?.selectedChild;
-
-  const { isPro, adminMode, loading: subscriptionLoading } = useSubscription();
+  
+  const { isPro, adminMode } = useSubscription();
 
   const hasProAccess = isPro || adminMode;
 
@@ -37,6 +36,9 @@ export default function AddChild() {
   const [caregiverRelationship, setCaregiverRelationship] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
+  const [gender, setGender] = useState<'boy' | 'girl' | 'not_specified'>(
+  'not_specified'
+);
   const [saving, setSaving] = useState(false);
   const [checkedAccess, setCheckedAccess] = useState(false);
 
@@ -46,45 +48,81 @@ export default function AddChild() {
 
   const isFirstChild = childCount === 0;
 
-  useEffect(() => {
-    if (subscriptionLoading) return;
+useEffect(() => {
+  let mounted = true;
 
-    if (!hasProAccess && childCount >= 1) {
-      Alert.alert(
-        'Pro Feature',
-        'Your free plan includes 1 child profile. Upgrade to Pro to add another child.',
-        [
-          {
-            text: 'Maybe Later',
-            style: 'cancel',
-            onPress: () => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/(tabs)');
-              }
+  const checkAccess = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        if (mounted) setCheckedAccess(true);
+        return;
+      }
+
+      const { data: sharedAccess, error } = await supabase
+        .from('child_caregivers')
+        .select('id')
+        .eq('caregiver_user_id', user.id)
+        .eq('status', 'accepted')
+        .neq('role', 'owner')
+        .limit(1);
+
+      if (error) {
+        console.error('Shared caregiver access check error:', error);
+        if (mounted) setCheckedAccess(true);
+        return;
+      }
+
+      if (sharedAccess && sharedAccess.length > 0) {
+        router.replace('/(tabs)' as any);
+        return;
+      }
+
+      if (!hasProAccess && childCount >= 1) {
+        Alert.alert(
+          'Pro Feature',
+          'Your free plan includes 1 child profile. Upgrade to Pro to add another child.',
+          [
+            {
+              text: 'Maybe Later',
+              style: 'cancel',
+              onPress: () => router.replace('/(tabs)' as any),
             },
-          },
-          {
-            text: 'Upgrade',
-            onPress: () => router.replace('/subscription'),
-          },
-        ]
-      );
+            {
+              text: 'Upgrade',
+              onPress: () => router.replace('/subscription' as any),
+            },
+          ]
+        );
 
-      return;
-    }
+        return;
+      }
 
-    setCheckedAccess(true);
-  }, [childCount, hasProAccess, subscriptionLoading, router]);
+      if (mounted) setCheckedAccess(true);
+    } catch (error) {
+      console.error('Add child access check error:', error);
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)');
+      if (mounted) setCheckedAccess(true);
     }
   };
+
+  void checkAccess();
+
+  return () => {
+    mounted = false;
+  };
+}, [childCount, hasProAccess, router]);
+
+const handleBack = () => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace('/(tabs)' as any);
+  }
+};
 
   const timeout = (ms: number) =>
   new Promise((_, reject) =>
@@ -93,6 +131,29 @@ export default function AddChild() {
 
 const handleSave = async () => {
   if (saving) return;
+
+  const {
+  data: { user: currentUser },
+} = await supabase.auth.getUser();
+
+if (!currentUser?.id) {
+  Alert.alert('Sign In Required', 'Please log in again.');
+  return;
+}
+
+const { data: sharedAccess, error: sharedAccessError } = await supabase
+  .from('child_caregivers')
+  .select('id')
+  .eq('caregiver_user_id', currentUser.id)
+  .eq('status', 'accepted')
+  .neq('role', 'owner')
+  .limit(1);
+
+if (sharedAccessError) {
+  console.error('Add child save access check error:', sharedAccessError);
+  Alert.alert('Access Check Failed', 'Please try again.');
+  return;
+}
 
   const trimmedCaregiverName = caregiverName.trim();
   const trimmedCaregiverRelationship = caregiverRelationship.trim();
@@ -115,6 +176,11 @@ const handleSave = async () => {
     Alert.alert('Invalid Age', 'Please enter a valid age between 1 and 21.');
     return;
   }
+
+  if (!gender) {
+  Alert.alert('Missing Info', 'Please choose a child visual preference.');
+  return;
+}
 
   setSaving(true);
 
@@ -144,6 +210,7 @@ const handleSave = async () => {
           age: parsedAge,
           child_age: String(parsedAge),
           caregiver_relationship: trimmedCaregiverRelationship || 'Caregiver',
+          gender,
         })
         .select('*')
         .single(),
@@ -173,16 +240,16 @@ runInBackground(async () => {
   }
 };
 
-  if (subscriptionLoading || !checkedAccess) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#4F46E5" />
-          <Text style={styles.loadingText}>Checking access...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  if (!checkedAccess) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text style={styles.loadingText}>Checking access...</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
 
   return (
     <SafeAreaView style={styles.container}>
@@ -219,6 +286,23 @@ runInBackground(async () => {
   </Text>
       </View>
 
+      <TouchableOpacity
+  style={styles.inviteCodeLink}
+  onPress={() =>
+    router.push('/settings/accept-caregiver-invite' as any)
+  }
+>
+  <Ionicons
+    name="key-outline"
+    size={17}
+    color="#4F46E5"
+  />
+
+  <Text style={styles.inviteCodeLinkText}>
+    I have an invite code instead
+  </Text>
+</TouchableOpacity>
+
           <View style={styles.proCard}>
             <View style={styles.proHeader}>
               <Ionicons
@@ -235,7 +319,7 @@ runInBackground(async () => {
             <Text style={styles.proText}>
                {isFirstChild
               ? 'Your first child profile is included in the free plan. Additional child profiles can be added with Pro.'
-              : 'One caregiver account can support multiple children with separate lessons, assessments, and progress.'}
+              : 'The child profile owner can add multiple children with separate lessons, assessments, and progress.'}
             </Text>
           </View>
 
@@ -299,6 +383,45 @@ runInBackground(async () => {
                 maxLength={2}
               />
             </View>
+
+            <View style={styles.inputGroup}>
+  <Text style={styles.label}>Visual Preference</Text>
+
+  <Text style={styles.helperText}>
+    This helps ABA at Home show matching routine visuals, like potty routine images.
+  </Text>
+
+  <View style={styles.genderRow}>
+    {[
+      { id: 'boy', label: 'Boy' },
+      { id: 'girl', label: 'Girl' },
+      { id: 'not_specified', label: 'No Preference' },
+    ].map((option) => {
+      const selected = gender === option.id;
+
+      return (
+        <TouchableOpacity
+          key={option.id}
+          style={[
+            styles.genderButton,
+            selected && styles.genderButtonSelected,
+          ]}
+          onPress={() => setGender(option.id as 'boy' | 'girl' | 'not_specified')}
+          activeOpacity={0.9}
+        >
+          <Text
+            style={[
+              styles.genderButtonText,
+              selected && styles.genderButtonTextSelected,
+            ]}
+          >
+            {option.label}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+</View>
 
             <View style={styles.accountCard}>
               <Ionicons name="person-circle-outline" size={20} color="#4F46E5" />
@@ -579,5 +702,66 @@ progressFill: {
   height: '100%',
   borderRadius: 999,
   backgroundColor: '#4F46E5',
+},
+
+helperText: {
+  color: '#64748B',
+  fontSize: 12.5,
+  fontWeight: '600',
+  lineHeight: 18,
+  marginBottom: 10,
+},
+
+genderRow: {
+  flexDirection: 'row',
+  gap: 8,
+},
+
+genderButton: {
+  flex: 1,
+  minHeight: 48,
+  borderRadius: 16,
+  backgroundColor: '#F8FAFC',
+  borderWidth: 1,
+  borderColor: '#E5E7EB',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 8,
+},
+
+genderButtonSelected: {
+  backgroundColor: '#4F46E5',
+  borderColor: '#4F46E5',
+},
+
+genderButtonText: {
+  color: '#374151',
+  fontSize: 12.5,
+  fontWeight: '900',
+  textAlign: 'center',
+},
+
+genderButtonTextSelected: {
+  color: '#FFFFFF',
+},
+
+inviteCodeLink: {
+  backgroundColor: '#EEF2FF',
+  borderRadius: 18,
+  paddingVertical: 12,
+  paddingHorizontal: 14,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+
+inviteCodeLinkText: {
+  marginLeft: 8,
+  color: '#4F46E5',
+  fontWeight: '900',
+  fontSize: 14,
 },
 });

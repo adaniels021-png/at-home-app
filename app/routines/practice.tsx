@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -51,14 +51,23 @@ const DEFAULT_ROUTINES: Record<
 
 export default function PracticeModeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { selectedChild } = useChild();
 
-  const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
+  const initialTime =
+  params.selectedTime === 'afternoon' || params.selectedTime === 'evening'
+    ? params.selectedTime
+    : 'morning';
+
+  const [selectedTime, setSelectedTime] = useState<TimePeriod>(
+  initialTime as TimePeriod
+);
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [completedSession, setCompletedSession] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const currentTask = tasks[currentIndex];
 
@@ -66,9 +75,53 @@ export default function PracticeModeScreen() {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
 
+  const nextTask = tasks[currentIndex + 1];
+
+function getEncouragement(taskName?: string) {
+  const name = taskName?.toLowerCase() || '';
+
+  if (name.includes('wake')) return 'Good morning!';
+  if (name.includes('brush')) return 'Keep those teeth clean!';
+  if (name.includes('dress')) return 'Almost ready!';
+  if (name.includes('breakfast')) return 'Fuel your body!';
+  if (name.includes('bus')) return 'Have a great day!';
+  if (name.includes('bath')) return 'Time to get clean!';
+  if (name.includes('bed')) return 'Almost bedtime!';
+  if (name.includes('pajama')) return 'Cozy time!';
+  if (name.includes('dinner')) return 'Dinner time!';
+
+  return 'You can do this.';
+}
+
+function goToNextStep() {
+  if (!tasks.length) return;
+
+  if (currentIndex < tasks.length - 1) {
+    setCurrentIndex((prev) => prev + 1);
+  } else {
+    setCompletedSession(true);
+  }
+}
+
   useEffect(() => {
     void loadRoutine();
   }, [selectedChild, selectedTime]);
+
+ useEffect(() => {
+  if (!loading && currentTask && !completedSession) {
+    const timer = setTimeout(() => {
+      void speakTask();
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }
+}, [currentIndex, loading, completedSession, currentTask?.task_name]);
+
+useEffect(() => {
+  return () => {
+    Speech.stop();
+  };
+}, []);
 
   const loadRoutine = async () => {
     if (!selectedChild?.id) {
@@ -137,14 +190,15 @@ export default function PracticeModeScreen() {
   };
 
   const handleNext = () => {
-    if (!tasks.length) return;
+  if (!tasks.length) return;
 
-    if (currentIndex < tasks.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setCompletedSession(true);
-    }
-  };
+  setShowCelebration(true);
+
+  setTimeout(() => {
+    setShowCelebration(false);
+    goToNextStep();
+  }, 750);
+};
 
   const handleBack = () => {
     if (currentIndex > 0) {
@@ -217,9 +271,9 @@ export default function PracticeModeScreen() {
               <Ionicons name="trophy-outline" size={54} color="#F59E0B" />
             </View>
 
-            <Text style={styles.completedTitle}>Great job!</Text>
+            <Text style={styles.completedTitle}>Amazing Job {childName}!</Text>
             <Text style={styles.completedText}>
-              {childName} finished the {getTimeLabel(selectedTime).toLowerCase()} routine practice.
+              You completed your {getTimeLabel(selectedTime).toLowerCase()} routine!
             </Text>
 
             <TouchableOpacity style={styles.primaryBtn} onPress={restartSession}>
@@ -244,32 +298,15 @@ export default function PracticeModeScreen() {
             <Ionicons name="arrow-back" size={22} color="#0F172A" />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Practice Mode</Text>
+          <Text style={styles.headerTitle}>Child Mode</Text>
 
           <View style={styles.iconBtnPlaceholder} />
         </View>
 
         <Text style={styles.subtitle}>
-          Step-by-step routine practice for {childName}
-        </Text>
+           One step at a time for {childName}
+       </Text>
 
-        <View style={styles.timeRow}>
-          {(['morning', 'afternoon', 'evening'] as TimePeriod[]).map((time) => {
-            const active = selectedTime === time;
-
-            return (
-              <TouchableOpacity
-                key={time}
-                style={[styles.timeBtn, active && styles.timeBtnActive]}
-                onPress={() => setSelectedTime(time)}
-              >
-                <Text style={[styles.timeBtnText, active && styles.timeBtnTextActive]}>
-                  {getTimeLabel(time)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
 
         <View style={styles.progressWrap}>
           <Text style={styles.progressText}>
@@ -285,28 +322,60 @@ export default function PracticeModeScreen() {
           </View>
         </View>
 
+        <View style={styles.firstThenCard}>
+  <View style={[styles.firstThenBlock, styles.firstBlock]}>
+    <Text style={styles.firstThenLabel}>FIRST</Text>
+    <Text style={styles.firstThenText}>
+      {currentTask?.task_name}
+    </Text>
+  </View>
+
+  <Ionicons name="arrow-forward" size={18} color="#64748B" />
+
+  <View style={[styles.firstThenBlock, styles.thenBlock]}>
+    <Text style={styles.firstThenLabel}>THEN</Text>
+    <Text style={styles.firstThenText}>
+      {nextTask?.task_name || 'All done'}
+    </Text>
+  </View>
+</View>
+
         <View style={styles.card}>
-          <View style={styles.visualBox}>
-            {currentTask?.image_url ? (
-              <Image
-                source={{ uri: currentTask.image_url }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.iconCircle}>
-                <Ionicons
-                  name={currentTask?.default_icon || 'checkmark-circle'}
-                  size={110}
-                  color="#4F46E5"
-                />
-              </View>
-            )}
-          </View>
+         <TouchableOpacity
+  style={styles.visualBox}
+  activeOpacity={0.9}
+  onPress={() => void speakTask()}
+>
+  {currentTask?.image_url ? (
+    <Image
+      source={{ uri: currentTask.image_url }}
+      style={styles.image}
+      resizeMode="cover"
+    />
+  ) : (
+    <View style={styles.iconCircle}>
+      <Ionicons
+        name={currentTask?.default_icon || 'checkmark-circle'}
+        size={120}
+        color="#4F46E5"
+      />
+    </View>
+  )}
+</TouchableOpacity>
 
           <Text style={styles.taskText}>{currentTask?.task_name}</Text>
-          <Text style={styles.taskHint}>Say it, show it, then complete the step.</Text>
+          <Text style={styles.taskHint}>
+  {getEncouragement(currentTask?.task_name)}
+</Text>
+
+{showCelebration ? (
+  <View style={styles.celebrationBubble}>
+    <Text style={styles.celebrationText}>⭐ Great job!</Text>
+  </View>
+) : null}
         </View>
+
+        
 
         <View style={styles.actions}>
           <TouchableOpacity style={styles.backActionBtn} onPress={handleBack} disabled={currentIndex === 0}>
@@ -338,7 +407,7 @@ export default function PracticeModeScreen() {
 
           <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
             <Text style={styles.btnText}>
-              {currentIndex === tasks.length - 1 ? 'Finish' : 'Next'}
+              {currentIndex === tasks.length - 1 ? 'All Done!' : 'I Did It!'}
             </Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </TouchableOpacity>
@@ -426,38 +495,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    gap: 8,
-  },
-
-  timeBtn: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  timeBtnActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-
-  timeBtnText: {
-    color: '#4F46E5',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-
-  timeBtnTextActive: {
-    color: '#FFFFFF',
-  },
-
   progressWrap: {
     marginBottom: 18,
   },
@@ -499,27 +536,20 @@ const styles = StyleSheet.create({
   },
 
   image: {
-    width: 220,
-    height: 220,
-    borderRadius: 26,
-    backgroundColor: '#FFFFFF',
-  },
+  width: '100%',
+  height: 330,
+  borderRadius: 28,
+  backgroundColor: '#FFFFFF',
+},
 
-  iconCircle: {
-    width: 220,
-    height: 220,
-    borderRadius: 36,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  taskText: {
-    fontSize: 30,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: '#1E293B',
-  },
+ iconCircle: {
+  width: '100%',
+  height: 330,
+  borderRadius: 36,
+  backgroundColor: '#FFFFFF',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
 
   taskHint: {
     marginTop: 10,
@@ -672,4 +702,68 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
   },
+
+firstThenCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  padding: 14,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+firstThenBlock: {
+  flex: 1,
+  alignItems: 'center',
+  paddingVertical: 10,
+  borderRadius: 14,
+},
+
+firstBlock: {
+  backgroundColor: '#EEF2FF',
+},
+
+thenBlock: {
+  backgroundColor: '#F8FAFC',
+},
+
+firstThenLabel: {
+  color: '#64748B',
+  fontSize: 11,
+  fontWeight: '900',
+  marginBottom: 4,
+},
+
+firstThenText: {
+  color: '#1E293B',
+  fontSize: 15,
+  fontWeight: '900',
+  textAlign: 'center',
+},
+
+celebrationBubble: {
+  marginTop: 18,
+  backgroundColor: '#FFFBEB',
+  borderRadius: 999,
+  paddingVertical: 10,
+  paddingHorizontal: 18,
+  borderWidth: 1,
+  borderColor: '#FDE68A',
+},
+
+celebrationText: {
+  color: '#92400E',
+  fontSize: 16,
+  fontWeight: '900',
+},
+
+taskText: {
+  fontSize: 42,
+  fontWeight: '900',
+  textAlign: 'center',
+  color: '#1E293B',
+},
 });

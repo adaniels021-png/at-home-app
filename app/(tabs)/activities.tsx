@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+  import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -24,80 +24,258 @@ import {
   getTimeGreeting,
   getTodayLocalDateString,
   normalizeActivities,
-  safePregenerateActivityQueue,
-  safeStringArray
+  safeStringArray,
 } from '../../lib/activities';
 import { generateDailyABAActivities } from '../../lib/aiService';
 import { supabase } from '../../lib/supabase';
 
-import {
-  getNextActivitiesFromQueue
-} from '../../lib/aiService';
-
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
 
-function buildInstantActivities(childName: string): DailyActivity[] {
+type AdventureCategory =
+  | 'home'
+  | 'outdoor'
+  | 'community'
+  | 'sensory'
+  | 'creative'
+  | 'calm'
+  | 'movement'
+  | 'surprise';
+
+type AdventureFeedback = 'loved' | 'good' | 'not_today';
+
+type DailyAdventure = DailyActivity & {
+  title?: string;
+  name: string;
+  category?: AdventureCategory | string;
+  location?: string;
+  time?: string;
+  description?: string;
+  try_this?: string[];
+  tryThis?: string[];
+  why_it_helps?: string;
+  whyItHelps?: string;
+};
+
+const FILTERS: {
+  id: AdventureCategory;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { id: 'surprise', label: 'Surprise Me', icon: 'sparkles-outline' },
+  { id: 'home', label: 'At Home', icon: 'home-outline' },
+  { id: 'outdoor', label: 'Outdoor', icon: 'leaf-outline' },
+  { id: 'community', label: 'Community', icon: 'car-outline' },
+  { id: 'calm', label: 'Calm', icon: 'moon-outline' },
+  { id: 'movement', label: 'Active', icon: 'walk-outline' },
+];
+
+const LOCATION_MAP: Record<AdventureCategory, string> = {
+  home: 'Home',
+  outdoor: 'Outdoor',
+  community: 'Community',
+  sensory: 'Sensory play',
+  creative: 'Creative play',
+  calm: 'Calm and quiet play',
+  movement: 'Movement and active play',
+  surprise: 'Home, outdoor, or community',
+};
+
+function buildInstantActivities(childName: string): DailyAdventure[] {
   return normalizeActivities([
     {
-      name: 'Requesting Practice',
-      materials: ['Preferred toy or snack', 'PECS card or gesture support'],
-      instructions: [
-        `Place a preferred item near ${childName}.`,
-        'Pause and wait for your child to request it.',
-        'Accept pointing, words, signs, or PECS.',
-        'Give the item right away and praise the request.',
+      name: 'Bubble Chase',
+      title: 'Bubble Chase',
+      category: 'outdoor',
+      location: 'Backyard, park, or sidewalk',
+      time: '5–10 minutes',
+      description:
+        'Blow bubbles and turn it into a playful chase, pop, and laugh adventure.',
+      try_this: [
+        `Let ${childName} pop bubbles with hands, feet, or a wand.`,
+        'Pause before blowing more bubbles to encourage communication.',
+        'Try big bubbles, tiny bubbles, fast bubbles, and slow bubbles.',
       ],
-      success_criteria: 'Child requests an item 3 times with support.',
+      why_it_helps:
+        'Supports movement, shared attention, communication, and joyful connection through play.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
     },
     {
-      name: 'Clean-Up Match',
-      materials: ['Toys', 'Toy bin'],
-      instructions: [
-        'Place 2 or 3 toys on the floor.',
-        'Give the direction, “Put in.”',
-        'Model placing one toy in the bin.',
-        'Praise each attempt, even with help.',
+      name: 'Toy Rescue Mission',
+      title: 'Toy Rescue Mission',
+      category: 'home',
+      location: 'Living room or play area',
+      time: '5 minutes',
+      description:
+        'Pretend toys are stuck around the room and need help getting back home.',
+      try_this: [
+        'Pick 3–5 toys to “rescue.”',
+        'Give each toy a silly voice or sound.',
+        'Celebrate when each toy makes it back to its basket, shelf, or bed.',
       ],
-      success_criteria: 'Child helps clean up 2 items with support.',
+      why_it_helps:
+        'Builds pretend play, clean-up routines, following directions, and cooperation without feeling like a chore.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
     },
     {
-      name: 'Follow One-Step Directions',
-      materials: ['Favorite item', 'Simple household objects'],
-      instructions: [
-        'Choose one simple direction like “give me,” “sit down,” or “come here.”',
-        'Say the direction one time.',
-        'Wait 3 to 5 seconds.',
-        'Prompt if needed and praise success.',
+      name: 'Grocery Store Helper',
+      title: 'Grocery Store Helper',
+      category: 'community',
+      location: 'Grocery store or quick errand',
+      time: '10–15 minutes',
+      description:
+        'Let your child be your special helper during a simple shopping trip.',
+      try_this: [
+        'Ask your child to help find one color, one fruit, or one box.',
+        'Let them place a safe item in the cart.',
+        'Praise helping, waiting, looking, or staying nearby.',
       ],
-      success_criteria: 'Child follows 3 one-step directions with support.',
+      why_it_helps:
+        'Supports real-world language, attention, patience, and community participation.',
+      materials: [],
+      instructions: [],
+      success_criteria: '',
     },
-  ]);
+  ]) as DailyAdventure[];
 }
 
-function getActivityAccent(index: number) {
+function getAdventureAccent(index: number) {
   const accents = [
     {
-      border: '#C7D2FE',
-      icon: '#4F46E5',
-      chipBg: '#E0E7FF',
-      soft: '#F8FAFF',
+      border: '#DDD6FE',
+      icon: '#7C3AED',
+      chipBg: '#F3E8FF',
+      soft: '#FFFBFF',
+      emoji: '🌈',
     },
     {
-      border: '#A7F3D0',
-      icon: '#10B981',
-      chipBg: '#D1FAE5',
+      border: '#BBF7D0',
+      icon: '#16A34A',
+      chipBg: '#DCFCE7',
       soft: '#F7FFFB',
+      emoji: '🌿',
     },
     {
       border: '#FED7AA',
       icon: '#EA580C',
       chipBg: '#FFEDD5',
       soft: '#FFFDFC',
+      emoji: '🎲',
     },
   ];
 
   return accents[index % accents.length];
+}
+
+function getAdventureTitle(activity: DailyAdventure) {
+  return activity.title || activity.name || 'Daily Adventure';
+}
+
+function getAdventureLocation(activity: DailyAdventure) {
+  return activity.location || 'Home, outside, or in the community';
+}
+
+function getAdventureTime(activity: DailyAdventure) {
+  return activity.time || '5–10 minutes';
+}
+
+function getAdventureDescription(activity: DailyAdventure) {
+  return (
+    activity.description ||
+    'Try this playful activity together in a relaxed, low-pressure way.'
+  );
+}
+
+function getAdventureTryThis(activity: DailyAdventure) {
+  const custom = activity.try_this || activity.tryThis;
+  const fallback = activity.instructions;
+  const items = safeStringArray(custom?.length ? custom : fallback);
+
+  return items.length
+    ? items
+    : [
+        'Keep it playful and flexible.',
+        'Follow your child’s interest.',
+        'Celebrate small moments of connection.',
+      ];
+}
+
+function getAdventureWhy(activity: DailyAdventure) {
+  return (
+    activity.why_it_helps ||
+    activity.whyItHelps ||
+    activity.success_criteria ||
+    'Supports communication, attention, confidence, and connection through everyday play.'
+  );
+}
+
+function getAdventureCategory(activity: DailyAdventure) {
+  return (activity.category || 'surprise') as AdventureCategory;
+}
+
+function getCategoryLabel(category: string) {
+  const cleanCategory = String(category || 'surprise')
+    .toLowerCase()
+    .split('|')[0]
+    .trim();
+
+  const labels: Record<string, string> = {
+    home: 'At Home',
+    outdoor: 'Outdoor',
+    community: 'Community',
+    sensory: 'Sensory',
+    creative: 'Creative',
+    calm: 'Calm',
+    movement: 'Active',
+    surprise: 'Surprise',
+  };
+
+  return labels[cleanCategory] || 'Adventure';
+}
+
+function buildAdventurePrompt(recentTitles: string[], filter: AdventureCategory) {
+  const filterText =
+    filter === 'surprise'
+      ? 'Mix home, outdoor, community, sensory, movement, calm, and creative ideas.'
+      : `Only generate ${filter} activities. Every returned activity category must be "${filter}".`;
+
+  return `
+Generate fun Daily Adventures for a parent and child.
+
+These should NOT feel like lessons, therapy, ABA programs, worksheets, drills, or formal teaching.
+
+They should feel like playful family activities parents can do at home, outside, or in the community that naturally support development.
+
+${filterText}
+
+Return each idea with:
+- name
+- title
+- category
+- location
+- time
+- description
+- try_this: 3 simple playful ideas
+- why_it_helps
+
+Avoid:
+- goals
+- measurable objectives
+- "child will"
+- trials
+- prompts
+- data collection language
+- clinical wording
+- lesson-style instructions
+- materials lists unless truly needed
+
+Do not repeat or closely copy these recent activities:
+${recentTitles.length ? recentTitles.map((title) => `- ${title}`).join('\n') : '- None'}
+`;
 }
 
 export default function ActivitiesScreen() {
@@ -105,15 +283,26 @@ export default function ActivitiesScreen() {
   const { selectedChild } = useChild() as any;
   const { isPro } = useSubscription();
 
-  const [activities, setActivities] = useState<DailyActivity[]>([]);
+  const [activities, setActivities] = useState<DailyAdventure[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] =
+    useState<AdventureCategory>('surprise');
+  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(
+    null
+  );
+  const [filterLoading, setFilterLoading] = useState(false);
 
   const scrollRef = useRef<ScrollView | null>(null);
+  const isMountedRef = useRef(true);
+  const preloadingFiltersRef = useRef(false);
+  const preloadStartedRef = useRef(false);
+  const lastPreloadChildRef = useRef<string | null>(null);
+  const filterRequestIdRef = useRef(0);
 
   const todayLabel = useMemo(() => getTodayLocalDateString(), []);
   const greeting = useMemo(() => getTimeGreeting(), []);
@@ -129,24 +318,27 @@ export default function ActivitiesScreen() {
   const lockedActivities = !isPro && activities.length > 1;
 
   const loadSavedActivityState = useCallback(
-    async (activityList: DailyActivity[]) => {
+    async (activityList: DailyAdventure[]) => {
       if (!selectedChild?.id || activityList.length === 0) {
         setSavedIds([]);
         setFavoriteIds([]);
+        setCompletedIds([]);
         return;
       }
 
       try {
         const { data, error } = await supabase
           .from('saved_activities')
-          .select('activity_name, is_saved, is_favorite')
+          .select('activity_name, is_saved, is_favorite, completed')
           .eq('child_id', selectedChild.id)
           .eq('activity_date', getTodayLocalDateString());
 
         if (error) throw error;
+        if (!isMountedRef.current) return;
 
         const saved: string[] = [];
         const favorites: string[] = [];
+        const completed: string[] = [];
 
         (data || []).forEach((row: any) => {
           const matchingIndex = activityList.findIndex(
@@ -157,11 +349,13 @@ export default function ActivitiesScreen() {
             const id = buildActivityId(activityList[matchingIndex], matchingIndex);
             if (row.is_saved) saved.push(id);
             if (row.is_favorite) favorites.push(id);
+            if (row.completed) completed.push(id);
           }
         });
 
         setSavedIds(saved);
         setFavoriteIds(favorites);
+        setCompletedIds(completed);
       } catch (error) {
         console.error('Load saved activity state error:', error);
       }
@@ -170,7 +364,10 @@ export default function ActivitiesScreen() {
   );
 
   const saveActivitiesForToday = useCallback(
-    async (activityList: DailyActivity[]) => {
+    async (
+      activityList: DailyAdventure[],
+      filter: AdventureCategory = 'surprise'
+    ) => {
       if (!selectedChild?.id) return;
 
       const { error } = await supabase.from('daily_fun_activities').upsert(
@@ -178,14 +375,15 @@ export default function ActivitiesScreen() {
           {
             child_id: selectedChild.id,
             activity_date: getTodayLocalDateString(),
+            activity_filter: filter,
             activities_json: activityList,
           },
         ],
-        { onConflict: 'child_id,activity_date' }
+        { onConflict: 'child_id,activity_date,activity_filter' }
       );
 
       if (error) {
-        console.error('Daily activities save error:', error);
+        console.error('Daily adventures save error:', error);
       }
     },
     [selectedChild?.id]
@@ -193,10 +391,12 @@ export default function ActivitiesScreen() {
 
   const upsertSavedActivity = useCallback(
     async (
-      activity: DailyActivity,
+      activity: DailyAdventure,
       updates: {
         is_saved?: boolean;
         is_favorite?: boolean;
+        completed?: boolean;
+        feedback?: AdventureFeedback;
       }
     ) => {
       if (!selectedChild?.id) return;
@@ -211,9 +411,7 @@ export default function ActivitiesScreen() {
             ...updates,
           },
         ],
-        {
-          onConflict: 'child_id,activity_date,activity_name',
-        }
+        { onConflict: 'child_id,activity_date,activity_name' }
       );
 
       if (error) throw error;
@@ -221,170 +419,365 @@ export default function ActivitiesScreen() {
     [selectedChild?.id]
   );
 
+  const getRecentAdventureTitles = useCallback(async () => {
+    if (!selectedChild?.id) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('daily_fun_activities')
+        .select('activities_json')
+        .eq('child_id', selectedChild.id)
+        .order('activity_date', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const titles: string[] = [];
+
+      (data || []).forEach((row: any) => {
+        if (Array.isArray(row.activities_json)) {
+          row.activities_json.forEach((activity: any) => {
+            const title = activity?.title || activity?.name;
+            if (title && !titles.includes(title)) titles.push(title);
+          });
+        }
+      });
+
+      return titles.slice(0, 30);
+    } catch (error) {
+      console.error('Recent adventure title load error:', error);
+      return [];
+    }
+  }, [selectedChild?.id]);
+
+  const loadSavedTodayActivities = useCallback(
+    async (filter: AdventureCategory = 'surprise') => {
+      if (!selectedChild?.id) return [];
+
+      const { data, error } = await supabase
+        .from('daily_fun_activities')
+        .select('activities_json')
+        .eq('child_id', selectedChild.id)
+        .eq('activity_date', getTodayLocalDateString())
+        .eq('activity_filter', filter)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Load saved today adventures error:', error);
+        return [];
+      }
+
+      return normalizeActivities(data?.activities_json || []) as DailyAdventure[];
+    },
+    [selectedChild?.id]
+  );
+
+  const generateActivitiesForFilter = useCallback(
+  async (
+    filter: AdventureCategory,
+    count: number,
+    extraRecentTitles: string[] = []
+  ) => {
+    if (!selectedChild?.id) return [];
+
+      const recentTitles = await getRecentAdventureTitles();
+
+      const [assessmentRes, lessonsRes, routinesRes] = await Promise.all([
+        supabase
+          .from('assessments')
+          .select('responses, completed_at')
+          .eq('child_id', selectedChild.id)
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+
+        supabase
+          .from('lesson_logs')
+          .select('category, lesson_name, completed_at')
+          .eq('child_id', selectedChild.id)
+          .order('completed_at', { ascending: false })
+          .limit(10),
+
+        supabase
+          .from('routine_logs')
+          .select('routine_name, routine_period, completed_at, completed')
+          .eq('child_id', selectedChild.id)
+          .order('completed_at', { ascending: false })
+          .limit(10),
+      ]);
+
+      if (assessmentRes.error) throw assessmentRes.error;
+      if (lessonsRes.error) throw lessonsRes.error;
+      if (routinesRes.error) throw routinesRes.error;
+
+      const generated = await generateDailyABAActivities({
+        childName,
+        location: LOCATION_MAP[filter] || LOCATION_MAP.surprise,
+        skillFocus: buildAdventurePrompt(
+          [...recentTitles, ...extraRecentTitles],
+          filter
+        ),
+        assessmentContext: assessmentRes.data?.responses || {},
+        recentLessons: lessonsRes.data || [],
+        recentRoutines: routinesRes.data || [],
+        count,
+      });
+
+      return normalizeActivities(generated) as DailyAdventure[];
+    },
+    [childName, getRecentAdventureTitles, selectedChild?.id]
+  );
+  
+  const preloadTodayAdventureFilters = useCallback(async () => {
+    if (!selectedChild?.id || !isPro || preloadingFiltersRef.current) {
+      return;
+    }
+
+    preloadingFiltersRef.current = true;
+
+    try {
+      const filtersToPreload: AdventureCategory[] = [
+        'surprise',
+        'home',
+        'outdoor',
+        'community',
+        'calm',
+        'movement',
+      ];
+
+      for (const filter of filtersToPreload) {
+        const saved = await loadSavedTodayActivities(filter);
+
+        if (saved.length > 0) continue;
+
+        const generated = await generateActivitiesForFilter(filter, 3);
+
+        await saveActivitiesForToday(generated, filter);
+      }
+    } catch (error) {
+      console.error('Preload adventure filters error:', error);
+    } finally {
+      preloadingFiltersRef.current = false;
+    }
+  }, [
+    selectedChild?.id,
+    isPro,
+    loadSavedTodayActivities,
+    saveActivitiesForToday,
+    generateActivitiesForFilter,
+  ]);
+
   const loadActivities = useCallback(
-    async (forceRefresh = false) => {
+    async (
+      forceRefresh = false,
+      filter: AdventureCategory = activeFilter
+    ) => {
       if (!selectedChild?.id) {
         setActivities([]);
         setSavedIds([]);
         setFavoriteIds([]);
+        setCompletedIds([]);
         setLoading(false);
         setRefreshing(false);
         return;
       }
 
+      const requestId = ++filterRequestIdRef.current;
+
       try {
-  const instantActivities = buildInstantActivities(childName);
-
-  if (!forceRefresh) {
-    setActivities(instantActivities);
-    setCurrentIndex(0);
-    setLoading(false);
-  }
-
-  const today = getTodayLocalDateString();
-
         if (!forceRefresh) {
-          const { data: existing, error: existingError } = await supabase
-            .from('daily_fun_activities')
-            .select('activities_json')
-            .eq('child_id', selectedChild.id)
-            .eq('activity_date', today)
-            .maybeSingle();
+          const savedToday = await loadSavedTodayActivities(filter);
 
-          if (existingError) throw existingError;
-
-          if (Array.isArray(existing?.activities_json)) {
-            const existingActivities = normalizeActivities(existing.activities_json);
-            setActivities(existingActivities);
+          if (
+            savedToday.length > 0 &&
+            requestId === filterRequestIdRef.current
+          ) {
+            setActivities(savedToday);
             setCurrentIndex(0);
-            await loadSavedActivityState(existingActivities);
+
+            await loadSavedActivityState(savedToday);
+
+            setLoading(false);
+            setRefreshing(false);
             return;
           }
         }
 
-        const queuedActivities = await getNextActivitiesFromQueue({
-          childId: selectedChild.id,
-        });
+        const instantActivities = buildInstantActivities(childName);
 
-        if (queuedActivities?.length) {
-          setActivities(queuedActivities);
+        if (!forceRefresh && isMountedRef.current) {
+          setActivities(
+            isPro ? instantActivities : instantActivities.slice(0, 1)
+          );
           setCurrentIndex(0);
-          await saveActivitiesForToday(queuedActivities);
-          await loadSavedActivityState(queuedActivities);
+          setLoading(false);
+        }
 
-          void safePregenerateActivityQueue({
-            childId: selectedChild.id,
-            childName,
-          });
+        const generated = await generateActivitiesForFilter(
+          filter,
+          isPro ? 3 : 1
+        );
 
+        if (
+          !isMountedRef.current ||
+          requestId !== filterRequestIdRef.current
+        ) {
           return;
         }
 
-        const [assessmentRes, lessonsRes, routinesRes] = await Promise.all([
-          supabase
-            .from('assessments')
-            .select('responses, completed_at')
-            .eq('child_id', selectedChild.id)
-            .order('completed_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+        const finalActivities = isPro
+          ? generated
+          : generated.slice(0, 1);
 
-          supabase
-            .from('lesson_logs')
-            .select('category, lesson_name, completed_at')
-            .eq('child_id', selectedChild.id)
-            .order('completed_at', { ascending: false })
-            .limit(10),
-
-          supabase
-            .from('routine_logs')
-            .select('routine_name, routine_period, completed_at, completed')
-            .eq('child_id', selectedChild.id)
-            .order('completed_at', { ascending: false })
-            .limit(10),
-        ]);
-
-        if (assessmentRes.error) throw assessmentRes.error;
-        if (lessonsRes.error) throw lessonsRes.error;
-        if (routinesRes.error) throw routinesRes.error;
-
-        const activitiesFromAI = await generateDailyABAActivities({
-          childName,
-          location: 'Home',
-          skillFocus: 'Communication, play, routines, and daily living',
-          assessmentContext: assessmentRes.data?.responses || {},
-          recentLessons: lessonsRes.data || [],
-          recentRoutines: routinesRes.data || [],
-          count: 3,
-        });
-
-        const safeActivities = normalizeActivities(activitiesFromAI);
-
-        setActivities(safeActivities);
+        setActivities(finalActivities);
         setCurrentIndex(0);
 
-        await saveActivitiesForToday(safeActivities);
-        await loadSavedActivityState(safeActivities);
-
-        void safePregenerateActivityQueue({
-          childId: selectedChild.id,
-          childName,
-        });
+        await saveActivitiesForToday(finalActivities, filter);
+        await loadSavedActivityState(finalActivities);
       } catch (error: any) {
-        console.error('Load suggested activities error:', error);
+        console.error('Load daily adventures error:', error);
+
         Alert.alert(
-          'Activity Error',
-          error?.message || 'Could not load suggested activities.'
+          'Adventure Error',
+          error?.message || 'Could not load daily adventures.'
         );
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [
+      activeFilter,
       childName,
+      isPro,
       selectedChild?.id,
+      loadSavedTodayActivities,
       loadSavedActivityState,
       saveActivitiesForToday,
+      generateActivitiesForFilter,
     ]
   );
 
   useFocusEffect(
-    useCallback(() => {
-      void loadActivities(false);
-    }, [loadActivities])
-  );
+  useCallback(() => {
+    isMountedRef.current = true;
+
+    void loadActivities(false, activeFilter);
+
+    if (lastPreloadChildRef.current !== selectedChild?.id) {
+      preloadStartedRef.current = false;
+      lastPreloadChildRef.current = selectedChild?.id || null;
+    }
+
+    if (isPro && !preloadStartedRef.current) {
+      preloadStartedRef.current = true;
+      void preloadTodayAdventureFilters();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [selectedChild?.id, isPro])
+);
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadActivities(true);
+    Alert.alert(
+      'Get Fresh Adventures?',
+      'This will replace today’s saved Daily Adventures with new ideas.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Fresh Ideas',
+          onPress: async () => {
+            setRefreshing(true);
+            await loadActivities(true, activeFilter);
+          },
+        },
+      ]
+    );
   };
 
-  const toggleSaved = async (activity: DailyActivity, activityId: string) => {
+  const handleFilterPress = async (filter: AdventureCategory) => {
+    if (!selectedChild?.id || filterLoading) return;
+
+    filterRequestIdRef.current += 1;
+
+    if (!isPro && filter !== 'surprise') {
+      router.push('/subscription');
+      return;
+    }
+
+    setActiveFilter(filter);
+    setFilterLoading(true);
+    setRefreshing(true);
+
+    try {
+      const saved = await loadSavedTodayActivities(filter);
+
+      if (saved.length > 0) {
+        setActivities(isPro ? saved : saved.slice(0, 1));
+        setCurrentIndex(0);
+        await loadSavedActivityState(saved);
+      } else {
+        await loadActivities(true, filter);
+      }
+
+      scrollRef.current?.scrollTo({
+        x: 0,
+        animated: false,
+      });
+    } finally {
+      setFilterLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const toggleSaved = async (
+    activity: DailyAdventure,
+    activityId: string
+  ) => {
     const alreadySaved = savedIds.includes(activityId);
     const nextSaved = !alreadySaved;
 
     setSavedIds((prev) =>
-      alreadySaved ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+      alreadySaved
+        ? prev.filter((id) => id !== activityId)
+        : [...prev, activityId]
     );
 
     try {
-      await upsertSavedActivity(activity, { is_saved: nextSaved });
+      await upsertSavedActivity(activity, {
+        is_saved: nextSaved,
+      });
     } catch (error) {
       console.error('Toggle saved error:', error);
+
       setSavedIds((prev) =>
-        nextSaved ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+        nextSaved
+          ? prev.filter((id) => id !== activityId)
+          : [...prev, activityId]
       );
-      Alert.alert('Save Error', 'Could not update saved activity.');
+
+      Alert.alert(
+        'Save Error',
+        'Could not update saved adventure.'
+      );
     }
   };
 
-  const toggleFavorite = async (activity: DailyActivity, activityId: string) => {
+  const toggleFavorite = async (
+    activity: DailyAdventure,
+    activityId: string
+  ) => {
     const alreadyFavorite = favoriteIds.includes(activityId);
     const nextFavorite = !alreadyFavorite;
 
     setFavoriteIds((prev) =>
-      alreadyFavorite ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+      alreadyFavorite
+        ? prev.filter((id) => id !== activityId)
+        : [...prev, activityId]
     );
 
     try {
@@ -395,16 +788,89 @@ export default function ActivitiesScreen() {
 
       if (nextFavorite) {
         setSavedIds((prev) =>
-          prev.includes(activityId) ? prev : [...prev, activityId]
+          prev.includes(activityId)
+            ? prev
+            : [...prev, activityId]
         );
       }
     } catch (error) {
       console.error('Toggle favorite error:', error);
+
       setFavoriteIds((prev) =>
-        nextFavorite ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+        nextFavorite
+          ? prev.filter((id) => id !== activityId)
+          : [...prev, activityId]
       );
-      Alert.alert('Favorite Error', 'Could not update favorite activity.');
+
+      Alert.alert(
+        'Favorite Error',
+        'Could not update favorite adventure.'
+      );
     }
+  };
+
+  const markCompleted = async (
+    activity: DailyAdventure,
+    activityId: string,
+    feedback: AdventureFeedback
+  ) => {
+    setCompletedIds((prev) =>
+      prev.includes(activityId)
+        ? prev
+        : [...prev, activityId]
+    );
+
+    try {
+      await upsertSavedActivity(activity, {
+        completed: true,
+        feedback,
+        is_saved: true,
+      });
+
+      Alert.alert(
+        'Adventure Saved',
+        feedback === 'loved'
+          ? 'Glad this was a hit! I saved it for later.'
+          : feedback === 'good'
+          ? 'Nice! I saved this adventure.'
+          : 'Got it. I saved your feedback.'
+      );
+    } catch (error) {
+      console.error('Complete adventure error:', error);
+
+      Alert.alert(
+        'Save Error',
+        'Could not save this adventure feedback.'
+      );
+    }
+  };
+
+  const askCompletedFeedback = (
+    activity: DailyAdventure,
+    activityId: string
+  ) => {
+    Alert.alert(
+      'How did it go?',
+      'This helps make future adventures better.',
+      [
+        {
+          text: 'Loved it',
+          onPress: () =>
+            void markCompleted(activity, activityId, 'loved'),
+        },
+        {
+          text: 'Pretty good',
+          onPress: () =>
+            void markCompleted(activity, activityId, 'good'),
+        },
+        {
+          text: 'Not today',
+          onPress: () =>
+            void markCompleted(activity, activityId, 'not_today'),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
   };
 
   const regenerateActivity = async (index: number) => {
@@ -418,32 +884,31 @@ export default function ActivitiesScreen() {
     setRegeneratingIndex(index);
 
     try {
-      const generated = await generateDailyABAActivities({
-        childName,
-        location: 'Home',
-        skillFocus:
-          'Create one fresh ABA activity with clear parent instructions, home materials, and a short success goal.',
-        count: 1,
-      });
+      const replacement = await generateActivitiesForFilter(
+        activeFilter,
+        1,
+        activities.map((a) => getAdventureTitle(a))
+      );
 
-      const newActivity = normalizeActivities(generated)[0];
+      const newActivity = replacement[0];
 
       if (!newActivity) {
-        Alert.alert('Regenerate Error', 'Could not create a new activity.');
-        return;
+        throw new Error('No activity generated');
       }
 
-      const updatedActivities = [...activities];
-      updatedActivities[index] = newActivity;
+      const updated = [...activities];
+      updated[index] = newActivity;
 
-      setActivities(updatedActivities);
-      await saveActivitiesForToday(updatedActivities);
-      await loadSavedActivityState(updatedActivities);
+      setActivities(updated);
+
+      await saveActivitiesForToday(updated, activeFilter);
+      await loadSavedActivityState(updated);
     } catch (error: any) {
-      console.error('Regenerate activity error:', error);
+      console.error('Regenerate adventure error:', error);
+
       Alert.alert(
-        'Regenerate Error',
-        error?.message || 'Could not regenerate this activity.'
+        'New Adventure Error',
+        error?.message || 'Could not create a new adventure.'
       );
     } finally {
       setRegeneratingIndex(null);
@@ -459,7 +924,11 @@ export default function ActivitiesScreen() {
   };
 
   const scrollToCard = (index: number) => {
-    scrollRef.current?.scrollTo({ x: index * CARD_WIDTH, animated: true });
+    scrollRef.current?.scrollTo({
+      x: index * CARD_WIDTH,
+      animated: true,
+    });
+
     setCurrentIndex(index);
   };
 
@@ -470,7 +939,7 @@ export default function ActivitiesScreen() {
           <Ionicons name="happy-outline" size={34} color="#94A3B8" />
           <Text style={styles.emptyTitle}>No Child Selected</Text>
           <Text style={styles.emptyText}>
-            Select or create a child profile to see personalized suggested activities.
+            Select or create a child profile to see Daily Adventures.
           </Text>
         </View>
       </SafeAreaView>
@@ -481,8 +950,8 @@ export default function ActivitiesScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerWrap}>
-          <ActivityIndicator size="large" color="#4F46E5" />
-          <Text style={styles.loadingText}>Loading suggested activities...</Text>
+          <ActivityIndicator size="large" color="#7C3AED" />
+          <Text style={styles.loadingText}>Loading Daily Adventures...</Text>
         </View>
       </SafeAreaView>
     );
@@ -503,7 +972,7 @@ export default function ActivitiesScreen() {
           <View style={styles.heroTopRow}>
             <View style={styles.heroBadge}>
               <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-              <Text style={styles.heroBadgeText}>PERSONALIZED DAILY IDEAS</Text>
+              <Text style={styles.heroBadgeText}>PLAY • EXPLORE • CONNECT</Text>
             </View>
 
             <View style={styles.heroActionRow}>
@@ -522,34 +991,88 @@ export default function ActivitiesScreen() {
           </View>
 
           <Text style={styles.heroGreeting}>{greeting}</Text>
-          <Text style={styles.heroTitle}>Suggested Activities</Text>
+          <Text style={styles.heroTitle}>Daily Adventures</Text>
           <Text style={styles.heroSubtitle}>
-            Fresh ideas for {childName}, based on recent progress, routines, and
-            support needs.
+            Fun ideas for {childName} to play, explore, and learn together today.
           </Text>
+
+          <View style={styles.heroIllustration}>
+            <Text style={styles.heroEmoji}>🎲</Text>
+            <View style={styles.heroMiniTextWrap}>
+              <Text style={styles.heroMiniTitle}>Low-pressure family fun</Text>
+              <Text style={styles.heroMiniText}>
+                Not a lesson. Just simple moments that support development.
+              </Text>
+            </View>
+          </View>
+
           <Text style={styles.heroDate}>{todayLabel}</Text>
         </View>
 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {FILTERS.map((filter) => {
+            const active = activeFilter === filter.id;
+            const locked = filter.id !== 'surprise' && !isPro;
+
+            return (
+              <TouchableOpacity
+  key={filter.id}
+  style={[
+    styles.filterChip,
+    active && styles.filterChipActive,
+    filterLoading && styles.filterChipDisabled,
+  ]}
+  onPress={() => void handleFilterPress(filter.id)}
+  disabled={filterLoading}
+>
+ {filterLoading && active ? (
+  <ActivityIndicator size="small" color="#FFFFFF" />
+) : (
+  <Ionicons
+    name={locked ? 'lock-closed-outline' : filter.icon}
+    size={15}
+    color={active ? '#FFFFFF' : '#7C3AED'}
+  />
+)}
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    active && styles.filterChipTextActive,
+                  ]}
+                >
+                  {filter.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
         <View style={styles.feedHeaderRow}>
           <View>
-            <Text style={styles.feedTitle}>Today&apos;s feed</Text>
+            <Text style={styles.feedTitle}>Today&apos;s Adventures</Text>
             <Text style={styles.feedSubtitle}>
-              Swipe through activity cards for today
+              Swipe through playful ideas for your family
             </Text>
           </View>
 
           <View style={styles.feedMetaChip}>
-            <Ionicons name="albums-outline" size={14} color="#4F46E5" />
-            <Text style={styles.feedMetaText}>{visibleActivities.length} cards</Text>
+            <Ionicons name="albums-outline" size={14} color="#7C3AED" />
+            <Text style={styles.feedMetaText}>
+              {visibleActivities.length} ideas
+            </Text>
           </View>
         </View>
 
         {visibleActivities.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="sparkles-outline" size={30} color="#94A3B8" />
-            <Text style={styles.emptyCardTitle}>No suggested activities yet</Text>
+            <Text style={styles.emptyCardTitle}>No adventures yet</Text>
             <Text style={styles.emptyCardText}>
-              Pull down to refresh and generate a fresh set of personalized ideas.
+              Pull down to refresh and generate a fresh set of ideas.
             </Text>
           </View>
         ) : (
@@ -567,10 +1090,12 @@ export default function ActivitiesScreen() {
               contentContainerStyle={styles.horizontalFeed}
             >
               {visibleActivities.map((activity, index) => {
-                const accent = getActivityAccent(index);
+                const accent = getAdventureAccent(index);
                 const activityId = buildActivityId(activity, index);
                 const isSaved = savedIds.includes(activityId);
                 const isFavorite = favoriteIds.includes(activityId);
+                const isCompleted = completedIds.includes(activityId);
+                const category = getAdventureCategory(activity);
 
                 return (
                   <View
@@ -591,14 +1116,7 @@ export default function ActivitiesScreen() {
                           { backgroundColor: accent.chipBg },
                         ]}
                       >
-                        <Text
-                          style={[
-                            styles.feedIndexBadgeText,
-                            { color: accent.icon },
-                          ]}
-                        >
-                          {index + 1}
-                        </Text>
+                        <Text style={styles.feedEmoji}>{accent.emoji}</Text>
                       </View>
 
                       <View style={styles.feedTopActions}>
@@ -620,14 +1138,50 @@ export default function ActivitiesScreen() {
                           <Ionicons
                             name={isSaved ? 'bookmark' : 'bookmark-outline'}
                             size={20}
-                            color={isSaved ? '#4F46E5' : '#64748B'}
+                            color={isSaved ? '#7C3AED' : '#64748B'}
                           />
                         </TouchableOpacity>
                       </View>
                     </View>
 
-                    <Text style={styles.feedCardTitle}>{activity.name}</Text>
-                    <Text style={styles.feedCardSubTitle}>Suggested for today</Text>
+                    <View style={styles.categoryRow}>
+                      <View
+                        style={[
+                          styles.categoryChip,
+                          { backgroundColor: accent.chipBg },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.categoryChipText, { color: accent.icon }]}
+                        >
+                          {getCategoryLabel(category)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.feedCardTitle}>
+                      {getAdventureTitle(activity)}
+                    </Text>
+
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaPill}>
+                        <Ionicons name="location-outline" size={14} color="#64748B" />
+                        <Text style={styles.metaPillText}>
+                          {getAdventureLocation(activity)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.metaPill}>
+                        <Ionicons name="time-outline" size={14} color="#64748B" />
+                        <Text style={styles.metaPillText}>
+                          {getAdventureTime(activity)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.descriptionText}>
+                      {getAdventureDescription(activity)}
+                    </Text>
 
                     <TouchableOpacity
                       style={[
@@ -638,13 +1192,13 @@ export default function ActivitiesScreen() {
                       disabled={regeneratingIndex === index}
                     >
                       {regeneratingIndex === index ? (
-                        <ActivityIndicator size="small" color="#4F46E5" />
+                        <ActivityIndicator size="small" color="#7C3AED" />
                       ) : (
                         <>
                           <Ionicons
-                            name={isPro ? 'refresh-outline' : 'lock-closed-outline'}
+                            name={isPro ? 'shuffle-outline' : 'lock-closed-outline'}
                             size={16}
-                            color={isPro ? '#4F46E5' : '#94A3B8'}
+                            color={isPro ? '#7C3AED' : '#94A3B8'}
                           />
                           <Text
                             style={[
@@ -652,41 +1206,50 @@ export default function ActivitiesScreen() {
                               !isPro && styles.regenerateActivityTextDisabled,
                             ]}
                           >
-                            {isPro ? 'Regenerate activity' : 'Regenerate with Pro'}
+                            {isPro ? 'New adventure' : 'New adventure with Pro'}
                           </Text>
                         </>
                       )}
                     </TouchableOpacity>
 
                     <View style={styles.feedSection}>
-                      <Text style={styles.feedSectionTitle}>Materials</Text>
-                      {safeStringArray(activity.materials).map((item, idx) => (
+                      <Text style={styles.feedSectionTitle}>Try this</Text>
+                      {getAdventureTryThis(activity).map((step, idx) => (
                         <Text key={idx} style={styles.feedBullet}>
-                          • {item}
+                          • {step}
                         </Text>
                       ))}
                     </View>
 
-                    <View style={styles.feedSection}>
-                      <Text style={styles.feedSectionTitle}>Instructions</Text>
-                      {safeStringArray(activity.instructions).map((step, idx) => (
-                        <Text key={idx} style={styles.feedBullet}>
-                          {idx + 1}. {step}
-                        </Text>
-                      ))}
+                    <View style={styles.whyBox}>
+                      <Ionicons name="heart-circle-outline" size={20} color="#7C3AED" />
+                      <View style={styles.whyTextWrap}>
+                        <Text style={styles.whyTitle}>Why it helps</Text>
+                        <Text style={styles.whyText}>{getAdventureWhy(activity)}</Text>
+                      </View>
                     </View>
 
-                    <View style={styles.successBox}>
+                    <TouchableOpacity
+                      style={[
+                        styles.didThisBtn,
+                        isCompleted && styles.didThisBtnCompleted,
+                      ]}
+                      onPress={() => askCompletedFeedback(activity, activityId)}
+                    >
                       <Ionicons
-                        name="checkmark-circle-outline"
+                        name={isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'}
                         size={18}
-                        color="#16A34A"
+                        color={isCompleted ? '#166534' : '#FFFFFF'}
                       />
-                      <Text style={styles.successText}>
-                        {activity.success_criteria ||
-                          'Complete the activity with support.'}
+                      <Text
+                        style={[
+                          styles.didThisBtnText,
+                          isCompleted && styles.didThisBtnTextCompleted,
+                        ]}
+                      >
+                        {isCompleted ? 'Adventure Completed' : 'We Did This'}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 );
               })}
@@ -711,10 +1274,10 @@ export default function ActivitiesScreen() {
                 onPress={() => router.push('/subscription')}
               >
                 <Ionicons name="lock-closed-outline" size={28} color="#7C3AED" />
-                <Text style={styles.lockedTitle}>Unlock More Activities</Text>
+                <Text style={styles.lockedTitle}>Unlock More Adventures</Text>
                 <Text style={styles.lockedText}>
-                  Get full daily activities, unlimited regenerations, saved favorites,
-                  and smarter personalization with Pro.
+                  Get all daily adventures, category filters, unlimited new ideas,
+                  saved favorites, and smarter personalization with Pro.
                 </Text>
               </TouchableOpacity>
             )}
@@ -727,23 +1290,26 @@ export default function ActivitiesScreen() {
                   <TouchableOpacity
                     style={styles.quickActionBtn}
                     onPress={() =>
+                      askCompletedFeedback(
+                        currentActivity,
+                        buildActivityId(currentActivity, currentIndex)
+                      )
+                    }
+                  >
+                    <Ionicons name="checkmark-circle-outline" size={18} color="#16A34A" />
+                    <Text style={styles.quickActionText}>We Did This</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickActionBtn}
+                    onPress={() =>
                       void toggleFavorite(
                         currentActivity,
                         buildActivityId(currentActivity, currentIndex)
                       )
                     }
                   >
-                    <Ionicons
-                      name={
-                        favoriteIds.includes(
-                          buildActivityId(currentActivity, currentIndex)
-                        )
-                          ? 'heart'
-                          : 'heart-outline'
-                      }
-                      size={18}
-                      color="#EF4444"
-                    />
+                    <Ionicons name="heart-outline" size={18} color="#EF4444" />
                     <Text style={styles.quickActionText}>Favorite</Text>
                   </TouchableOpacity>
 
@@ -756,29 +1322,13 @@ export default function ActivitiesScreen() {
                       )
                     }
                   >
-                    <Ionicons
-                      name={
-                        savedIds.includes(buildActivityId(currentActivity, currentIndex))
-                          ? 'bookmark'
-                          : 'bookmark-outline'
-                      }
-                      size={18}
-                      color="#4F46E5"
-                    />
+                    <Ionicons name="bookmark-outline" size={18} color="#7C3AED" />
                     <Text style={styles.quickActionText}>Save</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.quickActionBtn}
-                    onPress={() => router.push('/(tabs)/saved')}
-                  >
-                    <Ionicons name="albums-outline" size={18} color="#4F46E5" />
-                    <Text style={styles.quickActionText}>Open Saved</Text>
-                  </TouchableOpacity>
-
                   <TouchableOpacity style={styles.quickActionBtn} onPress={handleRefresh}>
-                    <Ionicons name="refresh-outline" size={18} color="#10B981" />
-                    <Text style={styles.quickActionText}>Refresh</Text>
+                    <Ionicons name="shuffle-outline" size={18} color="#EA580C" />
+                    <Text style={styles.quickActionText}>Fresh Ideas</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -789,9 +1339,8 @@ export default function ActivitiesScreen() {
         <View style={styles.tipCard}>
           <Ionicons name="bulb-outline" size={18} color="#D97706" />
           <Text style={styles.tipText}>
-            These suggested activities are refreshed using your child&apos;s latest
-            assessment, lesson history, and routine patterns to stay relevant and
-            supportive.
+            Daily Adventures are meant to feel fun and natural. No drills, no
+            pressure, no data tracking — just playful moments that support growth.
           </Text>
         </View>
       </ScrollView>
@@ -802,7 +1351,7 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF7ED',
   },
 
   pageContent: {
@@ -815,18 +1364,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    backgroundColor: '#FFF7ED',
   },
 
   loadingText: {
     marginTop: 12,
     color: '#64748B',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   emptyTitle: {
     marginTop: 12,
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#1E293B',
   },
 
@@ -835,13 +1385,19 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 20,
     textAlign: 'center',
+    fontWeight: '600',
   },
 
   heroCard: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 28,
+    backgroundColor: '#7C3AED',
+    borderRadius: 30,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 14,
+    shadowColor: '#7C3AED',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
   },
 
   heroTopRow: {
@@ -859,7 +1415,7 @@ const styles = StyleSheet.create({
   heroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -867,16 +1423,16 @@ const styles = StyleSheet.create({
 
   heroBadgeText: {
     color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
     marginLeft: 6,
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
 
   savedBtn: {
     height: 38,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -885,7 +1441,7 @@ const styles = StyleSheet.create({
 
   savedBtnText: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 12,
     marginLeft: 6,
   },
@@ -893,37 +1449,102 @@ const styles = StyleSheet.create({
   refreshBtn: {
     width: 38,
     height: 38,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   heroGreeting: {
     marginTop: 14,
-    color: '#C7D2FE',
+    color: '#E9D5FF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 
   heroTitle: {
     marginTop: 4,
-    fontSize: 27,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
     color: '#FFFFFF',
   },
 
   heroSubtitle: {
     marginTop: 8,
-    color: '#E0E7FF',
-    lineHeight: 20,
+    color: '#F3E8FF',
+    lineHeight: 21,
+    fontWeight: '600',
+  },
+
+  heroIllustration: {
+    marginTop: 16,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 22,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  heroEmoji: {
+    fontSize: 34,
+    marginRight: 12,
+  },
+
+  heroMiniTextWrap: {
+    flex: 1,
+  },
+
+  heroMiniTitle: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 14,
+  },
+
+  heroMiniText: {
+    marginTop: 3,
+    color: '#F3E8FF',
+    fontWeight: '600',
+    lineHeight: 18,
+    fontSize: 12,
   },
 
   heroDate: {
-    marginTop: 10,
-    color: '#C7D2FE',
-    fontWeight: '700',
+    marginTop: 12,
+    color: '#E9D5FF',
+    fontWeight: '800',
     fontSize: 12,
+  },
+
+  filterRow: {
+    paddingBottom: 16,
+    gap: 10,
+  },
+
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+
+  filterChipActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+
+  filterChipText: {
+    marginLeft: 6,
+    color: '#7C3AED',
+    fontWeight: '900',
+    fontSize: 12,
+  },
+
+  filterChipTextActive: {
+    color: '#FFFFFF',
   },
 
   feedHeaderRow: {
@@ -935,20 +1556,20 @@ const styles = StyleSheet.create({
 
   feedTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
   },
 
   feedSubtitle: {
     marginTop: 4,
     color: '#64748B',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   feedMetaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F3E8FF',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -956,8 +1577,8 @@ const styles = StyleSheet.create({
 
   feedMetaText: {
     marginLeft: 6,
-    color: '#4F46E5',
-    fontWeight: '800',
+    color: '#7C3AED',
+    fontWeight: '900',
     fontSize: 12,
   },
 
@@ -966,10 +1587,15 @@ const styles = StyleSheet.create({
   },
 
   feedCard: {
-    borderRadius: 24,
+    borderRadius: 26,
     padding: 18,
     marginRight: 12,
     borderWidth: 1.5,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
 
   feedCardTop: {
@@ -979,15 +1605,15 @@ const styles = StyleSheet.create({
   },
 
   feedIndexBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  feedIndexBadgeText: {
-    fontWeight: '800',
+  feedEmoji: {
+    fontSize: 22,
   },
 
   feedTopActions: {
@@ -998,7 +1624,7 @@ const styles = StyleSheet.create({
   iconActionBtn: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1006,31 +1632,71 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
 
+  categoryRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+  },
+
+  categoryChip: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  categoryChipText: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
   feedCardTitle: {
-    marginTop: 16,
-    fontSize: 22,
-    fontWeight: '800',
+    marginTop: 12,
+    fontSize: 24,
+    fontWeight: '900',
     color: '#0F172A',
   },
 
-  feedCardSubTitle: {
-    marginTop: 4,
+  metaRow: {
+    marginTop: 12,
+    gap: 8,
+  },
+
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  metaPillText: {
+    flex: 1,
+    marginLeft: 6,
+    color: '#475569',
+    fontWeight: '800',
     fontSize: 12,
-    color: '#64748B',
+  },
+
+  descriptionText: {
+    marginTop: 14,
+    color: '#334155',
+    lineHeight: 21,
     fontWeight: '700',
   },
 
   regenerateActivityBtn: {
-    marginTop: 12,
+    marginTop: 14,
     alignSelf: 'flex-start',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F3E8FF',
     borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: '#E9D5FF',
   },
 
   regenerateActivityBtnDisabled: {
@@ -1040,8 +1706,8 @@ const styles = StyleSheet.create({
 
   regenerateActivityText: {
     marginLeft: 6,
-    color: '#4F46E5',
-    fontWeight: '800',
+    color: '#7C3AED',
+    fontWeight: '900',
     fontSize: 12,
   },
 
@@ -1054,8 +1720,8 @@ const styles = StyleSheet.create({
   },
 
   feedSectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '900',
     color: '#334155',
     marginBottom: 8,
   },
@@ -1063,25 +1729,62 @@ const styles = StyleSheet.create({
   feedBullet: {
     color: '#475569',
     lineHeight: 22,
-    marginBottom: 5,
-    fontWeight: '600',
+    marginBottom: 6,
+    fontWeight: '700',
   },
 
-  successBox: {
+  whyBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F0FDF4',
-    borderRadius: 16,
-    padding: 12,
+    backgroundColor: '#F5F3FF',
+    borderRadius: 18,
+    padding: 13,
     marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
 
-  successText: {
+  whyTextWrap: {
     flex: 1,
     marginLeft: 8,
-    color: '#166534',
-    lineHeight: 20,
+  },
+
+  whyTitle: {
+    color: '#5B21B6',
+    fontWeight: '900',
+    marginBottom: 3,
+  },
+
+  whyText: {
+    color: '#6D28D9',
+    lineHeight: 19,
     fontWeight: '700',
+  },
+
+  didThisBtn: {
+    marginTop: 16,
+    backgroundColor: '#7C3AED',
+    borderRadius: 18,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+
+  didThisBtnCompleted: {
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+
+  didThisBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    marginLeft: 7,
+  },
+
+  didThisBtnTextCompleted: {
+    color: '#166534',
   },
 
   paginationRow: {
@@ -1102,7 +1805,7 @@ const styles = StyleSheet.create({
 
   paginationDotActive: {
     width: 24,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#7C3AED',
   },
 
   lockedCard: {
@@ -1133,16 +1836,16 @@ const styles = StyleSheet.create({
 
   quickActionsCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#FED7AA',
   },
 
   quickActionsTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
     marginBottom: 12,
   },
@@ -1156,18 +1859,18 @@ const styles = StyleSheet.create({
   quickActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF7ED',
     borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#FED7AA',
   },
 
   quickActionText: {
     marginLeft: 6,
     color: '#334155',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 13,
   },
 
@@ -1177,14 +1880,14 @@ const styles = StyleSheet.create({
     padding: 22,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#FED7AA',
     alignItems: 'center',
   },
 
   emptyCardTitle: {
     marginTop: 10,
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#1E293B',
   },
 
@@ -1193,6 +1896,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 20,
     textAlign: 'center',
+    fontWeight: '600',
   },
 
   tipCard: {
@@ -1202,6 +1906,8 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
 
   tipText: {
@@ -1211,4 +1917,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '700',
   },
+
+  filterChipDisabled: {
+  opacity: 0.6,
+},
 });

@@ -2,18 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-    SavedCalmStrategy,
-    getSavedCalmStrategies,
+  SavedCalmStrategy,
+  deleteCalmStrategy,
+  getSavedCalmStrategies,
 } from '@/lib/calmStrategiesStorage';
+
 
 export default function MyCalmingPlansScreen() {
   const router = useRouter();
@@ -26,9 +29,37 @@ export default function MyCalmingPlansScreen() {
   );
 
   async function loadStrategies() {
-    const data = await getSavedCalmStrategies();
-    setSavedStrategies(data);
-  }
+  const data = await getSavedCalmStrategies();
+
+  const filteredData = data.filter(
+    (item) => item.type !== 'simple-words'
+  );
+
+  setSavedStrategies(filteredData);
+}
+
+  function confirmDeleteStrategy(strategyId: string) {
+  Alert.alert(
+    'Delete saved plan?',
+    'This calming plan will be removed from your saved plans.',
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteCalmStrategy(strategyId);
+          setSavedStrategies((current) =>
+            current.filter((item) => item.id !== strategyId)
+          );
+        },
+      },
+    ]
+  );
+}
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -74,7 +105,12 @@ export default function MyCalmingPlansScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
 
-                <Ionicons name="bookmark" size={20} color={item.color} />
+                <TouchableOpacity
+  style={styles.deleteButton}
+  onPress={() => confirmDeleteStrategy(item.id)}
+>
+  <Ionicons name="trash-outline" size={18} color="#DC2626" />
+</TouchableOpacity>
               </View>
             ))}
           </View>
@@ -84,9 +120,9 @@ export default function MyCalmingPlansScreen() {
 
             <Text style={styles.emptyTitle}>No saved plans yet</Text>
 
-            <Text style={styles.emptyText}>
-              When a strategy helps, save it from Simple Words, Sensory Reset, or Quiet Space.
-            </Text>
+           <Text style={styles.emptyText}>
+            When a strategy helps, save it from Sensory Reset, Quiet Space, or other calming tools.
+          </Text>
           </View>
         )}
       </ScrollView>
@@ -192,4 +228,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 21,
   },
+
+  deleteButton: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: '#FEF2F2',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#FECACA',
+  marginLeft: 10,
+},
 });
