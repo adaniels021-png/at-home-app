@@ -38,7 +38,7 @@ export default {
 
     android: {
       package: 'com.adaniels021.abaathome',
-      versionCode: 6,
+      versionCode: 7,
 
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
