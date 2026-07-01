@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -49,14 +49,25 @@ export default function SettingsScreen() {
   const childContext = useChild() as any;
   const { selectedChild, refreshChildren } = childContext;
 
-  const { isPro, adminMode, toggleAdminMode } = useSubscription();
+  const { isPro, adminMode } = useSubscription();
 
-  const [adminTapCount, setAdminTapCount] = useState(0);
-  const [showAdminMode, setShowAdminMode] = useState(false);
   const [deletingChild, setDeletingChild] = useState(false);
+  const [isAppAdmin, setIsAppAdmin] = useState(false);
   
 
   const hasProAccess = isPro || adminMode;
+
+  useEffect(() => {
+  async function checkAdmin() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setIsAppAdmin(user?.email === 'adaniels021@gmail.com');
+  }
+
+  void checkAdmin();
+}, []);
 
   const role = selectedChild?.caregiver_access_role;
 
@@ -74,19 +85,6 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
     selectedChild?.name ||
     selectedChild?.first_name ||
     'this child';
-
-  const handleHiddenAdminTap = () => {
-    const nextCount = adminTapCount + 1;
-
-    if (nextCount >= 5) {
-      setShowAdminMode(true);
-      setAdminTapCount(0);
-      Alert.alert('Admin Mode Unlocked', 'You can now toggle test Pro access.');
-      return;
-    }
-
-    setAdminTapCount(nextCount);
-  };
 
   const handleDeleteChild = () => {
     if (!selectedChild?.id) {
@@ -167,9 +165,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
       >
         <View style={[styles.contentInner, { maxWidth: layout.maxContentWidth }]}>
           <View style={styles.headerCard}>
-            <TouchableOpacity activeOpacity={0.8} onPress={handleHiddenAdminTap}>
-              <Text style={styles.title}>Settings</Text>
-            </TouchableOpacity>
+            <Text style={styles.title}>Settings</Text>
 
             <Text style={styles.subtitle}>
               Manage your account, child profiles, subscription, legal links, and app tools.
@@ -193,32 +189,72 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
             </View>
           </View>
 
-          {showAdminMode ? (
-            <View style={styles.adminCard}>
-              <View style={styles.adminLeft}>
-                <View style={styles.adminIconWrap}>
-                  <Ionicons name="shield-checkmark" size={22} color="#92400E" />
-                </View>
+         {isAppAdmin ? (
+  <Section title="Admin Tools">
 
-                <View style={styles.adminTextWrap}>
-                  <Text style={styles.adminTitle}>Admin Mode</Text>
-                  <Text style={styles.adminText}>
-                    Testing access is currently {adminMode ? 'enabled' : 'disabled'}.
-                  </Text>
-                </View>
-              </View>
+    {/* ---------- LESSONS ---------- */}
 
-              <TouchableOpacity
-                style={[styles.adminToggle, adminMode && styles.adminToggleActive]}
-                onPress={() => void toggleAdminMode()}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.adminToggleText}>
-                  {adminMode ? 'On' : 'Off'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+    <SettingItem
+      icon="library-outline"
+      label="Admin Lesson Library"
+      helper="Review, approve, edit, and manage lessons before families see them"
+      onPress={() => openRoute('/admin/lesson-library')}
+    />
+
+    <SettingItem
+      icon="shield-checkmark-outline"
+      label="Lesson Review Queue"
+      helper="Approve lessons that are waiting for review"
+      onPress={() => openRoute('/admin/lesson-review')}
+    />
+
+    <SettingItem
+      icon="create-outline"
+      label="Create / Draft Lesson"
+      helper="Add a new lesson draft for review"
+      onPress={() => openRoute('/admin/create-lesson')}
+    />
+
+    {/* ---------- ACTIVITIES ---------- */}
+
+
+<SettingItem
+  icon="happy-outline"
+  label="Admin Activity Library"
+  helper="Review, approve, edit, and manage Daily Adventures"
+  onPress={() => openRoute('/admin/activity-library')}
+/>
+
+<SettingItem
+  icon="cloud-upload-outline"
+  label="Bulk Import Activities"
+  helper="Paste a JSON list and add many activities at once"
+  onPress={() => openRoute('/admin/activity-library/bulk-import')}
+/>
+
+    <SettingItem
+  icon="clipboard-outline"
+  label="Activity Review Queue"
+  helper="Approve pending Daily Adventures"
+  onPress={() => openRoute('/admin/activity-review')}
+/>
+
+    <SettingItem
+  icon="sparkles-outline"
+  label="AI Generate Activities"
+  helper="Use AI to create pending activity drafts for review"
+  onPress={() => openRoute('/admin/activity-library/ai-generate')}
+/>
+
+    <SettingItem
+      icon="add-circle-outline"
+      label="Create Activity"
+      helper="Create a new Daily Adventure"
+      onPress={() => openRoute('/admin/activity-library/new')}
+    />
+
+  </Section>
+) : null}
 
           {!hasProAccess ? (
             <TouchableOpacity

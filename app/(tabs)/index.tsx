@@ -364,13 +364,17 @@ useEffect(() => {
       onPress={() => router.push('/toilet-training')}
     >
       <View style={styles.toiletMiniIconWrap}>
-        <Ionicons name="water-outline" size={22} color="#2563EB" />
+        <Image
+  source={require('../../assets/images/toilet-character.png')}
+  style={styles.toiletCharacterImage}
+  resizeMode="contain"
+/>
       </View>
 
       <View style={{ flex: 1 }}>
         <Text style={styles.toiletMiniTitle}>Toilet Training</Text>
         <Text style={styles.toiletMiniSubtitle}>
-          Potty logs, visual steps, and schedules
+          Daily practice & progress
         </Text>
       </View>
 
@@ -390,61 +394,62 @@ useEffect(() => {
 ) : null}
 
         <FadeInView delay={230}>
-          <Text style={styles.sectionTitle}>Parent & Learning Tools</Text>
+  <Text style={styles.sectionTitle}>Parent & Learning Tools</Text>
 
-          <View style={styles.toolList}>
-            <ToolCard
-              icon="heart-circle-outline"
-              title="Parent Support"
-              subtitle="Caregiver tools, Parent Wins, journaling, and encouragement."
-              color="#7C3AED"
-              bg="#F5F3FF"
-              border="#DDD6FE"
-              onPress={() => router.push('/parent-support')}
-            />
+  <View style={styles.toolList}>
+    <ToolCard
+      image={require('../../assets/images/parent-support-tool.png')}
+      title="Parent Support"
+      subtitle="Caregiver tools, Parent Wins, journaling, and encouragement."
+      color="#7C3AED"
+      bg="#F5F3FF"
+      border="#DDD6FE"
+      onPress={() => router.push('/parent-support')}
+    />
 
-            <ToolCard
-              icon="leaf-outline"
-              title="Calm Down Toolkit"
-              subtitle="Quick regulation supports for stressful moments."
-              color="#0F766E"
-              bg="#ECFDF5"
-              border="#A7F3D0"
-              onPress={() => router.push('/calm-down')}
-            />
+    <ToolCard
+      image={require('../../assets/images/calm-tool.png')}
+      title="Calm Down Toolkit"
+      subtitle="Quick regulation supports for stressful moments."
+      color="#0F766E"
+      bg="#ECFDF5"
+      border="#A7F3D0"
+      onPress={() => router.push('/calm-down')}
+    />
 
-            <ToolCard
-              icon="color-palette-outline"
-              title="Activities"
-              subtitle="Fun at-home learning ideas for daily practice."
-              color="#EA580C"
-              bg="#FFF7ED"
-              border="#FED7AA"
-              onPress={() => router.push('/activities')}
-            />
+    <ToolCard
+      image={require('../../assets/images/activities-tool.png')}
+      title="Activities"
+      subtitle="Fun at-home learning ideas for daily practice."
+      color="#EA580C"
+      bg="#FFF7ED"
+      border="#FED7AA"
+      onPress={() => router.push('/activities')}
+    />
 
-            <ToolCard
-              icon="document-text-outline"
-              title="Worksheets"
-              subtitle="Printable practice pages for learning and routines."
-              color="#DB2777"
-              bg="#FDF2F8"
-              border="#FBCFE8"
-              onPress={() => router.push('/worksheets')}
-            />
+    <ToolCard
+      image={require('../../assets/images/worksheets-tool.png')}
+      title="Worksheets"
+      subtitle="Printable practice pages for learning and routines."
+      color="#DB2777"
+      bg="#FDF2F8"
+      border="#FBCFE8"
+      onPress={() => router.push('/worksheets')}
+    />
 
-            <ToolCard
-              icon="play-circle-outline"
-              title="Videos"
-              subtitle="Watch-and-learn supports for caregivers and children."
-              color="#2563EB"
-              bg="#EFF6FF"
-              border="#BFDBFE"
-              onPress={() => router.push('/videos')}
-            />
-          </View>
-        </FadeInView>
-           <FadeInView delay={230}>
+    <ToolCard
+      image={require('../../assets/images/videos-tool.png')}
+      title="Videos"
+      subtitle="Watch-and-learn supports for caregivers and children."
+      color="#2563EB"
+      bg="#EFF6FF"
+      border="#BFDBFE"
+      onPress={() => router.push('/videos')}
+    />
+  </View>
+</FadeInView>
+
+<FadeInView delay={230}>
   <DropdownSection
     title="Family Tools"
     subtitle="Caregiver tools and shortcuts"
@@ -509,11 +514,12 @@ useEffect(() => {
               </Text>
 
               <AnimatedPressable
-                style={styles.progressDismiss}
-                onPress={dismissWeeklyProgress}
-              >
-                <Text style={styles.progressDismissText}>Got it</Text>
-              </AnimatedPressable>
+  style={styles.progressDismiss}
+  onPress={() => router.push('/progress')}
+>
+  <Text style={styles.progressDismissText}>View Progress</Text>
+  <Ionicons name="chevron-forward" size={16} color="#0F766E" />
+</AnimatedPressable>
             </View>
           </FadeInView>
         ) : null}
@@ -523,7 +529,7 @@ useEffect(() => {
 }
 
 function ToolCard({
-  icon,
+  image,
   title,
   subtitle,
   bg,
@@ -531,7 +537,7 @@ function ToolCard({
   border,
   onPress,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  image: any;
   title: string;
   subtitle: string;
   bg: string;
@@ -545,9 +551,11 @@ function ToolCard({
       onPress={onPress}
     >
       <View style={styles.toolLeft}>
-        <View style={styles.toolIconWrap}>
-          <Ionicons name={icon} size={26} color={color} />
-        </View>
+   <View style={styles.toolIconWrap}>
+  <View style={styles.toolImageMask}>
+    <Image source={image} style={styles.toolImage} resizeMode="cover" />
+  </View>
+</View>
 
         <View style={styles.toolTextWrap}>
           <Text style={[styles.toolTitle, { color }]}>{title}</Text>
@@ -555,7 +563,7 @@ function ToolCard({
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={22} color={color} />
+      <Ionicons name="chevron-forward" size={18} color={color} />
     </AnimatedPressable>
   );
 }
@@ -604,9 +612,9 @@ function DropdownItem({
 }) {
   return (
     <AnimatedPressable style={styles.dropdownItem} onPress={onPress}>
-      <Ionicons name={icon} size={19} color="#4F46E5" />
+      <Ionicons name={icon} size={23} color="#4F46E5" />
       <Text style={styles.dropdownItemText}>{label}</Text>
-      <Ionicons name="chevron-forward" size={17} color="#94A3B8" />
+      <Ionicons name="chevron-forward" size={19} color="#94A3B8" />
     </AnimatedPressable>
   );
 }
@@ -618,8 +626,8 @@ const styles = StyleSheet.create({
 },
 
   scrollContent: {
-  paddingHorizontal: 20,
-  paddingBottom: 190,
+  paddingHorizontal: 18,
+  paddingBottom: 170,
 },
 
   centered: {
@@ -654,49 +662,49 @@ const styles = StyleSheet.create({
  lessonCard: {
   overflow: 'hidden',
   backgroundColor: '#5B3FF4',
-  borderRadius: 28,
-  padding: 22,
-  marginBottom: 20,
+  borderRadius: 24,
+  padding: 18,
+  marginBottom: 14,
   shadowColor: '#5B3FF4',
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.2,
-  shadowRadius: 16,
-  elevation: 4,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.16,
+  shadowRadius: 14,
+  elevation: 3,
 },
 
 lessonTopRow: {
   flexDirection: 'row',
   alignItems: 'center',
-  marginBottom: 9,
+  marginBottom: 7,
 },
 
 lessonIcon: {
-  width: 46,
-  height: 46,
-  borderRadius: 17,
+  width: 42,
+  height: 42,
+  borderRadius: 15,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: 11,
+  marginRight: 10,
 },
 
 lessonLabel: {
   color: '#DDD6FE',
-  fontSize: 11,
+  fontSize: 10.5,
   fontWeight: '900',
-  marginBottom: 3,
+  marginBottom: 2,
 },
 
 lessonTitle: {
   color: '#FFFFFF',
-  fontSize: 22,
+  fontSize: 19,
   fontWeight: '900',
 },
 
 lessonText: {
   color: '#EDE9FE',
   fontSize: 12,
-  lineHeight: 18,
+  lineHeight: 17,
   fontWeight: '700',
 },
 
@@ -711,39 +719,68 @@ lessonText: {
 },
 
   sectionTitle: {
-  fontSize: 19,
+  fontSize: 17,
   fontWeight: '900',
   color: '#0F172A',
-  marginBottom: 12,
+  marginBottom: 8,
 },
 
-  toolList: {
-    gap: 14,
-    marginBottom: 20,
-  },
-
- toolCard: {
-  borderRadius: 30,
-  padding: 16,
+toolCard: {
+  borderRadius: 20,
+  padding: 11,
   borderWidth: 1,
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
   shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.04,
-  shadowRadius: 14,
-  elevation: 2,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.03,
+  shadowRadius: 10,
+  elevation: 1,
 },
 
 toolIconWrap: {
-  width: 76,
-  height: 76,
-  borderRadius: 26,
+  width: 58,
+  height: 58,
+  borderRadius: 20,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: 14,
+  marginRight: 11,
+  overflow: 'hidden',
+},
+
+toolImageMask: {
+  width: 48,
+  height: 48,
+  borderRadius: 16,
+  overflow: 'hidden',
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+toolImage: {
+  width: 58,
+  height: 58,
+},
+
+toolTitle: {
+  fontSize: 14,
+  fontWeight: '900',
+  marginBottom: 1,
+},
+
+toolSubtitle: {
+  color: '#475569',
+  fontSize: 11.5,
+  lineHeight: 16,
+  fontWeight: '700',
+},
+
+toolList: {
+  gap: 9,
+  marginBottom: 14,
 },
 
   toolLeft: {
@@ -757,66 +794,52 @@ toolIconWrap: {
     flex: 1,
   },
 
- toolTitle: {
-  fontSize: 16,
-  fontWeight: '900',
-  marginBottom: 3,
+ dropdownCard: {
+  backgroundColor: 'rgba(255,255,255,0.94)',
+  borderRadius: 24,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.9)',
+  marginBottom: 12,
+  overflow: 'hidden',
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.04,
+  shadowRadius: 12,
+  elevation: 2,
 },
 
-toolSubtitle: {
-  color: '#475569',
-  fontSize: 12.5,
-  lineHeight: 18,
+dropdownHeader: {
+  padding: 14,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+dropdownTitle: {
+  color: '#0F172A',
+  fontSize: 15,
+  fontWeight: '900',
+},
+
+dropdownSubtitle: {
+  marginTop: 3,
+  color: '#64748B',
+  fontSize: 11.5,
   fontWeight: '700',
 },
 
-  dropdownCard: {
-  backgroundColor: 'rgba(255,255,255,0.94)',
-  borderRadius: 30,
-  borderWidth: 1,
-  borderColor: 'rgba(255,255,255,0.9)',
-  marginBottom: 16,
-  overflow: 'hidden',
-
-  shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.05,
-  shadowRadius: 16,
-  elevation: 3,
+dropdownItem: {
+  paddingHorizontal: 15,
+  paddingVertical: 12,
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderBottomWidth: 1,
+  borderBottomColor: '#F8FAFC',
 },
-
-  dropdownHeader: {
-    padding: 17,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-
-  dropdownTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
-  dropdownSubtitle: {
-    marginTop: 4,
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '700',
-  },
 
   dropdownBody: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-  },
-
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
   },
 
   dropdownItemText: {
@@ -829,16 +852,15 @@ toolSubtitle: {
 
  progressCard: {
   backgroundColor: '#ECFDF5',
-  borderRadius: 28,
-  padding: 16,
+  borderRadius: 24,
+  padding: 14,
   borderWidth: 1,
   borderColor: '#A7F3D0',
-
   shadowColor: '#10B981',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.08,
-  shadowRadius: 16,
-  elevation: 3,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.06,
+  shadowRadius: 12,
+  elevation: 2,
 },
 
   progressHeader: {
@@ -861,14 +883,17 @@ toolSubtitle: {
   fontWeight: '700',
 },
 
-  progressDismiss: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 999,
-  },
+progressDismiss: {
+  marginTop: 12,
+  alignSelf: 'flex-start',
+  backgroundColor: '#FFFFFF',
+  paddingHorizontal: 16,
+  paddingVertical: 9,
+  borderRadius: 999,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+},
 
   progressDismissText: {
     color: '#0F766E',
@@ -919,7 +944,7 @@ topHeroHeader: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: 18,
+  marginBottom: 12,
   zIndex: 2,
 },
 
@@ -948,25 +973,25 @@ topHeroCard: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#F3EEFF',
-  borderRadius: 34,
-  padding: 20,
-  minHeight: 365,
+  borderRadius: 30,
+  padding: 18,
+  minHeight: 330,
   marginTop: 2,
-  marginBottom: 12,
+  marginBottom: 10,
   borderWidth: 1,
   borderColor: '#E9D5FF',
   shadowColor: '#7C3AED',
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.12,
-  shadowRadius: 22,
-  elevation: 4,
-  paddingBottom: 14,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.09,
+  shadowRadius: 16,
+  elevation: 3,
+  paddingBottom: 12,
 },
 
 topHeroIcon: {
-  width: 42,
-  height: 42,
-  borderRadius: 16,
+  width: 38,
+  height: 38,
+  borderRadius: 14,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
@@ -981,31 +1006,31 @@ topHeroTitle: {
 },
 
 topHeroMessage: {
-  marginTop: 7,
-  fontSize: 14,
-  lineHeight: 21,
+  marginTop: 6,
+  fontSize: 13,
+  lineHeight: 19,
   fontWeight: '800',
   color: '#4F46E5',
 },
 
 heroImage: {
   width: '100%',
-  height: 180,
-  borderRadius: 24,
-  marginTop: 10,
+  height: 160,
+  borderRadius: 22,
+  marginTop: 9,
 },
 
 logoutGlassButton: {
-  width: 44,
-  height: 44,
-  borderRadius: 16,
+  width: 40,
+  height: 40,
+  borderRadius: 14,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
   shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: 5 },
-  shadowOpacity: 0.08,
-  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
   elevation: 2,
 },
 
@@ -1065,17 +1090,17 @@ featuredCalmIllustration: {
 heroBadge: {
   alignSelf: 'flex-start',
   backgroundColor: '#FFFFFF',
-  paddingHorizontal: 12,
-  paddingVertical: 7,
+  paddingHorizontal: 11,
+  paddingVertical: 6,
   borderRadius: 999,
-  marginBottom: 12,
+  marginBottom: 10,
   zIndex: 3,
 },
 
 heroBadgeText: {
   color: '#6D28D9',
   fontWeight: '800',
-  fontSize: 14,
+  fontSize: 13,
 },
 
 childSelectorCard: {
@@ -1210,55 +1235,62 @@ toiletChipText: {
   fontWeight: '900',
 },
 
-hideToiletButton: {
-  width: 34,
-  height: 34,
-  borderRadius: 14,
-  backgroundColor: '#FFFFFF',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginRight: 8,
-  borderWidth: 1,
-  borderColor: '#DBEAFE',
-},
-
 toiletTrainingMiniCard: {
   backgroundColor: '#EFF6FF',
-  borderRadius: 24,
-  padding: 14,
+  borderRadius: 22,
+  padding: 12,
   borderWidth: 1,
   borderColor: '#BFDBFE',
-  marginBottom: 18,
+  marginBottom: 14,
   flexDirection: 'row',
   alignItems: 'center',
   shadowColor: '#2563EB',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.08,
-  shadowRadius: 14,
-  elevation: 3,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.06,
+  shadowRadius: 12,
+  elevation: 2,
 },
 
 toiletMiniIconWrap: {
-  width: 52,
-  height: 52,
-  borderRadius: 18,
+  width: 46,
+  height: 46,
+  borderRadius: 16,
   backgroundColor: '#FFFFFF',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: 12,
+  marginRight: 10,
 },
 
 toiletMiniTitle: {
   color: '#0F172A',
   fontSize: 16,
   fontWeight: '900',
+  letterSpacing: -0.3,
 },
 
 toiletMiniSubtitle: {
   color: '#475569',
-  fontSize: 12.5,
+  fontSize: 12,
   fontWeight: '700',
-  marginTop: 3,
-  lineHeight: 17,
+  marginTop: 2,
+  lineHeight: 16,
+},
+
+hideToiletButton: {
+  width: 30,
+  height: 30,
+  borderRadius: 12,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 6,
+  borderWidth: 1,
+  borderColor: '#DBEAFE',
+},
+
+toiletCharacterImage: {
+  width: 58,
+  height: 58,
+  marginLeft: 2,
 },
 });

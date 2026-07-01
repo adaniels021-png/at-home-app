@@ -180,11 +180,11 @@ setPendingInvites(invites || []);
         </Text>
 
         <TouchableOpacity
-          style={styles.restrictedButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.restrictedButtonText}>Go Back</Text>
-        </TouchableOpacity>
+  style={styles.restrictedButton}
+  onPress={() => router.push('/settings/accept-caregiver-invite')}
+>
+  <Text style={styles.restrictedButtonText}>Accept an Invite</Text>
+</TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -267,16 +267,22 @@ setPendingInvites(invites || []);
 </TouchableOpacity>
 
         <View style={styles.infoCard}>
-          <Ionicons
-            name="information-circle-outline"
-            size={20}
-            color="#4F46E5"
-          />
+  <Ionicons
+    name="information-circle-outline"
+    size={22}
+    color="#4F46E5"
+  />
 
-          <Text style={styles.infoText}>
-             Multi-Caregiver Sync is coming soon. In a future update, you’ll be able to invite trusted caregivers, share child progress, and sync lessons, routines, PECS tools, and calming plans securely.
-          </Text>
-        </View>
+  <View style={styles.infoContent}>
+    <Text style={styles.infoTitle}>
+      Share Your Child's Progress
+    </Text>
+
+    <Text style={styles.infoText}>
+      Invite parents, caregivers, family members, or therapists to securely access and support your child's learning journey.
+    </Text>
+  </View>
+</View>
 
                 {loading ? (
           <View style={styles.centered}>
@@ -295,11 +301,11 @@ setPendingInvites(invites || []);
             />
 
             <Text style={styles.emptyTitle}>
-              No Caregivers Yet
+              Build Your Support Team
             </Text>
 
             <Text style={styles.emptyText}>
-              Invite a parent, caregiver, or therapist to help support your child’s progress.
+              Invite caregivers, therapists, and family members to collaborate on lessons, routines, communication tools, and progress tracking.
             </Text>
           </View>
         ) : (
@@ -318,7 +324,7 @@ setPendingInvites(invites || []);
 
       <View style={styles.caregiverInfo}>
         <Text style={styles.roleText}>
-          {caregiver.role}
+           {caregiver.role.charAt(0).toUpperCase() + caregiver.role.slice(1)}
         </Text>
 
         <Text style={styles.statusText}>
@@ -439,20 +445,31 @@ const styles = StyleSheet.create({
   },
 
   infoCard: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 20,
-    padding: 14,
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
+  backgroundColor: '#EEF2FF',
+  borderRadius: 20,
+  padding: 16,
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 20,
+},
 
-  infoText: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#4338CA',
-    fontWeight: '700',
-    lineHeight: 18,
-  },
+infoContent: {
+  flex: 1,
+  marginLeft: 10,
+},
+
+infoTitle: {
+  color: '#3730A3',
+  fontSize: 14,
+  fontWeight: '800',
+  marginBottom: 4,
+},
+
+infoText: {
+  color: '#4338CA',
+  fontWeight: '700',
+  lineHeight: 20,
+},
 
   centered: {
     alignItems: 'center',

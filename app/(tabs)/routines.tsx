@@ -487,10 +487,8 @@ const secondTask =
       : null;
 
 const getStepLabel = (index: number) => {
-  if (index === 0) return 'FIRST';
-  if (index === 1) return 'THEN';
   return `${index + 1}`;
-};
+};;
 
 const getStepCircleStyle = (index: number, completed: boolean) => {
   if (completed) return styles.timelineCircleCompleted;
@@ -923,14 +921,14 @@ const getStepTextStyle = (index: number, completed: boolean) => {
 const styles = StyleSheet.create({
   container: {
   flex: 1,
-  backgroundColor: '#F1F5F9',
+  backgroundColor: '#F6F8FC',
   overflow: 'hidden',
 },
 
-  scrollContent: {
+scrollContent: {
   paddingHorizontal: 20,
   paddingTop: 20,
-  paddingBottom: 170,
+  paddingBottom: 220,
 },
 
   centered: {
@@ -1026,19 +1024,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
-  resetBtn: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    marginBottom: 14,
-  },
+ resetBtn: {
+  alignSelf: 'center',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingVertical: 10,
+  paddingHorizontal: 18,
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexDirection: 'row',
+  borderWidth: 1,
+  borderColor: '#FCA5A5',
+  marginBottom: 14,
+},
 
   resetBtnText: {
     marginLeft: 6,
@@ -1153,7 +1151,7 @@ routineCard: {
   topActionRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 18,
   },
 
   secondaryActionBtn: {
@@ -1162,7 +1160,7 @@ routineCard: {
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#C7D2FE',
-    paddingVertical: 14,
+    paddingVertical: 13,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -1178,7 +1176,7 @@ routineCard: {
     flex: 1,
     backgroundColor: '#4F46E5',
     borderRadius: 18,
-    paddingVertical: 14,
+    paddingVertical: 13,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -1400,17 +1398,17 @@ stepLine: {
 },
 
 routineHeroCard: {
-  backgroundColor: 'rgba(255,255,255,0.92)',
-  borderRadius: 28,
-  padding: 18,
+  backgroundColor: 'rgba(255,255,255,0.96)',
+  borderRadius: 26,
+  padding: 16,
   marginBottom: 14,
   borderWidth: 1,
-  borderColor: '#E2E8F0',
+  borderColor: '#E5E7EB',
   shadowColor: '#0F172A',
-  shadowOpacity: 0.06,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 7 },
-  elevation: 3,
+  shadowOpacity: 0.045,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
 },
 
 routineHeroIllustration: {
@@ -1542,20 +1540,20 @@ timelineContainer: {
 timelineItem: {
   flexDirection: 'row',
   alignItems: 'stretch',
-  marginBottom: 18,
+  marginBottom: 14,
 },
 
 timelineRail: {
-  width: 26,
+  width: 34,
   alignItems: 'center',
-  marginRight: 8,
+  marginRight: 10,
 },
 
 timelineCircle: {
-  width: 58,
-  height: 58,
-  borderRadius: 29,
-  backgroundColor: '#EEF2FF',
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: '#FFFFFF',
   borderWidth: 1.5,
   borderColor: '#C7D2FE',
   alignItems: 'center',
@@ -1565,37 +1563,37 @@ timelineCircle: {
 
 timelineNumber: {
   color: '#4F46E5',
-  fontSize: 12,
+  fontSize: 17,
   fontWeight: '900',
 },
 
 timelineCard: {
   flex: 1,
-  backgroundColor: 'rgba(255,255,255,0.96)',
-  borderRadius: 28,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
   padding: 12,
   borderWidth: 1,
-  borderColor: '#E0E7FF',
+  borderColor: '#E6EAF5',
   flexDirection: 'row',
   alignItems: 'center',
-  shadowColor: '#6366F1',
-  shadowOpacity: 0.10,
-  shadowRadius: 18,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 4,
-  minHeight: 96
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.055,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+  minHeight: 84,
 },
 
 timelineImage: {
-  width: 56,
-  height: 56,
+  width: 54,
+  height: 54,
   borderRadius: 16,
-  backgroundColor: '#E2E8F0',
+  backgroundColor: '#F1F5F9'
 },
 
 timelineIconWrap: {
-  width: 56,
-  height: 56,
+  width: 54,
+  height: 54,
   borderRadius: 16,
   backgroundColor: '#EEF2FF',
   alignItems: 'center',
@@ -1604,9 +1602,9 @@ timelineIconWrap: {
 
 timelineTitle: {
   color: '#0F172A',
-  fontSize: 22,
+  fontSize: 19,
   fontWeight: '900',
-  letterSpacing: -0.3,
+  letterSpacing: -0.25,
 },
 
 timelineCircleCompleted: {
@@ -1650,10 +1648,10 @@ timelineTextWrap: {
 },
 
 timelineCheckBtn: {
-  width: 48,
-  height: 48,
-  borderRadius: 18,
-  backgroundColor: '#EEF2FF',
+  width: 46,
+  height: 46,
+  borderRadius: 17,
+  backgroundColor: '#F8FAFF',
   borderWidth: 1,
   borderColor: '#C7D2FE',
   alignItems: 'center',
@@ -1668,10 +1666,10 @@ timelineCheckBtnCompleted: {
 timelineCardCurrent: {
   borderWidth: 1.5,
   backgroundColor: '#FFFBEB',
-  shadowOpacity: 0.25,
-  shadowRadius: 18,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 8,
+  shadowOpacity: 0.12,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 7 },
+  elevation: 4,
 },
 
 firstThenPreviewCard: {

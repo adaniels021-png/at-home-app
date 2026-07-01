@@ -1,14 +1,21 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useChild } from '@/lib/SelectedChildContext';
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  getPottyEntriesForChild,
+  getPottyReadinessResult,
+  PottyEntry,
+  PottyReadinessResult,
+} from '@/lib/toiletTrainingStorage';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -182,6 +189,78 @@ export default function PottyProblemSolverScreen() {
   const router = useRouter();
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
+  const { selectedChild } = useChild();
+
+const [entries, setEntries] = useState<PottyEntry[]>([]);
+const [readinessResult, setReadinessResult] =
+  useState<PottyReadinessResult | null>(null);
+
+useFocusEffect(
+  useCallback(() => {
+    async function loadCoachData() {
+      if (!selectedChild?.id) return;
+
+      const savedEntries = await getPottyEntriesForChild(selectedChild.id);
+      const savedReadiness = await getPottyReadinessResult(selectedChild.id);
+
+      setEntries(savedEntries);
+      setReadinessResult(savedReadiness);
+    }
+
+    void loadCoachData();
+  }, [selectedChild?.id])
+);
+
+function getRecommendedProblem() {
+  const recentEntries = entries.slice(0, 10);
+
+  const hasRefusal = recentEntries.some((entry) =>
+    entry.supportNeeds?.includes('refusal')
+  );
+
+  const hasFear = recentEntries.some(
+    (entry) =>
+      entry.supportNeeds?.includes('fear') ||
+      entry.supportNeeds?.includes('sensory_discomfort')
+  );
+
+  const hasAccidents = recentEntries.filter(
+    (entry) => entry.result === 'accident'
+  ).length >= 2;
+
+  const hasCommunicationNeed = recentEntries.some((entry) =>
+    entry.supportNeeds?.includes('does_not_communicate_need')
+  );
+
+  const hasSatButNoGo = recentEntries.some((entry) =>
+    entry.supportNeeds?.includes('sat_but_did_not_go')
+  );
+
+  if (readinessResult?.level === 'not_ready' || hasRefusal) {
+    return problems.find((item) => item.id === 'refuses_bathroom');
+  }
+
+  if (hasSatButNoGo) {
+    return problems.find((item) => item.id === 'wont_sit');
+  }
+
+  if (hasFear) {
+    return problems.find((item) => item.id === 'fear_flushing');
+  }
+
+  if (hasAccidents) {
+    return problems.find((item) => item.id === 'accidents');
+  }
+
+  if (hasCommunicationNeed) {
+    return problems.find((item) => item.id === 'nonverbal');
+  }
+
+  return problems.find((item) => item.id === 'wont_sit');
+}
+
+const recommendedProblem = getRecommendedProblem();
+
   return (
     <SafeAreaView style={styles.safe}>
       <View pointerEvents="none" style={styles.screenGlowTop} />
@@ -195,8 +274,10 @@ export default function PottyProblemSolverScreen() {
           </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Problem Solver</Text>
-            <Text style={styles.subtitle}>Autism-friendly potty support for hard moments.</Text>
+            <Text style={styles.title}>Potty Coach</Text>
+          <Text style={styles.subtitle}>
+Personalized support based on your child's potty journey.
+        </Text>
           </View>
         </View>
 
@@ -215,6 +296,32 @@ export default function PottyProblemSolverScreen() {
             </Text>
           </View>
         </View>
+
+        {recommendedProblem ? (
+  <TouchableOpacity
+    style={styles.recommendationCard}
+    onPress={() => setSelectedProblem(recommendedProblem)}
+    activeOpacity={0.9}
+  >
+    <Text style={styles.recommendationEyebrow}>
+      TODAY'S RECOMMENDATION
+    </Text>
+
+    <Text style={styles.recommendationTitle}>
+      {recommendedProblem.title}
+    </Text>
+
+    <Text style={styles.recommendationText}>
+      {readinessResult || entries.length > 0
+        ? `Based on recent potty logs and readiness results, this may be the best place to focus today. ${recommendedProblem.subtitle}`
+        : 'Start here if you are not sure what to work on first. This gives parents simple steps, short scripts, and what to avoid.'}
+    </Text>
+
+    <Text style={styles.recommendationLink}>
+      Open coaching steps
+    </Text>
+  </TouchableOpacity>
+) : null}
 
         <View style={styles.problemList}>
           {problems.map((problem) => (
@@ -566,4 +673,41 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
+
+  recommendationCard: {
+  backgroundColor: '#EFF6FF',
+  borderRadius: 24,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: '#BFDBFE',
+  marginBottom: 18,
+},
+
+recommendationEyebrow: {
+  color: '#2563EB',
+  fontSize: 11,
+  fontWeight: '900',
+  letterSpacing: 0.7,
+  marginBottom: 6,
+},
+
+recommendationTitle: {
+  color: '#1E3A8A',
+  fontSize: 18,
+  fontWeight: '900',
+  marginBottom: 5,
+},
+
+recommendationText: {
+  color: '#334155',
+  fontSize: 13,
+  fontWeight: '700',
+  lineHeight: 19,
+},
+recommendationLink: {
+  color: '#2563EB',
+  fontSize: 12,
+  fontWeight: '900',
+  marginTop: 10,
+},
 });

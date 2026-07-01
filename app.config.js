@@ -20,7 +20,7 @@ export default {
     ios: {
       supportsTablet: false,
       bundleIdentifier: 'com.adaniels021.abaathome',
-      buildNumber: '31',
+      buildNumber: '33',
 
       infoPlist: {
         NSCameraUsageDescription:
@@ -38,10 +38,10 @@ export default {
 
     android: {
       package: 'com.adaniels021.abaathome',
-      versionCode: 8,
+      versionCode: 15,
 
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
+        foregroundImage: './assets/icon.png',
         backgroundColor: '#ffffff',
       },
 

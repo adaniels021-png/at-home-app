@@ -46,57 +46,70 @@ export function SubscriptionProvider({
   const [adminMode, setAdminMode] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const isPro = DEV_FORCE_PRO || adminMode || revenueCatIsPro || ownerInheritedPro;
+  const isPro =
+    DEV_FORCE_PRO || adminMode || revenueCatIsPro || ownerInheritedPro;
 
   const setIsPro = (value: boolean) => {
     setRevenueCatIsPro(value);
   };
 
-  const saveCurrentUserProStatus = async (userId: string, proActive: boolean) => {
-    await supabase.from('user_subscription_status').upsert(
-      {
-        user_id: userId,
-        is_pro: proActive,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' }
-    );
+  const saveCurrentUserProStatus = async (
+    userId: string,
+    proActive: boolean
+  ) => {
+    try {
+      await supabase.from('user_subscription_status').upsert(
+        {
+          user_id: userId,
+          is_pro: proActive,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+    } catch (error) {
+      console.error('Save pro status error:', error);
+    }
   };
 
   const checkInheritedOwnerPro = async (userId: string) => {
-    const { data: caregiverRows, error: caregiverError } = await supabase
-      .from('child_caregivers')
-      .select('owner_user_id, caregiver_user_id, status')
-      .eq('caregiver_user_id', userId)
-      .eq('status', 'accepted');
+    try {
+      const { data: caregiverRows, error: caregiverError } = await supabase
+        .from('child_caregivers')
+        .select('owner_user_id, caregiver_user_id, status')
+        .eq('caregiver_user_id', userId)
+        .eq('status', 'accepted');
 
-    if (caregiverError) throw caregiverError;
+      if (caregiverError) throw caregiverError;
 
-    const ownerIds = Array.from(
-      new Set(
-        (caregiverRows || [])
-          .map((row: any) => row.owner_user_id)
-          .filter((ownerId: string) => ownerId && ownerId !== userId)
-      )
-    );
+      const ownerIds = Array.from(
+        new Set(
+          (caregiverRows || [])
+            .map((row: any) => row.owner_user_id)
+            .filter((ownerId: string) => ownerId && ownerId !== userId)
+        )
+      );
 
-    if (ownerIds.length === 0) {
+      if (ownerIds.length === 0) {
+        setOwnerInheritedPro(false);
+        return;
+      }
+
+      const { data: ownerStatuses, error: ownerStatusError } = await supabase
+        .from('user_subscription_status')
+        .select('user_id, is_pro')
+        .in('user_id', ownerIds);
+
+      if (ownerStatusError) throw ownerStatusError;
+
+      const ownerHasPro = (ownerStatuses || []).some(
+        (status: any) => status.is_pro === true
+      );
+
+      setOwnerInheritedPro(ownerHasPro);
+    } catch (error) {
+      console.error('Inherited owner pro check error:', error);
       setOwnerInheritedPro(false);
-      return;
     }
-
-    const { data: ownerStatuses, error: ownerStatusError } = await supabase
-      .from('user_subscription_status')
-      .select('user_id, is_pro')
-      .in('user_id', ownerIds);
-
-    if (ownerStatusError) throw ownerStatusError;
-
-    const ownerHasPro = (ownerStatuses || []).some(
-      (status: any) => status.is_pro === true
-    );
-
-    setOwnerInheritedPro(ownerHasPro);
   };
 
   useEffect(() => {
@@ -144,17 +157,23 @@ export function SubscriptionProvider({
       }
 
       const userId = session.user.id;
+      let proActive = false;
 
-      await configureRevenueCat();
-      await logInRevenueCat(userId);
+      try {
+        await configureRevenueCat();
+        await logInRevenueCat(userId);
 
-      const customerInfo = await getCustomerInfo();
-      const proActive = hasProAccess(customerInfo);
+        const customerInfo = await getCustomerInfo();
+        proActive = hasProAccess(customerInfo);
 
-      setRevenueCatIsPro(proActive);
+        setRevenueCatIsPro(proActive);
+      } catch (revenueCatError) {
+        console.error('RevenueCat subscription check error:', revenueCatError);
+        setRevenueCatIsPro(false);
+      }
 
-      await saveCurrentUserProStatus(userId, proActive);
-      await checkInheritedOwnerPro(userId);
+      void saveCurrentUserProStatus(userId, proActive);
+      void checkInheritedOwnerPro(userId);
     } catch (error) {
       console.error('Subscription refresh error:', error);
       setRevenueCatIsPro(false);
@@ -165,57 +184,33 @@ export function SubscriptionProvider({
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const initialize = async () => {
-      try {
-        await refreshSubscription();
-      } catch (error) {
-        console.error('Subscription init error:', error);
-
-        if (isMounted) {
-          setRevenueCatIsPro(false);
-          setOwnerInheritedPro(false);
-          setLoading(false);
-        }
-      }
-    };
-
-    void initialize();
+    setTimeout(() => {
+      void refreshSubscription();
+    }, 0);
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        if (!session?.user?.id) {
-          await logOutRevenueCat();
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user?.id) {
+        setRevenueCatIsPro(false);
+        setOwnerInheritedPro(false);
+        setLoading(false);
 
-          if (isMounted) {
-            setRevenueCatIsPro(false);
-            setOwnerInheritedPro(false);
-            setLoading(false);
-          }
+        setTimeout(() => {
+          void logOutRevenueCat();
+        }, 0);
 
-          return;
-        }
-
-        if (isMounted) setLoading(true);
-
-        await refreshSubscription();
-      } catch (error) {
-        console.error('Subscription auth sync error:', error);
-
-        if (isMounted) {
-          setRevenueCatIsPro(false);
-          setOwnerInheritedPro(false);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
+        return;
       }
+
+      setLoading(true);
+
+      setTimeout(() => {
+        void refreshSubscription();
+      }, 0);
     });
 
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);

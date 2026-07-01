@@ -1,4 +1,5 @@
 import { generateDailyABAActivities } from './aiService';
+
 import { supabase } from './supabase';
 
 export type ActivitySetting = 'home' | 'community' | 'outdoor' | 'either';
@@ -382,23 +383,6 @@ Warm, parent-friendly, practical, playful, autism-friendly, and low-pressure.
 `;
 }
 
-export async function safePregenerateActivityQueue({
-  childId,
-  childName,
-}: {
-  childId: string;
-  childName: string;
-}) {
-  try {
-    await pregenerateActivityQueue({
-      childId,
-      childName,
-      count: 5,
-    });
-  } catch (error) {
-    console.error('Pregenerate Daily Adventures queue error:', error);
-  }
-}
 
 export async function getChildActivityContext(childId: string) {
   const [assessmentRes, lessonsRes, routinesRes] = await Promise.all([
@@ -519,86 +503,6 @@ Difficulty should be parent-friendly and ${difficulty}, but do not label the act
   }
 }
 
-export async function getQueuedActivities({
-  childId,
-}: {
-  childId: string;
-}): Promise<DailyActivity[] | null> {
-  try {
-    const { data, error } = await supabase
-      .from('activity_queue')
-      .select('*')
-      .eq('child_id', childId)
-      .eq('is_used', false)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !data?.activities_json) return null;
-
-    await supabase
-      .from('activity_queue')
-      .update({ is_used: true })
-      .eq('id', data.id);
-
-    return normalizeActivities(data.activities_json);
-  } catch (error) {
-    console.error('getQueuedActivities error:', error);
-    return null;
-  }
-}
-
-export async function getNextActivitiesFromQueue({
-  childId,
-}: {
-  childId: string;
-}) {
-  return getQueuedActivities({ childId });
-}
-
-export async function pregenerateActivityQueue({
-  childId,
-  childName,
-  count = 5,
-}: {
-  childId: string;
-  childName: string;
-  count?: number;
-}) {
-  try {
-    const { data: existing } = await supabase
-      .from('activity_queue')
-      .select('id')
-      .eq('child_id', childId)
-      .eq('is_used', false)
-      .limit(1)
-      .maybeSingle();
-
-    if (existing) return;
-
-    const activities = await generateCreativeDailyActivities({
-      childId,
-      childName,
-      count,
-      setting: 'either',
-      difficulty: 'beginner',
-    });
-
-    const { error } = await supabase.from('activity_queue').insert({
-      child_id: childId,
-      activities_json: activities,
-      is_used: false,
-      created_at: new Date().toISOString(),
-    });
-
-    if (error) {
-      console.error('pregenerateActivityQueue insert error:', error);
-    }
-  } catch (error) {
-    console.error('pregenerateActivityQueue error:', error);
-  }
-}
-
 export async function getOrCreateDailyActivities({
   childId,
   childName,
@@ -628,21 +532,13 @@ export async function getOrCreateDailyActivities({
       }
     }
 
-    let activities: DailyActivity[] | null = null;
-
-    if (isPro) {
-      activities = await getQueuedActivities({ childId });
-    }
-
-    if (!activities || activities.length === 0) {
-      activities = await generateCreativeDailyActivities({
-        childId,
-        childName,
-        count: isPro ? 5 : 3,
-        setting: 'either',
-        difficulty: 'beginner',
-      });
-    }
+   const activities = await generateCreativeDailyActivities({
+  childId,
+  childName,
+  count: isPro ? 5 : 3,
+  setting: 'either',
+  difficulty: 'beginner',
+});
 
     const { error: saveError } = await supabase.from('daily_fun_activities').upsert(
       [
@@ -660,12 +556,6 @@ export async function getOrCreateDailyActivities({
     if (saveError) {
       console.error('getOrCreateDailyActivities save error:', saveError);
     }
-
-    void pregenerateActivityQueue({
-      childId,
-      childName,
-      count: 5,
-    });
 
     return activities;
   } catch (error) {

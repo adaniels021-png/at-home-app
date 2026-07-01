@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -20,13 +21,17 @@ import { supabase } from '../../lib/supabase';
 type LessonLogRow = {
   id: string;
   child_id: string;
-  category: string;
-  lesson_number: number;
-  lesson_name: string | null;
+  category: string | null;
+  lesson_number: number | null;
+  lesson_payload: any;
   status: string;
-  performance: string | null;
-  notes: string | null;
-  completed_at: string;
+  performance_score: number | null;
+  prompt_level: string | null;
+  behavior_response: string | null;
+  consistency_level: string | null;
+  skill_area: string | null;
+  stage_number: number | null;
+  completed_at: string | null;
   created_at: string;
 };
 
@@ -52,6 +57,8 @@ type ReassessmentRow = {
 export default function ProgressScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
+
+  const [growthDetailsVisible, setGrowthDetailsVisible] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,10 +92,25 @@ export default function ProgressScreen() {
 
       const [lessonRes, routineRes, reassessmentRes] = await Promise.all([
         supabase
-          .from('lesson_logs')
-          .select('*')
+          .from('daily_lesson_instances')
+          .select(`
+            id,
+            child_id,
+            category,
+            lesson_number,
+            lesson_payload,
+            status,
+            performance_score,
+            prompt_level,
+            behavior_response,
+            consistency_level,
+            skill_area,
+            stage_number,
+            completed_at,
+            created_at
+          `)
           .eq('child_id', selectedChild.id)
-          .eq('status', 'success')
+          .in('status', ['completed', 'success'])
           .gte('completed_at', sevenDaysAgo.toISOString())
           .order('completed_at', { ascending: false }),
 
@@ -126,12 +148,7 @@ export default function ProgressScreen() {
 
       try {
         const summary = await generateProgressSummary(selectedChild.id);
-
-setAiRecommendations(
-  summary?.summary
-    ? [summary.summary]
-    : []
-);
+        setAiRecommendations(summary?.summary ? [summary.summary] : []);
       } catch (error) {
         console.error('Recommendation load error:', error);
         setAiRecommendations([]);
@@ -150,135 +167,203 @@ setAiRecommendations(
     }
   }
 
-  const lessonsThisWeek = lessonLogs.length;
-  const routinesThisWeek = routineLogs.length;
+  const progressScore = useMemo(() => {
+  const scored = lessonLogs.filter(
+    (log) => typeof log.performance_score === 'number'
+  );
 
-  const topLessonCategory = useMemo(() => {
-    if (!lessonLogs.length) return 'No lessons yet';
+  const lessonAverage = scored.length
+    ? scored.reduce((sum, log) => sum + Number(log.performance_score || 0), 0) /
+      scored.length
+    : 0;
 
-    const counts: Record<string, number> = {};
+  const routineBoost = Math.min(routineLogs.length * 5, 18);
 
-    lessonLogs.forEach((log) => {
-      const category = log.category || 'General';
-      counts[category] = (counts[category] || 0) + 1;
-    });
+  const supportPenalty =
+    lessonLogs.filter(
+      (log) =>
+        log.prompt_level === 'physical' ||
+        log.behavior_response === 'frustrated' ||
+        log.consistency_level === 'low'
+    ).length * 6;
 
-    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  }, [lessonLogs]);
+  const base = scored.length ? lessonAverage : routineLogs.length ? 58 : 0;
 
-  const strongestRoutine = useMemo(() => {
-    if (!routineLogs.length) return 'No routine data yet';
+  const rawScore = Math.max(
+    0,
+    Math.min(100, Math.round(base + routineBoost - supportPenalty))
+  );
 
-    const counts: Record<string, number> = {};
+  if (rawScore >= 95) return 92;
+  if (rawScore >= 85) return 86;
+  if (rawScore >= 75) return 78;
+  if (rawScore >= 60) return 68;
+  if (rawScore > 0) return 54;
 
-    routineLogs.forEach((log) => {
-      const period = log.routine_period || 'Routine';
-      counts[period] = (counts[period] || 0) + 1;
-    });
+  return 0;
+}, [lessonLogs, routineLogs]);
 
-    const winner = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+const strongestSkillGrowth = useMemo(() => {
+  if (!lessonLogs.length) {
+    return 'Building Predictability';
+  }
 
-    if (!winner) return 'No routine data yet';
+  const counts: Record<string, number> = {};
 
-    return winner.charAt(0).toUpperCase() + winner.slice(1);
-  }, [routineLogs]);
+  lessonLogs.forEach((log) => {
+    const skill =
+      log.skill_area ||
+      log.lesson_payload?.focus_skill ||
+      log.category ||
+      'Learning';
 
-  const lessonTrend = useMemo(() => {
-    const withPerformance = lessonLogs.filter((log) => !!log.performance);
+    counts[skill] = (counts[skill] || 0) + 1;
+  });
 
-    if (!withPerformance.length) {
-      return 'Complete a few lessons with feedback to see learning patterns.';
-    }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Learning';
+}, [lessonLogs]);
 
-    const counts = {
-      easy: 0,
-      justRight: 0,
-      challenging: 0,
+const strongestSkillText = useMemo(() => {
+  if (strongestSkillGrowth === 'Building Predictability') {
+    return 'Daily routines are creating more consistency and confidence.';
+  }
+
+  return 'This is the area showing the clearest practice pattern right now.';
+}, [strongestSkillGrowth]);
+
+const mostPracticedSkill = useMemo(() => {
+  const counts: Record<string, number> = {};
+
+  lessonLogs.forEach((log) => {
+    const skill =
+      log.skill_area ||
+      log.lesson_payload?.focus_skill ||
+      log.category ||
+      'Learning';
+
+    counts[skill] = (counts[skill] || 0) + 1;
+  });
+
+  if (!Object.keys(counts).length && routineLogs.length > 0) {
+    return {
+      title: 'Daily Routines',
+      count: routineLogs.length,
+      description: `${routineLogs.length} routine moment${
+  routineLogs.length === 1 ? '' : 's'
+} practiced this week.`,
     };
+  }
 
-    withPerformance.forEach((log) => {
-      if (log.performance === 'easy') counts.easy += 1;
-      if (log.performance === 'just_right') counts.justRight += 1;
-      if (log.performance === 'challenging') counts.challenging += 1;
-    });
+  const winner = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
 
-    if (counts.justRight >= counts.easy && counts.justRight >= counts.challenging) {
-      return 'Recent lessons seem to be landing at a helpful level.';
-    }
+  if (!winner) {
+    return {
+      title: 'Getting Started',
+      count: 0,
+      description: 'Practice will appear here after lessons or routines are completed.',
+    };
+  }
 
-    if (counts.easy > counts.challenging) {
-      return 'Some lessons may be feeling easier, so the next step may be adding gentle challenge.';
-    }
+  return {
+    title: winner[0],
+    count: winner[1],
+    description: `${winner[1]} lesson${winner[1] === 1 ? '' : 's'} practiced this week.`,
+  };
+}, [lessonLogs, routineLogs]);
 
-    return 'Some lessons may need extra repetition, shorter steps, or more support.';
-  }, [lessonLogs]);
-
-  const weeklyInsights = useMemo(() => {
-    const insights: string[] = [];
-
-    if (lessonsThisWeek > 0) {
-      insights.push(`${childName} practiced ${topLessonCategory} most often this week.`);
-    }
-
-    if (routinesThisWeek > 0) {
-      insights.push(`${strongestRoutine} routine showed the most consistency.`);
-    }
-
-    insights.push(lessonTrend);
-
-    if (lessonsThisWeek === 0 && routinesThisWeek === 0) {
-      return [
-        'Progress insights will appear after lessons or routines are completed.',
-        'Start with one short lesson or one routine check-off today.',
-      ];
-    }
-
-    return insights.slice(0, 3);
-  }, [
-    childName,
-    lessonsThisWeek,
-    routinesThisWeek,
-    strongestRoutine,
-    topLessonCategory,
-    lessonTrend,
-  ]);
-
-  const focusAreas = useMemo(() => {
-    const areas = [
-      {
-        title: 'Communication',
-        icon: 'chatbubbles-outline' as keyof typeof Ionicons.glyphMap,
-        color: '#2563EB',
-        bg: '#EFF6FF',
-        text:
-          topLessonCategory === 'Communication'
-            ? 'Communication has been a major focus this week.'
-            : 'Use choices, requesting, and simple language during daily routines.',
-      },
-      {
-        title: 'Routines',
-        icon: 'calendar-outline' as keyof typeof Ionicons.glyphMap,
-        color: '#0F766E',
-        bg: '#ECFDF5',
-        text:
-          routinesThisWeek > 0
-            ? 'Routine practice is helping build predictability.'
-            : 'Try one simple routine check-off to begin building consistency.',
-      },
-      {
-        title: 'Learning',
-        icon: 'book-outline' as keyof typeof Ionicons.glyphMap,
-        color: '#7C3AED',
-        bg: '#F5F3FF',
-        text:
-          lessonsThisWeek > 0
-            ? 'Short lessons are building a useful learning pattern.'
-            : 'Start with a short lesson when your child is regulated.',
-      },
+const strongestSkillDetails = useMemo(() => {
+  if (!lessonLogs.length && routineLogs.length > 0) {
+    return [
+      `${routineLogs.length} routine moment${routineLogs.length === 1 ? '' : 's'} completed this week.`,
+      'Routine practice helps create more predictability at home.',
+      'Keep repeating the same routine steps so they feel familiar.',
     ];
+  }
 
-    return areas;
-  }, [lessonsThisWeek, routinesThisWeek, topLessonCategory]);
+  if (!lessonLogs.length) {
+    return [
+      'No lesson practice has been logged yet this week.',
+      'One short lesson or routine check-off will start the progress pattern.',
+      'This area will update as more practice is completed.',
+    ];
+  }
+
+  const relatedLessons = lessonLogs.filter((log) => {
+    const skill =
+      log.skill_area ||
+      log.lesson_payload?.focus_skill ||
+      log.category ||
+      'Learning';
+
+    return skill === strongestSkillGrowth;
+  });
+
+  return [
+    `${relatedLessons.length} practice moment${
+      relatedLessons.length === 1 ? '' : 's'
+    } connected to ${strongestSkillGrowth}.`,
+    'This area had the clearest practice pattern this week.',
+    'Repeat this skill once more before adding a harder next step.',
+  ];
+}, [lessonLogs, routineLogs, strongestSkillGrowth]);
+
+  const progressTone = useMemo(() => {
+  if (progressScore >= 85) return 'Strong week';
+  if (progressScore >= 70) return 'Steady progress';
+  if (progressScore >= 50) return 'Building momentum';
+  return 'Fresh start';
+}, [progressScore]);
+
+  const parentWins = useMemo(() => {
+    const wins: string[] = [];
+
+    if (lessonLogs.length > 0) {
+      wins.push(`${childName} is getting repeated practice with ${strongestSkillGrowth}.`);
+    }
+
+    if (routineLogs.length > 0) {
+      wins.push('Routine practice is helping create more predictability at home.');
+    }
+
+    const independentCount = lessonLogs.filter(
+      (log) =>
+        log.prompt_level === 'independent' ||
+        log.behavior_response === 'independent'
+    ).length;
+
+    if (independentCount > 0) {
+      wins.push('There were signs of growing independence this week.');
+    }
+
+    if (!wins.length) {
+      wins.push('Start with one short lesson or routine moment to begin this week’s progress story.');
+    }
+
+    return wins.slice(0, 3);
+  }, [childName, lessonLogs, routineLogs, strongestSkillGrowth]);
+
+  const nextStep = useMemo(() => {
+    if (!lessonLogs.length && !routineLogs.length) {
+      return 'Choose one calm moment today and complete a short lesson or routine check-off.';
+    }
+
+    const needsSupport = lessonLogs.some(
+      (log) =>
+        log.prompt_level === 'physical' ||
+        log.behavior_response === 'frustrated' ||
+        log.consistency_level === 'low'
+    );
+
+    if (needsSupport) {
+      return 'Keep the next practice short, use simple words, and celebrate small attempts.';
+    }
+
+    if (progressScore >= 80) {
+      return 'Try a gentle next step: add one new example, person, place, or material.';
+    }
+
+    return 'Repeat the strongest skill once more this week to build confidence.';
+  }, [lessonLogs, routineLogs, progressScore]);
 
   const isReassessmentDue = useMemo(() => {
     if (!lastReassessment) return true;
@@ -299,7 +384,7 @@ setAiRecommendations(
   if (loading && !refreshing) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#7C3AED" />
         <Text style={styles.loadingText}>Loading weekly insights...</Text>
       </View>
     );
@@ -321,21 +406,24 @@ setAiRecommendations(
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.bgBlobOne} />
+      <View style={styles.bgBlobTwo} />
+
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="arrow-back" size={22} color="#29145F" />
         </TouchableOpacity>
 
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Weekly Insights</Text>
-          <Text style={styles.headerSubtitle}>Helpful patterns for {childName}</Text>
+          <Text style={styles.headerSubtitle}>Simple progress for {childName}</Text>
         </View>
 
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => void loadProgressData()}
         >
-          <Ionicons name="refresh" size={20} color="#4F46E5" />
+          <Ionicons name="refresh" size={20} color="#7C3AED" />
         </TouchableOpacity>
       </View>
 
@@ -346,78 +434,125 @@ setAiRecommendations(
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4F46E5"
+            tintColor="#7C3AED"
           />
         }
       >
         <View style={styles.heroCard}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="sparkles-outline" size={28} color="#FFFFFF" />
+          <View style={styles.heroTextArea}>
+            <Text style={styles.heroKicker}>THIS WEEK</Text>
+            <Text style={styles.heroTitle}>{progressTone}</Text>
+            <Text style={styles.heroText}>
+              A parent-friendly snapshot of what is growing, what helped, and
+              what to try next.
+            </Text>
           </View>
 
-          <Text style={styles.heroTitle}>This week at a glance</Text>
+          <View style={styles.illustrationWrap}>
+            <View style={styles.illustrationCircleLarge} />
+            <View style={styles.illustrationCircleSmall} />
+            <View style={styles.illustrationPersonOne}>
+              <Ionicons name="person" size={30} color="#7C3AED" />
+            </View>
+            <View style={styles.illustrationPersonTwo}>
+              <Ionicons name="happy" size={28} color="#F97316" />
+            </View>
+            <View style={styles.illustrationSparkle}>
+              <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+            </View>
+          </View>
+        </View>
 
-          <Text style={styles.heroText}>
-            These insights are based on recent lessons, routines, and caregiver
-            activity. They are meant to guide—not pressure—your family.
+        <View style={styles.scoreCard}>
+          <View style={styles.scoreTopRow}>
+            <View>
+              <Text style={styles.scoreLabel}>Weekly Progress Score</Text>
+              <Text style={styles.scoreValue}>{progressScore}%</Text>
+            </View>
+
+            <View style={styles.scoreBadge}>
+              <Ionicons name="heart-circle-outline" size={18} color="#7C3AED" />
+              <Text style={styles.scoreBadgeText}>{progressTone}</Text>
+            </View>
+          </View>
+
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progressScore}%` }]} />
+          </View>
+
+          <Text style={styles.scoreNote}>
+            Based on recent lesson feedback, routine consistency, and support needs.
           </Text>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{lessonsThisWeek}</Text>
-            <Text style={styles.statLabel}>Lessons practiced</Text>
-          </View>
+        <TouchableOpacity
+  activeOpacity={0.9}
+  style={styles.growthCard}
+  onPress={() => setGrowthDetailsVisible(true)}
+>
+  <View style={styles.growthIcon}>
+    <Ionicons name="trending-up" size={24} color="#0F766E" />
+  </View>
 
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{routinesThisWeek}</Text>
-            <Text style={styles.statLabel}>Routine moments</Text>
-          </View>
-        </View>
+  <View style={{ flex: 1 }}>
+    <Text style={styles.growthLabel}>Strongest Skill Growth</Text>
+    <Text style={styles.growthTitle}>{strongestSkillGrowth}</Text>
+    <Text style={styles.growthText}>{strongestSkillText}</Text>
+    <Text style={styles.tapHint}>Tap to see why</Text>
+  </View>
 
-        <View style={styles.insightsCard}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="bulb-outline" size={20} color="#7C3AED" />
-            <Text style={styles.cardTitle}>Parent-Friendly Insights</Text>
-          </View>
+  <Ionicons name="chevron-forward" size={20} color="#0F766E" />
+</TouchableOpacity>
 
-          {weeklyInsights.map((item, index) => (
-            <View key={`${item}-${index}`} style={styles.insightRow}>
-              <View style={styles.insightDot} />
-              <Text style={styles.insightText}>{item}</Text>
+<View style={styles.practiceCard}>
+  <View style={styles.practiceIcon}>
+    <Ionicons name="repeat-outline" size={22} color="#5B3FF4" />
+  </View>
+
+  <View style={{ flex: 1 }}>
+    <Text style={styles.practiceLabel}>Most Practiced This Week</Text>
+    <Text style={styles.practiceTitle}>{mostPracticedSkill.title}</Text>
+    <Text style={styles.practiceText}>{mostPracticedSkill.description}</Text>
+  </View>
+</View>
+
+        <Text style={styles.sectionTitle}>Helpful Parent Takeaways</Text>
+
+        <View style={styles.takeawayCard}>
+          {parentWins.map((win, index) => (
+            <View key={`${win}-${index}`} style={styles.takeawayRow}>
+              <View style={styles.takeawayDot}>
+                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+              </View>
+              <Text style={styles.takeawayText}>{win}</Text>
             </View>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Recommended Focus Areas</Text>
-
-        {focusAreas.map((area) => (
-          <View key={area.title} style={styles.focusCard}>
-            <View style={[styles.focusIcon, { backgroundColor: area.bg }]}>
-              <Ionicons name={area.icon} size={23} color={area.color} />
+        <View style={styles.nextStepCard}>
+          <View style={styles.nextStepHeader}>
+            <View style={styles.nextStepIcon}>
+              <Ionicons name="compass-outline" size={22} color="#7C3AED" />
             </View>
-
-            <View style={styles.focusTextWrap}>
-              <Text style={styles.focusTitle}>{area.title}</Text>
-              <Text style={styles.focusText}>{area.text}</Text>
-            </View>
+            <Text style={styles.nextStepTitle}>Best Next Step</Text>
           </View>
-        ))}
+
+          <Text style={styles.nextStepText}>{nextStep}</Text>
+        </View>
 
         <View style={styles.aiCard}>
           <View style={styles.cardHeader}>
             <Ionicons name="sparkles-outline" size={20} color="#2563EB" />
-            <Text style={styles.aiTitle}>Personalized Next Steps</Text>
+            <Text style={styles.aiTitle}>Personalized Note</Text>
           </View>
 
           {recommendationsLoading ? (
             <Text style={styles.aiText}>Reviewing recent progress...</Text>
           ) : aiRecommendations.length > 0 ? (
-            aiRecommendations.slice(0, 4).map((item, index) => (
-              <View key={`${item}-${index}`} style={styles.aiRow}>
-                <Text style={styles.aiNumber}>{index + 1}</Text>
-                <Text style={styles.aiText}>{item}</Text>
-              </View>
+            aiRecommendations.slice(0, 2).map((item, index) => (
+              <Text key={`${item}-${index}`} style={styles.aiText}>
+                {item}
+              </Text>
             ))
           ) : (
             <Text style={styles.aiText}>
@@ -435,13 +570,13 @@ setAiRecommendations(
 
           <Text style={styles.reassessmentText}>
             {lastReassessment
-              ? `Last reassessment: ${new Date(lastReassessment).toLocaleDateString()}`
-              : 'No reassessment completed yet.'}
+              ? `Last check-in: ${new Date(lastReassessment).toLocaleDateString()}`
+              : 'No check-in completed yet.'}
           </Text>
 
           <Text style={styles.reassessmentSubText}>
             {isReassessmentDue
-              ? 'A new reassessment can help refresh the plan.'
+              ? 'A quick check-in can refresh the plan.'
               : 'The current plan is still up to date.'}
           </Text>
 
@@ -464,27 +599,85 @@ setAiRecommendations(
           onPress={() => router.push('/reports' as any)}
         >
           <Ionicons name="document-text-outline" size={19} color="#FFFFFF" />
-          <Text style={styles.reportButtonText}>Export Progress Report</Text>
+          <Text style={styles.reportButtonText}>See Full Weekly Report</Text>
         </TouchableOpacity>
 
         <Text style={styles.footerText}>
-          Progress insights are supportive summaries, not a clinical diagnosis or
-          medical recommendation.
+          Supportive summaries only — not a diagnosis or medical recommendation.
         </Text>
       </ScrollView>
+      <Modal
+  visible={growthDetailsVisible}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setGrowthDetailsVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalCard}>
+      <View style={styles.modalHeader}>
+        <View style={styles.modalIcon}>
+          <Ionicons name="trending-up" size={22} color="#0F766E" />
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.modalTitle}>Why this area?</Text>
+          <Text style={styles.modalSubtitle}>{strongestSkillGrowth}</Text>
+        </View>
+
+        <TouchableOpacity onPress={() => setGrowthDetailsVisible(false)}>
+          <Ionicons name="close" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      {strongestSkillDetails.map((item, index) => (
+        <View key={`${item}-${index}`} style={styles.modalRow}>
+          <View style={styles.modalDot} />
+          <Text style={styles.modalText}>{item}</Text>
+        </View>
+      ))}
+
+      <TouchableOpacity
+        style={styles.modalButton}
+        onPress={() => setGrowthDetailsVisible(false)}
+      >
+        <Text style={styles.modalButtonText}>Got it</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#FFF8F1' },
+
+  bgBlobOne: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(221, 214, 254, 0.45)',
+    top: -90,
+    right: -80,
+  },
+
+  bgBlobTwo: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(254, 215, 170, 0.35)',
+    bottom: 120,
+    left: -110,
+  },
 
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF8F1',
   },
 
   loadingText: {
@@ -511,22 +704,25 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255,248,241,0.96)',
   },
 
   headerButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 17,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E9D5FF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
 
   headerTextWrap: {
@@ -535,180 +731,336 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    color: '#0F172A',
-    fontSize: 24,
+    color: '#201047',
+    fontSize: 25,
     fontWeight: '900',
+    letterSpacing: -0.5,
   },
 
   headerSubtitle: {
-    color: '#64748B',
+    color: '#7C6F92',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     marginTop: 3,
   },
 
   scrollContent: {
     padding: 20,
-    paddingBottom: 42,
+    paddingBottom: 220,
   },
 
   heroCard: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 30,
+    backgroundColor: '#5B3FF4',
+    borderRadius: 34,
     padding: 22,
     marginBottom: 16,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    shadowColor: '#5B3FF4',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 4,
   },
 
-  heroIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
+  heroTextArea: {
+    flex: 1.15,
+    zIndex: 2,
+  },
+
+  heroKicker: {
+    color: '#DDD6FE',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 8,
   },
 
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 25,
+    fontSize: 29,
     fontWeight: '900',
+    letterSpacing: -0.8,
     marginBottom: 8,
   },
 
   heroText: {
-    color: '#E0E7FF',
+    color: '#EDE9FE',
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
   },
 
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+  illustrationWrap: {
+    flex: 0.85,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  statCard: {
-    flex: 1,
+  illustrationCircleLarge: {
+    position: 'absolute',
+    width: 126,
+    height: 126,
+    borderRadius: 63,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+
+  illustrationCircleSmall: {
+    position: 'absolute',
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: 'rgba(255,255,255,0.20)',
+    bottom: 10,
+    right: 0,
+  },
+
+  illustrationPersonOne: {
+    position: 'absolute',
+    left: 14,
+    bottom: 28,
+    width: 58,
+    height: 58,
+    borderRadius: 23,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  statValue: {
-    color: '#0F172A',
-    fontSize: 26,
+  illustrationPersonTwo: {
+    position: 'absolute',
+    right: 10,
+    top: 28,
+    width: 56,
+    height: 56,
+    borderRadius: 22,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  illustrationSparkle: {
+    position: 'absolute',
+    top: 2,
+    left: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  scoreCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    marginBottom: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+
+  scoreTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+
+  scoreLabel: {
+    color: '#7C6F92',
+    fontSize: 13,
     fontWeight: '900',
   },
 
-  statLabel: {
-    color: '#64748B',
+  scoreValue: {
+    marginTop: 4,
+    color: '#201047',
+    fontSize: 42,
+    fontWeight: '900',
+    letterSpacing: -1.2,
+  },
+
+  scoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F3FF',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 11,
+  },
+
+  scoreBadgeText: {
+    marginLeft: 5,
+    color: '#6D28D9',
     fontSize: 12,
+    fontWeight: '900',
+  },
+
+  progressTrack: {
+    height: 12,
+    backgroundColor: '#EEE7FF',
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#7C3AED',
+    borderRadius: 999,
+  },
+
+  scoreNote: {
+    color: '#7C6F92',
+    fontSize: 12.5,
+    lineHeight: 18,
     fontWeight: '700',
+  },
+
+  growthCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 28,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 22,
+  },
+
+  growthIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 13,
+  },
+
+  growthLabel: {
+    color: '#0F766E',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+  },
+
+  growthTitle: {
+    color: '#064E3B',
+    fontSize: 21,
+    fontWeight: '900',
     marginTop: 4,
   },
 
-  insightsCard: {
+  growthText: {
+    color: '#0F766E',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '700',
+    marginTop: 5,
+  },
+
+  sectionTitle: {
+    color: '#201047',
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+
+  takeawayCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 28,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 20,
+    borderColor: '#F1E7FF',
+    marginBottom: 14,
+  },
+
+  takeawayRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 13,
+  },
+
+  takeawayDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    marginTop: 1,
+  },
+
+  takeawayText: {
+    flex: 1,
+    color: '#475569',
+    fontSize: 14.5,
+    lineHeight: 21,
+    fontWeight: '800',
+  },
+
+  nextStepCard: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: 28,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    marginBottom: 14,
+  },
+
+  nextStepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  nextStepIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
+
+  nextStepTitle: {
+    color: '#7C2D12',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+
+  nextStepText: {
+    color: '#9A3412',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '800',
+  },
+
+  aiCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 26,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    marginBottom: 16,
   },
 
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-  },
-
-  cardTitle: {
-    marginLeft: 8,
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
-  insightRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 11,
-  },
-
-  insightDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#7C3AED',
-    marginTop: 7,
-    marginRight: 10,
-  },
-
-  insightText: {
-    flex: 1,
-    color: '#475569',
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: '700',
-  },
-
-  sectionTitle: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 12,
-  },
-
-  focusCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-
-  focusIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  focusTextWrap: {
-    flex: 1,
-  },
-
-  focusTitle: {
-    color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '900',
-  },
-
-  focusText: {
-    color: '#64748B',
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-
-  aiCard: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    marginTop: 8,
-    marginBottom: 16,
   },
 
   aiTitle: {
@@ -718,39 +1070,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
-  aiRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-
-  aiNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#DBEAFE',
-    color: '#1D4ED8',
-    textAlign: 'center',
-    lineHeight: 24,
-    fontSize: 12,
-    fontWeight: '900',
-    marginRight: 9,
-  },
-
   aiText: {
-    flex: 1,
     color: '#1E40AF',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     fontWeight: '700',
   },
 
   reassessmentCard: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 24,
+    backgroundColor: '#F0FDFA',
+    borderRadius: 26,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#99F6E4',
     marginBottom: 16,
   },
 
@@ -802,13 +1134,18 @@ const styles = StyleSheet.create({
   },
 
   reportButton: {
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#4F46E5',
+    height: 58,
+    borderRadius: 21,
+    backgroundColor: '#5B3FF4',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
+    shadowColor: '#5B3FF4',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 3,
   },
 
   reportButtonText: {
@@ -820,10 +1157,142 @@ const styles = StyleSheet.create({
 
   footerText: {
     marginTop: 14,
-    color: '#94A3B8',
+    color: '#A8A29E',
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
     fontWeight: '700',
   },
+
+  tapHint: {
+  color: '#0F766E',
+  fontSize: 12,
+  fontWeight: '900',
+  marginTop: 8,
+  opacity: 0.75,
+},
+
+practiceCard: {
+  backgroundColor: '#F5F3FF',
+  borderRadius: 28,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 22,
+},
+
+practiceIcon: {
+  width: 52,
+  height: 52,
+  borderRadius: 19,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 13,
+},
+
+practiceLabel: {
+  color: '#6D28D9',
+  fontSize: 12,
+  fontWeight: '900',
+  letterSpacing: 0.7,
+  textTransform: 'uppercase',
+},
+
+practiceTitle: {
+  color: '#201047',
+  fontSize: 21,
+  fontWeight: '900',
+  marginTop: 4,
+},
+
+practiceText: {
+  color: '#6D28D9',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '700',
+  marginTop: 5,
+},
+
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(15, 23, 42, 0.35)',
+  justifyContent: 'center',
+  padding: 24,
+},
+
+modalCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 30,
+  padding: 22,
+},
+
+modalHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 18,
+},
+
+modalIcon: {
+  width: 48,
+  height: 48,
+  borderRadius: 18,
+  backgroundColor: '#ECFDF5',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+modalTitle: {
+  color: '#201047',
+  fontSize: 19,
+  fontWeight: '900',
+},
+
+modalSubtitle: {
+  color: '#0F766E',
+  fontSize: 14,
+  fontWeight: '800',
+  marginTop: 2,
+},
+
+modalRow: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  marginBottom: 13,
+},
+
+modalDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: '#0F766E',
+  marginTop: 7,
+  marginRight: 10,
+},
+
+modalText: {
+  flex: 1,
+  color: '#475569',
+  fontSize: 14,
+  lineHeight: 21,
+  fontWeight: '700',
+},
+
+modalButton: {
+  marginTop: 10,
+  height: 50,
+  borderRadius: 18,
+  backgroundColor: '#5B3FF4',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+modalButtonText: {
+  color: '#FFFFFF',
+  fontSize: 15,
+  fontWeight: '900',
+},
 });

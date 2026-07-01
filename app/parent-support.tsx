@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  type ImageSourcePropType,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +21,7 @@ type SupportSection = {
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
+  image?: ImageSourcePropType;
   color: string;
   bg: string;
   iconBg?: string;
@@ -33,23 +35,25 @@ type SupportSection = {
 };
 
 const SUPPORT_SECTIONS: SupportSection[] = [
-  {
-    id: 'parent-wins',
-    title: 'Parent Wins',
-    subtitle: 'Positive wins from caregivers navigating autism support at home.',
-    icon: 'people-outline',
-    color: '#7C3AED',
-    bg: '#F5F3FF',
-    iconBg: '#FFFFFF',
-    border: '#DDD6FE',
-    route: '/parent-support/parent-wins',
-  },
+ {
+  id: 'parent-wins',
+  title: 'Parent Wins',
+  subtitle: 'Positive wins from caregivers navigating autism support at home.',
+  icon: 'people-outline',
+  image: require('../assets/images/parent-support-parent-wins.png'),
+  color: '#7C3AED',
+  bg: '#F5F3FF',
+  iconBg: '#FFFFFF',
+  border: '#DDD6FE',
+  route: '/parent-support/parent-wins',
+},
   {
     id: 'emotional-reset',
     title: 'Emotional Reset',
     subtitle:
       'A quick parent reset that helps you calm your body and know what to do next.',
     icon: 'leaf-outline',
+    image: require('../assets/images/parent-support-emotional-reset.png'),
     color: '#EA580C',
     bg: '#FFF7ED',
     iconBg: '#FFEDD5',
@@ -63,6 +67,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     subtitle:
       'Quick check-ins with options to type, reflect, or use voice-to-text.',
     icon: 'journal-outline',
+    image: require('../assets/images/parent-support-journal.png'),
     color: '#0F766E',
     bg: '#ECFDF5',
     iconBg: '#D1FAE5',
@@ -76,6 +81,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     subtitle:
       'Encouragement, hard-day support, burnout reminders, and parent sensory overload tips.',
     icon: 'sparkles-outline',
+    image: require('../assets/images/parent-support-daily-permission.png'),
     color: '#BE123C',
     bg: '#FFF1F2',
     iconBg: '#FFE4E6',
@@ -204,11 +210,27 @@ export default function ParentSupportScreen() {
                       { backgroundColor: section.iconBg || '#FFFFFF' },
                     ]}
                   >
-                    <Ionicons
-                      name={locked ? 'lock-closed-outline' : section.icon}
-                      size={26}
-                      color={section.color}
-                    />
+  {section.image ? (
+  <>
+    <Image
+      source={section.image}
+      style={[styles.sectionIconImage, locked && styles.sectionIconImageLocked]}
+      resizeMode="contain"
+    />
+
+    {locked ? (
+      <View style={styles.lockBadge}>
+        <Ionicons name="lock-closed" size={11} color="#FFFFFF" />
+      </View>
+    ) : null}
+  </>
+) : (
+  <Ionicons
+    name={locked ? 'lock-closed-outline' : section.icon}
+    size={26}
+    color={section.color}
+  />
+)}
                   </View>
 
                   <View style={styles.sectionTextWrap}>
@@ -420,15 +442,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
-  sectionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-
   sectionTextWrap: {
     flex: 1,
   },
@@ -568,5 +581,40 @@ heroOverlayText: {
   fontSize: 15,
   lineHeight: 22,
   fontWeight: '700',
+},
+
+sectionIcon: {
+  width: 64,
+  height: 64,
+  borderRadius: 22,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 14,
+  position: 'relative',
+  overflow: 'hidden',
+},
+
+sectionIconImage: {
+  width: 64,
+  height: 64,
+  borderRadius: 22,
+},
+
+sectionIconImageLocked: {
+  opacity: 0.55,
+},
+
+lockBadge: {
+  position: 'absolute',
+  top: -5,
+  right: -5,
+  width: 22,
+  height: 22,
+  borderRadius: 11,
+  backgroundColor: '#0F172A',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 2,
+  borderColor: '#FFFFFF',
 },
 });

@@ -15,7 +15,7 @@ import { useChild } from '@/lib/SelectedChildContext';
 import {
   deletePottyEntryForChild,
   getPottyEntriesForChild,
-  PottyEntry,
+  PottyEntry
 } from '@/lib/toiletTrainingStorage';
 
 export default function PottyLogsScreen() {
@@ -459,4 +459,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  
 });

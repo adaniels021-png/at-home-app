@@ -85,7 +85,7 @@ export default function ParentJournalScreen() {
       selectedMoodIds.includes(mood.id)
     );
 
-    if (selected.length === 0) return 'No feeling selected yet.';
+    if (selected.length === 0) return 'No feeling selected yet';
 
     return selected.map((mood) => mood.title).join(', ');
   }, [selectedMoodIds]);
@@ -100,29 +100,29 @@ export default function ParentJournalScreen() {
     );
   }
 
- async function saveJournalEntry() {
-  if (!stressLevel && selectedMoodIds.length === 0 && !entryText.trim()) {
-    return;
+  async function saveJournalEntry() {
+    if (!stressLevel && selectedMoodIds.length === 0 && !entryText.trim()) {
+      return;
+    }
+
+    const selectedMoodTitles = moodOptions
+      .filter((mood) => selectedMoodIds.includes(mood.id))
+      .map((mood) => mood.title);
+
+    await upsertParentJournalEntry({
+      text: entryText.trim() || selectedPrompt.prompt,
+      promptTitle: selectedPrompt.title,
+      promptText: selectedPrompt.prompt,
+      moods: selectedMoodTitles,
+      stressLevel,
+    });
+
+    setSavedEntry(true);
+
+    setTimeout(() => {
+      router.replace('/parent-support/journal-history');
+    }, 700);
   }
-
-  const selectedMoodTitles = moodOptions
-    .filter((mood) => selectedMoodIds.includes(mood.id))
-    .map((mood) => mood.title);
-
-  await upsertParentJournalEntry({
-    text: entryText.trim() || selectedPrompt.prompt,
-    promptTitle: selectedPrompt.title,
-    promptText: selectedPrompt.prompt,
-    moods: selectedMoodTitles,
-    stressLevel,
-  });
-
-  setSavedEntry(true);
-
-  setTimeout(() => {
-    router.replace('/parent-support/journal-history');
-  }, 700);
-}
 
   function resetJournal() {
     setStressLevel(null);
@@ -134,34 +134,73 @@ export default function ParentJournalScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={22} color="#0F172A" />
+      <View style={styles.backgroundWash} />
+
+      <View style={styles.bgBlobTopRight} />
+      <View style={styles.bgBlobLeft} />
+      <View style={styles.bgBlobBottomRight} />
+
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.82}
+          >
+            <Ionicons name="chevron-back" size={24} color="#0F172A" />
+          </TouchableOpacity>
+
           <Text style={styles.backText}>Parent Support</Text>
-        </TouchableOpacity>
+        </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
-
-          <View style={styles.heroIcon}>
-            <Ionicons name="journal-outline" size={34} color="#FFFFFF" />
+        <View style={styles.introCard}>
+          <View style={styles.introIcon}>
+            <Ionicons name="journal-outline" size={27} color="#FFFFFF" />
           </View>
 
-          <Text style={styles.heroTitle}>Parent Journal</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.introTitle}>Quick Check-In</Text>
+            <Text style={styles.introText}>One sentence is enough.</Text>
+          </View>
+        </View>
 
-          <Text style={styles.heroText}>
-            A quick check-in space for short reflections, small wins, and hard
-            moments. Keep it simple.
+        <View style={styles.writeCard}>
+          <View style={styles.stepHeader}>
+            <Text style={styles.stepLabel}>Step 1</Text>
+            <Text style={styles.sectionTitle}>Short journal entry</Text>
+          </View>
+
+          <View style={styles.promptStarterBox}>
+            <Ionicons name={selectedPrompt.icon} size={20} color="#DB2777" />
+            <Text style={styles.promptStarter}>{selectedPrompt.prompt}</Text>
+          </View>
+
+          <TextInput
+            style={styles.textInput}
+            multiline
+            textAlignVertical="top"
+            placeholder="Write one or two sentences..."
+            placeholderTextColor="#94A3B8"
+            value={entryText}
+            onChangeText={(text) => {
+              setEntryText(text);
+              setSavedEntry(false);
+            }}
+          />
+
+          <Text style={styles.voiceTipText}>
+            You can also use your keyboard microphone.
           </Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.stepLabel}>Step 1</Text>
+          <Text style={styles.stepLabel}>Step 2</Text>
           <Text style={styles.sectionTitle}>Stress level today</Text>
-          <Text style={styles.helperText}>
-             You can type or use your keyboard microphone to talk-to-text.
-              This space is for honest check-ins, hard days, small wins, and emotional resets.
-              </Text>
+          <Text style={styles.helperText}>Choose how heavy today feels.</Text>
 
           <View style={styles.levelRow}>
             {stressLevels.map((level) => (
@@ -189,17 +228,14 @@ export default function ParentJournalScreen() {
           </View>
 
           <View style={styles.levelLabels}>
-            <Text style={styles.labelSmall}>Low stress</Text>
-            <Text style={styles.labelSmall}>High stress</Text>
+            <Text style={styles.labelSmall}>Low</Text>
+            <Text style={styles.labelSmall}>High</Text>
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.stepLabel}>Step 2</Text>
+          <Text style={styles.stepLabel}>Step 3</Text>
           <Text style={styles.sectionTitle}>How are you feeling?</Text>
-          <Text style={styles.helperText}>
-            Select anything that fits. More than one is okay.
-          </Text>
 
           <View style={styles.moodGrid}>
             {moodOptions.map((mood) => {
@@ -209,28 +245,22 @@ export default function ParentJournalScreen() {
                 <Pressable
                   key={mood.id}
                   onPress={() => toggleMood(mood.id)}
-                  style={[styles.moodCard, selected && styles.moodCardSelected]}
+                  style={[styles.moodChip, selected && styles.moodChipSelected]}
                 >
                   <Ionicons
                     name={mood.icon}
-                    size={20}
-                    color={selected ? '#FFFFFF' : '#0F766E'}
+                    size={17}
+                    color={selected ? '#FFFFFF' : '#DB2777'}
                   />
 
                   <Text
                     style={[
-                      styles.moodText,
-                      selected && styles.moodTextSelected,
+                      styles.moodChipText,
+                      selected && styles.moodChipTextSelected,
                     ]}
                   >
                     {mood.title}
                   </Text>
-
-                  <Ionicons
-                    name={selected ? 'checkmark-circle' : 'add-circle-outline'}
-                    size={18}
-                    color={selected ? '#FFFFFF' : '#0F766E'}
-                  />
                 </Pressable>
               );
             })}
@@ -238,14 +268,10 @@ export default function ParentJournalScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.stepLabel}>Step 3</Text>
-          <Text style={styles.sectionTitle}>Choose a quick prompt</Text>
-          <Text style={styles.helperText}>
-            Pick one prompt, then type a short note. You can also use your
-            keyboard microphone for talk-to-text.
-          </Text>
+          <Text style={styles.stepLabel}>Step 4</Text>
+          <Text style={styles.sectionTitle}>Choose a prompt</Text>
 
-          <View style={styles.promptList}>
+          <View style={styles.promptGrid}>
             {promptOptions.map((prompt) => {
               const selected = selectedPromptId === prompt.id;
 
@@ -269,98 +295,66 @@ export default function ParentJournalScreen() {
                   >
                     <Ionicons
                       name={prompt.icon}
-                      size={20}
-                      color={selected ? '#FFFFFF' : '#0F766E'}
+                      size={18}
+                      color={selected ? '#FFFFFF' : '#DB2777'}
                     />
                   </View>
 
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        styles.promptTitle,
-                        selected && styles.promptTitleSelected,
-                      ]}
-                    >
-                      {prompt.title}
-                    </Text>
-
-                    <Text style={styles.promptText}>{prompt.prompt}</Text>
-                  </View>
+                  <Text
+                    style={[
+                      styles.promptTitle,
+                      selected && styles.promptTitleSelected,
+                    ]}
+                  >
+                    {prompt.title}
+                  </Text>
                 </Pressable>
               );
             })}
           </View>
         </View>
 
-        <View style={styles.writeCard}>
-          <Text style={styles.stepLabel}>Step 4</Text>
-          <Text style={styles.sectionTitle}>Short journal entry</Text>
-
-          <View style={styles.voiceTipBox}>
-            <Ionicons name="mic-outline" size={20} color="#0F766E" />
-
-            <Text style={styles.voiceTipText}>
-              To talk instead of type, tap inside the box and use the microphone
-              on your keyboard.
-            </Text>
-          </View>
-
-          <Text style={styles.promptStarter}>{selectedPrompt.prompt}</Text>
-
-          <TextInput
-            style={styles.textInput}
-            multiline
-            textAlignVertical="top"
-            placeholder="Write one or two sentences..."
-            placeholderTextColor="#94A3B8"
-            value={entryText}
-            onChangeText={(text) => {
-              setEntryText(text);
-              setSavedEntry(false);
-            }}
-          />
-
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>Today’s check-in</Text>
-            <Text style={styles.summaryText}>
-              Stress: {stressLevel || 'Not selected'} • Feelings:{' '}
-              {selectedMoodsText}
-            </Text>
-          </View>
-
-          <TouchableOpacity style={styles.saveButton} onPress={saveJournalEntry}>
-            <Ionicons name="bookmark-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>Save journal check-in</Text>
-          </TouchableOpacity>
-
-          {savedEntry && (
-            <View style={styles.savedBox}>
-              <Ionicons name="checkmark-circle" size={20} color="#0F766E" />
-
-              <View style={{ flex: 1 }}>
-                <Text style={styles.savedTitle}>Saved</Text>
-                <Text style={styles.savedText}>
-                  Your check-in was saved for reflection.
-                </Text>
-              </View>
-            </View>
-          )}
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryLabel}>Today’s check-in</Text>
+          <Text style={styles.summaryText}>
+            Stress: {stressLevel || 'Not selected'} • Feelings:{' '}
+            {selectedMoodsText}
+          </Text>
         </View>
 
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={saveJournalEntry}
+          activeOpacity={0.88}
+        >
+          <Ionicons name="bookmark-outline" size={19} color="#FFFFFF" />
+          <Text style={styles.saveButtonText}>Save journal check-in</Text>
+        </TouchableOpacity>
+
+        {savedEntry ? (
+          <View style={styles.savedBox}>
+            <Ionicons name="checkmark-circle" size={20} color="#0F766E" />
+            <Text style={styles.savedText}>Saved for reflection.</Text>
+          </View>
+        ) : null}
+
         <View style={styles.reminderCard}>
-          <Ionicons name="heart-outline" size={22} color="#0F766E" />
+          <Ionicons name="heart-outline" size={22} color="#DB2777" />
 
           <View style={{ flex: 1 }}>
             <Text style={styles.reminderTitle}>Keep it short</Text>
             <Text style={styles.reminderText}>
-              This journal is not meant to be another task. Even one sentence
-              counts.
+              This journal is not meant to be another task. Even one sentence counts.
             </Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.resetButton} onPress={resetJournal}>
-          <Ionicons name="refresh-outline" size={18} color="#0F766E" />
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={resetJournal}
+          activeOpacity={0.88}
+        >
+          <Ionicons name="refresh-outline" size={18} color="#DB2777" />
           <Text style={styles.resetText}>Reset journal</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -371,91 +365,140 @@ export default function ParentJournalScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFF7FA',
   },
 
   container: {
-    padding: 20,
-    paddingBottom: 42,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 46,
   },
 
-  backButton: {
+  bgBlobTopRight: {
+    position: 'absolute',
+    width: 330,
+    height: 330,
+    borderRadius: 165,
+    backgroundColor: '#FFE4E6',
+    top: -110,
+    right: -110,
+    opacity: 0.68,
+  },
+
+  bgBlobLeft: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#FCE7F3',
+    top: 560,
+    left: -175,
+    opacity: 0.3,
+  },
+
+  bgBlobBottomRight: {
+    position: 'absolute',
+    width: 270,
+    height: 270,
+    borderRadius: 135,
+    backgroundColor: '#DBEAFE',
+    bottom: 80,
+    right: -145,
+    opacity: 0.22,
+  },
+
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 18,
   },
 
+  backButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FDE2E7',
+  },
+
   backText: {
-    marginLeft: 4,
-    fontSize: 15,
-    fontWeight: '800',
+    marginLeft: 12,
+    fontSize: 20,
+    fontWeight: '900',
     color: '#0F172A',
   },
 
-  heroCard: {
-    overflow: 'hidden',
-    backgroundColor: '#0F766E',
-    borderRadius: 32,
-    padding: 24,
-    marginBottom: 18,
+  introCard: {
+    backgroundColor: '#DB2777',
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#DB2777',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 2,
   },
 
-  heroGlow: {
-    position: 'absolute',
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -70,
-    right: -55,
-  },
-
-  heroIcon: {
-    width: 62,
-    height: 62,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  introIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginRight: 14,
   },
 
-  heroTitle: {
+  introTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '900',
-    marginBottom: 8,
+    marginBottom: 3,
   },
 
-  heroText: {
-    color: '#CCFBF1',
+  introText: {
+    color: '#FFE4E6',
     fontSize: 15,
-    lineHeight: 23,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderRadius: 26,
-    padding: 18,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FBCFE8',
   },
 
   writeCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
-    padding: 20,
-    marginBottom: 16,
+    padding: 18,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#99F6E4',
+    borderColor: '#FBCFE8',
+    shadowColor: '#DB2777',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 2,
+  },
+
+  stepHeader: {
+    marginBottom: 4,
   },
 
   stepLabel: {
     alignSelf: 'flex-start',
-    backgroundColor: '#CCFBF1',
-    color: '#0F766E',
+    backgroundColor: '#FCE7F3',
+    color: '#DB2777',
     fontSize: 12,
     fontWeight: '900',
     paddingHorizontal: 10,
@@ -465,7 +508,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '900',
     color: '#0F172A',
     marginBottom: 6,
@@ -476,18 +519,57 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+
+  promptStarterBox: {
+    backgroundColor: '#FFF1F2',
+    borderRadius: 20,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  promptStarter: {
+    flex: 1,
+    marginLeft: 9,
+    color: '#9F1239',
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '900',
+  },
+
+  textInput: {
+    minHeight: 122,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 14,
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
+
+  voiceTipText: {
+    marginTop: 9,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   levelRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 8,
   },
 
   levelButton: {
     flex: 1,
-    height: 48,
+    height: 46,
     borderRadius: 16,
     backgroundColor: '#F8FAFC',
     alignItems: 'center',
@@ -497,8 +579,8 @@ const styles = StyleSheet.create({
   },
 
   levelButtonSelected: {
-    backgroundColor: '#0F766E',
-    borderColor: '#0F766E',
+    backgroundColor: '#DB2777',
+    borderColor: '#DB2777',
   },
 
   levelText: {
@@ -514,7 +596,7 @@ const styles = StyleSheet.create({
   levelLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 7,
   },
 
   labelSmall: {
@@ -524,159 +606,116 @@ const styles = StyleSheet.create({
   },
 
   moodGrid: {
-    gap: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
 
-  moodCard: {
-    minHeight: 56,
+  moodChip: {
+    width: '48.5%',
+    minHeight: 46,
     borderRadius: 18,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFF1F2',
     borderWidth: 1,
-    borderColor: '#A7F3D0',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: '#FBCFE8',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
   },
 
-  moodCardSelected: {
-    backgroundColor: '#0F766E',
-    borderColor: '#0F766E',
+  moodChipSelected: {
+    backgroundColor: '#DB2777',
+    borderColor: '#DB2777',
   },
 
-  moodText: {
+  moodChipText: {
     flex: 1,
-    marginLeft: 10,
-    color: '#0F766E',
+    marginLeft: 7,
+    color: '#9F1239',
     fontWeight: '900',
-    fontSize: 14,
+    fontSize: 12,
   },
 
-  moodTextSelected: {
+  moodChipTextSelected: {
     color: '#FFFFFF',
   },
 
-  promptList: {
-    gap: 10,
+  promptGrid: {
+    gap: 9,
   },
 
   promptCard: {
-    minHeight: 70,
+    minHeight: 58,
     borderRadius: 20,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 14,
+    borderColor: '#E2E8F0',
+    padding: 11,
     flexDirection: 'row',
     alignItems: 'center',
   },
 
   promptCardSelected: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#0F766E',
+    backgroundColor: '#FFF1F2',
+    borderColor: '#DB2777',
   },
 
   promptIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: '#CCFBF1',
+    width: 38,
+    height: 38,
+    borderRadius: 15,
+    backgroundColor: '#FCE7F3',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
 
   promptIconSelected: {
-    backgroundColor: '#0F766E',
+    backgroundColor: '#DB2777',
   },
 
   promptTitle: {
     color: '#334155',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
-    marginBottom: 4,
   },
 
   promptTitleSelected: {
-    color: '#0F766E',
-  },
-
-  promptText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-
-  voiceTipBox: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 18,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-  },
-
-  voiceTipText: {
-    flex: 1,
-    marginLeft: 9,
-    color: '#0F766E',
-    fontWeight: '800',
-    lineHeight: 20,
-  },
-
-  promptStarter: {
-    color: '#0F766E',
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-
-  textInput: {
-    minHeight: 130,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 14,
-    color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 22,
+    color: '#DB2777',
   },
 
   summaryBox: {
-    marginTop: 14,
-    backgroundColor: '#ECFDF5',
-    borderRadius: 18,
+    backgroundColor: '#FFF1F2',
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FBCFE8',
+    marginBottom: 14,
   },
 
   summaryLabel: {
-    color: '#0F766E',
+    color: '#9F1239',
     fontSize: 12,
     fontWeight: '900',
     marginBottom: 4,
   },
 
   summaryText: {
-    color: '#115E59',
+    color: '#831843',
     fontSize: 13,
     fontWeight: '800',
     lineHeight: 19,
   },
 
   saveButton: {
-    marginTop: 16,
-    minHeight: 54,
-    borderRadius: 18,
-    backgroundColor: '#0F766E',
+    minHeight: 56,
+    borderRadius: 20,
+    backgroundColor: '#DB2777',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 14,
   },
 
   saveButtonText: {
@@ -687,30 +726,21 @@ const styles = StyleSheet.create({
   },
 
   savedBox: {
-    marginTop: 14,
     backgroundColor: '#ECFDF5',
     borderRadius: 18,
-    padding: 14,
+    padding: 13,
     borderWidth: 1,
     borderColor: '#A7F3D0',
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-
-  savedTitle: {
-    marginLeft: 8,
-    color: '#0F766E',
-    fontSize: 14,
-    fontWeight: '900',
+    alignItems: 'center',
+    marginBottom: 14,
   },
 
   savedText: {
     marginLeft: 8,
-    marginTop: 3,
-    color: '#115E59',
+    color: '#0F766E',
     fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
+    fontWeight: '900',
   },
 
   reminderCard: {
@@ -719,14 +749,14 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FBCFE8',
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
 
   reminderTitle: {
     marginLeft: 10,
-    color: '#0F766E',
+    color: '#DB2777',
     fontSize: 15,
     fontWeight: '900',
   },
@@ -745,7 +775,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FBCFE8',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -753,8 +783,13 @@ const styles = StyleSheet.create({
 
   resetText: {
     marginLeft: 8,
-    color: '#0F766E',
+    color: '#DB2777',
     fontWeight: '900',
     fontSize: 14,
   },
+
+  backgroundWash: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: '#FFA6AE',
+},
 });

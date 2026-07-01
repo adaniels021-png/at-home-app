@@ -49,7 +49,7 @@ export type CachedDailyLessonRow = {
   category: string;
   lesson_number: number | null;
   lesson_payload: Lesson;
-  source: 'ai' | 'fallback';
+  source: 'ai' | 'fallback' | 'library';
   generated_at: string;
   updated_at: string;
 };
@@ -62,7 +62,7 @@ export type DailyLessonInstanceRow = {
   category: string;
   lesson_number: number;
   lesson_payload: Lesson;
-  source: 'ai' | 'fallback';
+  source: 'ai' | 'fallback' | 'library';
   status: 'generated' | 'started' | 'completed' | 'unsuccessful';
   started_at?: string | null;
   completed_at?: string | null;
@@ -112,36 +112,49 @@ export const SKILL_PROGRESSION_PATHS: Record<string, string[]> = {
     'Requesting attention appropriately',
   ],
 
-  Social: [
-    'Responding to name',
-    'Making eye contact briefly',
-    'Taking turns',
-    'Imitating simple actions',
-    'Greeting familiar people',
-    'Sharing attention with an adult',
-  ],
-
-  Play: [
-    'Exploring toys appropriately',
-    'Imitating play actions',
-    'Functional play with one toy',
-    'Taking turns during play',
-    'Simple pretend play',
-  ],
-
-  'Self-Help': [
-    'Following one-step directions',
+  'Daily Routines': [
+    'Following one-step routines',
     'Cleaning up one item',
     'Washing hands with prompts',
     'Brushing teeth with prompts',
     'Getting dressed with support',
+    'Mealtime participation',
+    'Bedtime routine participation',
   ],
 
-  Motor: [
+  'Play & Social Skills': [
+    'Joint attention',
+    'Imitating play actions',
+    'Functional play',
+    'Taking turns',
+    'Sharing attention with an adult',
+    'Simple pretend play',
+    'Greeting familiar people',
+  ],
+
+  'Learning & Attention': [
+    'Matching identical items',
+    'Sorting by color',
+    'Sorting by shape',
+    'Attending to a short activity',
+    'Following two-step directions',
+    'Completing simple puzzles',
+  ],
+
+  'Movement & Coordination': [
     'Imitating gross motor movements',
     'Stacking blocks',
-    'Completing simple puzzles',
     'Using crayons or markers',
+    'Fine motor practice',
     'Following movement directions',
+  ],
+
+  'Emotions & Behavior': [
+    'Identifying emotions',
+    'Requesting a break',
+    'Waiting briefly',
+    'Using a calming strategy',
+    'Handling small changes',
+    'Following a replacement behavior',
   ],
 };

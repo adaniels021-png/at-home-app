@@ -46,6 +46,18 @@ async function isNativeRevenueCatConfigured(): Promise<boolean> {
   }
 }
 
+async function getCurrentSupabaseUserId(): Promise<string | undefined> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    return session?.user?.id;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function configureRevenueCat(): Promise<void> {
   if (configured) return;
 
@@ -85,24 +97,13 @@ export async function configureRevenueCat(): Promise<void> {
       if (alreadyConfigured) {
         configured = true;
         revenueCatAvailable = true;
-
-        try {
-          const info = await Purchases.getCustomerInfo();
-          currentRevenueCatAppUserId = info?.originalAppUserId || null;
-        } catch {
-          currentRevenueCatAppUserId = null;
-        }
-
+        currentRevenueCatAppUserId = (await getCurrentSupabaseUserId()) ?? null;
         return;
       }
 
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const appUserID = session?.user?.id ?? undefined;
+      const appUserID = await getCurrentSupabaseUserId();
 
       Purchases.configure({
         apiKey,

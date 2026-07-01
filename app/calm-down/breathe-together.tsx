@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,10 +19,14 @@ type Phase = 'Ready' | 'Breathe in' | 'Hold' | 'Breathe out';
 
 const calmLevels = [1, 2, 3, 4, 5];
 
+// Add this image to assets/images/ or change this require path to your actual file name.
+const HERO_IMAGE = require('@/assets/images/breathe-together-hero.png');
+
 export default function BreatheTogetherScreen() {
   const router = useRouter();
 
   const circleAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isRunning, setIsRunning] = useState(false);
@@ -50,8 +55,10 @@ export default function BreatheTogetherScreen() {
       return 'Good try. This may need more time, or your child may need a quieter space first.';
     }
 
-    return 'That is okay. This may not be the right strategy for this moment. Try Quiet Space or Sensory Reset next.';
+    return 'That is okay. This may not be the right strategy for this moment.';
   }, [beforeCalm, afterCalm]);
+
+  const showNextToolSuggestion = helped || !!resultMessage || !!afterCalm;
 
   useEffect(() => {
     if (!isRunning) return;
@@ -68,6 +75,15 @@ export default function BreatheTogetherScreen() {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isRunning, count, phase]);
+
+  useEffect(() => {
+    Animated.timing(glowAnim, {
+      toValue: isRunning ? 1 : 0,
+      duration: 350,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [isRunning, glowAnim]);
 
   function animateCircle(toValue: number, duration: number) {
     Animated.timing(circleAnim, {
@@ -131,41 +147,105 @@ export default function BreatheTogetherScreen() {
     }).start();
   }
 
+  async function toggleHelped() {
+    const nextHelped = !helped;
+    setHelped(nextHelped);
+
+    if (nextHelped) {
+      await saveCalmToolkitLog({
+        toolType: 'breathe-together',
+        trigger: 'big-emotions',
+        toolsUsed: ['Breathe Together'],
+        helped: true,
+      });
+    }
+  }
+
+ const glowOpacity = glowAnim.interpolate({
+  inputRange: [0, 1],
+  outputRange: [0.25, 1],
+});
+
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={22} color="#0F172A" />
+      <View style={styles.backgroundBase} />
+      <View style={styles.bgBlobTopRight} />
+      <View style={styles.bgBlobLeft} />
+      <View style={styles.bgBlobBottomRight} />
+
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.82}
+          >
+            <Ionicons name="chevron-back" size={24} color="#0F172A" />
+          </TouchableOpacity>
+
           <Text style={styles.backText}>Calm Down Toolkit</Text>
-        </TouchableOpacity>
+        </View>
 
-        <View style={styles.heroCard}>
-          <View pointerEvents="none" style={styles.heroGlowOne} />
-          <View pointerEvents="none" style={styles.heroGlowTwo} />
+        <View style={styles.heroBlendWrap}>
+          <View style={styles.heroGlowBehind} />
 
-          <View style={styles.heroTopRow}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="leaf-outline" size={30} color="#FFFFFF" />
-            </View>
+          <View style={styles.heroCard}>
+            <Image source={HERO_IMAGE} style={styles.heroImage} resizeMode="cover" />
 
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>CO-REGULATION</Text>
+            <View style={styles.heroOverlay} />
+
+            <View style={styles.heroCopy}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="leaf-outline" size={28} color="#FFFFFF" />
+              </View>
+
+              <Text style={styles.title}>Breathe Together</Text>
+
+              <Text style={styles.subtitle}>
+                Slow your body first. Stay close, calm, and steady.
+              </Text>
             </View>
           </View>
+        </View>
 
-          <Text style={styles.title}>Breathe Together</Text>
+        <View style={styles.progressStrip}>
+          <View style={styles.progressStep}>
+            <View style={styles.progressDot}>
+              <Text style={styles.progressNumber}>1</Text>
+            </View>
+            <Text style={styles.progressText}>Check calm</Text>
+          </View>
 
-          <Text style={styles.subtitle}>
-            Slow your body first. Your calm voice, slower breathing, and steady presence can help your child feel safer.
-          </Text>
+          <View style={styles.progressLine} />
+
+          <View style={styles.progressStep}>
+            <View style={styles.progressDot}>
+              <Text style={styles.progressNumber}>2</Text>
+            </View>
+            <Text style={styles.progressText}>Breathe</Text>
+          </View>
+
+          <View style={styles.progressLine} />
+
+          <View style={styles.progressStep}>
+            <View style={styles.progressDot}>
+              <Text style={styles.progressNumber}>3</Text>
+            </View>
+            <Text style={styles.progressText}>Check again</Text>
+          </View>
         </View>
 
         <View style={styles.scriptCard}>
-          <Ionicons name="chatbubble-ellipses-outline" size={22} color="#047857" />
+          <View style={styles.scriptIcon}>
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#047857" />
+          </View>
 
           <View style={{ flex: 1 }}>
             <Text style={styles.scriptTitle}>Parent script</Text>
-            <Text style={styles.scriptText}>
+            <Text style={styles.scriptQuote}>
               “You’re safe. I’m right here. Let’s breathe together.”
             </Text>
           </View>
@@ -179,53 +259,64 @@ export default function BreatheTogetherScreen() {
         />
 
         <View style={styles.breathingCard}>
-          <View style={styles.liveBadge}>
-            <View style={[styles.liveDot, isRunning && styles.liveDotActive]} />
-            <Text style={styles.liveText}>
-              {isRunning ? 'Breathing in progress' : 'Ready when you are'}
-            </Text>
-          </View>
+  <View style={styles.liveBadge}>
+    <View style={[styles.liveDot, isRunning && styles.liveDotActive]} />
+    <Text style={styles.liveText}>
+      {isRunning ? 'Breathing in progress' : 'Ready when you are'}
+    </Text>
+  </View>
 
-          <Pressable style={styles.circleWrap} onPress={isRunning ? stopBreathing : startBreathing}>
-            <Animated.View style={[styles.breathCircle, { transform: [{ scale: circleAnim }] }]}>
-              <View style={styles.innerCircle}>
-                <Text style={styles.phaseText}>{phase}</Text>
-                <Text style={styles.countText}>{isRunning ? count : 'Start'}</Text>
-              </View>
-            </Animated.View>
-          </Pressable>
+  <Pressable
+    style={styles.circleWrap}
+    onPress={isRunning ? stopBreathing : startBreathing}
+  >
+    <Animated.View style={[styles.circleGlow, { opacity: glowOpacity }]} />
 
-          <Text style={styles.coachText}>{coachText}</Text>
+    <Animated.View
+      style={[styles.breathCircle, { transform: [{ scale: circleAnim }] }]}
+    >
+      <View style={styles.innerCircle}>
+        <Text style={styles.phaseText}>{isRunning ? phase : 'Tap to'}</Text>
+        <Text style={styles.countText}>{isRunning ? count : 'Start'}</Text>
+      </View>
+    </Animated.View>
+  </Pressable>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-  style={styles.primaryButton}
-  onPress={startBreathing}
-  disabled={isRunning}
->
-              <Ionicons name="play" size={18} color="#FFFFFF" />
-              <Text style={styles.primaryButtonText}>Start</Text>
-            </TouchableOpacity>
+  <View style={styles.phaseLabelsRow}>
+    <PhaseLabel label="Breathe in" active={phase === 'Breathe in'} />
+    <PhaseLabel label="Hold" active={phase === 'Hold'} />
+    <PhaseLabel label="Breathe out" active={phase === 'Breathe out'} />
+  </View>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={stopBreathing}>
-              <Ionicons name="stop" size={18} color="#047857" />
-              <Text style={styles.secondaryButtonText}>Stop</Text>
-            </TouchableOpacity>
-          </View>
+  <Text style={styles.coachText}>{coachText}</Text>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{cycles}</Text>
-              <Text style={styles.statLabel}>Rounds</Text>
-            </View>
+  <View style={styles.buttonRow}>
+    <TouchableOpacity
+      style={[styles.primaryButton, isRunning && styles.primaryButtonDisabled]}
+      onPress={startBreathing}
+      disabled={isRunning}
+      activeOpacity={0.9}
+    >
+      <Ionicons name="play" size={18} color="#FFFFFF" />
+      <Text style={styles.primaryButtonText}>Start</Text>
+    </TouchableOpacity>
 
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{phase}</Text>
-              <Text style={styles.statLabel}>Current step</Text>
-            </View>
-          </View>
-        </View>
+    <TouchableOpacity
+      style={styles.secondaryButton}
+      onPress={stopBreathing}
+      activeOpacity={0.9}
+    >
+      <Ionicons name="stop" size={18} color="#047857" />
+      <Text style={styles.secondaryButtonText}>Stop</Text>
+    </TouchableOpacity>
+  </View>
 
+  <View style={styles.roundsCard}>
+    <Ionicons name="repeat-outline" size={16} color="#047857" />
+    <Text style={styles.roundsText}>{cycles} rounds</Text>
+  </View>
+</View>
+   
         <CalmLevelCard
           title="After calm level"
           helper="How calm does your child seem after trying this?"
@@ -235,21 +326,14 @@ export default function BreatheTogetherScreen() {
 
         <TouchableOpacity
           style={[styles.helpedButton, helped && styles.helpedButtonSelected]}
-          onPress={async () => {
-            const nextHelped = !helped;
-            setHelped(nextHelped);
-
-            if (nextHelped) {
-            await saveCalmToolkitLog({
-            toolType: 'breathe-together',
-             trigger: 'big-emotions',
-            toolsUsed: ['Breathe Together'],
-           helped: true,
-          });
-        }
-      }}
+          onPress={toggleHelped}
+          activeOpacity={0.9}
         >
-          <Ionicons name={helped ? 'heart' : 'heart-outline'} size={20} color={helped ? '#FFFFFF' : '#047857'} />
+          <Ionicons
+            name={helped ? 'heart' : 'heart-outline'}
+            size={20}
+            color={helped ? '#FFFFFF' : '#047857'}
+          />
           <Text style={[styles.helpedText, helped && styles.helpedTextSelected]}>
             This helped
           </Text>
@@ -257,20 +341,53 @@ export default function BreatheTogetherScreen() {
 
         {!!resultMessage && (
           <View style={styles.resultCard}>
-            <Ionicons name="sparkles-outline" size={24} color="#047857" />
-            <Text style={styles.resultTitle}>Personal result</Text>
-            <Text style={styles.resultText}>{resultMessage}</Text>
+            <View style={styles.resultIcon}>
+              <Ionicons name="sparkles-outline" size={22} color="#047857" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resultTitle}>Personal result</Text>
+              <Text style={styles.resultText}>{resultMessage}</Text>
+            </View>
+          </View>
+        )}
+
+        {showNextToolSuggestion && (
+          <View style={styles.nextToolCard}>
+            <View style={styles.nextToolIcon}>
+              <Ionicons name="compass-outline" size={23} color="#047857" />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nextToolTitle}>Need more support?</Text>
+              <Text style={styles.nextToolText}>
+                Try Quiet Space or Sensory Reset next.
+              </Text>
+            </View>
           </View>
         )}
 
         <View style={styles.tipCard}>
-          <Text style={styles.tipTitle}>Parent tip</Text>
-          <Text style={styles.tipText}>
-            Do not force perfect breathing, eye contact, or talking. The goal is safety, connection, and slowing the moment down.
-          </Text>
-        </View>
+  <Ionicons name="bulb-outline" size={22} color="#047857" />
+
+  <View style={{ flex: 1 }}>
+    <Text style={styles.tipTitle}>Parent tip</Text>
+    <Text style={styles.tipText}>
+      Do not force perfect breathing, eye contact, or talking. The goal is safety, connection, and slowing the moment down.
+    </Text>
+  </View>
+</View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function PhaseLabel({ label, active }: { label: string; active: boolean }) {
+  return (
+    <View style={[styles.phaseLabel, active && styles.phaseLabelActive]}>
+      <Text style={[styles.phaseLabelText, active && styles.phaseLabelTextActive]}>
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -287,7 +404,15 @@ function CalmLevelCard({
 }) {
   return (
     <View style={styles.card}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.cardHeaderRow}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {selected ? (
+          <View style={styles.selectedBadge}>
+            <Text style={styles.selectedBadgeText}>{selected}/5</Text>
+          </View>
+        ) : null}
+      </View>
+
       <Text style={styles.helperText}>{helper}</Text>
 
       <View style={styles.levelRow}>
@@ -313,140 +438,219 @@ function CalmLevelCard({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F7F8FC' },
-  container: { padding: 20, paddingBottom: 42 },
+  safe: {
+  flex: 1,
+  backgroundColor: '#F7FFF9',
+},
 
-  backButton: {
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 46,
+  },
+
+  bgBlobTopRight: {
+    position: 'absolute',
+    width: 330,
+    height: 330,
+    borderRadius: 165,
+    backgroundColor: '#D1FAE5',
+    top: -118,
+    right: -130,
+    opacity: 0.75,
+  },
+
+  bgBlobLeft: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: '#FEF3C7',
+    top: 620,
+    left: -170,
+    opacity: 0.34,
+  },
+
+  bgBlobBottomRight: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: '#BBF7D0',
+    bottom: 80,
+    right: -145,
+    opacity: 0.28,
+  },
+
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
+  },
+
+  backButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    shadowColor: '#047857',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
 
   backText: {
-    fontSize: 15,
-    fontWeight: '800',
+    marginLeft: 12,
+    fontSize: 18,
+    fontWeight: '900',
     color: '#0F172A',
-    marginLeft: 4,
   },
 
-  heroCard: {
-    overflow: 'hidden',
-    backgroundColor: '#047857',
-    borderRadius: 30,
-    padding: 22,
-    marginBottom: 14,
-  },
-
-  heroGlowOne: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -90,
-    right: -70,
-  },
-
-  heroGlowTwo: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(187,247,208,0.22)',
-    bottom: -80,
-    left: -55,
-  },
-
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  heroBlendWrap: {
     marginBottom: 16,
   },
 
+  heroGlowBehind: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: -10,
+    height: 46,
+    borderRadius: 28,
+    backgroundColor: '#D1FAE5',
+    opacity: 0.7,
+  },
+
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+heroOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(4,120,87,0.52)',
+},
+
   iconCircle: {
-    width: 56,
-    height: 56,
+    width: 58,
+    height: 58,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
+  progressStep: {
+    flex: 1,
+    alignItems: 'center',
   },
 
-  heroBadgeText: {
-    color: '#FFFFFF',
+  progressDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+
+  progressNumber: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
+  progressText: {
+    color: '#475569',
     fontSize: 11,
+    lineHeight: 14,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    textAlign: 'center',
   },
 
-  title: {
-    color: '#FFFFFF',
-    fontSize: 29,
-    fontWeight: '900',
-  },
-
-  subtitle: {
-    color: '#D1FAE5',
-    marginTop: 9,
-    lineHeight: 22,
-    fontSize: 14,
-    fontWeight: '700',
+  progressLine: {
+    width: 22,
+    height: 1,
+    backgroundColor: '#A7F3D0',
+    marginBottom: 20,
   },
 
   scriptCard: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 24,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 26,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#FED7AA',
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 12,
+  },
+
+  scriptIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   scriptTitle: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#064E3B',
+    color: '#7C2D12',
   },
 
-  scriptText: {
+  scriptQuote: {
     marginTop: 4,
-    color: '#047857',
-    lineHeight: 20,
-    fontSize: 13,
-    fontWeight: '800',
+    color: '#064E3B',
+    lineHeight: 22,
+    fontSize: 15,
+    fontWeight: '900',
   },
 
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
 
   sectionTitle: {
-    fontSize: 19,
+    flex: 1,
+    fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
-    marginBottom: 6,
+  },
+
+  selectedBadge: {
+    borderRadius: 999,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+
+  selectedBadgeText: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '900',
   },
 
   helperText: {
     fontSize: 13,
     color: '#64748B',
-    marginBottom: 14,
-    lineHeight: 20,
+    marginBottom: 12,
+    lineHeight: 18,
     fontWeight: '700',
   },
 
@@ -455,24 +659,133 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  levelButton: {
-    flex: 1,
-    height: 50,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
+heroCard: {
+  height: 210,
+  borderRadius: 32,
+  overflow: 'hidden',
+  backgroundColor: '#047857',
+  shadowColor: '#047857',
+  shadowOpacity: 0.06,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+},
+
+heroCopy: {
+  position: 'absolute',
+  left: 22,
+  top: 22,
+  bottom: 22,
+  width: '52%',
+  justifyContent: 'space-between',
+},
+
+title: {
+  color: '#FFFFFF',
+  fontSize: 28,
+  lineHeight: 33,
+  fontWeight: '900',
+  letterSpacing: -0.5,
+},
+
+subtitle: {
+  color: '#ECFDF5',
+  fontSize: 13,
+  lineHeight: 19,
+  fontWeight: '800',
+},
+
+progressStrip: {
+  backgroundColor: 'rgba(255,255,255,0.72)',
+  borderRadius: 24,
+  borderWidth: 1,
+  borderColor: 'rgba(167,243,208,0.75)',
+  padding: 12,
+  marginBottom: 14,
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+breathingCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 30,
+  paddingVertical: 18,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#A7F3D0',
+  alignItems: 'center',
+  overflow: 'hidden',
+},
+
+circleWrap: {
+  height: 205,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: -12,
+  marginBottom: 6,
+},
+
+circleGlow: {
+  position: 'absolute',
+  width: 165,
+  height: 165,
+  borderRadius: 82,
+  backgroundColor: 'rgba(16,185,129,0.14)',
+},
+
+breathCircle: {
+  width: 148,
+  height: 148,
+  borderRadius: 74,
+  backgroundColor: '#DCFCE7',
+  borderWidth: 7,
+  borderColor: '#86EFAC',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+innerCircle: {
+  width: 114,
+  height: 114,
+  borderRadius: 57,
+  backgroundColor: '#F0FDF4',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 6,
+},
+
+card: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
+  padding: 15,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#D1FAE5',
+},
+
+levelButton: {
+  flex: 1,
+  height: 42,
+  borderRadius: 15,
+  backgroundColor: '#F8FAFC',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#CBD5E1',
+},
 
   levelButtonSelected: {
     backgroundColor: '#047857',
     borderColor: '#047857',
+    shadowColor: '#047857',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 3,
   },
 
   levelText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '900',
     color: '#334155',
   },
@@ -484,7 +797,7 @@ const styles = StyleSheet.create({
   levelLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 7,
   },
 
   labelSmall: {
@@ -493,15 +806,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  breathingCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 30,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    alignItems: 'center',
-  },
 
   liveBadge: {
     flexDirection: 'row',
@@ -510,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#BBF7D0',
   },
@@ -533,75 +837,39 @@ const styles = StyleSheet.create({
     color: '#047857',
   },
 
-  circleWrap: {
-    height: 250,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
+phaseText: {
+  fontSize: 16,
+  fontWeight: '800',
+  color: '#064E3B',
+},
 
-  breathCircle: {
-    width: 168,
-    height: 168,
-    borderRadius: 84,
-    backgroundColor: '#DCFCE7',
-    borderWidth: 8,
-    borderColor: '#86EFAC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#10B981',
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
+countText: {
+  fontSize: 28,
+  fontWeight: '900',
+  color: '#047857',
+},
 
-  innerCircle: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: '#F0FDF4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  phaseText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#064E3B',
-    textAlign: 'center',
-  },
-
-  countText: {
-    fontSize: 23,
-    fontWeight: '900',
-    color: '#047857',
-    marginTop: 4,
-  },
-
-  coachText: {
-    fontSize: 14,
-    color: '#475569',
-    textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: 18,
-    fontWeight: '700',
-  },
-
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
+coachText: {
+  fontSize: 14,
+  color: '#475569',
+  textAlign: 'center',
+  lineHeight: 21,
+  marginBottom: 14,
+  fontWeight: '700',
+},
 
   primaryButton: {
     flex: 1,
-    height: 54,
-    borderRadius: 20,
+    height: 52,
+    borderRadius: 19,
     backgroundColor: '#047857',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  primaryButtonDisabled: {
+    opacity: 0.55,
   },
 
   primaryButtonText: {
@@ -612,16 +880,16 @@ const styles = StyleSheet.create({
   },
 
   secondaryButton: {
-    flex: 1,
-    height: 54,
-    borderRadius: 20,
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  flex: 1,
+  height: 52,
+  borderRadius: 19,
+  backgroundColor: '#F0FDF4',
+  borderWidth: 1,
+  borderColor: '#BBF7D0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
 
   secondaryButtonText: {
     color: '#047857',
@@ -632,35 +900,11 @@ const styles = StyleSheet.create({
 
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
+    gap: 10,
+    marginTop: 14,
     width: '100%',
   },
 
-  statCard: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-  },
-
-  statValue: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#064E3B',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#64748B',
-    textAlign: 'center',
-  },
 
   helpedButton: {
     height: 54,
@@ -671,7 +915,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
 
   helpedButtonSelected: {
@@ -692,18 +936,29 @@ const styles = StyleSheet.create({
   resultCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 26,
-    padding: 20,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#BBF7D0',
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+
+  resultIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   resultTitle: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '900',
     color: '#064E3B',
-    marginTop: 10,
-    marginBottom: 6,
+    marginBottom: 5,
   },
 
   resultText: {
@@ -713,13 +968,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  tipCard: {
-    backgroundColor: '#ECFDF5',
+  nextToolCard: {
+    backgroundColor: '#FFFBEB',
     borderRadius: 24,
-    padding: 18,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#FED7AA',
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
   },
+
+  nextToolIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  nextToolTitle: {
+    color: '#7C2D12',
+    fontSize: 16,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+
+  nextToolText: {
+    color: '#475569',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '800',
+  },
+
+ tipCard: {
+  backgroundColor: '#ECFDF5',
+  borderRadius: 24,
+  padding: 17,
+  borderWidth: 1,
+  borderColor: '#BBF7D0',
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: 10,
+},
 
   tipTitle: {
     fontSize: 16,
@@ -734,4 +1027,72 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     fontWeight: '700',
   },
+
+  backgroundBase: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: '#F7FFF9',
+},
+
+phaseLabelsRow: {
+  width: '100%',
+  flexDirection: 'row',
+  gap: 8,
+  marginTop: 0,
+  marginBottom: 10,
+},
+
+phaseLabel: {
+  flex: 1,
+  minHeight: 38,
+  borderRadius: 999,
+  backgroundColor: '#F8FAFC',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 6,
+},
+
+phaseLabelText: {
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '900',
+  textAlign: 'center',
+},
+
+phaseLabelActive: {
+  backgroundColor: '#047857',
+  borderColor: '#047857',
+},
+
+phaseLabelTextActive: {
+  color: '#FFFFFF',
+},
+
+buttonRow: {
+  flexDirection: 'row',
+  gap: 10,
+  width: '100%',
+  marginTop: 4,
+},
+
+roundsCard: {
+  marginTop: 10,
+  minHeight: 40,
+  borderRadius: 15,
+  backgroundColor: '#F8FAFC',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+},
+
+roundsText: {
+  marginLeft: 6,
+  color: '#064E3B',
+  fontSize: 12,
+  fontWeight: '900',
+},
 });

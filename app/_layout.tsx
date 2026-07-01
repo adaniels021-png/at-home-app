@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ChildProvider } from '../lib/SelectedChildContext';
@@ -19,6 +19,15 @@ export default function RootLayout() {
 
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const startupFinishedRef = useRef(false);
+
+  const finishStartup = (nextSession: any = null) => {
+    if (startupFinishedRef.current) return;
+
+    startupFinishedRef.current = true;
+    setSession(nextSession);
+    setLoading(false);
+  };
 
   useEffect(() => {
     const initNotifications = async () => {
@@ -36,6 +45,13 @@ export default function RootLayout() {
   useEffect(() => {
     let mounted = true;
 
+    const startupTimer = setTimeout(() => {
+      if (!mounted) return;
+
+      console.warn('Startup timeout reached. Continuing without blocking app.');
+      finishStartup(null);
+    }, 7000);
+
     const safeConfigureRevenueCat = async (userId?: string) => {
       try {
         if (typeof revenuecat.configureRevenueCat === 'function') {
@@ -43,8 +59,9 @@ export default function RootLayout() {
         }
 
         if (userId && typeof revenuecat.logInRevenueCat === 'function') {
-          await revenuecat.logInRevenueCat(userId);
-        }
+  await revenuecat.logInRevenueCat(userId);
+  await revenuecat.getCustomerInfo();
+}
       } catch (error) {
         console.error('RevenueCat init error:', error);
       }
@@ -58,19 +75,19 @@ export default function RootLayout() {
           console.error('Error loading session:', error.message);
         }
 
-        await safeConfigureRevenueCat(data.session?.user?.id);
+        if (!mounted) return;
 
-        if (mounted) {
-          setSession(data.session ?? null);
-          setLoading(false);
-        }
+        clearTimeout(startupTimer);
+        finishStartup(data.session ?? null);
+
+        void safeConfigureRevenueCat(data.session?.user?.id);
       } catch (error) {
         console.error('Root layout session load error:', error);
 
-        if (mounted) {
-          setSession(null);
-          setLoading(false);
-        }
+        if (!mounted) return;
+
+        clearTimeout(startupTimer);
+        finishStartup(null);
       }
     };
 
@@ -81,7 +98,10 @@ export default function RootLayout() {
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log('Auth change:', event);
 
-      setSession(newSession ?? null);
+      if (mounted) {
+        setSession(newSession ?? null);
+        setLoading(false);
+      }
 
       try {
         if (
@@ -89,6 +109,7 @@ export default function RootLayout() {
           typeof revenuecat.logInRevenueCat === 'function'
         ) {
           await revenuecat.logInRevenueCat(newSession.user.id);
+          await revenuecat.getCustomerInfo();
         } else if (
           !newSession?.user?.id &&
           typeof revenuecat.logOutRevenueCat === 'function'
@@ -102,6 +123,7 @@ export default function RootLayout() {
 
     return () => {
       mounted = false;
+      clearTimeout(startupTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -133,10 +155,22 @@ export default function RootLayout() {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F8FAFC',
+            paddingHorizontal: 24,
           }}
         >
           <ActivityIndicator size="large" color="#4F46E5" />
+          <Text
+            style={{
+              marginTop: 18,
+              color: '#64748B',
+              fontSize: 16,
+              fontWeight: '700',
+              textAlign: 'center',
+            }}
+          >
+            Loading ABA at Home...
+          </Text>
         </View>
       </GestureHandlerRootView>
     );

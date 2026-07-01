@@ -3,216 +3,219 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Corrected Import
-import { generateABAActivity } from '../lib/aiService';
-import { supabase } from '../lib/supabase';
+import { getLessonById, LessonLibraryItem } from '../lib/lessonLibrary';
 
 export default function LessonDetail() {
-  const { id, title } = useLocalSearchParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [aiActivity, setAiActivity] = useState<any>(null);
-  const [childName, setChildName] = useState('your child');
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const [lesson, setLesson] = useState<LessonLibraryItem | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchChildData();
-  }, []);
-
-  const fetchChildData = async () => {
-    try {
-      const { data } = await supabase.from('children').select('child_name').limit(1).single();
-      if (data?.child_name) setChildName(data.child_name);
-    } catch (e) {
-      console.log("No child profile found yet.");
-    }
-  };
-
-  const handlePersonalize = async () => {
-    setLoading(true);
-    try {
-      const result = await generateABAActivity(
-        "Home", 
-        childName, 
-        title as string || "General Skill"
-      );
-
-      if (result) {
-        setResult(result); // Support for standard naming
-        setAiActivity(result);
-      } else {
-        Alert.alert("Connection Error", "The AI Coach is currently offline. Please check your settings.");
+    async function loadLesson() {
+      if (!id) {
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Personalization Error:", error);
-    } finally {
-      setLoading(false);
+
+      try {
+        const data = await getLessonById(id);
+        setLesson(data);
+      } catch (error) {
+        console.error('Lesson detail error:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+
+    void loadLesson();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator color="#6366F1" />
+          <Text style={styles.loadingText}>Loading lesson...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!lesson) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={styles.emptyTitle}>Lesson not found.</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backLink}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1e293b" />
+          <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Lesson Detail</Text>
+
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.lessonHeader}>
-          <Text style={styles.lessonTitle}>{title}</Text>
-          <Text style={styles.lessonSubtitle}>Standard ABA Curriculum</Text>
-        </View>
+        <Text style={styles.category}>{lesson.category}</Text>
+        <Text style={styles.title}>{lesson.title}</Text>
 
-        {!aiActivity ? (
-          <TouchableOpacity 
-            style={styles.aiButton} 
-            onPress={handlePersonalize}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="sparkles" size={20} color="#fff" />
-                <Text style={styles.aiButtonText}>Personalize with AI Coach</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.aiCard}>
-            <View style={styles.aiCardHeader}>
-              <Ionicons name="ribbon" size={20} color="#6366f1" />
-              <Text style={styles.aiCardTitle}>AI-Powered Plan for {childName}</Text>
-            </View>
+        <Text style={styles.meta}>
+          {lesson.skill_area} • Stage {lesson.stage_number}: {lesson.stage_name}
+        </Text>
 
-            <Text style={styles.sectionTitle}>Activity</Text>
-            <Text style={styles.activityName}>{aiActivity.name}</Text>
+        {lesson.description ? (
+          <Text style={styles.description}>{lesson.description}</Text>
+        ) : null}
 
-            <Text style={styles.sectionTitle}>Instructions</Text>
-            {aiActivity.instructions?.map((step: string, index: number) => (
-              <Text key={index} style={styles.instructionStep}>
-                {index + 1}. {step}
-              </Text>
-            ))}
+        <InfoCard title="Goal" text={lesson.goal} icon="flag-outline" />
 
-            <TouchableOpacity 
-              style={styles.resetButton} 
-              onPress={() => setAiActivity(null)}
-            >
-              <Text style={styles.resetButtonText}>Generate New Variation</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <InfoCard
+          title="Why This Skill Matters"
+          text={lesson.why_skill_matters}
+          icon="heart-outline"
+        />
+
+        <InfoCard
+          title="Setup"
+          text={lesson.setup_instructions}
+          icon="construct-outline"
+        />
+
+        <InfoCard
+          title="Parent Script"
+          text={lesson.parent_script}
+          icon="chatbubble-ellipses-outline"
+        />
+
+        <InfoCard
+          title="Expected Child Response"
+          text={lesson.expected_child_response}
+          icon="happy-outline"
+        />
+
+        <Section title="Materials" items={lesson.materials || []} />
+        <Section title="Teaching Steps" items={lesson.steps || []} numbered />
+        <Section title="Caregiver Tips" items={lesson.caregiver_tips || []} />
+        <Section title="Prompting Tips" items={lesson.prompting_tips || []} />
+        <Section title="Reinforcement Tips" items={lesson.reinforcement_tips || []} />
+        <Section title="If Child Struggles" items={lesson.if_child_struggles || []} />
+
+        <InfoCard title="Easy Version" text={lesson.easy_version} icon="remove-circle-outline" />
+        <InfoCard title="Harder Version" text={lesson.harder_version} icon="add-circle-outline" />
+
+        <Section title="Generalization Ideas" items={lesson.generalization_ideas || []} />
+        <Section title="Safety Notes" items={lesson.safety_notes || []} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function InfoCard({
+  title,
+  text,
+  icon,
+}: {
+  title: string;
+  text?: string | null;
+  icon: keyof typeof Ionicons.glyphMap;
+}) {
+  if (!text) return null;
+
+  return (
+    <View style={styles.infoCard}>
+      <View style={styles.sectionHeader}>
+        <Ionicons name={icon} size={18} color="#6366F1" />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+
+      <Text style={styles.bodyText}>{text}</Text>
+    </View>
+  );
+}
+
+function Section({
+  title,
+  items,
+  numbered,
+}: {
+  title: string;
+  items: string[];
+  numbered?: boolean;
+}) {
+  if (!items.length) return null;
+
+  return (
+    <View style={styles.infoCard}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+
+      {items.map((item, index) => (
+        <Text key={`${title}-${index}`} style={styles.itemText}>
+          {numbered ? `${index + 1}. ` : '• '}
+          {item}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#FFF7ED' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  lessonHeader: {
-    marginBottom: 24,
-  },
-  lessonTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1e293b',
-  },
-  lessonSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  aiButton: {
-    backgroundColor: '#6366f1',
-    flexDirection: 'row',
+  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
+  scrollContent: { padding: 20, paddingBottom: 100 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  loadingText: { marginTop: 10, color: '#64748B', fontWeight: '700' },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
+  backLink: { marginTop: 12, color: '#6366F1', fontWeight: '800' },
+  category: { color: '#8B5CF6', fontWeight: '900', marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: '900', color: '#2F2A3D', marginBottom: 8 },
+  meta: { color: '#6B6478', fontWeight: '800', marginBottom: 14 },
+  description: { fontSize: 16, lineHeight: 24, color: '#4B465C', marginBottom: 16 },
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     padding: 16,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  aiButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  aiCard: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    padding: 20,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#F1E7DA',
   },
-  aiCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  aiCardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#4338ca',
-    textTransform: 'uppercase',
-  },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#2F2A3D',
     marginBottom: 8,
+    marginLeft: 6,
   },
-  activityName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  instructionStep: {
-    fontSize: 15,
-    color: '#334155',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  resetButton: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  resetButtonText: {
-    color: '#6366f1',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  bodyText: { fontSize: 15, lineHeight: 23, color: '#4B465C', fontWeight: '600' },
+  itemText: { fontSize: 15, lineHeight: 23, color: '#4B465C', marginBottom: 6 },
 });

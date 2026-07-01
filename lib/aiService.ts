@@ -40,22 +40,17 @@ async function generateJsonWithEdgeFunction<T>(
     }
   );
 
-  console.log('RAW EDGE FUNCTION RESPONSE:', data);
-
-  if (error) {
-  console.error('Edge function invoke error:', error);
+if (error) {
+  console.log('Edge function unavailable:', error);
 
   const context = (error as any)?.context;
 
   if (context) {
     try {
       const errorText = await context.text();
-      console.error('EDGE FUNCTION ERROR BODY:', errorText);
+      console.log('EDGE FUNCTION ERROR BODY:', errorText);
     } catch (readError) {
-      console.error(
-        'Could not read edge error body:',
-        readError
-      );
+      console.log('Could not read edge error body:', readError);
     }
   }
 
@@ -68,14 +63,14 @@ async function generateJsonWithEdgeFunction<T>(
       : JSON.stringify(data?.result || '');
 
   if (!rawText) {
-    console.error('AI returned empty result:', data);
+   console.log('AI returned empty result:', data);
     throw new Error('AI returned an empty lesson.');
   }
 
   const parsed = extractJsonFromText(rawText);
 
   if (!parsed) {
-    console.error('AI JSON PARSE FAILED:', rawText);
+    console.log('AI JSON parse failed:', rawText);
     throw new Error('AI returned invalid lesson JSON.');
   }
 
@@ -153,10 +148,11 @@ function hasUsableLessonContent(
 function getFallbackLessonTitle(skill: string) {
   const titles: Record<string, string> = {
     Communication: 'Practicing Communication at Home',
-    Social: 'Building Social Skills at Home',
-    Play: 'Learning Through Play',
-    'Self-Help': 'Practicing Independence',
-    Motor: 'Movement and Motor Practice',
+    'Daily Routines': 'Practicing Daily Routines',
+    'Emotions & Behavior': 'Building Calm Behavior Skills',
+    'Play & Social Skills': 'Learning Through Play and Connection',
+    'Learning & Attention': 'Building Learning and Attention',
+    'Movement & Coordination': 'Movement and Coordination Practice',
   };
 
   return titles[skill] || `${skill} Practice at Home`;
@@ -1126,10 +1122,11 @@ Lesson quality rules:
 
 Category examples:
 Communication: requesting, choosing, help, all done, more, labeling, yes/no.
-Social: turn taking, greeting, sharing attention, responding to name, waiting.
-Play: imitation, functional play, pretend play, turn-taking play, expanding play.
-Self-Help: brushing teeth, handwashing, cleaning up, dressing, snack routine.
-Motor: clapping, jumping, stacking, crossing midline, imitation, obstacle play.
+Daily Routines: handwashing, brushing teeth, dressing, cleaning up, snack routine, bedtime routine.
+Emotions & Behavior: waiting, requesting a break, calming body, transitions, coping with no, replacement behaviors.
+Play & Social Skills: joint attention, turn taking, functional play, pretend play, greeting, sharing attention.
+Learning & Attention: matching, sorting, attending, following directions, completing simple tasks, puzzles.
+Movement & Coordination: clapping, jumping, stacking, crossing midline, imitation, obstacle play, fine motor practice.
 `;
 
     const raw = await generateJsonWithEdgeFunction<any>(
@@ -1232,7 +1229,7 @@ const coerced = coerceLessonShape(raw);
       source: 'ai',
     };
   } catch (error) {
-    console.error('AI lesson failed:', error);
+    console.log('AI lesson failed, using fallback lesson:', error);
 
     return {
       lesson: buildFallbackLesson(skill),
@@ -1616,45 +1613,7 @@ export function getDifficultyDisplay(level?: LessonDifficultyLevel | null): {
       };
   }
 }
-
-export async function getNextActivitiesFromQueue({
-  childId,
-}: {
-  childId: string;
-}) {
-  try {
-    const { data, error } = await supabase
-      .from('activity_queue')
-      .select('*')
-      .eq('child_id', childId)
-      .eq('is_used', false)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error('getNextActivitiesFromQueue error:', error);
-      return null;
-    }
-
-    if (!data?.activities_json) {
-      return null;
-    }
-
-    await supabase
-      .from('activity_queue')
-      .update({
-        is_used: true,
-        used_at: new Date().toISOString(),
-      })
-      .eq('id', data.id);
-
-    return data.activities_json;
-  } catch (error) {
-    console.error('getNextActivitiesFromQueue crash:', error);
-    return null;
-  }
-}
+ 
 
 export async function generateAssessmentQuestions(
   childName: string,
@@ -1675,25 +1634,25 @@ export async function generateAssessmentQuestions(
     },
     {
       id: 'social_1',
-      category: 'Social',
+      category: 'Play & Social Skills',
       question: `How does ${childName} respond to other children?`,
       options: ['Engages often', 'Watches nearby', 'Avoids', 'Gets upset'],
     },
     {
       id: 'play_1',
-      category: 'Play',
+      category: 'Play & Social Skills',
       question: `How does ${childName} usually play with toys?`,
       options: ['Pretend play', 'Functional play', 'Lines up/spins items', 'Limited interest'],
     },
     {
       id: 'self_help_1',
-      category: 'Self-Help',
+      category: 'Daily Routines',
       question: `How independent is ${childName} with daily routines?`,
       options: ['Very independent', 'Some help', 'Lots of help', 'Not yet'],
     },
     {
       id: 'sensory_1',
-      category: 'Sensory',
+      category: 'Emotions & Behavior',
       question: `Does ${childName} have sensory sensitivities?`,
       options: ['Often', 'Sometimes', 'Rarely', 'Not sure'],
     },
@@ -1704,7 +1663,7 @@ export async function generateAssessmentQuestions(
       id: `general_${fallbackQuestions.length + 1}`,
       category: 'General',
       question: `What support does ${childName} need most right now?`,
-      options: ['Communication', 'Behavior', 'Routines', 'Play/Social skills'],
+      options: ['Communication', 'Emotions & Behavior', 'Daily Routines', 'Play & Social Skills'],
     });
   }
 

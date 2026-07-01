@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getRecommendedActivitiesFromLibrary } from '../../lib/activityLibrary';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
@@ -26,7 +27,6 @@ import {
   normalizeActivities,
   safeStringArray,
 } from '../../lib/activities';
-import { generateDailyABAActivities } from '../../lib/aiService';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
@@ -237,47 +237,6 @@ function getCategoryLabel(category: string) {
   return labels[cleanCategory] || 'Adventure';
 }
 
-function buildAdventurePrompt(recentTitles: string[], filter: AdventureCategory) {
-  const filterText =
-    filter === 'surprise'
-      ? 'Mix home, outdoor, community, sensory, movement, calm, and creative ideas.'
-      : `Only generate ${filter} activities. Every returned activity category must be "${filter}".`;
-
-  return `
-Generate fun Daily Adventures for a parent and child.
-
-These should NOT feel like lessons, therapy, ABA programs, worksheets, drills, or formal teaching.
-
-They should feel like playful family activities parents can do at home, outside, or in the community that naturally support development.
-
-${filterText}
-
-Return each idea with:
-- name
-- title
-- category
-- location
-- time
-- description
-- try_this: 3 simple playful ideas
-- why_it_helps
-
-Avoid:
-- goals
-- measurable objectives
-- "child will"
-- trials
-- prompts
-- data collection language
-- clinical wording
-- lesson-style instructions
-- materials lists unless truly needed
-
-Do not repeat or closely copy these recent activities:
-${recentTitles.length ? recentTitles.map((title) => `- ${title}`).join('\n') : '- None'}
-`;
-}
-
 export default function ActivitiesScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
@@ -472,7 +431,7 @@ export default function ActivitiesScreen() {
     [selectedChild?.id]
   );
 
-  const generateActivitiesForFilter = useCallback(
+const generateActivitiesForFilter = useCallback(
   async (
     filter: AdventureCategory,
     count: number,
@@ -480,53 +439,26 @@ export default function ActivitiesScreen() {
   ) => {
     if (!selectedChild?.id) return [];
 
-      const recentTitles = await getRecentAdventureTitles();
+    const recentTitles = await getRecentAdventureTitles();
+    const allRecentTitles = [...recentTitles, ...extraRecentTitles];
 
-      const [assessmentRes, lessonsRes, routinesRes] = await Promise.all([
-        supabase
-          .from('assessments')
-          .select('responses, completed_at')
-          .eq('child_id', selectedChild.id)
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+    const libraryActivities = await getRecommendedActivitiesFromLibrary({
+      filter,
+      count,
+      excludeTitles: allRecentTitles,
+    });
 
-        supabase
-          .from('lesson_logs')
-          .select('category, lesson_name, completed_at')
-          .eq('child_id', selectedChild.id)
-          .order('completed_at', { ascending: false })
-          .limit(10),
+    if (libraryActivities.length > 0) {
+      return libraryActivities.slice(0, count) as DailyAdventure[];
+    }
 
-        supabase
-          .from('routine_logs')
-          .select('routine_name, routine_period, completed_at, completed')
-          .eq('child_id', selectedChild.id)
-          .order('completed_at', { ascending: false })
-          .limit(10),
-      ]);
-
-      if (assessmentRes.error) throw assessmentRes.error;
-      if (lessonsRes.error) throw lessonsRes.error;
-      if (routinesRes.error) throw routinesRes.error;
-
-      const generated = await generateDailyABAActivities({
-        childName,
-        location: LOCATION_MAP[filter] || LOCATION_MAP.surprise,
-        skillFocus: buildAdventurePrompt(
-          [...recentTitles, ...extraRecentTitles],
-          filter
-        ),
-        assessmentContext: assessmentRes.data?.responses || {},
-        recentLessons: lessonsRes.data || [],
-        recentRoutines: routinesRes.data || [],
-        count,
-      });
-
-      return normalizeActivities(generated) as DailyAdventure[];
-    },
-    [childName, getRecentAdventureTitles, selectedChild?.id]
-  );
+    return buildInstantActivities(childName).filter((activity) => {
+      if (filter === 'surprise') return true;
+      return getAdventureCategory(activity) === filter;
+    }).slice(0, count);
+  },
+  [childName, getRecentAdventureTitles, selectedChild?.id]
+);
   
   const preloadTodayAdventureFilters = useCallback(async () => {
     if (!selectedChild?.id || !isPro || preloadingFiltersRef.current) {

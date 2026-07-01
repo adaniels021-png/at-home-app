@@ -1,226 +1,230 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useChild } from '@/lib/SelectedChildContext';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  getBestPottyWindows,
+  getPottyCoachInsights,
+  getWeeklyPottyStats,
+  PottyInsight,
+} from '@/lib/toiletTrainingStorage';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ToiletTrainingInsightsScreen() {
   const router = useRouter();
+  const { selectedChild } = useChild();
+
+  const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<PottyInsight[]>([]);
+  const [bestWindows, setBestWindows] = useState<string[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState({
+    successes: 0,
+    attempts: 0,
+    accidents: 0,
+    total: 0,
+    successRate: 0,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadInsights();
+    }, [selectedChild?.id])
+  );
+
+  async function loadInsights() {
+    if (!selectedChild?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const [coachInsights, windows, stats] = await Promise.all([
+        getPottyCoachInsights(selectedChild.id),
+        getBestPottyWindows(selectedChild.id),
+        getWeeklyPottyStats(selectedChild.id),
+      ]);
+
+      setInsights(coachInsights);
+      setBestWindows(windows);
+      setWeeklyStats(stats);
+    } catch (error) {
+      console.error('Error loading potty insights:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const hasLogs = weeklyStats.total > 0;
+  const hasEnoughLogs = weeklyStats.total >= 3;
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
+      <View pointerEvents="none" style={styles.screenGlowTop} />
+      <View pointerEvents="none" style={styles.screenGlowBottom} />
+
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={22}
-              color="#0F172A"
-            />
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={22} color="#0F172A" />
           </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Smart Insights</Text>
-            <Text style={styles.subtitle}>
-              Discover potty-training patterns and opportunities.
-            </Text>
+            <Text style={styles.subtitle}>Helpful patterns for potty practice.</Text>
           </View>
         </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.lockBadge}>
-            <Ionicons
-              name="lock-closed"
-              size={13}
-              color="#FFFFFF"
-            />
-            <Text style={styles.lockBadgeText}>Pro</Text>
+        {loading ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#2563EB" />
+            <Text style={styles.loadingText}>Looking for helpful patterns...</Text>
           </View>
+        ) : (
+          <>
+            <View style={styles.parentCard}>
+              <View style={styles.parentIcon}>
+                <Ionicons name="heart-outline" size={26} color="#2563EB" />
+              </View>
 
-          <View style={styles.heroContent}>
-            <View style={styles.heroIcon}>
-              <Ionicons
-                name="sparkles-outline"
-                size={30}
-                color="#7C3AED"
-              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.parentTitle}>
+                  {hasLogs ? 'Here’s what we’re noticing' : 'Start simple'}
+                </Text>
+                <Text style={styles.parentText}>
+                  {hasLogs
+                    ? 'These insights are meant to help you decide what to try next, not judge progress.'
+                    : 'Log a few potty visits and ABA at Home will begin finding helpful timing and support patterns.'}
+                </Text>
+              </View>
             </View>
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.heroTitle}>
-                Personalized Potty Insights
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>THIS WEEK</Text>
+              <Text style={styles.summaryTitle}>
+                {hasLogs ? `${weeklyStats.successRate}% Success Rate` : 'Ready to Learn Patterns'}
               </Text>
-
-              <Text style={styles.heroText}>
-                As you log more potty visits, ABA at Home
-                will identify patterns and provide
-                personalized coaching.
+              <Text style={styles.summaryText}>
+                {hasLogs
+                  ? `${weeklyStats.successes} successes, ${weeklyStats.attempts} attempts, and ${weeklyStats.accidents} accidents logged this week.`
+                  : 'No pressure. Once you log a few visits, this page will become more personalized.'}
               </Text>
             </View>
-          </View>
-        </View>
 
-        <Text style={styles.sectionTitle}>
-          Coming Soon for Pro Members
-        </Text>
+            <Text style={styles.sectionTitle}>Good Times to Try</Text>
 
-        <InsightCard
-          icon="time-outline"
-          title="Best Potty Window"
-          description="Identify the times of day when your child is most successful."
-          example="Most successes occur between 10:00 AM and 12:00 PM."
-        />
+            <View style={styles.windowCard}>
+              {bestWindows.map((window) => (
+                <View key={window} style={styles.windowRow}>
+                  <View style={styles.windowIcon}>
+                    <Ionicons name="time-outline" size={18} color="#2563EB" />
+                  </View>
+                  <Text style={styles.windowText}>{window}</Text>
+                </View>
+              ))}
+            </View>
 
-        <InsightCard
-          icon="trending-up-outline"
-          title="Progress Trends"
-          description="Track whether success rates are improving week-to-week."
-          example="Success rate increased by 18% this week."
-        />
+            <Text style={styles.sectionTitle}>Helpful Next Steps</Text>
 
-        <InsightCard
-          icon="warning-outline"
-          title="Accident Patterns"
-          description="Spot common accident times and routines."
-          example="Most accidents happen after dinner."
-        />
+            {insights.map((insight) => (
+              <InsightCard key={`${insight.title}-${insight.type}`} insight={insight} />
+            ))}
 
-        <InsightCard
-          icon="calendar-outline"
-          title="Routine Recommendations"
-          description="Receive schedule suggestions based on your logs."
-          example="Consider adding a potty sit 15 minutes after lunch."
-        />
+            {!hasEnoughLogs && (
+              <View style={styles.infoCard}>
+                <Ionicons name="information-circle-outline" size={22} color="#2563EB" />
+                <Text style={styles.infoText}>
+                  Smart Insights become more personalized after about 3 or more potty logs.
+                </Text>
+              </View>
+            )}
 
-        <InsightCard
-          icon="analytics-outline"
-          title="Success Analytics"
-          description="See advanced potty training reports and charts."
-          example="Average success rate: 72%"
-        />
-
-        <View style={styles.upgradeCard}>
-          <Ionicons
-            name="diamond-outline"
-            size={34}
-            color="#7C3AED"
-          />
-
-          <Text style={styles.upgradeTitle}>
-            Unlock Potty Training Pro
-          </Text>
-
-          <Text style={styles.upgradeText}>
-            Gain access to advanced potty insights,
-            coaching tools, printable reports, and
-            future multi-caregiver potty tracking.
-          </Text>
-
-          <TouchableOpacity style={styles.upgradeButton}>
-            <Text style={styles.upgradeButtonText}>
-              Upgrade to Pro
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Ionicons
-            name="information-circle-outline"
-            size={22}
-            color="#2563EB"
-          />
-
-          <Text style={styles.infoText}>
-            Insights become more accurate as more potty
-            visits are logged over time.
-          </Text>
-        </View>
+            <TouchableOpacity
+              style={styles.coachButton}
+              onPress={() => router.push('/toilet-training/problem-solver' as any)}
+            >
+              <Ionicons name="bulb-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.coachButtonText}>Open Potty Coach</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-type InsightCardProps = {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  description: string;
-  example: string;
-};
+function InsightCard({ insight }: { insight: PottyInsight }) {
+  const icon =
+    insight.type === 'timing'
+      ? 'time-outline'
+      : insight.type === 'communication'
+      ? 'chatbubbles-outline'
+      : insight.type === 'comfort'
+      ? 'heart-outline'
+      : insight.type === 'success'
+      ? 'checkmark-circle-outline'
+      : 'sparkles-outline';
 
-function InsightCard({
-  icon,
-  title,
-  description,
-  example,
-}: InsightCardProps) {
   return (
     <View style={styles.insightCard}>
       <View style={styles.insightHeader}>
         <View style={styles.iconContainer}>
-          <Ionicons
-            name={icon}
-            size={24}
-            color="#7C3AED"
-          />
+          <Ionicons name={icon} size={23} color="#2563EB" />
         </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={styles.insightTitle}>
-            {title}
-          </Text>
-
-          <Text style={styles.insightDescription}>
-            {description}
-          </Text>
+          <Text style={styles.insightTitle}>{insight.title}</Text>
+          <Text style={styles.insightDescription}>{insight.message}</Text>
         </View>
       </View>
 
-      <View style={styles.exampleBox}>
-        <Text style={styles.exampleLabel}>
-          Example Insight
-        </Text>
-
-        <Text style={styles.exampleText}>
-          {example}
-        </Text>
+      <View style={styles.nextStepBox}>
+        <Text style={styles.nextStepLabel}>Try this next</Text>
+        <Text style={styles.nextStepText}>{insight.nextStep}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  safe: { flex: 1, backgroundColor: '#F7F8FC' },
+  container: { padding: 20, paddingBottom: 44 },
+
+  screenGlowTop: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(37,99,235,0.07)',
+    top: -130,
+    right: -90,
   },
 
-  container: {
-    padding: 20,
-    paddingBottom: 40,
+  screenGlowBottom: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(168,85,247,0.05)',
+    bottom: -140,
+    left: -130,
   },
 
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
 
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 46,
+    height: 46,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -230,82 +234,141 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 27,
+    fontSize: 30,
     fontWeight: '900',
     color: '#0F172A',
+    letterSpacing: -0.8,
   },
 
   subtitle: {
     fontSize: 14,
     color: '#64748B',
     marginTop: 2,
+    fontWeight: '700',
   },
 
-  heroCard: {
-    backgroundColor: '#FAF5FF',
-    borderRadius: 24,
-    padding: 18,
+  loadingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 26,
+    padding: 26,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
-    marginBottom: 24,
+    borderColor: '#E2E8F0',
   },
 
-  heroContent: {
+  loadingText: {
+    marginTop: 10,
+    color: '#64748B',
+    fontWeight: '800',
+  },
+
+  parentCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 28,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
 
-  heroIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+  parentIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    justifyContent: 'center',
   },
 
-  heroTitle: {
+  parentTitle: {
+    color: '#1E3A8A',
     fontSize: 18,
     fontWeight: '900',
-    color: '#4C1D95',
   },
 
-  heroText: {
+  parentText: {
+    color: '#334155',
     fontSize: 13,
-    color: '#6D28D9',
-    marginTop: 4,
+    fontWeight: '700',
     lineHeight: 19,
+    marginTop: 4,
   },
 
-  lockBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#7C3AED',
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 12,
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 26,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 22,
   },
 
-  lockBadgeText: {
-    color: '#FFFFFF',
+  summaryLabel: {
+    color: '#2563EB',
     fontSize: 11,
     fontWeight: '900',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+
+  summaryTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+
+  summaryText: {
+    marginTop: 6,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
     color: '#0F172A',
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+
+  windowCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    marginBottom: 22,
+    gap: 12,
+  },
+
+  windowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  windowIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 14,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  windowText: {
+    color: '#1E3A8A',
+    fontSize: 15,
+    fontWeight: '900',
   },
 
   insightCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -318,17 +381,17 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F5F3FF',
+    width: 52,
+    height: 52,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
 
   insightTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '900',
     color: '#0F172A',
   },
@@ -337,70 +400,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontWeight: '700',
   },
 
-  exampleBox: {
+  nextStepBox: {
     marginTop: 14,
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
 
-  exampleLabel: {
+  nextStepLabel: {
     fontSize: 11,
     fontWeight: '900',
-    color: '#64748B',
+    color: '#2563EB',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
 
-  exampleText: {
+  nextStepText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0F172A',
-  },
-
-  upgradeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-
-  upgradeTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginTop: 10,
-  },
-
-  upgradeText: {
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 8,
     lineHeight: 20,
-  },
-
-  upgradeButton: {
-    marginTop: 16,
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-
-  upgradeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
   },
 
   infoCard: {
@@ -411,6 +436,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: '#BFDBFE',
+    marginTop: 4,
+    marginBottom: 14,
   },
 
   infoText: {
@@ -419,6 +446,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#1E3A8A',
     lineHeight: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+
+  coachButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+
+  coachButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
   },
 });

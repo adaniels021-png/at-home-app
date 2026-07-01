@@ -3,7 +3,11 @@ import {
   getPottyEntriesForChild,
   getPottyReadinessResult,
   getTodaysPottyStats,
+  PottyEntry,
+  PottyOutput,
+  PottyPromptLevel,
   PottyReadinessResult,
+  PottySupportNeed,
   savePottyEntry,
 } from '@/lib/toiletTrainingStorage';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,19 +22,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 type PottyResult = 'success' | 'attempt' | 'accident';
 
-type PottyEntry = {
-  id: string;
-  result: PottyResult;
-  timestamp: string;
-  notes?: string;
-};
+const timeOptions = [
+  { label: 'Just now', minutesAgo: 0 },
+  { label: '15 min ago', minutesAgo: 15 },
+  { label: '30 min ago', minutesAgo: 30 },
+  { label: '1 hour ago', minutesAgo: 60 },
+];
 
 export default function ToiletTrainingScreen() {
   const router = useRouter();
@@ -39,47 +42,50 @@ export default function ToiletTrainingScreen() {
   const [entries, setEntries] = useState<PottyEntry[]>([]);
   const [allEntries, setAllEntries] = useState<PottyEntry[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+
   const [selectedResult, setSelectedResult] = useState<PottyResult | null>(null);
   const [note, setNote] = useState('');
+  const [output, setOutput] = useState<PottyOutput>('unsure');
+  const [promptLevel, setPromptLevel] = useState<PottyPromptLevel>('verbal_prompt');
+  const [satMinutes, setSatMinutes] = useState('');
+  const [supportNeeds, setSupportNeeds] = useState<PottySupportNeed[]>([]);
+  const [minutesAgo, setMinutesAgo] = useState(0);
+  const [customMinutesAgo, setCustomMinutesAgo] = useState('');
+
   const [readinessResult, setReadinessResult] =
-  useState<PottyReadinessResult | null>(null);
+    useState<PottyReadinessResult | null>(null);
 
   const pottyRoutinePreview = require('../../assets/images/potty-routine/boy/bathroom.png');
 
   useFocusEffect(
-  React.useCallback(() => {
-    void loadTodayStats();
-  }, [selectedChild?.id])
-);
+    React.useCallback(() => {
+      void loadTodayStats();
+    }, [selectedChild?.id])
+  );
 
-async function loadTodayStats() {
-  if (!selectedChild?.id) return;
+  async function loadTodayStats() {
+    if (!selectedChild?.id) return;
 
-  const stats = await getTodaysPottyStats(selectedChild.id);
-  const savedEntries = await getPottyEntriesForChild(selectedChild.id);
-  const savedReadiness = await getPottyReadinessResult(selectedChild.id);
-  setReadinessResult(savedReadiness); 
+    const stats = await getTodaysPottyStats(selectedChild.id);
+    const savedEntries = await getPottyEntriesForChild(selectedChild.id);
+    const savedReadiness = await getPottyReadinessResult(selectedChild.id);
 
-  setAllEntries(savedEntries);
+    setReadinessResult(savedReadiness);
+    setAllEntries(savedEntries);
 
-  setEntries([
-    ...Array.from({ length: stats.successes }).map((_, index) => ({
-      id: `success-${index}`,
-      result: 'success' as PottyResult,
-      timestamp: new Date().toISOString(),
-    })),
-    ...Array.from({ length: stats.attempts }).map((_, index) => ({
-      id: `attempt-${index}`,
-      result: 'attempt' as PottyResult,
-      timestamp: new Date().toISOString(),
-    })),
-    ...Array.from({ length: stats.accidents }).map((_, index) => ({
-      id: `accident-${index}`,
-      result: 'accident' as PottyResult,
-      timestamp: new Date().toISOString(),
-    })),
-  ]);
-}
+    const today = new Date();
+
+    setEntries(
+      savedEntries.filter((entry) => {
+        const entryDate = new Date(entry.timestamp);
+        return (
+          entryDate.getFullYear() === today.getFullYear() &&
+          entryDate.getMonth() === today.getMonth() &&
+          entryDate.getDate() === today.getDate()
+        );
+      })
+    );
+  }
 
   const todayStats = useMemo(() => {
     return {
@@ -89,30 +95,64 @@ async function loadTodayStats() {
     };
   }, [entries]);
 
-
   function openLogModal(result?: PottyResult) {
     setSelectedResult(result ?? null);
+    setOutput('unsure');
+    setPromptLevel('verbal_prompt');
+    setSatMinutes('');
+    setSupportNeeds([]);
+    setMinutesAgo(0);
+    setCustomMinutesAgo('');
     setNote('');
     setModalVisible(true);
   }
 
- async function saveEntry() {
-  if (!selectedResult || !selectedChild?.id) return;
+  function toggleSupportNeed(value: PottySupportNeed) {
+    setSupportNeeds((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value]
+    );
+  }
 
-  await savePottyEntry({
-    id: `${Date.now()}`,
-    childId: selectedChild.id,
-    result: selectedResult,
-    timestamp: new Date().toISOString(),
-    notes: note.trim() || undefined,
-  });
+  async function saveEntry() {
+    if (!selectedResult || !selectedChild?.id) return;
 
-  await loadTodayStats();
+    const parsedSatMinutes = Number.parseInt(satMinutes.trim(), 10);
+    const parsedCustomMinutes = Number.parseInt(customMinutesAgo.trim(), 10);
 
-  setModalVisible(false);
-  setSelectedResult(null);
-  setNote('');
-}
+    const finalMinutesAgo =
+      customMinutesAgo.trim().length > 0 && !Number.isNaN(parsedCustomMinutes)
+        ? parsedCustomMinutes
+        : minutesAgo;
+
+    const loggedTime = new Date();
+    loggedTime.setMinutes(loggedTime.getMinutes() - finalMinutesAgo);
+
+    await savePottyEntry({
+      id: `${Date.now()}`,
+      childId: selectedChild.id,
+      result: selectedResult,
+      output,
+      promptLevel,
+      satMinutes: Number.isNaN(parsedSatMinutes) ? undefined : parsedSatMinutes,
+      supportNeeds,
+      timestamp: loggedTime.toISOString(),
+      notes: note.trim() || undefined,
+    });
+
+    await loadTodayStats();
+
+    setModalVisible(false);
+    setSelectedResult(null);
+    setOutput('unsure');
+    setPromptLevel('verbal_prompt');
+    setSatMinutes('');
+    setSupportNeeds([]);
+    setMinutesAgo(0);
+    setCustomMinutesAgo('');
+    setNote('');
+  }
 
   function getResultLabel(result: PottyResult) {
     if (result === 'success') return 'Used Potty';
@@ -132,100 +172,70 @@ async function loadTodayStats() {
     return '#DC2626';
   }
 
-  function getResultSoftBg(result: PottyResult) {
-    if (result === 'success') return '#ECFDF5';
-    if (result === 'attempt') return '#FFFBEB';
-    return '#FEF2F2';
-  }
-
   function getReadinessPreview() {
-  if (!readinessResult) {
-    return {
-      title: 'Readiness',
-      text: 'Find your child’s starting point.',
-      subtext: 'Take assessment',
-      color: '#7C3AED',
-    };
-  }
+    if (!readinessResult) {
+      return {
+        title: 'Readiness',
+        text: 'Find your child’s starting point.',
+        subtext: 'Take assessment',
+        color: '#7C3AED',
+      };
+    }
 
-  if (readinessResult.level === 'not_ready') {
+    if (readinessResult.level === 'not_ready') {
+      return {
+        title: 'Bathroom Comfort',
+        text: `Score ${readinessResult.score}/8`,
+        subtext: 'Start with comfort first',
+        color: '#D97706',
+      };
+    }
+
+    if (readinessResult.level === 'building_skills') {
+      return {
+        title: 'Building Skills',
+        text: `Score ${readinessResult.score}/8`,
+        subtext: 'Practice short potty steps',
+        color: '#7C3AED',
+      };
+    }
+
+    if (readinessResult.level === 'ready_to_start') {
+      return {
+        title: 'Ready to Begin',
+        text: `Score ${readinessResult.score}/8`,
+        subtext: 'Start scheduled practice',
+        color: '#2563EB',
+      };
+    }
+
     return {
-      title: 'Bathroom Comfort',
+      title: 'Ready for Routine',
       text: `Score ${readinessResult.score}/8`,
-      subtext: 'Start with comfort first',
-      color: '#D97706',
+      subtext: 'Use a consistent plan',
+      color: '#059669',
     };
   }
 
-  if (readinessResult.level === 'building_skills') {
-    return {
-      title: 'Building Skills',
-      text: `Score ${readinessResult.score}/8`,
-      subtext: 'Practice short potty steps',
-      color: '#7C3AED',
-    };
+  function getPlanPreview() {
+    if (!readinessResult) return 'Complete readiness first';
+    if (readinessResult.level === 'not_ready') return 'Focus on bathroom comfort';
+    if (readinessResult.level === 'building_skills') return 'Try 2–4 calm potty sits';
+    if (readinessResult.level === 'ready_to_start') return 'Try every 60–90 minutes';
+    return 'Use scheduled potty sits';
   }
 
-  if (readinessResult.level === 'ready_to_start') {
-    return {
-      title: 'Ready to Begin',
-      text: `Score ${readinessResult.score}/8`,
-      subtext: 'Start scheduled practice',
-      color: '#2563EB',
-    };
+  function getProblemSolverPreview() {
+    if (todayStats.accident >= 2) return 'Frequent accidents?';
+    if (todayStats.attempt > todayStats.success) return 'Child sitting but not going?';
+    if (!readinessResult) return 'Refusal, accidents, flushing, or communication';
+    if (readinessResult.level === 'not_ready') return 'Bathroom refusal or fear?';
+    return 'Need help with a potty challenge?';
   }
 
-  return {
-    title: 'Ready for Routine',
-    text: `Score ${readinessResult.score}/8`,
-    subtext: 'Use a consistent plan',
-    color: '#059669',
-  };
-}
-
-function getPlanPreview() {
-  if (!readinessResult) {
-    return 'Complete readiness first';
-  }
-
-  if (readinessResult.level === 'not_ready') {
-    return 'Focus on bathroom comfort';
-  }
-
-  if (readinessResult.level === 'building_skills') {
-    return 'Try 2–4 calm potty sits';
-  }
-
-  if (readinessResult.level === 'ready_to_start') {
-    return 'Try every 60–90 minutes';
-  }
-
-  return 'Use scheduled potty sits';
-}
-
-function getProblemSolverPreview() {
-  if (todayStats.accident >= 2) {
-    return 'Frequent accidents?';
-  }
-
-  if (todayStats.attempt > todayStats.success) {
-    return 'Child sitting but not going?';
-  }
-
-  if (!readinessResult) {
-    return 'Refusal, accidents, flushing, or communication';
-  }
-
-  if (readinessResult.level === 'not_ready') {
-    return 'Bathroom refusal or fear?';
-  }
-
-  return 'Need help with a potty challenge?';
-}
-
-const readinessPreview = getReadinessPreview();
-const planPreview = getPlanPreview();
-const problemPreview = getProblemSolverPreview();
+  const readinessPreview = getReadinessPreview();
+  const planPreview = getPlanPreview();
+  const problemPreview = getProblemSolverPreview();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -241,7 +251,7 @@ const problemPreview = getProblemSolverPreview();
 
           <View style={styles.headerTextWrap}>
             <Text style={styles.title}>Toilet Training</Text>
-            <Text style={styles.subtitle}>Support potty practice without pressure.</Text>
+            <Text style={styles.subtitle}>Gentle potty support for real parent moments.</Text>
           </View>
         </View>
 
@@ -254,112 +264,92 @@ const problemPreview = getProblemSolverPreview();
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.practiceEyebrow}>POTTY SUPPORT</Text>
-              <Text style={styles.practiceTitle}>Today’s Practice</Text>
+              <Text style={styles.practiceEyebrow}>TODAY</Text>
+              <Text style={styles.practiceTitle}>Potty Practice</Text>
               <Text style={styles.practiceText}>
-                Track visits, celebrate effort, and keep routines predictable.
+                Log what happened so Potty Coach can guide the next step.
               </Text>
             </View>
           </View>
 
           <View style={styles.statsRow}>
-            <StatMini
-              value={todayStats.success}
-              label="Success"
-              color="#059669"
-              bg="#ECFDF5"
-              icon="checkmark-circle-outline"
-            />
-
-            <StatMini
-              value={todayStats.attempt}
-              label="Attempt"
-              color="#D97706"
-              bg="#FFFBEB"
-              icon="ellipse-outline"
-            />
-
-            <StatMini
-              value={todayStats.accident}
-              label="Accident"
-              color="#DC2626"
-              bg="#FEF2F2"
-              icon="alert-circle-outline"
-            />
+            <StatMini value={todayStats.success} label="Success" color="#059669" bg="#ECFDF5" icon="checkmark-circle-outline" />
+            <StatMini value={todayStats.attempt} label="Attempt" color="#D97706" bg="#FFFBEB" icon="ellipse-outline" />
+            <StatMini value={todayStats.accident} label="Accident" color="#DC2626" bg="#FEF2F2" icon="alert-circle-outline" />
           </View>
 
           <TouchableOpacity style={styles.mainLogButton} onPress={() => openLogModal()}>
-  <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-  <Text style={styles.mainLogButtonText}>Log Potty Visit</Text>
-</TouchableOpacity>
-</View> 
+            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.mainLogButtonText}>Add Potty Moment</Text>
+          </TouchableOpacity>
+        </View>
 
-<View style={styles.sectionHeader}>
-  <Text style={styles.sectionTitle}>Potty Training Coach</Text>
-  <Text style={styles.sectionSubtext}>
-    Guidance that adjusts based on readiness and today’s logs.
-  </Text>
-</View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Potty Coach</Text>
+          <Text style={styles.sectionSubtext}>
+            Helpful guidance based on readiness and recent potty moments.
+          </Text>
+        </View>
 
-<View style={styles.coachSummaryCard}>
-  <View style={styles.coachSummaryIcon}>
-    <Ionicons name="sparkles-outline" size={24} color="#2563EB" />
-  </View>
+        <View style={styles.coachSummaryCard}>
+          <View style={styles.coachSummaryIcon}>
+            <Ionicons name="sparkles-outline" size={24} color="#2563EB" />
+          </View>
 
-  <View style={{ flex: 1 }}>
-    <Text style={styles.coachSummaryTitle}>Today’s Coaching Tip</Text>
-    <Text style={styles.coachSummaryText}>
-      {readinessResult
-        ? `${readinessPreview.subtext}. ${planPreview}.`
-        : 'Start with the readiness assessment so the app can guide today’s potty plan.'}
-    </Text>
-  </View>
-</View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.coachSummaryTitle}>Today’s gentle focus</Text>
+            <Text style={styles.coachSummaryText}>
+              {readinessResult
+                ? `${readinessPreview.subtext}. ${planPreview}.`
+                : 'Start with readiness so the app can suggest a calmer potty plan.'}
+            </Text>
+          </View>
+        </View>
 
-<View style={styles.coachGrid}>
-  <TouchableOpacity
-    style={styles.coachCard}
-    onPress={() => router.push('/toilet-training/readiness')}
-  >
-    <Ionicons name="clipboard-outline" size={24} color={readinessPreview.color} />
-    <Text style={styles.coachTitle}>{readinessPreview.title}</Text>
-    <Text style={styles.coachText}>{readinessPreview.text}</Text>
-    <Text style={[styles.coachMiniText, { color: readinessPreview.color }]}>
-      {readinessPreview.subtext}
-    </Text>
-  </TouchableOpacity>
+        <View style={styles.coachGrid}>
+          <TouchableOpacity
+            style={styles.coachCard}
+            onPress={() => router.push('/toilet-training/readiness')}
+          >
+            <Ionicons name="clipboard-outline" size={24} color={readinessPreview.color} />
+            <Text style={styles.coachTitle}>{readinessPreview.title}</Text>
+            <Text style={styles.coachText}>{readinessPreview.text}</Text>
+            <Text style={[styles.coachMiniText, { color: readinessPreview.color }]}>
+              {readinessPreview.subtext}
+            </Text>
+          </TouchableOpacity>
 
-  <TouchableOpacity
-    style={styles.coachCard}
-    onPress={() => router.push('/toilet-training/plan')}
-  >
-    <Ionicons name="calendar-outline" size={24} color="#2563EB" />
-    <Text style={styles.coachTitle}>Today’s Plan</Text>
-    <Text style={styles.coachText}>{planPreview}</Text>
-    <Text style={styles.coachMiniText}>View plan</Text>
-  </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.coachCard}
+            onPress={() => router.push('/toilet-training/plan')}
+          >
+            <Ionicons name="calendar-outline" size={24} color="#2563EB" />
+            <Text style={styles.coachTitle}>Today’s Plan</Text>
+            <Text style={styles.coachText}>{planPreview}</Text>
+            <Text style={styles.coachMiniText}>View plan</Text>
+          </TouchableOpacity>
 
-  <TouchableOpacity
-    style={styles.coachCardFull}
-    onPress={() => router.push('/toilet-training/problem-solver')}
-  >
-    <View style={styles.coachFullIcon}>
-      <Ionicons name="bulb-outline" size={24} color="#D97706" />
-    </View>
+          <TouchableOpacity
+            style={styles.coachCardFull}
+            onPress={() => router.push('/toilet-training/problem-solver')}
+          >
+            <View style={styles.coachFullIcon}>
+              <Ionicons name="bulb-outline" size={24} color="#D97706" />
+            </View>
 
-    <View style={{ flex: 1 }}>
-      <Text style={styles.coachTitle}>Problem Solver</Text>
-      <Text style={styles.coachText}>{problemPreview}</Text>
-    </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.coachTitle}>Potty Coach</Text>
+              <Text style={styles.coachText}>{problemPreview}</Text>
+            </View>
 
-    <Ionicons name="chevron-forward" size={20} color="#D97706" />
-  </TouchableOpacity>
-</View>
+            <Ionicons name="chevron-forward" size={20} color="#D97706" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Visual Potty Routine</Text>
           <Text style={styles.sectionSubtext}>
-            Step-by-step pictures and simple parent words.
+            Simple picture steps for bathroom routines.
           </Text>
         </View>
 
@@ -373,20 +363,8 @@ const problemPreview = getProblemSolverPreview();
           <View style={{ flex: 1 }}>
             <Text style={styles.visualRoutineTitle}>Open visual potty routine</Text>
             <Text style={styles.visualRoutineText}>
-              Picture steps for bathroom, pants down, sit, try, wipe, flush, and wash hands.
+              Pictures for bathroom, pants down, sit, try, wipe, flush, and wash hands.
             </Text>
-
-            <View style={styles.visualMiniRow}>
-              <View style={styles.visualMiniPill}>
-                <Ionicons name="images-outline" size={13} color="#2563EB" />
-                <Text style={styles.visualMiniText}>7 visual steps</Text>
-              </View>
-
-              <View style={styles.visualMiniPill}>
-                <Ionicons name="person-outline" size={13} color="#2563EB" />
-                <Text style={styles.visualMiniText}>Boy/Girl options</Text>
-              </View>
-            </View>
           </View>
 
           <Ionicons name="chevron-forward" size={22} color="#2563EB" />
@@ -398,112 +376,202 @@ const problemPreview = getProblemSolverPreview();
         </View>
 
         <View style={styles.toolGrid}>
-          <ToolCard
-            title="Progress"
-            text="Weekly totals"
-            icon="bar-chart-outline"
-            color="#10B981"
-            bg="#ECFDF5"
-            border="#A7F3D0"
-            onPress={() => router.push('/toilet-training/progress')}
-          />
-
-          <ToolCard
-            title="Schedule"
-            text="Reminder times"
-            icon="time-outline"
-            color="#2563EB"
-            bg="#EFF6FF"
-            border="#BFDBFE"
-            onPress={() => router.push('/toilet-training/schedule')}
-          />
-
-          <ToolCard
-            title="Smart Tips"
-            text="Refusal support"
-            icon="bulb-outline"
-            color="#7C3AED"
-            bg="#FAF5FF"
-            border="#E9D5FF"
-            pro
-            onPress={() => router.push('/toilet-training/tips')}
-          />
-
-          <ToolCard
-            title="Insights"
-            text="Best windows"
-            icon="sparkles-outline"
-            color="#7C3AED"
-            bg="#FAF5FF"
-            border="#E9D5FF"
-            pro
-            onPress={() => router.push('/toilet-training/insights')}
-          />
+          <ToolCard title="Progress" text="Weekly totals" icon="bar-chart-outline" color="#10B981" bg="#ECFDF5" border="#A7F3D0" onPress={() => router.push('/toilet-training/progress')} />
+          <ToolCard title="Schedule" text="Smart timing" icon="time-outline" color="#2563EB" bg="#EFF6FF" border="#BFDBFE" onPress={() => router.push('/toilet-training/schedule')} />
+          <ToolCard title="Coach Tips" text="What to try" icon="bulb-outline" color="#7C3AED" bg="#FAF5FF" border="#E9D5FF" pro onPress={() => router.push('/toilet-training/tips')} />
+          <ToolCard title="Coach Insights" text="Patterns & timing" icon="sparkles-outline" color="#7C3AED" bg="#FAF5FF" border="#E9D5FF" pro onPress={() => router.push('/toilet-training/insights')} />
         </View>
 
         <TouchableOpacity
-  style={styles.logsShortcutCard}
-  onPress={() => router.push('/toilet-training/logs')}
-  activeOpacity={0.9}
->
-  <View style={styles.logsShortcutIcon}>
-    <Ionicons name="file-tray-full-outline" size={24} color="#2563EB" />
-  </View>
+          style={styles.logsShortcutCard}
+          onPress={() => router.push('/toilet-training/logs')}
+          activeOpacity={0.9}
+        >
+          <View style={styles.logsShortcutIcon}>
+            <Ionicons name="file-tray-full-outline" size={24} color="#2563EB" />
+          </View>
 
-  <View style={{ flex: 1 }}>
-    <Text style={styles.logsShortcutTitle}>Potty Log History</Text>
-    <Text style={styles.logsShortcutText}>
-      View, review, or delete saved potty logs.
-    </Text>
-  </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.logsShortcutTitle}>Potty Log History</Text>
+            <Text style={styles.logsShortcutText}>Review or delete saved potty moments.</Text>
+          </View>
 
-  <View style={styles.logsCountPill}>
-    <Text style={styles.logsCountText}>{allEntries.length}</Text>
-  </View>
+          <View style={styles.logsCountPill}>
+            <Text style={styles.logsCountText}>{allEntries.length}</Text>
+          </View>
 
-  <Ionicons name="chevron-forward" size={21} color="#2563EB" />
-</TouchableOpacity>
-
+          <Ionicons name="chevron-forward" size={21} color="#2563EB" />
+        </TouchableOpacity>
       </ScrollView>
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
           <Pressable style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Log Potty Visit</Text>
-            <Text style={styles.modalSubtitle}>What happened this time?</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>Add Potty Moment</Text>
+              <Text style={styles.modalSubtitle}>
+                It’s okay if you’re logging this late. Pick when it happened.
+              </Text>
 
-            <View style={styles.modalOptions}>
-              {(['success', 'attempt', 'accident'] as PottyResult[]).map((result) => (
-                <TouchableOpacity
-                  key={result}
-                  style={[
-                    styles.modalOption,
-                    selectedResult === result && styles.modalOptionSelected,
-                  ]}
-                  onPress={() => setSelectedResult(result)}
-                >
-                  <Ionicons name={getResultIcon(result)} size={24} color={getResultColor(result)} />
-                  <Text style={styles.modalOptionText}>{getResultLabel(result)}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <Text style={styles.modalSectionLabel}>When did it happen?</Text>
 
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Optional note, like: sat for 2 minutes"
-              placeholderTextColor="#94A3B8"
-              value={note}
-              onChangeText={setNote}
-              multiline
-            />
+              <View style={styles.chipRow}>
+                {timeOptions.map((item) => {
+                  const active = minutesAgo === item.minutesAgo && customMinutesAgo.length === 0;
 
-            <TouchableOpacity
-              style={[styles.saveButton, !selectedResult && styles.saveButtonDisabled]}
-              onPress={saveEntry}
-              disabled={!selectedResult}
-            >
-              <Text style={styles.saveButtonText}>Save Log</Text>
-            </TouchableOpacity>
+                  return (
+                    <TouchableOpacity
+                      key={item.label}
+                      style={[styles.chip, active && styles.chipSelected]}
+                      onPress={() => {
+                        setMinutesAgo(item.minutesAgo);
+                        setCustomMinutesAgo('');
+                      }}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TextInput
+                style={styles.smallInput}
+                placeholder="Or type minutes ago, like 75"
+                placeholderTextColor="#94A3B8"
+                value={customMinutesAgo}
+                onChangeText={setCustomMinutesAgo}
+                keyboardType="number-pad"
+              />
+
+              <Text style={styles.modalSectionLabel}>What happened?</Text>
+
+              <View style={styles.modalOptions}>
+                {(['success', 'attempt', 'accident'] as PottyResult[]).map((result) => (
+                  <TouchableOpacity
+                    key={result}
+                    style={[
+                      styles.modalOption,
+                      selectedResult === result && styles.modalOptionSelected,
+                    ]}
+                    onPress={() => setSelectedResult(result)}
+                  >
+                    <Ionicons name={getResultIcon(result)} size={24} color={getResultColor(result)} />
+                    <Text style={styles.modalOptionText}>{getResultLabel(result)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.modalSectionLabel}>What came out?</Text>
+
+              <View style={styles.chipRow}>
+                {[
+                  { id: 'pee', label: 'Pee' },
+                  { id: 'poop', label: 'Poop' },
+                  { id: 'both', label: 'Both' },
+                  { id: 'none', label: 'Nothing' },
+                  { id: 'unsure', label: 'Unsure' },
+                ].map((item) => {
+                  const active = output === item.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.chip, active && styles.chipSelected]}
+                      onPress={() => setOutput(item.id as PottyOutput)}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.modalSectionLabel}>How much help was needed?</Text>
+
+              <View style={styles.chipRow}>
+                {[
+                  { id: 'independent', label: 'Independent' },
+                  { id: 'verbal_prompt', label: 'Verbal' },
+                  { id: 'visual_prompt', label: 'Visual' },
+                  { id: 'physical_help', label: 'Physical help' },
+                  { id: 'full_support', label: 'Full support' },
+                ].map((item) => {
+                  const active = promptLevel === item.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.chip, active && styles.chipSelected]}
+                      onPress={() => setPromptLevel(item.id as PottyPromptLevel)}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.modalSectionLabel}>Any challenge this time?</Text>
+
+              <View style={styles.chipRow}>
+                {[
+                  { id: 'refusal', label: 'Refusal' },
+                  { id: 'fear', label: 'Fear' },
+                  { id: 'sat_but_did_not_go', label: 'Sat but didn’t go' },
+                  { id: 'accident_after_sitting', label: 'Accident after sitting' },
+                  { id: 'does_not_communicate_need', label: 'Didn’t communicate' },
+                  { id: 'transition_difficulty', label: 'Transition hard' },
+                  { id: 'sensory_discomfort', label: 'Sensory discomfort' },
+                  { id: 'constipation_concern', label: 'Constipation concern' },
+                ].map((item) => {
+                  const active = supportNeeds.includes(item.id as PottySupportNeed);
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.chip, active && styles.chipSelected]}
+                      onPress={() => toggleSupportNeed(item.id as PottySupportNeed)}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextSelected]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.modalSectionLabel}>How long did they sit?</Text>
+
+              <TextInput
+                style={styles.smallInput}
+                placeholder="Example: 2 minutes"
+                placeholderTextColor="#94A3B8"
+                value={satMinutes}
+                onChangeText={setSatMinutes}
+                keyboardType="number-pad"
+              />
+
+              <TextInput
+                style={styles.noteInput}
+                placeholder="Optional note"
+                placeholderTextColor="#94A3B8"
+                value={note}
+                onChangeText={setNote}
+                multiline
+              />
+
+              <TouchableOpacity
+                style={[styles.saveButton, !selectedResult && styles.saveButtonDisabled]}
+                onPress={saveEntry}
+                disabled={!selectedResult}
+              >
+                <Text style={styles.saveButtonText}>Save Potty Moment</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -573,15 +641,8 @@ function ToolCard({
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F7F8FC',
-  },
-
-  container: {
-    padding: 20,
-    paddingBottom: 48,
-  },
+  safe: { flex: 1, backgroundColor: '#F7F8FC' },
+  container: { padding: 20, paddingBottom: 48 },
 
   screenGlowTop: {
     position: 'absolute',
@@ -592,7 +653,6 @@ const styles = StyleSheet.create({
     top: -130,
     right: -90,
   },
-
   screenGlowMiddle: {
     position: 'absolute',
     width: 250,
@@ -602,7 +662,6 @@ const styles = StyleSheet.create({
     top: 360,
     left: -140,
   },
-
   screenGlowBottom: {
     position: 'absolute',
     width: 300,
@@ -613,12 +672,7 @@ const styles = StyleSheet.create({
     right: -130,
   },
 
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   backButton: {
     width: 46,
     height: 46,
@@ -630,18 +684,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-
-  headerTextWrap: {
-    flex: 1,
-  },
-
+  headerTextWrap: { flex: 1 },
   title: {
     fontSize: 30,
     fontWeight: '900',
     color: '#0F172A',
     letterSpacing: -0.8,
   },
-
   subtitle: {
     fontSize: 14,
     color: '#64748B',
@@ -664,7 +713,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 9 },
     elevation: 3,
   },
-
   practiceGlow: {
     position: 'absolute',
     width: 150,
@@ -674,13 +722,7 @@ const styles = StyleSheet.create({
     right: -55,
     top: -60,
   },
-
-  practiceTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-
+  practiceTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   practiceIconCircle: {
     width: 60,
     height: 60,
@@ -690,7 +732,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 13,
   },
-
   practiceEyebrow: {
     color: '#2563EB',
     fontSize: 11,
@@ -698,13 +739,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 3,
   },
-
-  practiceTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#1E3A8A',
-  },
-
+  practiceTitle: { fontSize: 22, fontWeight: '900', color: '#1E3A8A' },
   practiceText: {
     fontSize: 13,
     color: '#334155',
@@ -713,26 +748,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  statsRow: {
-    flexDirection: 'row',
-    gap: 9,
-    marginBottom: 13,
+  statsRow: { flexDirection: 'row', gap: 9, marginBottom: 13 },
+  statMini: { flex: 1, borderRadius: 18, paddingVertical: 8, alignItems: 'center' },
+  statMiniNumber: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginTop: 2,
   },
-
-  statMini: {
-  flex: 1,
-  borderRadius: 18,
-  paddingVertical: 8,
-  alignItems: 'center',
-},
-
-statMiniNumber: {
-  fontSize: 20,
-  fontWeight: '900',
-  color: '#0F172A',
-  marginTop: 2,
-},
-
   statMiniLabel: {
     fontSize: 11,
     color: '#64748B',
@@ -740,22 +763,116 @@ statMiniNumber: {
     marginTop: 1,
   },
 
-  sectionHeader: {
-    marginBottom: 10,
+  mainLogButton: {
+    marginTop: 4,
+    backgroundColor: '#2563EB',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 7,
   },
+  mainLogButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
 
+  sectionHeader: { marginBottom: 10 },
   sectionTitle: {
     fontSize: 23,
     fontWeight: '900',
     color: '#0F172A',
     letterSpacing: -0.4,
   },
-
   sectionSubtext: {
     fontSize: 13,
     color: '#64748B',
     marginTop: 2,
     fontWeight: '700',
+  },
+
+  coachSummaryCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 24,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  coachSummaryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coachSummaryTitle: {
+    color: '#1E3A8A',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  coachSummaryText: {
+    color: '#334155',
+    fontSize: 12.5,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginTop: 3,
+  },
+
+  coachGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  coachCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    minHeight: 118,
+  },
+  coachCardFull: {
+    width: '100%',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 24,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  coachFullIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coachTitle: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+  coachText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  coachMiniText: {
+    fontSize: 11,
+    fontWeight: '900',
+    marginTop: 6,
+    color: '#2563EB',
   },
 
   visualRoutineCard: {
@@ -774,7 +891,6 @@ statMiniNumber: {
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
-
   visualPreviewImage: {
     width: 76,
     height: 76,
@@ -783,13 +899,11 @@ statMiniNumber: {
     borderWidth: 1,
     borderColor: '#DBEAFE',
   },
-
   visualRoutineTitle: {
     color: '#1E3A8A',
     fontSize: 17,
     fontWeight: '900',
   },
-
   visualRoutineText: {
     color: '#475569',
     fontSize: 13,
@@ -798,36 +912,12 @@ statMiniNumber: {
     marginTop: 4,
   },
 
-  visualMiniRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
-    marginTop: 9,
-  },
-
-  visualMiniPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    gap: 4,
-  },
-
-  visualMiniText: {
-    color: '#2563EB',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-
   toolGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 24,
   },
-
   toolCard: {
     width: '48%',
     borderRadius: 22,
@@ -835,7 +925,6 @@ statMiniNumber: {
     borderWidth: 1,
     minHeight: 112,
   },
-
   lockBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#7C3AED',
@@ -847,20 +936,13 @@ statMiniNumber: {
     gap: 4,
     marginBottom: 6,
   },
-
-  lockBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '900',
-  },
-
+  lockBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
   toolTitle: {
     fontSize: 15,
     fontWeight: '900',
     color: '#0F172A',
     marginTop: 8,
   },
-
   toolText: {
     fontSize: 12,
     color: '#64748B',
@@ -869,137 +951,76 @@ statMiniNumber: {
     fontWeight: '700',
   },
 
-  recentCard: {
+  logsShortcutCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 16,
+    borderRadius: 24,
+    padding: 15,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-
-  recentHeader: {
+    borderColor: '#BFDBFE',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    gap: 12,
+    marginTop: 4,
   },
-
-  recentTitle: {
-    fontSize: 21,
-    fontWeight: '900',
-    color: '#0F172A',
+  logsShortcutIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  recentCount: {
+  logsShortcutTitle: { color: '#0F172A', fontSize: 15, fontWeight: '900' },
+  logsShortcutText: {
     color: '#64748B',
     fontSize: 12,
-    fontWeight: '800',
-  },
-
-  emptyLogBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-
-  emptyText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 19,
     fontWeight: '700',
+    marginTop: 3,
   },
-
-  logRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 11,
-    borderRadius: 20,
-    marginBottom: 9,
-  },
-
-  logIconWrap: {
-    width: 38,
-    height: 38,
+  logsCountPill: {
+    minWidth: 30,
+    height: 30,
     borderRadius: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  logTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-
-  logNote: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-    lineHeight: 17,
-    fontWeight: '700',
-  },
-
-  logRight: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-
-  logTime: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '800',
-  },
-
-  deleteLogButton: {
-    width: 31,
-    height: 31,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  logsCountText: { color: '#2563EB', fontSize: 13, fontWeight: '900' },
 
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'flex-end',
   },
-
   modalCard: {
+    maxHeight: '88%',
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 22,
     paddingBottom: 34,
   },
-
   modalTitle: {
     fontSize: 23,
     fontWeight: '900',
     color: '#0F172A',
   },
-
   modalSubtitle: {
     fontSize: 14,
     color: '#64748B',
     marginTop: 4,
     marginBottom: 16,
     fontWeight: '700',
+    lineHeight: 20,
   },
-
-  modalOptions: {
-    gap: 10,
-    marginBottom: 14,
+  modalSectionLabel: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#334155',
+    marginBottom: 8,
+    marginTop: 10,
   },
-
+  modalOptions: { gap: 10, marginBottom: 14 },
   modalOption: {
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -1010,18 +1031,50 @@ statMiniNumber: {
     gap: 10,
     backgroundColor: '#FFFFFF',
   },
-
   modalOptionSelected: {
     borderColor: '#2563EB',
     backgroundColor: '#EFF6FF',
   },
-
   modalOptionText: {
     fontSize: 15,
     fontWeight: '900',
     color: '#0F172A',
   },
-
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  chip: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: 11,
+  },
+  chipSelected: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#2563EB',
+  },
+  chipText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  chipTextSelected: { color: '#2563EB' },
+  smallInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '700',
+    marginBottom: 10,
+  },
   noteInput: {
     minHeight: 82,
     backgroundColor: '#F8FAFC',
@@ -1035,182 +1088,16 @@ statMiniNumber: {
     marginBottom: 14,
     fontWeight: '700',
   },
-
   saveButton: {
     backgroundColor: '#2563EB',
     borderRadius: 18,
     paddingVertical: 15,
     alignItems: 'center',
   },
-
-  saveButtonDisabled: {
-    backgroundColor: '#CBD5E1',
-  },
-
+  saveButtonDisabled: { backgroundColor: '#CBD5E1' },
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
   },
-
-mainLogButton: {
-  marginTop: 4,
-  backgroundColor: '#2563EB',
-  borderRadius: 16,
-  paddingVertical: 12,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-  gap: 7,
-},
-
-mainLogButtonText: {
-  color: '#FFFFFF',
-  fontSize: 14,
-  fontWeight: '900',
-},
-
-logsShortcutCard: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 24,
-  padding: 15,
-  borderWidth: 1,
-  borderColor: '#BFDBFE',
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 12,
-  marginTop: 4,
-},
-
-logsShortcutIcon: {
-  width: 48,
-  height: 48,
-  borderRadius: 18,
-  backgroundColor: '#EFF6FF',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-logsShortcutTitle: {
-  color: '#0F172A',
-  fontSize: 15,
-  fontWeight: '900',
-},
-
-logsShortcutText: {
-  color: '#64748B',
-  fontSize: 12,
-  fontWeight: '700',
-  marginTop: 3,
-},
-
-logsCountPill: {
-  minWidth: 30,
-  height: 30,
-  borderRadius: 15,
-  backgroundColor: '#EFF6FF',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-logsCountText: {
-  color: '#2563EB',
-  fontSize: 13,
-  fontWeight: '900',
-},
-
-coachGrid: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 12,
-  marginBottom: 24,
-},
-
-coachCard: {
-  width: '48%',
-  backgroundColor: '#FFFFFF',
-  borderRadius: 22,
-  padding: 15,
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-  minHeight: 118,
-},
-
-coachCardFull: {
-  width: '100%',
-  backgroundColor: '#FFFBEB',
-  borderRadius: 24,
-  padding: 15,
-  borderWidth: 1,
-  borderColor: '#FDE68A',
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 12,
-},
-
-coachFullIcon: {
-  width: 48,
-  height: 48,
-  borderRadius: 18,
-  backgroundColor: '#FEF3C7',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-coachTitle: {
-  color: '#0F172A',
-  fontSize: 15,
-  fontWeight: '900',
-  marginTop: 8,
-},
-
-coachText: {
-  color: '#64748B',
-  fontSize: 12,
-  fontWeight: '700',
-  lineHeight: 17,
-  marginTop: 4,
-},
-
-coachSummaryCard: {
-  backgroundColor: '#EFF6FF',
-  borderRadius: 24,
-  padding: 15,
-  borderWidth: 1,
-  borderColor: '#BFDBFE',
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 12,
-  marginBottom: 12,
-},
-
-coachSummaryIcon: {
-  width: 48,
-  height: 48,
-  borderRadius: 18,
-  backgroundColor: '#FFFFFF',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-coachSummaryTitle: {
-  color: '#1E3A8A',
-  fontSize: 15,
-  fontWeight: '900',
-},
-
-coachSummaryText: {
-  color: '#334155',
-  fontSize: 12.5,
-  fontWeight: '700',
-  lineHeight: 18,
-  marginTop: 3,
-},
-
-coachMiniText: {
-  fontSize: 11,
-  fontWeight: '900',
-  marginTop: 6,
-  color: '#2563EB',
-},
 });

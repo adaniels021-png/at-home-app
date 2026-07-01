@@ -44,6 +44,14 @@ function getCategoryIcon(category: PermissionSlip['category']) {
   }
 }
 
+function getDisplayDate() {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export default function DailyPermissionSlipScreen() {
   const router = useRouter();
 
@@ -77,71 +85,77 @@ export default function DailyPermissionSlipScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <View style={styles.backgroundCircleOne} />
+      <View style={styles.backgroundCircleTwo} />
+      <View style={styles.backgroundHeartOne}>
+        <Ionicons name="heart" size={34} color="rgba(244,63,94,0.08)" />
+      </View>
+      <View style={styles.backgroundHeartTwo}>
+        <Ionicons name="mail-outline" size={48} color="rgba(190,18,60,0.06)" />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Header Navigation bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={22} color="#9F1239" />
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={27} color="#BE123C" />
+        </TouchableOpacity>
 
-          <View style={styles.topTitleWrap}>
-            <Text style={styles.topEyebrow}>Parent Support</Text>
-            <Text style={styles.topTitle}>Daily Permission</Text>
+        <View style={styles.headerWrap}>
+          <Text style={styles.topEyebrow}>Parent Support</Text>
+          <Text style={styles.topTitle}>Today’s Permission</Text>
+
+          <View style={styles.headerHeartRow}>
+            <View style={styles.headerDash} />
+            <Ionicons name="heart" size={18} color="#E11D48" />
+            <View style={styles.headerDash} />
           </View>
 
-          <View style={styles.backButtonPlaceholder} />
+          <Text style={styles.pageIntro}>One gentle reminder for yourself today.</Text>
         </View>
 
-        <Text style={styles.pageIntro}>
-          A small daily note to help you lower the pressure without turning it
-          into another task.
-        </Text>
-
-        {/* State Conditional Layout: Sealed Envelope vs Revealed Slip */}
         {!revealed ? (
           <TouchableOpacity
             style={styles.envelopeWrap}
             activeOpacity={0.9}
             onPress={() => setRevealed(true)}
           >
+            <View style={styles.paperPreview}>
+              <Text style={styles.previewStamp}>TODAY</Text>
+              <Text style={styles.previewDate}>{getDisplayDate()}</Text>
+              <Text style={styles.previewTitle}>Permission Slip</Text>
+              <View style={styles.previewDivider}>
+                <View style={styles.previewLine} />
+                <Ionicons name="heart" size={16} color="#FDA4AF" />
+                <View style={styles.previewLine} />
+              </View>
+            </View>
+
             <View style={styles.envelopeBack}>
-              <View style={styles.envelopeFlap} />
+              <View style={styles.envelopeLeftFold} />
+              <View style={styles.envelopeRightFold} />
+              <View style={styles.envelopeCenterLine} />
 
-              <View style={styles.envelopePaperPreview}>
-                <Text style={styles.previewStamp}>TODAY</Text>
-                <Text style={styles.previewTitle}>Permission Slip</Text>
+              <View style={styles.seal}>
+                <Ionicons name="heart" size={28} color="#BE123C" />
               </View>
 
-              <View style={styles.envelopeFront}>
-                <View style={styles.seal}>
-                  <Ionicons name="heart" size={26} color="#FFFFFF" />
-                </View>
-                <Text style={styles.envelopeText}>Tap to open</Text>
-                <Text style={styles.envelopeSubtext}>
-                  No streaks. No homework. Just one permission.
-                </Text>
-              </View>
+              <Text style={styles.envelopeText}>Open Today’s Permission</Text>
+              <Text style={styles.envelopeSubtext}>
+                No streaks. No homework. Just one permission.
+              </Text>
             </View>
           </TouchableOpacity>
         ) : (
           <>
-            {/* The Notebook Page Simulation */}
             <View style={styles.paperShadow}>
               <View style={styles.paper}>
-                <View style={styles.paperHoleRow}>
-                  <View style={styles.paperHole} />
-                  <View style={styles.paperHole} />
-                  <View style={styles.paperHole} />
-                </View>
-
                 <View style={styles.paperHeader}>
                   <View style={styles.stampBox}>
                     <Ionicons
                       name={getCategoryIcon(slip.category) as any}
-                      size={16}
+                      size={15}
                       color="#BE123C"
                     />
                     <Text style={styles.stampText}>
@@ -149,17 +163,23 @@ export default function DailyPermissionSlipScreen() {
                     </Text>
                   </View>
 
-                  {claimed && (
+                  {claimed ? (
                     <View style={styles.claimedStamp}>
                       <Ionicons name="checkmark-circle" size={15} color="#0F766E" />
                       <Text style={styles.claimedStampText}>Claimed</Text>
                     </View>
-                  )}
+                  ) : null}
                 </View>
 
                 <Text style={styles.paperLabel}>TODAY’S PERMISSION</Text>
                 <Text style={styles.slipTitle}>{slip.title}</Text>
-                <View style={styles.divider} />
+
+                <View style={styles.paperDivider}>
+                  <View style={styles.paperLine} />
+                  <Ionicons name="heart" size={16} color="#FDA4AF" />
+                  <View style={styles.paperLine} />
+                </View>
+
                 <Text style={styles.permissionText}>{slip.permission}</Text>
 
                 <View style={styles.signatureLine}>
@@ -171,7 +191,6 @@ export default function DailyPermissionSlipScreen() {
               </View>
             </View>
 
-            {/* Micro / Mini / Macro Customization Segment Control */}
             <View style={styles.timeSelector}>
               <TouchableOpacity
                 style={[styles.timeChip, level === 'micro' && styles.timeChipActive]}
@@ -210,24 +229,28 @@ export default function DailyPermissionSlipScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Dynamic Interactive Strategy Action Box */}
             <View style={styles.noteCard}>
               <View style={styles.noteIcon}>
-                <Ionicons name="leaf-outline" size={22} color="#BE123C" />
+                <Ionicons name="heart-outline" size={25} color="#BE123C" />
               </View>
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.noteLabel}>Use it this way</Text>
                 <Text style={styles.noteText}>{selectedAction}</Text>
               </View>
             </View>
 
-            {/* Psychological Subtext Container */}
             <View style={styles.whyStrip}>
-              <Text style={styles.whyLabel}>Why it matters</Text>
-              <Text style={styles.whyText}>{slip.why}</Text>
+              <View style={styles.whyIcon}>
+                <Ionicons name="sparkles-outline" size={22} color="#E11D48" />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.whyLabel}>Gentle Reminder</Text>
+                <Text style={styles.whyText}>{slip.why}</Text>
+              </View>
             </View>
 
-            {/* Footer Interactive Actions Row */}
             <View style={styles.actionRow}>
               <TouchableOpacity
                 style={[styles.claimButton, claimed && styles.claimButtonDone]}
@@ -249,11 +272,28 @@ export default function DailyPermissionSlipScreen() {
                 onPress={showDifferentSlip}
                 activeOpacity={0.84}
               >
-                <Ionicons name="refresh-outline" size={19} color="#BE123C" />
+                <Ionicons name="refresh-outline" size={20} color="#BE123C" />
               </TouchableOpacity>
             </View>
           </>
         )}
+
+        {!revealed ? (
+          <View style={styles.reminderCard}>
+            <View style={styles.reminderIcon}>
+              <Ionicons name="heart-outline" size={36} color="#BE123C" />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text style={styles.reminderTitle}>Gentle Reminder</Text>
+              <Text style={styles.reminderText}>
+                This isn’t another task. It’s simply something you’re allowed to believe today.
+              </Text>
+            </View>
+
+            <Ionicons name="sparkles" size={22} color="#FDA4AF" />
+          </View>
+        ) : null}
 
         <Text style={styles.footerNote}>
           This is not a score, streak, or assignment. It is simply a permission
@@ -265,153 +305,377 @@ export default function DailyPermissionSlipScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF1F2' },
-  container: { padding: 20, paddingBottom: 50 },
-  topBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
+  safe: {
+    flex: 1,
+    backgroundColor: '#FFF1F2',
+  },
+
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 95,
+  },
+
+  backgroundCircleOne: {
+    position: 'absolute',
+    top: -90,
+    right: -100,
+    width: 270,
+    height: 270,
+    borderRadius: 135,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+  },
+
+  backgroundCircleTwo: {
+    position: 'absolute',
+    bottom: -100,
+    left: -70,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(255,255,255,0.30)',
+  },
+
+  backgroundHeartOne: {
+    position: 'absolute',
+    top: 160,
+    right: 42,
+  },
+
+  backgroundHeartTwo: {
+    position: 'absolute',
+    bottom: 90,
+    right: 22,
+    transform: [{ rotate: '-12deg' }],
+  },
+
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
+    width: 54,
+    height: 54,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#FECDD3',
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  backButtonPlaceholder: { width: 42 },
-  topTitleWrap: { flex: 1, alignItems: 'center' },
+
+  headerWrap: {
+    alignItems: 'center',
+    marginTop: -18,
+    marginBottom: 10,
+  },
+
   topEyebrow: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
     color: '#BE123C',
-    letterSpacing: 1.1,
+    letterSpacing: 2.8,
     textTransform: 'uppercase',
   },
+
   topTitle: {
-    marginTop: 2,
-    fontSize: 21,
+    marginTop: 7,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: -0.4,
+    letterSpacing: -0.8,
+    textAlign: 'center',
   },
+
+  headerHeartRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  headerDash: {
+    width: 18,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: '#FDA4AF',
+  },
+
   pageIntro: {
-    color: '#9F1239',
-    fontSize: 15,
-    lineHeight: 22,
+    marginTop: 24,
+    color: '#64748B',
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 22,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
-  envelopeWrap: { marginTop: 18, marginBottom: 26 },
-  envelopeBack: {
-    height: 330,
-    borderRadius: 34,
-    backgroundColor: '#FECDD3',
-    borderWidth: 1,
-    borderColor: '#FDA4AF',
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    shadowColor: '#BE123C',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    elevation: 5,
-  },
-  envelopeFlap: {
+
+ envelopeWrap: {
+  marginTop: 8,
+  marginBottom: 22,
+  minHeight: 390,
+  justifyContent: 'flex-end',
+},
+
+  paperPreview: {
     position: 'absolute',
-    top: -110,
-    left: -40,
-    right: -40,
-    height: 240,
-    backgroundColor: '#FFE4E6',
-    transform: [{ rotate: '45deg' }],
-    borderWidth: 1,
-    borderColor: '#FDA4AF',
-  },
-  envelopePaperPreview: {
-    position: 'absolute',
-    top: 38,
-    left: 34,
-    right: 34,
-    height: 132,
+    top: 0,
+    left: 30,
+    right: 30,
+    height: 220,
     backgroundColor: '#FFFBF7',
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 28,
+    padding: 28,
     borderWidth: 1,
-    borderColor: '#FDE2E7',
+    borderColor: 'rgba(255,255,255,0.9)',
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.07,
+    shadowRadius: 22,
+    elevation: 2,
+    zIndex: 1,
   },
-  previewStamp: { color: '#BE123C', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
-  previewTitle: { marginTop: 12, color: '#0F172A', fontSize: 26, fontWeight: '900' },
-  envelopeFront: {
-    height: 190,
+
+  previewStamp: {
+    color: '#BE123C',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2.4,
+  },
+
+  previewDate: {
+    marginTop: 12,
+    color: '#BE123C',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  previewTitle: {
+    marginTop: 22,
+    color: '#0F172A',
+    fontSize: 33,
+    lineHeight: 38,
+    fontWeight: '900',
+    letterSpacing: -0.8,
+  },
+
+  previewDivider: {
+    marginTop: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  previewLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: '#FECDD3',
+  },
+
+  envelopeBack: {
+    height: 255,
+    borderRadius: 34,
     backgroundColor: '#BE123C',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    overflow: 'hidden',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 22,
+    paddingBottom: 32,
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 6,
+    zIndex: 2,
   },
+
+  envelopeLeftFold: {
+    position: 'absolute',
+    left: -30,
+    top: 0,
+    width: '72%',
+    height: 210,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    transform: [{ rotate: '23deg' }],
+  },
+
+  envelopeRightFold: {
+    position: 'absolute',
+    right: -30,
+    top: 0,
+    width: '72%',
+    height: 210,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    transform: [{ rotate: '-23deg' }],
+  },
+
+  envelopeCenterLine: {
+    position: 'absolute',
+    right: -36,
+    bottom: 42,
+    width: 210,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    transform: [{ rotate: '-32deg' }],
+  },
+
   seal: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#9F1239',
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 4,
+    borderWidth: 5,
     borderColor: '#FFE4E6',
-    marginBottom: 14,
+    marginBottom: 24,
+    shadowColor: '#7F1D1D',
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  envelopeText: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', marginBottom: 6 },
-  envelopeSubtext: { color: '#FFE4E6', fontSize: 13, lineHeight: 19, fontWeight: '700', textAlign: 'center' },
+
+  envelopeText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  envelopeSubtext: {
+    color: '#FFE4E6',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+
   paperShadow: {
     shadowColor: '#BE123C',
-    shadowOffset: { width: 0, height: 16 },
+    shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.1,
-    shadowRadius: 22,
+    shadowRadius: 24,
     elevation: 5,
     marginBottom: 16,
   },
-  paper: { backgroundColor: '#FFFBF7', borderRadius: 10, padding: 22, borderWidth: 1, borderColor: '#FDE2E7' },
-  paperHoleRow: { position: 'absolute', top: 14, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly' },
-  paperHole: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFF1F2', borderWidth: 1, borderColor: '#FECDD3' },
-  paperHeader: { marginTop: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  paper: {
+    backgroundColor: '#FFFBF7',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+  },
+
+  paperHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
   stampBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#BE123C',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    transform: [{ rotate: '-2deg' }],
+    backgroundColor: '#FFF1F2',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  stampText: { marginLeft: 5, color: '#BE123C', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.6 },
+
+  stampText: {
+    marginLeft: 6,
+    color: '#BE123C',
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+
   claimedStamp: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
     borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#A7F3D0',
   },
-  claimedStampText: { marginLeft: 5, color: '#0F766E', fontSize: 11, fontWeight: '900' },
-  paperLabel: { marginTop: 24, color: '#BE123C', fontSize: 12, fontWeight: '900', letterSpacing: 1.1 },
-  slipTitle: { marginTop: 8, color: '#0F172A', fontSize: 28, lineHeight: 34, fontWeight: '900', letterSpacing: -0.7 },
-  divider: { height: 1, backgroundColor: '#FDE2E7', marginVertical: 16 },
-  permissionText: { color: '#334155', fontSize: 16, lineHeight: 25, fontWeight: '700' },
-  signatureLine: { marginTop: 20 },
+
+  claimedStampText: {
+    marginLeft: 5,
+    color: '#0F766E',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  paperLabel: {
+    marginTop: 26,
+    color: '#BE123C',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+
+  slipTitle: {
+    marginTop: 8,
+    color: '#0F172A',
+    fontSize: 31,
+    lineHeight: 37,
+    fontWeight: '900',
+    letterSpacing: -0.8,
+  },
+
+  paperDivider: {
+    marginVertical: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  paperLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: '#FECDD3',
+  },
+
+  permissionText: {
+    color: '#334155',
+    fontSize: 16,
+    lineHeight: 25,
+    fontWeight: '700',
+  },
+
+  signatureLine: {
+    marginTop: 22,
+  },
+
   signatureDash: {
-  height: 1,
-  backgroundColor: '#E2E8F0',
-  width: '72%',
-  marginBottom: 8,
-},
-  signatureText: { color: '#94A3B8', fontSize: 12, lineHeight: 17, fontWeight: '800', fontStyle: 'italic' },
-  timeSelector: { flexDirection: 'row', gap: 9, marginBottom: 14 },
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    width: '72%',
+    marginBottom: 8,
+  },
+
+  signatureText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '800',
+    fontStyle: 'italic',
+  },
+
+  timeSelector: {
+    flexDirection: 'row',
+    gap: 9,
+    marginBottom: 14,
+  },
+
   timeChip: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -422,11 +686,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FECDD3',
   },
-  timeChipActive: { backgroundColor: '#BE123C', borderColor: '#BE123C' },
-  timeChipTop: { color: '#BE123C', fontSize: 14, fontWeight: '900' },
-  timeChipTopActive: { color: '#FFFFFF' },
-  timeChipBottom: { marginTop: 2, color: '#9F1239', fontSize: 10, fontWeight: '800' },
-  timeChipBottomActive: { color: '#FFE4E6' },
+
+  timeChipActive: {
+    backgroundColor: '#BE123C',
+    borderColor: '#BE123C',
+  },
+
+  timeChipTop: {
+    color: '#BE123C',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  timeChipTopActive: {
+    color: '#FFFFFF',
+  },
+
+  timeChipBottom: {
+    marginTop: 2,
+    color: '#9F1239',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  timeChipBottomActive: {
+    color: '#FFE4E6',
+  },
+
   noteCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
@@ -437,21 +723,77 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 12,
   },
+
   noteIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     backgroundColor: '#FFF1F2',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  noteLabel: { color: '#BE123C', fontSize: 13, fontWeight: '900', marginBottom: 4 },
-  noteText: { color: '#475569', fontSize: 14, lineHeight: 21, fontWeight: '800' },
-  whyStrip: { backgroundColor: '#FFF7ED', borderRadius: 22, padding: 15, borderWidth: 1, borderColor: '#FED7AA', marginBottom: 14 },
-  whyLabel: { color: '#9A3412', fontSize: 13, fontWeight: '900', marginBottom: 5 },
-  whyText: { color: '#7C2D12', fontSize: 13, lineHeight: 20, fontWeight: '700' },
-  actionRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
+
+  noteLabel: {
+    color: '#BE123C',
+    fontSize: 13,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+
+  noteText: {
+    color: '#475569',
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '800',
+  },
+
+  whyStrip: {
+    backgroundColor: 'rgba(255,255,255,0.78)',
+    borderRadius: 26,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+
+  whyIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#FFE4E6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  whyLabel: {
+    color: '#BE123C',
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 5,
+  },
+
+  whyText: {
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 18,
+  },
+
   claimButton: {
     flex: 1,
     height: 56,
@@ -460,9 +802,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  claimButtonDone: { backgroundColor: '#0F766E' },
-  claimButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', marginLeft: 7 },
+
+  claimButtonDone: {
+    backgroundColor: '#0F766E',
+    shadowColor: '#0F766E',
+  },
+
+  claimButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+    marginLeft: 7,
+  },
+
   newSlipButton: {
     width: 56,
     height: 56,
@@ -473,5 +831,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footerNote: { marginTop: 4, color: '#9F1239', fontSize: 13, lineHeight: 20, fontWeight: '700', textAlign: 'center', paddingHorizontal: 10 },
+
+  reminderCard: {
+    marginTop: 6,
+    backgroundColor: 'rgba(255,255,255,0.78)',
+    borderRadius: 28,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#BE123C',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.08,
+    shadowRadius: 22,
+    elevation: 3,
+  },
+
+  reminderIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#FFE4E6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  reminderTitle: {
+    color: '#BE123C',
+    fontSize: 17,
+    fontWeight: '900',
+    marginBottom: 5,
+  },
+
+  reminderText: {
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+
+  footerNote: {
+    marginTop: 20,
+    color: '#9F1239',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 10,
+  },
 });

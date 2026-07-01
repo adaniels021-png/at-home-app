@@ -17,17 +17,64 @@ import AnimatedPressable from '../../components/AnimatedPressable';
 import FadeInView from '../../components/FadeInView';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { getLearningPath } from '../../lib/learningPath';
 import { completeLesson } from '../../lib/lessonEngine';
+import { getRecommendedLesson } from '../../lib/lessonLibrary';
+import { getRecommendedStageForSkill } from '../../lib/lessonProgression';
 import { ensureLessonQueue, getNextQueuedLesson } from '../../lib/lessonQueue';
+import {
+  getMasteredSkills
+} from '../../lib/lessonRecommendations';
+import { SKILL_PROGRESSION_PATHS } from '../../lib/lessonTypes';
+import { getSmartRecommendedSkill } from '../../lib/smartLessonRecommendations';
 import { supabase } from '../../lib/supabase';
 type Lesson = any;
 
+const USE_LIBRARY_LESSONS = true;
+
+function mapAppCategoryToLibraryCategory(category: string) {
+  return category;
+}
+
+function mapLibraryLessonToDailyLesson(lesson: any) {
+  return {
+    id: `library-${lesson.id}`,
+    library_lesson_id: lesson.id,
+    source: 'library',
+
+    lesson_name: lesson.title,
+    focus_skill: lesson.skill_area,
+    category: lesson.category,
+
+    materials: lesson.materials || [],
+    teaching_steps: lesson.steps || [],
+    parent_coaching_note:
+      lesson.caregiver_tips?.[0] ||
+      lesson.goal ||
+      'Keep the lesson short, positive, and focused on small wins.',
+
+      estimated_minutes: lesson.estimated_minutes || null,
+
+    goal: lesson.goal,
+description: lesson.description,
+lesson_summary:
+  lesson.description ||
+  lesson.goal ||
+  lesson.why_skill_matters ||
+  null,
+lesson_type: lesson.lesson_type,
+stage_number: lesson.stage_number,
+stage_name: lesson.stage_name,
+  };
+}
+
 const SKILL_CATEGORIES = [
   'Communication',
-  'Social',
-  'Play',
-  'Self-Help',
-  'Motor',
+  'Daily Routines',
+  'Play & Social Skills',
+  'Learning & Attention',
+  'Movement & Coordination',
+  'Emotions & Behavior',
 ];
 
 type LessonStatus = 'success' | 'unsuccessful';
@@ -51,12 +98,13 @@ function cleanLessonTitle(title: any, category: string) {
 
   if (!raw || hasBadVariationTitle) {
     const cleanTitles: Record<string, string> = {
-      Communication: 'Practicing Communication at Home',
-      Social: 'Building Social Skills',
-      Play: 'Learning Through Play',
-      'Self-Help': 'Practicing Independence',
-      Motor: 'Movement and Motor Practice',
-    };
+  Communication: 'Practicing Communication at Home',
+  'Daily Routines': 'Practicing Daily Routines',
+  'Play & Social Skills': 'Learning Through Play and Connection',
+  'Learning & Attention': 'Building Learning and Attention',
+  'Movement & Coordination': 'Movement and Coordination Practice',
+  'Emotions & Behavior': 'Building Calm Behavior Skills',
+};
 
     return cleanTitles[category] || `${category} Practice`;
   }
@@ -87,6 +135,7 @@ const retryCountRef = useRef(0);
     useState('Communication');
 
   const [lessonData, setLessonData] = useState<Lesson | null>(null);
+  const [learningPath, setLearningPath] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -169,6 +218,7 @@ const { count, error } = await supabase
   const loadLesson = useCallback(async () => {
     if (!selectedChild?.id) return;
 
+
     const requestId = loadRequestRef.current + 1;
     loadRequestRef.current = requestId;
 
@@ -188,6 +238,78 @@ const { count, error } = await supabase
         setRefreshing(false);
         return;
       }
+
+      const path = await getLearningPath(selectedChild.id);
+    setLearningPath(path);
+
+    const libraryCategory = mapAppCategoryToLibraryCategory(requestCategory);
+
+
+if (USE_LIBRARY_LESSONS) {
+  const skillAreaFilter = SKILL_PROGRESSION_PATHS[requestCategory];
+
+  let stageFilter: number | undefined = undefined;
+  let stageSkillArea: string | undefined = undefined;
+
+  if (Array.isArray(skillAreaFilter) && skillAreaFilter.length > 0) {
+    stageSkillArea = await getSmartRecommendedSkill(
+      selectedChild.id,
+      skillAreaFilter
+    );
+
+    if (stageSkillArea) {
+      stageFilter = await getRecommendedStageForSkill({
+        childId: selectedChild.id,
+        category: requestCategory,
+        skillArea: stageSkillArea,
+      });
+    }
+  } else if (skillAreaFilter) {
+    stageSkillArea = skillAreaFilter;
+
+    stageFilter = await getRecommendedStageForSkill({
+      childId: selectedChild.id,
+      category: requestCategory,
+      skillArea: skillAreaFilter,
+    });
+  }
+
+  const masteredSkills = await getMasteredSkills(selectedChild.id);
+
+  const libraryLesson = await getRecommendedLesson({
+    category: libraryCategory,
+    skillArea:
+      stageSkillArea ||
+      (Array.isArray(skillAreaFilter) ? undefined : skillAreaFilter),
+    stageNumber: stageFilter,
+    childId: selectedChild.id,
+    excludeSkills: masteredSkills,
+  });
+
+  if (libraryLesson) {
+    const mappedLesson = mapLibraryLessonToDailyLesson(libraryLesson);
+
+    setLessonData(mappedLesson);
+
+  const updatedPath = await getLearningPath(selectedChild.id);
+
+setLearningPath({
+  ...updatedPath,
+  nextFocus:
+    mappedLesson.focus_skill ||
+    updatedPath?.nextFocus ||
+    mappedLesson.lesson_name,
+  message:
+    updatedPath?.message ||
+    `Building ${mappedLesson.focus_skill || mappedLesson.lesson_name} skills.`,
+});
+    setLessonNumber(libraryLesson.stage_number || 1);
+    setPreparingLesson(false);
+    setLoading(false);
+    setRefreshing(false);
+    return;
+  }
+}
 
       const lessonRow = await getNextQueuedLesson({
         childId: selectedChild.id,
@@ -238,16 +360,20 @@ const { count, error } = await supabase
   retryCountRef.current = 0;
 
   Alert.alert(
-    'Lesson still preparing',
-    'The app could not open a lesson yet. Please tap Check Again or restart the app.'
-  );
-
+  'Lesson still preparing',
+  'The app could not open a lesson yet. Please tap Check Again or restart the app.'
+);
   return;
 }
 
       const lesson = {
         ...lessonRow.lesson_payload,
         id: lessonRow.lesson_instance_id,
+        lesson_summary:
+  lessonRow.lesson_payload?.description ||
+  lessonRow.lesson_payload?.goal ||
+  lessonRow.lesson_payload?.parent_coaching_note ||
+  null,
         lesson_number:
           lessonRow.lesson_number || 1,
         source: lessonRow.source || 'ai',
@@ -261,6 +387,19 @@ const { count, error } = await supabase
       };
 
       setLessonData(lesson);
+
+    const updatedPath = await getLearningPath(selectedChild.id);
+
+setLearningPath({
+  ...updatedPath,
+  nextFocus:
+    lesson.focus_skill ||
+    updatedPath?.nextFocus ||
+    lesson.lesson_name,
+  message:
+    updatedPath?.message ||
+    `Building ${lesson.focus_skill || lesson.lesson_name} skills.`,
+});
 
       setLessonNumber(
         lesson.lesson_number || 1
@@ -323,6 +462,88 @@ const { count, error } = await supabase
 
     try {
       setIsCompleting(true);
+
+     if (lessonData?.library_lesson_id) {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const performanceScore =
+    status === 'success' ? completionRating * 20 : 20;
+
+  const { data: insertedLesson, error } = await supabase
+    .from('daily_lesson_instances')
+    .insert({
+      child_id: selectedChild.id,
+      user_id: selectedChild.user_id || null,
+      lesson_date: todayStr,
+      category: selectedCategory,
+      lesson_number: lessonData.stage_number || lessonNumber || 1,
+      lesson_payload: lessonData,
+      source: 'library',
+      status: 'opened',
+      library_lesson_id: lessonData.library_lesson_id,
+      skill_area: lessonData.focus_skill || null,
+      stage_number: lessonData.stage_number || null,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await completeLesson({
+    lessonId: insertedLesson.id,
+    childId: selectedChild.id,
+    category: selectedCategory,
+    performanceScore,
+    promptLevel,
+    behaviorResponse,
+    consistencyLevel,
+    status: status === 'success' ? 'completed' : 'unsuccessful',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+
+  if (!isPro && status === 'success') {
+    await AsyncStorage.setItem(
+      getFreeLessonLockKey(selectedChild.id),
+      'true'
+    );
+
+    setFreeLessonsUsedToday(1);
+    setDailyLimitReached(true);
+    setLessonData(null);
+    setStarted(false);
+
+    Alert.alert(
+      'Today’s free lesson completed 🎉',
+      'You’ve used your free lesson. Upgrade for unlimited access.',
+      [
+        { text: 'Later', style: 'cancel' },
+        {
+          text: 'Upgrade',
+          onPress: () => router.push('/subscription'),
+        },
+      ]
+    );
+
+    return;
+  }
+
+  Alert.alert(
+    status === 'success' ? 'Lesson Completed 🎉' : 'Lesson Saved',
+    'A new lesson is ready.'
+  );
+
+  setStarted(false);
+  setLessonData(null);
+  setLessonNumber((prev) => prev + 1);
+
+  setTimeout(() => {
+    void loadLesson();
+  }, 300);
+
+  return;
+}
 
       const performanceScore =
         status === 'success'
@@ -402,10 +623,10 @@ const { count, error } = await supabase
       }, 300);
 
       if (status === 'success') {
-        Alert.alert(
-          'Lesson Completed 🎉',
-          'A new lesson is ready.'
-        );
+       Alert.alert(
+  'Great Work 🎉',
+  'Nice job supporting your child today. Your progress has been saved and the next lesson is ready.'
+);
       }
     } catch (error: any) {
       console.log(
@@ -455,38 +676,26 @@ useEffect(() => {
   };
 }, []);
 
-  const lockedPreviewLessons =
-    useMemo<LockedPreviewLesson[]>(() => {
-      return [
-        {
-          id: '1',
-          title: `${selectedCategory} Lesson ${
-            lessonNumber + 1
-          }`,
-          subtitle:
-            'Next personalized lesson',
-        },
-        {
-          id: '2',
-          title: `${selectedCategory} Lesson ${
-            lessonNumber + 2
-          }`,
-          subtitle:
-            'More guided practice',
-        },
-        {
-          id: '3',
-          title: `${selectedCategory} Lesson ${
-            lessonNumber + 3
-          }`,
-          subtitle:
-            'Build consistency and confidence',
-        },
-      ];
-    }, [
-      selectedCategory,
-      lessonNumber,
-    ]);
+ const lockedPreviewLessons =
+  useMemo<LockedPreviewLesson[]>(() => {
+    return [
+      {
+        id: '1',
+        title: `Next ${selectedCategory} Practice`,
+        subtitle: 'Personalized follow-up lesson',
+      },
+      {
+        id: '2',
+        title: `More Guided ${selectedCategory}`,
+        subtitle: 'Build confidence with another step',
+      },
+      {
+        id: '3',
+        title: `Keep Building This Skill`,
+        subtitle: 'Continue the learning path with Pro',
+      },
+    ];
+  }, [selectedCategory]);
 
   const showLockedPreviews = !isPro;
 
@@ -530,14 +739,11 @@ useEffect(() => {
           />
         }
       >
-        <ScreenHeader childName={childName} />
+        <ScreenHeader childName={childName} isPro={isPro} />
 
-        <PlanBanner
-          isPro={isPro}
-          freeLessonsUsedToday={
-            freeLessonsUsedToday
-          }
-        />
+        {learningPath && (
+  <LearningPathCard learningPath={learningPath} />
+)}
 
         <CategorySelector
   selectedCategory={selectedCategory}
@@ -587,12 +793,11 @@ useEffect(() => {
   />
 ) : !started ? (
   <LessonStartCard
-            lessonData={lessonData}
-            lessonNumber={lessonNumber}
-            selectedCategory={selectedCategory}
-           childName={childName}
-           onStart={() => setStarted(true)}
-          />
+  lessonData={lessonData}
+  selectedCategory={selectedCategory}
+  childName={childName}
+  onStart={() => setStarted(true)}
+/>
         ) : (
           <GuidedLessonView
   lessonData={lessonData}
@@ -619,6 +824,52 @@ useEffect(() => {
     </SafeAreaView>
   );
 }
+
+function LearningPathCard({ learningPath }: any) {
+  return (
+    <View style={styles.learningPathCard}>
+      <View style={styles.learningPathHeader}>
+        <View style={styles.learningPathIcon}>
+          <Ionicons name="map-outline" size={20} color="#4F46E5" />
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.learningPathTitle}>
+            Personalized Learning Path
+          </Text>
+
+          <Text style={styles.learningPathSubtitle}>
+            Next focus: {learningPath?.nextFocus || 'Building steady progress'}
+          </Text>
+        </View>
+      </View>
+
+      {!!learningPath?.message && (
+  <Text style={styles.learningPathText}>
+    {learningPath.message}
+  </Text>
+)}
+
+{typeof learningPath?.progressPercent === 'number' && (
+  <View style={styles.learningProgressWrap}>
+    <View style={styles.learningProgressTrack}>
+      <View
+        style={[
+          styles.learningProgressFill,
+          { width: `${learningPath.progressPercent}%` },
+        ]}
+      />
+    </View>
+
+    <Text style={styles.learningProgressText}>
+      {learningPath.progressPercent}% path progress
+    </Text>
+  </View>
+)}
+    </View>
+  );
+}
+
 
 function getBehaviorAwareMessage({
   promptLevel,
@@ -677,96 +928,29 @@ function LoadingScreen() {
   );
 }
 
-function ScreenHeader({ childName }: { childName: string }) {
+function ScreenHeader({
+  childName,
+  isPro,
+}: {
+  childName: string;
+  isPro: boolean;
+}) {
   return (
     <View style={styles.header}>
-      <Text style={styles.headerTitle}>Daily Lessons</Text>
-      <Text style={styles.headerSubtitle}>
-        Personalized ABA learning for {childName}
-      </Text>
-    </View>
-  );
-}
-
-function PlanBanner({
-  isPro,
-  freeLessonsUsedToday,
-}: {
-  isPro: boolean;
-  freeLessonsUsedToday: number;
-}) {
-  if (isPro) {
-    return (
-      <View style={styles.proBannerPremium}>
-        <View pointerEvents="none" style={styles.proBannerGlow} />
-
-        <View style={styles.proBannerTop}>
-          <View style={styles.proBannerIconWrap}>
-            <Ionicons name="sparkles" size={18} color="#7C3AED" />
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.proBannerPremiumTitle}>
-              Pro Membership Active
-            </Text>
-
-            <Text style={styles.proBannerPremiumSubtitle}>
-               Unlimited guided learning unlocked
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.proFeatureRow}>
-          <View style={styles.proFeatureChip}>
-            <Ionicons name="infinite" size={14} color="#5B21B6" />
-            <Text style={styles.proFeatureText}>Unlimited Lessons</Text>
-          </View>
-
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.freeBannerPremium}>
-      <View pointerEvents="none" style={styles.freeBannerGlow} />
-
-      <View style={styles.freeBannerTop}>
-        <View style={styles.freeBannerIconWrap}>
-          <Ionicons name="gift-outline" size={20} color="#EA580C" />
-        </View>
-
+      <View style={styles.headerTopRow}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.freeBannerPremiumTitle}>
-            Free Daily Access
-          </Text>
-
-          <Text style={styles.freeBannerPremiumSubtitle}>
-            1 guided lesson available each day
+          <Text style={styles.headerTitle}>Daily Lessons</Text>
+          <Text style={styles.headerSubtitle}>
+            Personalized ABA learning for {childName}
           </Text>
         </View>
-      </View>
 
-      <View style={styles.freeUsageRow}>
-        <Text style={styles.freeUsageText}>
-          Used Today
-        </Text>
-
-        <Text style={styles.freeUsageCount}>
-          {freeLessonsUsedToday}/1
-        </Text>
-      </View>
-
-      <View style={styles.freeProgressTrack}>
-        <View
-          style={[
-            styles.freeProgressFill,
-            {
-              width:
-                freeLessonsUsedToday >= 1 ? '100%' : '0%'
-            },
-          ]}
-        />
+        {isPro && (
+          <View style={styles.proMiniBadge}>
+            <Ionicons name="sparkles" size={13} color="#7C3AED" />
+            <Text style={styles.proMiniBadgeText}>Pro</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -894,7 +1078,6 @@ function DailyLimitView({
 
 function LessonStartCard({
   lessonData,
-  lessonNumber,
   selectedCategory,
   onStart,
 }: any) {
@@ -906,71 +1089,53 @@ function LessonStartCard({
     <View>
       <LessonHero
   lessonData={lessonData}
-  lessonNumber={lessonNumber}
   selectedCategory={selectedCategory}
 />
 
-     <View style={styles.singleSummaryWrap}>
-  <View
-    style={[
-      styles.summaryCard,
-      {
-        backgroundColor: '#ECFDF5',
-        width: '100%',
-      },
-    ]}
-  >
-    <Text style={styles.summaryLabel}>Skill Focus</Text>
-
-    <Text style={styles.summaryValue}>
-      {lessonData?.focus_skill || selectedCategory}
-    </Text>
-  </View>
-</View>
-
-      <View style={styles.premiumStartCard}>
-        <View pointerEvents="none" style={styles.premiumStartGlow} />
-        <View pointerEvents="none" style={styles.premiumStartGlowTwo} />
-
-        <View style={styles.premiumStartHeader}>
-          <View style={styles.premiumIconCircle}>
-            <Ionicons name="play-circle-outline" size={24} color="#4F46E5" />
+      <View style={styles.lessonOverviewCard}>
+        <View style={styles.lessonOverviewHeader}>
+          <View style={styles.lessonOverviewIcon}>
+            <Ionicons name="compass-outline" size={22} color="#4F46E5" />
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.premiumStartTitle}>Ready to begin?</Text>
-            <Text style={styles.premiumStartSubtitle}>
-              This lesson will guide you step by step.
+            <Text style={styles.lessonOverviewTitle}>Lesson Overview</Text>
+            <Text style={styles.lessonOverviewSubtitle}>
+              Parent-led practice with gentle step-by-step guidance.
             </Text>
           </View>
         </View>
 
-        <View style={styles.quickInfoRow}>
-          <View style={styles.quickInfoCard}>
-            <Ionicons name="time-outline" size={18} color="#7C3AED" />
-            <Text style={styles.quickInfoLabel}>Time</Text>
-            <Text style={styles.quickInfoValue}>5–10 min</Text>
+        <View style={styles.overviewPillRow}>
+          <View style={styles.overviewPill}>
+            <Ionicons name="time-outline" size={15} color="#6D28D9" />
+            <Text style={styles.overviewPillText}>
+              {lessonData?.estimated_minutes
+                ? `${lessonData.estimated_minutes} min`
+                : '5–10 min'}
+            </Text>
           </View>
 
-          <View style={styles.quickInfoCard}>
-            <Ionicons name="heart-outline" size={18} color="#EA580C" />
-            <Text style={styles.quickInfoLabel}>Support</Text>
-            <Text style={styles.quickInfoValue}>Parent-led</Text>
+          <View style={styles.overviewPill}>
+            <Ionicons name="heart-outline" size={15} color="#EA580C" />
+            <Text style={styles.overviewPillText}>Parent-led</Text>
+          </View>
+
+          <View style={styles.overviewPill}>
+            <Ionicons name="school-outline" size={15} color="#059669" />
+            <Text style={styles.overviewPillText}>
+              {lessonData?.focus_skill || selectedCategory}
+            </Text>
           </View>
         </View>
 
         {materials.length > 0 && (
-          <View style={styles.previewSection}>
-            <Text style={styles.previewTitle}>Materials Preview</Text>
+          <View style={styles.materialsCompactBox}>
+            <Text style={styles.materialsCompactTitle}>Materials</Text>
 
-            {materials.slice(0, 3).map((item: any, index: number) => (
-              <View key={index} style={styles.previewBulletRow}>
-                <Ionicons name="arrow-forward" size={17} color="#7C3AED" />
-                <Text style={styles.previewBulletText}>
-                  {formatLessonItem(item)}
-                </Text>
-              </View>
-            ))}
+            <Text style={styles.materialsCompactText}>
+              {materials.slice(0, 3).map(formatLessonItem).join(' • ')}
+            </Text>
           </View>
         )}
 
@@ -1054,21 +1219,43 @@ const steps = rawSteps
   return (
     <View>
       <View style={styles.reviewHeroCard}>
-        <View pointerEvents="none" style={styles.reviewHeroGlow} />
-        <View pointerEvents="none" style={styles.reviewHeroGlowTwo} />
+  <View pointerEvents="none" style={styles.reviewHeroGlow} />
+  <View pointerEvents="none" style={styles.reviewHeroGlowTwo} />
 
-        <View style={styles.reviewHeroTopRow}>
-          <View style={styles.reviewIconWrap}>
-            <Ionicons name="checkmark-circle" size={30} color="#10B981" />
-          </View>
+  <View style={styles.reviewHeroTopRow}>
+    <View style={styles.reviewIconWrap}>
+      <Ionicons name="checkmark-circle" size={30} color="#10B981" />
+    </View>
 
-          <View style={{ flex: 1 }}>
-            <Text style={styles.reviewHeroTitle}>Great work today</Text>
-            <Text style={styles.reviewHeroText}>
-              Take a quick moment to save how this lesson went.
-            </Text>
-          </View>
-        </View>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.reviewHeroTitle}>Lesson complete</Text>
+      <Text style={styles.reviewHeroText}>
+        Save today’s session so the learning path can adjust.
+      </Text>
+    </View>
+  </View>
+
+  <View style={styles.masteryBox}>
+    <View style={styles.masteryTopRow}>
+      <Text style={styles.masteryLabel}>Learning Path Progress</Text>
+      <Text style={styles.masteryPercent}>+1 lesson</Text>
+    </View>
+
+    <View style={styles.masteryTrack}>
+      <View
+  style={[
+    styles.masteryFill,
+    {
+      width: `${Math.min(completionRating * 20, 100)}%`,
+    },
+  ]}
+/>
+    </View>
+
+    <Text style={styles.masteryText}>
+      This lesson helps build consistency with {lessonData?.focus_skill || selectedCategory}.
+    </Text>
+  </View>
 
         <View style={styles.reviewMiniRow}>
           <View style={styles.reviewMiniChip}>
@@ -1130,9 +1317,8 @@ const steps = rawSteps
 
   return (
     <View>
-      <LessonHero
+      <CompactLessonHeader
   lessonData={lessonData}
-  lessonNumber={lessonNumber}
   selectedCategory={selectedCategory}
 />
         
@@ -1157,22 +1343,24 @@ const steps = rawSteps
         </View>
       </View>
 
-      <View style={styles.guidedStepCard}>
+      <FadeInView key={stepIndex} delay={40}>
+  <View style={styles.guidedStepCard}>
         <View style={styles.guidedStepHeader}>
           <View style={styles.guidedStepNumber}>
             <Text style={styles.guidedStepNumberText}>{stepIndex + 1}</Text>
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.guidedStepTitle}>Parent Step</Text>
+            <Text style={styles.guidedStepTitle}>🎯 Current Step</Text>
             <Text style={styles.guidedStepSubtitle}>
-              Complete this step, then move forward.
-            </Text>
+  Follow this step at your child’s pace.
+</Text>
           </View>
         </View>
 
         <FormattedLessonStep text={formatLessonItem(steps[stepIndex])} />
-      </View>
+        </View>
+</FadeInView>
 
       <View style={styles.guidedNavRow}>
         <AnimatedPressable
@@ -1210,7 +1398,9 @@ const steps = rawSteps
       </View>
 
       <AnimatedPressable style={styles.tryLaterLink} onPress={onTryAgain}>
-        <Text style={styles.tryLaterLinkText}>Try Again Later</Text>
+        <Text style={styles.secondaryButtonPremiumText}>
+  Save as Needs More Practice
+</Text>
       </AnimatedPressable>
     </View>
   );
@@ -1303,22 +1493,21 @@ function FormattedLessonStep({ text }: { text: string }) {
   );
 }
 
-function LessonHero({ lessonData, lessonNumber, selectedCategory }: any) {
+function LessonHero({ lessonData, selectedCategory }: any) {
   return (
     <FadeInView delay={80}>
       <View style={styles.heroCard}>
         <View style={styles.heroGlowOne} />
         <View style={styles.heroGlowTwo} />
+        <View style={styles.heroGlowThree} />
 
         <View style={styles.heroTopRow}>
           <View style={styles.heroBadge}>
-            <Text style={styles.heroBadgeText}>
-              {selectedCategory.toUpperCase()} • LESSON {lessonNumber}
-            </Text>
+            <Text style={styles.heroBadgeText}>✨ TODAY'S PERSONALIZED LESSON</Text>
           </View>
 
           <View style={styles.heroSparkleIcon}>
-            <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+            <Ionicons name="book-outline" size={19} color="#FFFFFF" />
           </View>
         </View>
 
@@ -1326,15 +1515,30 @@ function LessonHero({ lessonData, lessonNumber, selectedCategory }: any) {
           {cleanLessonTitle(lessonData?.lesson_name, selectedCategory)}
         </Text>
 
+        {!!lessonData?.lesson_summary && (
+          <Text style={styles.heroDesc} numberOfLines={3}>
+            {lessonData.lesson_summary}
+          </Text>
+        )}
+
         <View style={styles.heroChipRow}>
           <View style={styles.heroMiniChip}>
             <Ionicons name="time-outline" size={13} color="#FFFFFF" />
-            <Text style={styles.heroMiniChipText}>5–10 min</Text>
+            <Text style={styles.heroMiniChipText}>
+              {lessonData?.estimated_minutes
+                ? `${lessonData.estimated_minutes} min`
+                : '5–10 min'}
+            </Text>
           </View>
 
           <View style={styles.heroMiniChip}>
             <Ionicons name="home-outline" size={13} color="#FFFFFF" />
             <Text style={styles.heroMiniChipText}>At home</Text>
+          </View>
+
+          <View style={styles.heroMiniChip}>
+            <Ionicons name="heart-outline" size={13} color="#FFFFFF" />
+            <Text style={styles.heroMiniChipText}>Parent-led</Text>
           </View>
         </View>
       </View>
@@ -1342,79 +1546,26 @@ function LessonHero({ lessonData, lessonNumber, selectedCategory }: any) {
   );
 }
 
-function SummaryRow({
-  leftTitle,
-  leftValue,
-  rightTitle,
-  rightValue,
-}: {
-  leftTitle: string;
-  leftValue: string;
-  rightTitle: string;
-  rightValue: string;
-}) {
+function CompactLessonHeader({ lessonData, selectedCategory }: any) {
   return (
-    <View style={styles.summaryRow}>
-      <View style={[styles.summaryCard, { backgroundColor: '#EEF2FF' }]}>
-        <Text style={styles.summaryLabel}>{leftTitle}</Text>
-        <Text style={styles.summaryValue}>{leftValue}</Text>
+    <View style={styles.compactLessonHeader}>
+      <View style={styles.compactLessonIcon}>
+        <Ionicons name="book-outline" size={18} color="#4F46E5" />
       </View>
 
-      <View style={[styles.summaryCard, { backgroundColor: '#ECFDF5' }]}>
-        <Text style={styles.summaryLabel}>{rightTitle}</Text>
-        <Text style={styles.summaryValue}>{rightValue}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.compactLessonTitle} numberOfLines={1}>
+          {cleanLessonTitle(lessonData?.lesson_name, selectedCategory)}
+        </Text>
+
+        <Text style={styles.compactLessonSubtitle} numberOfLines={1}>
+          {lessonData?.focus_skill || selectedCategory} ·{' '}
+          {lessonData?.estimated_minutes
+            ? `${lessonData.estimated_minutes} min`
+            : '5–10 min'}{' '}
+          · Parent-led
+        </Text>
       </View>
-    </View>
-  );
-}
-
-function LessonSection({
-  title,
-  icon,
-  tint,
-  iconColor,
-  items,
-  numbered = false,
-}: {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  tint: string;
-  iconColor: string;
-  items?: string[];
-  numbered?: boolean;
-}) {
-  if (!items || items.length === 0) return null;
-
-  return (
-    <View style={styles.sectionCard}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconWrap, { backgroundColor: tint }]}>
-          <Ionicons name={icon} size={18} color={iconColor} />
-        </View>
-
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-
-      {items.map((item, index) => (
-        <View key={`${title}-${index}`} style={styles.bulletRow}>
-  <Text style={styles.bulletIndex}>
-    {numbered ? `${index + 1}.` : '•'}
-  </Text>
-  <Text style={styles.bulletText}>{formatLessonItem(item)}</Text>
-</View>
-      ))}
-    </View>
-  );
-}
-
-function GoalCard({ icon, iconColor, title, text }: any) {
-  return (
-    <View style={styles.goalCard}>
-      <View style={styles.goalHeader}>
-        <Ionicons name={icon} size={18} color={iconColor} />
-        <Text style={styles.goalTitle}>{title}</Text>
-      </View>
-      <Text style={styles.goalText}>{text}</Text>
     </View>
   );
 }
@@ -1576,7 +1727,7 @@ function BehaviorCheckCard({
       />
 
       <BehaviorChipGroup
-        label="Overall Response"
+        label="Child's Response"
         value={behaviorResponse}
         options={[
           'engaged',
@@ -1647,8 +1798,8 @@ function CompletionButtons({ isCompleting, onTryAgain, onComplete }: any) {
           />
 
           <Text style={styles.secondaryButtonPremiumText}>
-            Try Again Later
-          </Text>
+  Save as Needs More Practice
+</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -1880,14 +2031,6 @@ startLessonButtonText: {
   marginLeft: 8,
 },
 
-  guidedProgressCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
   guidedProgressTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1921,16 +2064,25 @@ guidedStepHeader: {
   marginBottom: 14,
 },
 
+guidedProgressCard: {
+  backgroundColor: '#EEF2FF',
+  borderRadius: 20,
+  padding: 16,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#C7D2FE',
+},
+
 guidedStepCard: {
   backgroundColor: '#FFFFFF',
   borderRadius: 28,
   padding: 20,
   marginBottom: 18,
   borderWidth: 1,
-  borderColor: '#E2E8F0',
-  shadowColor: '#0F172A',
+  borderColor: '#E0E7FF',
+  shadowColor: '#4F46E5',
   shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.05,
+  shadowOpacity: 0.06,
   shadowRadius: 16,
   elevation: 3,
 },
@@ -1959,20 +2111,11 @@ guidedStepSubtitle: {
   fontWeight: '700',
 },
 
-guidedStepSectionHeader: {
-  fontSize: 14,
-  lineHeight: 22,
-  fontWeight: '900',
-  color: '#111827',
-  marginTop: 14,
-  marginBottom: 6,
-},
-
 guidedStepParagraph: {
-  fontSize: 15,
-  lineHeight: 25,
+  fontSize: 19,
+  lineHeight: 30,
   color: '#475569',
-  fontWeight: '600',
+  fontWeight: '700',
   marginBottom: 12,
 },
 
@@ -1982,44 +2125,6 @@ guidedStepNumberText: {
   fontWeight: '900',
 },
 
-guidedStepText: {
-  fontSize: 14,
-  lineHeight: 23,
-  color: '#334155',
-  fontWeight: '600',
-},
-  helpTipCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#FDF2F8',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
-  },
-  helpTipText: {
-    flex: 1,
-    marginLeft: 8,
-    color: '#BE185D',
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  helpTipCardAlt: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#FFFBEB',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 18,
-  },
-  helpTipTextAlt: {
-    flex: 1,
-    marginLeft: 8,
-    color: '#B45309',
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
  guidedNavRow: {
   flexDirection: 'row',
   justifyContent: 'space-between',
@@ -2058,12 +2163,13 @@ guidedNextButton: {
     fontSize: 14,
     marginRight: 8,
   },
-  guidedDisabledButton: {
-    opacity: 0.45,
-  },
-  guidedDisabledText: {
-    color: '#94A3B8',
-  },
+ guidedDisabledButton: {
+  opacity: 0.28,
+  backgroundColor: '#F8FAFC',
+},
+ guidedDisabledText: {
+  color: '#CBD5E1',
+},
   tryLaterLink: {
     alignItems: 'center',
     paddingVertical: 4,
@@ -2141,14 +2247,15 @@ heroCard: {
   position: 'relative',
   overflow: 'hidden',
   backgroundColor: '#5B3FF4',
-  borderRadius: 24,
-  padding: 14,
-  marginBottom: 10,
+  borderRadius: 30,
+  padding: 20,
+  marginBottom: 14,
+  minHeight: 205,
   shadowColor: '#5B3FF4',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.16,
-  shadowRadius: 14,
-  elevation: 3,
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.2,
+  shadowRadius: 20,
+  elevation: 5,
 },
 
 heroGlowOne: {
@@ -2187,9 +2294,9 @@ heroBadge: {
 
 heroBadgeText: {
   color: '#FFFFFF',
-  fontSize: 11,
+  fontSize: 10,
   fontWeight: '900',
-  letterSpacing: 0.4,
+  letterSpacing: 0.6,
 },
 
 heroSparkleIcon: {
@@ -2203,24 +2310,21 @@ heroSparkleIcon: {
 
 heroTitle: {
   color: '#FFFFFF',
-  fontSize: 18,
+  fontSize: 23,
+  lineHeight: 29,
   fontWeight: '900',
-  marginBottom: 2,
-  letterSpacing: -0.3,
+  marginBottom: 8,
+  letterSpacing: -0.5,
 },
 
 heroDesc: {
   color: '#EDE9FE',
-  fontSize: 12.5,
-  lineHeight: 19,
+  fontSize: 13.5,
+  lineHeight: 21,
   fontWeight: '700',
+  marginBottom: 4,
 },
 
-  summaryRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginBottom: 14,
-},
 
 summaryCard: {
   width: '48%',
@@ -2241,19 +2345,6 @@ summaryValue: {
   color: '#0F172A',
   fontWeight: '900',
 },
-
-  sectionCard: { backgroundColor: '#FFFFFF', borderRadius: 26, padding: 20, marginBottom: 18, borderWidth: 1, borderColor: '#DCE3EE' },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  sectionIconWrap: { width: 36, height: 36, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#1E293B' },
-  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
-  bulletIndex: { width: 22, fontSize: 14, fontWeight: '800', color: '#4F46E5' },
-  bulletText: { flex: 1, fontSize: 15, color: '#334155', lineHeight: 23 },
-
-  goalCard: { backgroundColor: '#FFFBEB', borderRadius: 22, padding: 18, marginBottom: 18 },
-  goalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  goalTitle: { marginLeft: 8, fontWeight: '800', color: '#92400E', fontSize: 15 },
-  goalText: { color: '#B45309', lineHeight: 23, fontSize: 15 },
 
   ratingRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
 
@@ -2457,122 +2548,6 @@ proBannerIconWrap: {
   marginRight: 10,
 },
 
-proBannerPremiumTitle: {
-  fontSize: 14,
-  fontWeight: '900',
-  color: '#1E1B4B',
-},
-
-proBannerPremiumSubtitle: {
-  marginTop: 1,
-  fontSize: 12,
-  color: '#6D28D9',
-  fontWeight: '700',
-},
-
-proFeatureRow: {
-  display: 'none',
-},
-
-proFeatureChip: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#F5F3FF',
-  borderRadius: 999,
-  paddingVertical: 8,
-  paddingHorizontal: 14,
-},
-
-proFeatureText: {
-  marginLeft: 6,
-  color: '#5B21B6',
-  fontWeight: '800',
-  fontSize: 12,
-},
-
-freeBannerPremium: {
-  position: 'relative',
-  overflow: 'hidden',
-  backgroundColor: '#FFFFFF',
-  borderRadius: 22,
-  paddingVertical: 12,
-  paddingHorizontal: 14,
-  marginBottom: 12,
-  borderWidth: 1,
-  borderColor: '#FED7AA',
-},
-
-freeBannerGlow: {
-  position: 'absolute',
-  width: 170,
-  height: 170,
-  borderRadius: 85,
-  backgroundColor: 'rgba(251,146,60,0.08)',
-  top: -90,
-  right: -50,
-},
-
-freeBannerTop: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-freeBannerIconWrap: {
-  width: 42,
-  height: 42,
-  borderRadius: 14,
-  backgroundColor: '#FFF7ED',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginRight: 12,
-},
-
-freeBannerPremiumTitle: {
-  fontSize: 15,
-  fontWeight: '900',
-  color: '#7C2D12',
-},
-
-freeBannerPremiumSubtitle: {
-  marginTop: 2,
-  fontSize: 12,
-  color: '#C2410C',
-  fontWeight: '700',
-},
-
-freeUsageRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginTop: 12,
-  marginBottom: 7,
-},
-
-freeUsageText: {
-  fontSize: 12,
-  fontWeight: '800',
-  color: '#9A3412',
-},
-
-freeUsageCount: {
-  fontSize: 13,
-  fontWeight: '900',
-  color: '#EA580C',
-},
-
-freeProgressTrack: {
-  height: 7,
-  backgroundColor: '#FFEDD5',
-  borderRadius: 999,
-  overflow: 'hidden',
-},
-
-freeProgressFill: {
-  height: '100%',
-  backgroundColor: '#F97316',
-  borderRadius: 999,
-},
-
 limitCardPremium: {
   position: 'relative',
   overflow: 'hidden',
@@ -2745,12 +2720,12 @@ reviewMiniText: {
 },
 
 ratingCardPremium: {
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#FFFBEB',
   borderRadius: 26,
   padding: 20,
   marginBottom: 18,
   borderWidth: 1,
-  borderColor: '#DCE3EE',
+  borderColor: '#FDE68A',
 },
 
 ratingHeaderRow: {
@@ -2834,12 +2809,12 @@ ratingSelectedValue: {
 },
 
 behaviorPremiumCard: {
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#F8FAFC',
   borderRadius: 28,
   padding: 20,
   marginBottom: 18,
   borderWidth: 1,
-  borderColor: '#DCE3EE',
+  borderColor: '#CBD5E1',
   shadowColor: '#0F172A',
   shadowOffset: { width: 0, height: 8 },
   shadowOpacity: 0.04,
@@ -2878,15 +2853,15 @@ behaviorPremiumSubtitle: {
 },
 
 completionSection: {
-  backgroundColor: '#FFFFFF',
+  backgroundColor: '#EEF2FF',
   borderRadius: 28,
   padding: 20,
   marginBottom: 18,
   borderWidth: 1,
-  borderColor: '#E2E8F0',
-  shadowColor: '#0F172A',
+  borderColor: '#C7D2FE',
+  shadowColor: '#4F46E5',
   shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.05,
+  shadowOpacity: 0.08,
   shadowRadius: 16,
   elevation: 2,
 },
@@ -3087,5 +3062,292 @@ preparingRefreshText: {
   color: '#FFFFFF',
   fontWeight: '900',
   fontSize: 14,
+},
+
+learningPathCard: {
+  backgroundColor: '#F5F3FF',
+  borderRadius: 24,
+  padding: 16,
+  marginBottom: 12,
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+},
+
+learningPathHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+learningPathIcon: {
+  width: 42,
+  height: 42,
+  borderRadius: 14,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+learningPathTitle: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+learningPathSubtitle: {
+  marginTop: 3,
+  fontSize: 12.5,
+  color: '#64748B',
+  fontWeight: '700',
+},
+
+learningPathText: {
+  marginTop: 12,
+  fontSize: 13,
+  lineHeight: 20,
+  color: '#5B21B6',
+  fontWeight: '700',
+},
+
+headerTopRow: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+},
+
+proMiniBadge: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F5F3FF',
+  borderWidth: 1,
+  borderColor: '#DDD6FE',
+  borderRadius: 999,
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+  marginTop: 4,
+  marginLeft: 10,
+},
+
+proMiniBadgeText: {
+  marginLeft: 4,
+  fontSize: 11,
+  fontWeight: '900',
+  color: '#6D28D9',
+},
+
+learningProgressWrap: {
+  marginTop: 14,
+},
+
+learningProgressTrack: {
+  height: 8,
+  backgroundColor: '#E0E7FF',
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+
+learningProgressFill: {
+  height: '100%',
+  backgroundColor: '#4F46E5',
+  borderRadius: 999,
+},
+
+learningProgressText: {
+  marginTop: 7,
+  fontSize: 12,
+  fontWeight: '800',
+  color: '#4F46E5',
+},
+
+lessonOverviewCard: {
+  position: 'relative',
+  overflow: 'hidden',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 28,
+  padding: 18,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: '#E0E7FF',
+  shadowColor: '#4F46E5',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.06,
+  shadowRadius: 16,
+  elevation: 3,
+},
+
+lessonOverviewHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 14,
+},
+
+lessonOverviewIcon: {
+  width: 46,
+  height: 46,
+  borderRadius: 16,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+lessonOverviewTitle: {
+  fontSize: 17,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+lessonOverviewSubtitle: {
+  marginTop: 3,
+  fontSize: 12.5,
+  color: '#64748B',
+  lineHeight: 18,
+  fontWeight: '700',
+},
+
+overviewPillRow: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginBottom: 14,
+},
+
+overviewPill: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F8FAFC',
+  borderRadius: 999,
+  paddingVertical: 8,
+  paddingHorizontal: 11,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+},
+
+overviewPillText: {
+  marginLeft: 6,
+  fontSize: 11.5,
+  fontWeight: '900',
+  color: '#334155',
+},
+
+materialsCompactBox: {
+  backgroundColor: '#F0FDF4',
+  borderRadius: 18,
+  padding: 13,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#BBF7D0',
+},
+
+materialsCompactTitle: {
+  fontSize: 12,
+  fontWeight: '900',
+  color: '#047857',
+  marginBottom: 5,
+},
+
+materialsCompactText: {
+  fontSize: 13,
+  lineHeight: 20,
+  color: '#065F46',
+  fontWeight: '700',
+},
+
+heroGlowThree: {
+  position: 'absolute',
+  width: 110,
+  height: 110,
+  borderRadius: 55,
+  backgroundColor: 'rgba(251,191,36,0.18)',
+  top: 62,
+  right: 24,
+},
+
+masteryBox: {
+  marginTop: 16,
+  backgroundColor: '#F0FDF4',
+  borderRadius: 20,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#BBF7D0',
+},
+
+masteryTopRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 9,
+},
+
+masteryLabel: {
+  fontSize: 12,
+  fontWeight: '900',
+  color: '#047857',
+},
+
+masteryPercent: {
+  fontSize: 12,
+  fontWeight: '900',
+  color: '#10B981',
+},
+
+masteryTrack: {
+  height: 8,
+  backgroundColor: '#D1FAE5',
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+
+masteryFill: {
+  height: '100%',
+  backgroundColor: '#10B981',
+  borderRadius: 999,
+},
+
+masteryText: {
+  marginTop: 9,
+  fontSize: 12.5,
+  lineHeight: 18,
+  fontWeight: '700',
+  color: '#047857',
+},
+
+compactLessonHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  padding: 14,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E0E7FF',
+  shadowColor: '#4F46E5',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  elevation: 2,
+},
+
+compactLessonIcon: {
+  width: 42,
+  height: 42,
+  borderRadius: 14,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+compactLessonTitle: {
+  fontSize: 17,
+  fontWeight: '900',
+  color: '#0F172A',
+},
+
+compactLessonSubtitle: {
+  marginTop: 3,
+  fontSize: 12.5,
+  fontWeight: '700',
+  color: '#64748B',
 },
 });

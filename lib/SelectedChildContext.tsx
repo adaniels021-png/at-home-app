@@ -142,11 +142,13 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refreshChildren();
+    setTimeout(() => {
+      void refreshChildren();
+    }, 0);
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user?.id) {
         setChildProfiles([]);
         setSelectedChild(null);
@@ -154,7 +156,9 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      await refreshChildren();
+      setTimeout(() => {
+        void refreshChildren();
+      }, 0);
     });
 
     return () => {

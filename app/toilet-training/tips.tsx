@@ -2,13 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 type Tip = {
   id: string;
@@ -114,7 +115,7 @@ const tips: Tip[] = [
   },
 ];
 
-export default function ToiletTrainingTipsScreen() {
+export default function PottyCoachScreen() {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>('refusal');
 
@@ -131,7 +132,7 @@ export default function ToiletTrainingTipsScreen() {
           </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Smart Potty Tips</Text>
+            <Text style={styles.title}>Potty Coach</Text>
             <Text style={styles.subtitle}>
               Parent scripts and calm strategies for common potty-training challenges.
             </Text>
@@ -150,7 +151,7 @@ export default function ToiletTrainingTipsScreen() {
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.proTitle}>Coaching in the Moment</Text>
+              <Text style={styles.proTitle}>Help for Real Potty Moments</Text>
               <Text style={styles.proText}>
                 Use simple words, predictable steps, and gentle support during tough potty moments.
               </Text>
@@ -166,7 +167,7 @@ export default function ToiletTrainingTipsScreen() {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Choose a Challenge</Text>
+         <Text style={styles.sectionTitle}>What’s happening?</Text>
           <Text style={styles.sectionSubtext}>
             Tap a card to see what to say and what to try.
           </Text>

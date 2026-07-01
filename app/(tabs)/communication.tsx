@@ -207,11 +207,16 @@ export default function CommunicationScreen() {
     return allCards.filter((card) => card.category === selectedCategory);
   }, [allCards, favoriteIds, mode, selectedCategory, smartCards]);
 
-  const getCardImageSource = (card: Card) => {
-    if (card.imageUrl) return { uri: card.imageUrl };
-    if (card.visualType && PECS_IMAGES[card.visualType]) return PECS_IMAGES[card.visualType];
-    return null;
-  };
+ const getCardImageSource = (card: Card) => {
+  if (card.imageUrl) return { uri: card.imageUrl };
+
+  if (card.visualType) {
+    const key = card.visualType as keyof typeof PECS_IMAGES;
+    if (PECS_IMAGES[key]) return PECS_IMAGES[key];
+  }
+
+  return null;
+};
 
   const loadAll = useCallback(async () => {
     if (!selectedChild?.id) return;
@@ -280,30 +285,30 @@ export default function CommunicationScreen() {
   );
 
   const logUsage = async (
-  cardId: string,
-  action: 'card_tap' | 'phrase_speak' | 'favorite_toggle'
-) => {
-  if (!selectedChild?.id) return;
+    cardId: string,
+    action: 'card_tap' | 'phrase_speak' | 'favorite_toggle'
+  ) => {
+    if (!selectedChild?.id) return;
 
-  setUsageMap((prev) => ({
-    ...prev,
-    [cardId]: (prev[cardId] || 0) + 1,
-  }));
+    setUsageMap((prev) => ({
+      ...prev,
+      [cardId]: (prev[cardId] || 0) + 1,
+    }));
 
-  const log = {
-  child_id: selectedChild.id,
-  card_id: cardId,
-  action,
-  created_at: new Date().toISOString(),
-};
+    const log = {
+      child_id: selectedChild.id,
+      card_id: cardId,
+      action,
+      created_at: new Date().toISOString(),
+    };
 
-  try {
-    const { error } = await supabase.from('pecs_card_usage').insert(log);
-    if (error) throw error;
-  } catch {
-    await queuePecsUsage(selectedChild.id, log);
-  }
-};
+    try {
+      const { error } = await supabase.from('pecs_card_usage').insert(log);
+      if (error) throw error;
+    } catch {
+      await queuePecsUsage(selectedChild.id, log);
+    }
+  };
 
   const handleCardPress = async (card: Card) => {
     setPhrase((prev) => [...prev, card.helperText || card.label]);
@@ -399,14 +404,14 @@ export default function CommunicationScreen() {
     }
   };
 
-  const handleManagePecsPress = () => {
-    if (!isPro) {
-      router.push('/subscription');
-      return;
-    }
+ const handleManagePecsPress = () => {
+  if (!isPro) {
+    router.push('/subscription' as any);
+    return;
+  }
 
-    router.push('/manage-pecs');
-  };
+  router.push('/manage-pecs' as any);
+};
 
   const expandedImageSource = expandedCard ? getCardImageSource(expandedCard) : null;
 
@@ -425,58 +430,59 @@ export default function CommunicationScreen() {
       >
         <View style={[styles.contentInner, { maxWidth: layout.maxContentWidth }]}>
           <View style={styles.hero}>
-  <View style={styles.heroBubbleOne} />
-  <View style={styles.heroBubbleTwo} />
+            <View style={styles.heroBubbleOne} />
+            <View style={styles.heroBubbleTwo} />
 
-  <View style={styles.heroIconCircle}>
-    <Ionicons
-      name="chatbubbles-outline"
-      size={32}
-      color="rgba(255,255,255,0.28)"
-    />
-  </View>
+            <View style={styles.heroIconCircle}>
+              <Ionicons
+                name="chatbubbles-outline"
+                size={28}
+                color="rgba(255,255,255,0.30)"
+              />
+            </View>
 
-  <TouchableOpacity
-    style={styles.printIconBtn}
-    onPress={() => {
-      if (!isPro) {
-        router.push('/subscription');
-        return;
-      }
+            <TouchableOpacity
+              style={styles.printIconBtn}
+              onPress={() => {
+                if (!isPro) {
+                  router.push('/subscription' as any);
+                  return;
+                }
 
-      setShowPrintModal(true);
-    }}
-  >
-    <Ionicons name="print-outline" size={18} color="#FFFFFF" />
-  </TouchableOpacity>
+                setShowPrintModal(true);
+              }}
+            >
+              <Ionicons name="print-outline" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
 
-  <Text style={styles.heroTitle}>Communication Support</Text>
+            <Text style={styles.heroEyebrow}>PECS VISUALS</Text>
+            <Text style={styles.heroTitle}>Communication Support</Text>
 
-  <Text style={styles.heroSubtitle}>
-    Build sentences, hear cards aloud, and use PECS visuals during everyday routines.
-  </Text>
-</View>
+            <Text style={styles.heroSubtitle}>
+              Build a sentence, hear cards aloud, and use visuals during everyday routines.
+            </Text>
+          </View>
 
-<View style={styles.statsRow}>
-  <View style={styles.statPill}>
-    <Ionicons name="albums-outline" size={16} color="#4F46E5" />
-    <Text style={styles.statText}>{allCards.length} Cards</Text>
-  </View>
+          <View style={styles.statsRow}>
+            <View style={styles.statPill}>
+              <Ionicons name="albums-outline" size={16} color="#4F46E5" />
+              <Text style={styles.statText}>{allCards.length} Cards</Text>
+            </View>
 
-  <View style={styles.statPill}>
-    <Ionicons name="star-outline" size={16} color="#F59E0B" />
-    <Text style={styles.statText}>{favoriteIds.length} Saved</Text>
-  </View>
+            <View style={styles.statPill}>
+              <Ionicons name="star-outline" size={16} color="#F59E0B" />
+              <Text style={styles.statText}>{favoriteIds.length} Saved</Text>
+            </View>
 
-  <View style={styles.statPill}>
-    <Ionicons name="volume-high-outline" size={16} color="#0F766E" />
-    <Text style={styles.statText}>Voice</Text>
-  </View>
-</View>
+            <View style={styles.statPill}>
+              <Ionicons name="volume-high-outline" size={16} color="#0F766E" />
+              <Text style={styles.statText}>Voice</Text>
+            </View>
+          </View>
 
           <TouchableOpacity
             style={styles.voiceSettingsCard}
-            onPress={() => router.push('/settings/voice-settings')}
+            onPress={() => router.push('/settings/voice-settings' as any)}
           >
             <View style={styles.voiceIconWrap}>
               <Ionicons name="volume-high-outline" size={20} color="#4F46E5" />
@@ -492,6 +498,67 @@ export default function CommunicationScreen() {
             <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
           </TouchableOpacity>
 
+          <View style={styles.phraseBox}>
+            <View style={styles.phraseHeaderRow}>
+              <Text style={styles.phraseTitle}>Build a Sentence</Text>
+              <Text style={styles.phraseCount}>{phrase.length} selected</Text>
+            </View>
+
+            <View style={styles.phraseChipWrap}>
+              {phrase.length ? (
+                phrase.map((word, index) => (
+                  <TouchableOpacity
+                    key={`${word}-${index}`}
+                    style={styles.phraseChip}
+                    onPress={() =>
+                      setPhrase((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Text style={styles.phraseChipText}>{word}</Text>
+                    <Ionicons name="close-circle" size={16} color="#64748B" />
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.phrasePlaceholder}>
+                  Tap a card to hear it. Long press to add and speak.
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.quickActionRow}>
+              <TouchableOpacity
+                style={styles.quickActionBtn}
+                onPress={() => setPhrase([])}
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                <Text style={styles.quickActionText}>Clear</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.quickActionBtn, styles.quickActionPrimary]}
+                onPress={() => void speakPhrase()}
+              >
+                <Ionicons name="volume-high-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.quickActionPrimaryText}>Speak</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickActionBtn}
+                onPress={() => {
+                  if (!isPro) {
+                    router.push('/subscription' as any);
+                    return;
+                  }
+
+                  setMode('favorites');
+                }}
+              >
+                <Ionicons name="star-outline" size={18} color="#F59E0B" />
+                <Text style={styles.quickActionText}>Saved</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.modeRow}>
             {(['library', 'smart', 'favorites', 'public'] as const).map((item) => (
               <TouchableOpacity
@@ -503,12 +570,12 @@ export default function CommunicationScreen() {
                   } catch {}
 
                   if (!isPro && (item === 'smart' || item === 'favorites')) {
-                    router.push('/subscription');
+                    router.push('/subscription' as any);
                     return;
-                }
+                  }
 
-                 setMode(item);
-              }}
+                  setMode(item);
+                }}
               >
                 <Text style={[styles.modeText, mode === item && styles.modeTextActive]}>
                   {item === 'smart' ? 'SMART' : item.toUpperCase()}
@@ -516,62 +583,6 @@ export default function CommunicationScreen() {
               </TouchableOpacity>
             ))}
           </View>
-
-         <View style={styles.phraseBox}>
-  <View style={styles.phraseChipWrap}>
-    {phrase.length ? (
-      phrase.map((word, index) => (
-        <TouchableOpacity
-          key={`${word}-${index}`}
-          style={styles.phraseChip}
-          onPress={() =>
-            setPhrase((prev) => prev.filter((_, i) => i !== index))
-          }
-        >
-          <Text style={styles.phraseChipText}>{word}</Text>
-          <Ionicons name="close-circle" size={16} color="#64748B" />
-        </TouchableOpacity>
-      ))
-    ) : (
-      <Text style={styles.phrasePlaceholder}>
-        Tap cards to build a sentence
-      </Text>
-    )}
-  </View>
-
-  <View style={styles.quickActionRow}>
-  <TouchableOpacity
-    style={styles.quickActionBtn}
-    onPress={() => setPhrase([])}
-  >
-    <Ionicons name="trash-outline" size={18} color="#EF4444" />
-    <Text style={styles.quickActionText}>Clear</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={styles.quickActionBtn}
-    onPress={() => void speakPhrase()}
-  >
-    <Ionicons name="volume-high-outline" size={18} color="#4F46E5" />
-    <Text style={styles.quickActionText}>Speak</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={styles.quickActionBtn}
-    onPress={() => {
-      if (!isPro) {
-        router.push('/subscription');
-        return;
-      }
-
-      setMode('favorites');
-    }}
-  >
-    <Ionicons name="star-outline" size={18} color="#F59E0B" />
-    <Text style={styles.quickActionText}>Favorites</Text>
-  </TouchableOpacity>
-</View>
-</View>
 
           {mode === 'library' && (
             <ScrollView
@@ -587,12 +598,12 @@ export default function CommunicationScreen() {
                     selectedCategory === category && styles.categoryChipActive,
                   ]}
                   onPress={async () => {
-  try {
-    await Haptics.selectionAsync();
-  } catch {}
+                    try {
+                      await Haptics.selectionAsync();
+                    } catch {}
 
-  setSelectedCategory(category);
-}}
+                    setSelectedCategory(category);
+                  }}
                 >
                   <Text
                     style={[
@@ -606,6 +617,11 @@ export default function CommunicationScreen() {
               ))}
             </ScrollView>
           )}
+
+          <View style={styles.tapHelperStrip}>
+            <Ionicons name="hand-left-outline" size={14} color="#4F46E5" />
+            <Text style={styles.tapHelperText}>Tap to hear • Long press to add</Text>
+          </View>
 
           {loading ? (
             <ActivityIndicator
@@ -637,7 +653,7 @@ export default function CommunicationScreen() {
                     >
                       <Ionicons
                         name={isFavorite ? 'star' : 'star-outline'}
-                        size={18}
+                        size={17}
                         color="#F59E0B"
                       />
                     </TouchableOpacity>
@@ -651,7 +667,7 @@ export default function CommunicationScreen() {
                     >
                       <Ionicons
                         name={isSelectedForPrint ? 'checkbox' : 'square-outline'}
-                        size={18}
+                        size={17}
                         color={isSelectedForPrint ? '#FFFFFF' : '#4F46E5'}
                       />
                     </TouchableOpacity>
@@ -666,7 +682,7 @@ export default function CommunicationScreen() {
                       ) : (
                         <Ionicons
                           name={card.icon || 'chatbubble'}
-                          size={32}
+                          size={30}
                           color="#4F46E5"
                         />
                       )}
@@ -687,29 +703,35 @@ export default function CommunicationScreen() {
             </View>
           )}
 
-           <View style={styles.tipBox}>
-  <Text style={styles.tipTitle}>Parent Coaching Tip</Text>
-  <Text style={styles.tipText}>
-    Tap a PECS card to enlarge it. Long press to quickly add and speak.
-  </Text>
-</View>
+         <View style={styles.manageSection}>
+  <Text style={styles.manageSectionTitle}>Customize Cards</Text>
 
-<View style={{ marginTop: 18 }}>
   <TouchableOpacity
-    style={[
-      styles.navBtn,
-      { backgroundColor: isPro ? '#0F172A' : '#CBD5E1' },
-    ]}
+    style={[styles.manageCard, !isPro && styles.manageCardLocked]}
     onPress={handleManagePecsPress}
+    activeOpacity={0.86}
   >
-    <Ionicons
-      name={isPro ? 'create-outline' : 'lock-closed'}
-      size={18}
-      color="#FFFFFF"
-    />
-    <Text style={styles.navText}>
-      {isPro ? 'Manage PECS' : 'Unlock PECS'}
-    </Text>
+    <View style={styles.manageIconWrap}>
+      <Ionicons
+        name={isPro ? 'create-outline' : 'lock-closed'}
+        size={20}
+        color="#4F46E5"
+      />
+    </View>
+
+    <View style={{ flex: 1 }}>
+      <Text style={styles.manageTitle}>
+        {isPro ? 'Manage PECS' : 'Unlock PECS'}
+      </Text>
+
+      <Text style={styles.manageSubtitle}>
+        {isPro
+          ? 'Edit cards, add visuals, and customize communication supports.'
+          : 'Upgrade to customize communication cards.'}
+      </Text>
+    </View>
+
+    <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
   </TouchableOpacity>
 </View>
 
@@ -832,30 +854,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   content: {
-    paddingTop: 18,
-    paddingBottom: 140,
+    paddingTop: 14,
+    paddingBottom: 190,
   },
   contentInner: {
     width: '100%',
   },
   hero: {
-  backgroundColor: '#4F46E5',
-  borderRadius: 32,
-  padding: 22,
-  paddingRight: 74,
-  marginBottom: 14,
-  position: 'relative',
-  shadowColor: '#4F46E5',
-  shadowOpacity: 0.24,
-  shadowRadius: 18,
-  shadowOffset: { width: 0, height: 10 },
-  elevation: 5,
-  overflow: 'hidden',
-},
+    backgroundColor: '#4F46E5',
+    borderRadius: 30,
+    padding: 18,
+    paddingRight: 72,
+    marginBottom: 12,
+    position: 'relative',
+    shadowColor: '#4F46E5',
+    shadowOpacity: 0.20,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+    overflow: 'hidden',
+  },
   printIconBtn: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: 14,
+    right: 14,
     zIndex: 20,
     backgroundColor: 'rgba(255,255,255,0.22)',
     padding: 9,
@@ -863,38 +885,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.24)',
   },
+  heroEyebrow: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.9,
+    marginBottom: 7,
+  },
   heroTitle: {
-    fontSize: 30,
+    fontSize: 27,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.4,
   },
   heroSubtitle: {
-    marginTop: 9,
+    marginTop: 8,
     color: '#E0E7FF',
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 19,
     fontWeight: '700',
   },
   voiceSettingsCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 15,
-    marginBottom: 14,
+    borderRadius: 22,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#0F172A',
     shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
     elevation: 2,
   },
   voiceIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 18,
+    width: 46,
+    height: 46,
+    borderRadius: 17,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -915,7 +944,7 @@ const styles = StyleSheet.create({
   modeRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 10,
     backgroundColor: '#E2E8F0',
     padding: 5,
     borderRadius: 20,
@@ -947,33 +976,41 @@ const styles = StyleSheet.create({
   },
   phraseBox: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 24,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
     shadowOpacity: 0.05,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 7 },
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
-  phraseActions: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+  phraseHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  phraseTitle: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  phraseCount: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '800',
   },
   categoryRow: {
-    paddingBottom: 10,
-    marginBottom: 8,
+    paddingBottom: 8,
+    marginBottom: 4,
   },
   categoryChip: {
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
-    paddingVertical: 10,
+    paddingVertical: 9,
     paddingHorizontal: 15,
     marginRight: 8,
     borderWidth: 1,
@@ -991,33 +1028,51 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: '#FFFFFF',
   },
+  tapHelperStrip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+  },
+  tapHelperText: {
+    marginLeft: 6,
+    color: '#4F46E5',
+    fontSize: 12,
+    fontWeight: '900',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    padding: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    minHeight: 232,
-    position: 'relative',
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
-  },
+ card: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
+  padding: 11,
+  marginBottom: 12,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  minHeight: 190, // was 208
+  position: 'relative',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.045,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 2,
+},
   favoriteIcon: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 11,
+    right: 11,
     zIndex: 10,
-    width: 30,
-    height: 30,
+    width: 29,
+    height: 29,
     borderRadius: 12,
     backgroundColor: '#FFF7ED',
     alignItems: 'center',
@@ -1025,11 +1080,11 @@ const styles = StyleSheet.create({
   },
   printSelectIcon: {
     position: 'absolute',
-    top: 12,
-    left: 12,
+    top: 11,
+    left: 11,
     zIndex: 10,
-    width: 30,
-    height: 30,
+    width: 29,
+    height: 29,
     borderRadius: 12,
     backgroundColor: '#EEF2FF',
     alignItems: 'center',
@@ -1039,19 +1094,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5',
   },
   visualPanel: {
-    height: 124,
-    borderRadius: 22,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E0E7FF',
-  },
+  height: 98, // was 108
+  borderRadius: 20,
+  backgroundColor: '#EEF2FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 10,
+  overflow: 'hidden',
+  borderWidth: 1,
+  borderColor: '#E0E7FF',
+},
   cardImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'contain',
   },
   cardLabel: {
     fontSize: 16,
@@ -1060,10 +1116,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardHelper: {
-    marginTop: 5,
+    marginTop: 4,
     fontSize: 12,
     color: '#64748B',
-    lineHeight: 17,
+    lineHeight: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -1085,48 +1141,43 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '600',
   },
-  tipBox: {
-    marginTop: 8,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
+  manageCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 24,
+  padding: 15,
+  borderWidth: 1,
+  borderColor: '#E0E7FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  shadowColor: '#0F172A',
+  shadowOpacity: 0.05,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+},
+  manageCardLocked: {
+    opacity: 0.9,
   },
-  tipTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#166534',
-  },
-  tipText: {
-    marginTop: 6,
-    color: '#15803D',
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  bottomWrap: {
-    marginTop: 18,
-    gap: 12,
-  },
-  navBtn: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 22,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    justifyContent: 'center',
+  manageIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    backgroundColor: '#EEF2FF',
     alignItems: 'center',
-    shadowColor: '#4F46E5',
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  navText: {
-    marginLeft: 8,
-    color: '#FFFFFF',
+  manageTitle: {
+    color: '#0F172A',
     fontSize: 15,
     fontWeight: '900',
+  },
+  manageSubtitle: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
@@ -1248,124 +1299,139 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontSize: 15,
   },
-
   phraseChipWrap: {
-  minHeight: 46,
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 8,
-  alignItems: 'center',
-},
+    minHeight: 44,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+  },
+  phraseChip: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  phraseChipText: {
+    color: '#312E81',
+    fontSize: 14,
+    fontWeight: '900',
+    marginRight: 6,
+  },
+  phrasePlaceholder: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 19,
+    fontWeight: '800',
+  },
+  quickActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  quickActionBtn: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 17,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  quickActionPrimary: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+    shadowColor: '#4F46E5',
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
+  },
+  quickActionText: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#475569',
+  },
+  quickActionPrimaryText: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  heroBubbleOne: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    right: -46,
+    top: -52,
+  },
+  heroBubbleTwo: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    left: -30,
+    bottom: -38,
+  },
+  heroIconCircle: {
+    position: 'absolute',
+    right: 34,
+    top: 42,
+    width: 56,
+    height: 56,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  statPill: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 11,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 1,
+  },
+  statText: {
+    marginTop: 5,
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#475569',
+    textAlign: 'center',
+  },
 
-phraseChip: {
-  backgroundColor: '#EEF2FF',
-  borderRadius: 999,
-  paddingVertical: 9,
-  paddingHorizontal: 12,
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#C7D2FE',
-},
-
-phraseChipText: {
-  color: '#312E81',
-  fontSize: 14,
-  fontWeight: '900',
-  marginRight: 6,
-},
-
-phrasePlaceholder: {
-  color: '#94A3B8',
-  fontSize: 15,
-  fontWeight: '800',
-},
-
-quickActionRow: {
-  flexDirection: 'row',
-  gap: 10,
-  marginBottom: 16,
-},
-
-quickActionBtn: {
-  flex: 1,
-  backgroundColor: '#FFFFFF',
-  borderRadius: 18,
-  paddingVertical: 14,
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-},
-
-quickActionText: {
+  manageSection: {
   marginTop: 4,
-  fontSize: 12,
-  fontWeight: '800',
-  color: '#475569',
+  marginBottom: 20,
 },
 
-heroBubbleOne: {
-  position: 'absolute',
-  width: 160,
-  height: 160,
-  borderRadius: 80,
-  backgroundColor: 'rgba(255,255,255,0.10)',
-  right: -42,
-  top: -48,
-},
-
-heroBubbleTwo: {
-  position: 'absolute',
-  width: 105,
-  height: 105,
-  borderRadius: 53,
-  backgroundColor: 'rgba(255,255,255,0.08)',
-  left: -30,
-  bottom: -35,
-},
-
-heroIconCircle: {
-  position: 'absolute',
-  right: 34,
-  top: 30,
-  width: 60,
-  height: 60,
-  borderRadius: 22,
-  backgroundColor: 'rgba(255,255,255,0.14)',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderWidth: 1,
-  borderColor: 'rgba(255,255,255,0.18)',
-},
-
-statsRow: {
-  flexDirection: 'row',
-  gap: 10,
-  marginBottom: 14,
-},
-
-statPill: {
-  flex: 1,
-  backgroundColor: '#FFFFFF',
-  borderRadius: 18,
-  paddingVertical: 12,
-  paddingHorizontal: 8,
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-  shadowColor: '#0F172A',
-  shadowOpacity: 0.04,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 5 },
-  elevation: 1,
-},
-
-statText: {
-  marginTop: 5,
-  fontSize: 11,
+manageSectionTitle: {
+  fontSize: 17,
   fontWeight: '900',
-  color: '#475569',
-  textAlign: 'center',
+  color: '#0F172A',
+  marginBottom: 10,
 },
 });
