@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSubscription } from '../../lib/SubscriptionContext';
 export default function Plan() {
   const { isPro } = useSubscription();
@@ -11,7 +11,7 @@ export default function Plan() {
         <Text style={styles.lockIcon}>🔒</Text>
         <Text style={styles.title}>Pro Feature</Text>
         <Text style={styles.subtitle}>Unlock your 30-day coaching plan.</Text>
-        <Link href="/paywall" style={styles.link}>Upgrade Now</Link>
+        <Link href="/subscription" style={styles.link}>Upgrade Now</Link>
       </View>
     );
   }
