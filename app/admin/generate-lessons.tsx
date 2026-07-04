@@ -14,19 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { generatePremiumLesson } from '../../lib/aiService';
-import { SKILL_PROGRESSION_PATHS } from '../../lib/lessonTypes';
+import { CURRICULUM, CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import { supabase } from '../../lib/supabase';
 
 const ADMIN_EMAIL = 'adaniels021@gmail.com';
-
-const CATEGORY_OPTIONS = [
-  'Communication',
-  'Daily Routines',
-  'Play & Social Skills',
-  'Learning & Attention',
-  'Movement & Coordination',
-  'Emotions & Behavior',
-];
 
 const DIFFICULTY_OPTIONS = ['support', 'balanced', 'challenge'];
 
@@ -56,10 +47,10 @@ export default function GenerateLessonsScreen() {
   const [generating, setGenerating] = useState(false);
   const [previewLessons, setPreviewLessons] = useState<any[]>([]);
 
-  const skillOptions = useMemo(() => {
-    const skills = SKILL_PROGRESSION_PATHS[category] || [];
-    return Array.isArray(skills) ? skills : [skills].filter(Boolean);
-  }, [category]);
+ const skillOptions = useMemo(() => {
+  const selectedCategory = CURRICULUM.find((item) => item.title === category);
+  return selectedCategory?.skills.map((skill) => skill.title) ?? [];
+}, [category]);
 
   const count = useMemo(() => {
     const parsed = Number(countText);
@@ -268,7 +259,7 @@ export default function GenerateLessonsScreen() {
 
         <Text style={styles.label}>Category</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          {CATEGORY_OPTIONS.map((item) => {
+          {CURRICULUM_CATEGORIES.map((item) => {
             const active = category === item;
 
             return (

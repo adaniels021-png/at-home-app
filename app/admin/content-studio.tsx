@@ -126,7 +126,14 @@ export default function ContentStudioScreen() {
           title="Lesson Library"
           description="Browse, edit, and review lesson content already in your library."
           onPress={() => router.push('/admin/lesson-library' as any)}
-        />
+/>
+
+         <StudioCard
+  icon="library-outline"
+  title="All Lessons"
+  description="Browse, search, and edit individual lessons in your curriculum."
+  onPress={() => router.push('/admin/lesson-library' as any)}
+/>
 
         <StudioCard
           icon="clipboard-outline"
@@ -162,16 +169,7 @@ export default function ContentStudioScreen() {
           badge="Soon"
           disabled
           onPress={() => {}}
-        />
-
-        <StudioCard
-          icon="map-outline"
-          title="Curriculum Builder"
-          description="Organize lessons by skill area, stage, and progression path."
-          badge="Soon"
-          disabled
-          onPress={() => {}}
-        />
+        /> 
       </ScrollView>
     </SafeAreaView>
   );
