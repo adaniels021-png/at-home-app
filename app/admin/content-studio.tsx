@@ -1,25 +1,66 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { getLessonLibraryItems } from '../../lib/lessonLibrary';
 
 type StudioCardProps = {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
   badge?: string;
+  disabled?: boolean;
   onPress: () => void;
+};
+
+type StatCardProps = {
+  label: string;
+  value: string | number;
+  icon: keyof typeof Ionicons.glyphMap;
 };
 
 export default function ContentStudioScreen() {
   const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+  const [lessonCount, setLessonCount] = useState(0);
+  const [activeLessonCount, setActiveLessonCount] = useState(0);
+  const [inactiveLessonCount, setInactiveLessonCount] = useState(0);
+
+  const loadStats = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const lessons = await getLessonLibraryItems();
+
+      setLessonCount(lessons.length);
+      setActiveLessonCount(lessons.filter((lesson) => lesson.is_active).length);
+      setInactiveLessonCount(
+        lessons.filter((lesson) => lesson.is_active === false).length
+      );
+    } catch (error) {
+      console.error('Content Studio stats error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadStats();
+    }, [loadStats])
+  );
+
+  const reviewCount = useMemo(() => inactiveLessonCount, [inactiveLessonCount]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,28 +73,50 @@ export default function ContentStudioScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>AI Content Studio</Text>
             <Text style={styles.subtitle}>
-              Create, review, and manage ABA at Home content.
+              Manage lessons, activities, review queues, and future content.
             </Text>
           </View>
         </View>
 
         <View style={styles.heroCard}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="sparkles" size={28} color="#7C3AED" />
+          <View style={styles.heroTop}>
+            <View style={styles.heroIcon}>
+              <Ionicons name="sparkles" size={28} color="#7C3AED" />
+            </View>
+
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>Admin</Text>
+            </View>
           </View>
 
-          <Text style={styles.heroTitle}>Build your content library faster</Text>
+          <Text style={styles.heroTitle}>Your ABA content command center</Text>
           <Text style={styles.heroText}>
-            Use your admin tools to generate lessons, activities, and review curriculum content before publishing.
+            Generate, review, organize, and publish educational content from one place.
           </Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Content Tools</Text>
+        <Text style={styles.sectionTitle}>Library Overview</Text>
+
+        {loading ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#7C3AED" />
+            <Text style={styles.loadingText}>Loading content stats...</Text>
+          </View>
+        ) : (
+          <View style={styles.statsGrid}>
+            <StatCard icon="library-outline" label="Lessons" value={lessonCount} />
+            <StatCard icon="checkmark-circle-outline" label="Active" value={activeLessonCount} />
+            <StatCard icon="clipboard-outline" label="Review" value={reviewCount} />
+            <StatCard icon="hourglass-outline" label="Activities" value="Soon" />
+          </View>
+        )}
+
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
 
         <StudioCard
           icon="school-outline"
           title="Generate Lessons"
-          description="Create new ABA lesson content using the lesson generator."
+          description="Create new ABA lesson content using your AI lesson generator."
           badge="AI"
           onPress={() => router.push('/admin/generate-lessons' as any)}
         />
@@ -61,35 +124,69 @@ export default function ContentStudioScreen() {
         <StudioCard
           icon="library-outline"
           title="Lesson Library"
-          description="Review active and inactive lesson content in your library."
+          description="Browse, edit, and review lesson content already in your library."
           onPress={() => router.push('/admin/lesson-library' as any)}
+        />
+
+        <StudioCard
+          icon="clipboard-outline"
+          title="Lesson Review Queue"
+          description="Review generated or inactive lessons before publishing."
+          badge={reviewCount > 0 ? String(reviewCount) : undefined}
+          onPress={() => router.push('/admin/lesson-review' as any)}
         />
 
         <StudioCard
           icon="color-wand-outline"
           title="Generate Activities"
-          description="Create daily activity ideas for the Activities Library."
+          description="Create activity ideas for the Activities Library."
           badge="AI"
           onPress={() => router.push('/admin/activity-library/ai-generate' as any)}
         />
 
+        <Text style={styles.sectionTitle}>Coming Next</Text>
+
         <StudioCard
           icon="heart-circle-outline"
           title="Behavior Support Generator"
-          description="Future tool for behavior support plans and calming strategies."
+          description="Create calming strategies and parent support plans."
           badge="Soon"
+          disabled
           onPress={() => {}}
         />
 
         <StudioCard
           icon="document-text-outline"
           title="Worksheet Generator"
-          description="Future tool for printable worksheets and parent handouts."
+          description="Create printable worksheets and parent handouts."
           badge="Soon"
+          disabled
+          onPress={() => {}}
+        />
+
+        <StudioCard
+          icon="map-outline"
+          title="Curriculum Builder"
+          description="Organize lessons by skill area, stage, and progression path."
+          badge="Soon"
+          disabled
           onPress={() => {}}
         />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function StatCard({ icon, label, value }: StatCardProps) {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statIcon}>
+        <Ionicons name={icon} size={20} color="#7C3AED" />
+      </View>
+
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -98,10 +195,9 @@ function StudioCard({
   title,
   description,
   badge,
+  disabled,
   onPress,
 }: StudioCardProps) {
-  const disabled = badge === 'Soon';
-
   return (
     <TouchableOpacity
       style={[styles.card, disabled && styles.disabledCard]}
@@ -175,6 +271,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E9D5FF',
   },
+  heroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   heroIcon: {
     width: 54,
     height: 54,
@@ -183,6 +284,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
+  },
+  heroBadge: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  heroBadgeText: {
+    color: '#92400E',
+    fontWeight: '900',
+    fontSize: 12,
   },
   heroTitle: {
     fontSize: 21,
@@ -200,6 +312,56 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#2E1065',
     marginBottom: 12,
+    marginTop: 4,
+  },
+  loadingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginLeft: 10,
+    color: '#64748B',
+    fontWeight: '800',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 22,
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  statIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    backgroundColor: '#F5F3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  statValue: {
+    fontSize: 23,
+    fontWeight: '900',
+    color: '#2E1065',
+  },
+  statLabel: {
+    marginTop: 3,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
   },
   card: {
     backgroundColor: '#FFFFFF',
