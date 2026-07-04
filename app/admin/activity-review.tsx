@@ -69,6 +69,9 @@ export default function AdminActivityListScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
   const [statusFilter, setStatusFilter] = useState<'all' | ActivityStatus>(
     'pending'
   );
@@ -77,13 +80,35 @@ export default function AdminActivityListScreen() {
 
   const [saving, setSaving] = useState(false);
 
-  const filteredActivities = useMemo(() => {
-    if (statusFilter === 'all') return activities;
+ const filteredActivities = useMemo(() => {
+  return activities.filter((activity) => {
+    const matchesStatus =
+      statusFilter === 'all' || (activity.status || 'pending') === statusFilter;
 
-    return activities.filter(
-      (activity) => (activity.status || 'pending') === statusFilter
-    );
-  }, [activities, statusFilter]);
+    const matchesCategory =
+      categoryFilter === 'all' || activity.category === categoryFilter;
+
+    return matchesStatus && matchesCategory;
+  });
+}, [activities, statusFilter, categoryFilter]);
+
+  const categoryOptions = useMemo(() => {
+  const categories = activities
+    .map((activity) => activity.category || 'surprise')
+    .filter(Boolean);
+
+  return ['all', ...Array.from(new Set(categories))];
+}, [activities]);
+
+const selectedCount = selectedIds.length;
+
+function toggleSelected(id: string) {
+  setSelectedIds((current) =>
+    current.includes(id)
+      ? current.filter((item) => item !== id)
+      : [...current, id]
+  );
+}
 
   const pendingCount = useMemo(() => {
     return activities.filter((activity) => activity.status === 'pending')
@@ -351,6 +376,136 @@ export default function AdminActivityListScreen() {
           })}
         </ScrollView>
 
+        <ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.filterRow}
+>
+  {categoryOptions.map((item) => {
+    const active = categoryFilter === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.categoryChip, active && styles.filterChipActive]}
+        onPress={() => {
+          setCategoryFilter(item);
+          setSelectedIds([]);
+        }}
+      >
+        <Text
+          style={[
+            styles.categoryChipText,
+            active && styles.filterChipTextActive,
+          ]}
+        >
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
+
+{selectedCount > 0 ? (
+  <View style={styles.bulkBar}>
+    <Text style={styles.bulkText}>{selectedCount} selected</Text>
+
+    <TouchableOpacity
+  style={styles.bulkApprove}
+  onPress={() => {
+    Alert.alert(
+      'Approve Selected?',
+      `Approve ${selectedCount} selected activity draft(s)?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Approve',
+          onPress: async () => {
+            const selectedActivities = activities.filter((activity) =>
+              selectedIds.includes(activity.id)
+            );
+
+            const approvedPayload = selectedActivities.map((activity) => ({
+              title: activity.title || activity.name || 'Untitled Activity',
+              category: activity.category || 'surprise',
+              location: activity.location,
+              time: activity.time,
+              description: activity.description,
+              try_this: normalizeTryThis(activity.try_this),
+              why_it_helps: activity.why_it_helps,
+              status: 'approved',
+              source: 'approved_from_queue',
+              updated_at: new Date().toISOString(),
+            }));
+
+            const { error: insertError } = await supabase
+              .from('activity_library')
+              .insert(approvedPayload);
+
+            if (insertError) {
+              Alert.alert('Approve Error', insertError.message);
+              return;
+            }
+
+            const { error: deleteError } = await supabase
+              .from('activity_queue')
+              .delete()
+              .in('id', selectedIds);
+
+            if (deleteError) {
+              Alert.alert('Cleanup Error', deleteError.message);
+              return;
+            }
+
+            setSelectedIds([]);
+            await loadActivities();
+          },
+        },
+      ]
+    );
+  }}
+>
+  <Text style={styles.bulkApproveText}>Approve</Text>
+</TouchableOpacity>
+
+    <TouchableOpacity
+      style={styles.bulkReject}
+      onPress={() => {
+        Alert.alert(
+          'Reject Selected?',
+          `Reject ${selectedCount} selected activity draft(s)?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Reject',
+              style: 'destructive',
+              onPress: async () => {
+                const { error } = await supabase
+                  .from('activity_queue')
+                  .update({
+                    status: 'rejected',
+                    updated_at: new Date().toISOString(),
+                  })
+                  .in('id', selectedIds);
+
+                if (error) {
+                  Alert.alert('Update Error', error.message);
+                  return;
+                }
+
+                setSelectedIds([]);
+                await loadActivities();
+              },
+            },
+          ]
+        );
+      }}
+    >
+      <Text style={styles.bulkRejectText}>Reject</Text>
+    </TouchableOpacity>
+  </View>
+) : null}
+
         {filteredActivities.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="happy-outline" size={32} color="#94A3B8" />
@@ -362,8 +517,10 @@ export default function AdminActivityListScreen() {
         ) : (
           filteredActivities.map((activity) => (
             <ActivityReviewCard
-              key={activity.id}
-              activity={activity}
+  key={activity.id}
+  activity={activity}
+  selected={selectedIds.includes(activity.id)}
+  onToggle={() => toggleSelected(activity.id)}
               onEdit={() =>
   router.push({
     pathname: '/admin/activity-library/edit',
@@ -387,6 +544,8 @@ export default function AdminActivityListScreen() {
 
 function ActivityReviewCard({
   activity,
+  selected,
+  onToggle,
   onEdit,
   onApprove,
   onReject,
@@ -394,6 +553,8 @@ function ActivityReviewCard({
   onDelete,
 }: {
   activity: ActivityQueueItem;
+  selected: boolean;
+  onToggle: () => void;
   onEdit: () => void;
   onApprove: () => void;
   onReject: () => void;
@@ -406,6 +567,16 @@ function ActivityReviewCard({
   return (
     <View style={styles.activityCard}>
       <View style={styles.activityTopRow}>
+        <TouchableOpacity
+  style={styles.checkbox}
+  onPress={onToggle}
+>
+  <Ionicons
+    name={selected ? 'checkbox' : 'square-outline'}
+    size={24}
+    color="#7C3AED"
+  />
+</TouchableOpacity>
         <View style={styles.activityIcon}>
           <Ionicons name="color-wand-outline" size={20} color="#7C3AED" />
         </View>
@@ -921,5 +1092,70 @@ const styles = StyleSheet.create({
   backButtonText: {
   color: '#7C3AED',
   fontWeight: '900',
+},
+
+categoryChip: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingHorizontal: 13,
+  paddingVertical: 9,
+  borderWidth: 1,
+  borderColor: '#FED7AA',
+},
+
+categoryChipText: {
+  color: '#7C3AED',
+  fontWeight: '900',
+  fontSize: 12,
+  textTransform: 'capitalize',
+},
+
+bulkBar: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  padding: 12,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
+
+bulkText: {
+  flex: 1,
+  color: '#2E1065',
+  fontWeight: '900',
+},
+
+bulkReject: {
+  backgroundColor: '#FEE2E2',
+  borderRadius: 999,
+  paddingHorizontal: 13,
+  paddingVertical: 8,
+},
+
+bulkRejectText: {
+  color: '#991B1B',
+  fontWeight: '900',
+  fontSize: 12,
+},
+checkbox: {
+  marginRight: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+bulkApprove: {
+  backgroundColor: '#10B981',
+  borderRadius: 999,
+  paddingHorizontal: 13,
+  paddingVertical: 8,
+},
+
+bulkApproveText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+  fontSize: 12,
 },
 });
