@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -379,6 +379,17 @@ export default function WorksheetReviewScreen() {
 
               <View style={styles.actionRow}>
                 <TouchableOpacity
+  style={styles.previewButton}
+  onPress={() =>
+    router.push({
+      pathname: '/admin/worksheet-preview',
+      params: { id: worksheet.id },
+    } as any)
+  }
+>
+  <Text style={styles.previewButtonText}>Preview</Text>
+</TouchableOpacity>
+                <TouchableOpacity
                   style={styles.approveButton}
                   disabled={saving}
                   onPress={() => void updateStatus([worksheet.id], 'approved')}
@@ -668,8 +679,8 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
   },
-  approveButton: {
-    flex: 1,
+ approveButton: {
+  flex: 1,
     backgroundColor: '#10B981',
     borderRadius: 16,
     paddingVertical: 12,
@@ -697,4 +708,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+previewButton: {
+  flex: 1,
+  backgroundColor: '#EEF2FF',
+  borderRadius: 16,
+  paddingVertical: 12,
+  alignItems: 'center',
+},
+
+previewButtonText: {
+  color: '#4F46E5',
+  fontWeight: '900',
+},
 });

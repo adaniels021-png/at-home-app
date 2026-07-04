@@ -171,6 +171,21 @@ setRevisionLessonCount(
         />
 
         <StudioCard
+  icon="clipboard-outline"
+  title="Activity Review Queue"
+  description="Approve, edit, reject, or delete Daily Adventure drafts."
+  badge="New"
+  onPress={() => router.push('/admin/activity-review' as any)}
+/>
+
+<StudioCard
+  icon="albums-outline"
+  title="Activity Library"
+  description="Browse and manage approved Daily Adventures."
+  onPress={() => router.push('/admin/activity-library' as any)}
+/>
+
+        <StudioCard
   icon="document-text-outline"
   title="Worksheet Generator"
   description="Create printable worksheet drafts for review."
