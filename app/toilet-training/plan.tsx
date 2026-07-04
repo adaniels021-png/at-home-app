@@ -1,18 +1,18 @@
 import { useChild } from '@/lib/SelectedChildContext';
 import {
-    getPottyReadinessResult,
-    PottyReadinessLevel,
-    PottyReadinessResult,
+  getPottyReadinessResult,
+  PottyReadinessLevel,
+  PottyReadinessResult,
 } from '@/lib/toiletTrainingStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -261,7 +261,7 @@ export default function PottyPlanScreen() {
               ]}
             >
               <View style={styles.stepIcon}>
-                <Ionicons name={step.icon} size={22} color={plan.color} />
+                <Ionicons name={step.icon as any} size={22} color={plan.color} />
               </View>
 
               <View style={{ flex: 1 }}>

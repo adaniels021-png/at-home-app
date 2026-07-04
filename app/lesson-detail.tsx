@@ -46,7 +46,6 @@ export default function LessonDetail() {
       );
 
       if (result) {
-        setResult(result); // Support for standard naming
         setAiActivity(result);
       } else {
         Alert.alert("Connection Error", "The AI Coach is currently offline. Please check your settings.");

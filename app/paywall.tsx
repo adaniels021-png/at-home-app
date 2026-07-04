@@ -1,11 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 export default function PaywallScreen() {
   const handlePurchase = async () => {
     try {
-      const { customerInfo } = await Purchases.purchasePackage(packageToBuy);
+      const offerings = await Purchases.getOfferings();
+const packageToBuy =
+  offerings.current?.monthly ??
+  offerings.current?.availablePackages?.[0];
+
+if (!packageToBuy) {
+  Alert.alert('Subscription unavailable', 'Please try again later.');
+  return;
+}
+
+const { customerInfo } = await Purchases.purchasePackage(packageToBuy);
       if (customerInfo.entitlements.active['pro']) {
         Alert.alert("Welcome to Pro!", "All features are now unlocked.");
       }
@@ -22,7 +32,7 @@ export default function PaywallScreen() {
       <Text style={styles.benefit}>✅ Multi-Child Profile Support</Text>
       
       <TouchableOpacity style={styles.button} onPress={handlePurchase}>
-        <Text style={styles.buttonText}>Subscribe - .99/mo</Text>
+        <Text style={styles.buttonText}>Subscribe Monthly</Text>
       </TouchableOpacity>
       
       <Text style={styles.footer} onPress={() => Linking.openURL('https://docs.google.com/document/d/YOUR_ID')}>
