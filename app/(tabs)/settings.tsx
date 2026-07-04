@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -45,6 +45,7 @@ type SectionProps = {
 export default function SettingsScreen() {
   const router = useRouter();
   const layout = useResponsiveLayout();
+const [isRealAdmin, setIsRealAdmin] = useState(false);
 
   const childContext = useChild() as any;
   const { selectedChild, refreshChildren } = childContext;
@@ -153,6 +154,18 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
     router.push(path as any);
   };
 
+  useEffect(() => {
+  async function checkAdminUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setIsRealAdmin(user?.email === 'adaniels021@gmail.com');
+  }
+
+  void checkAdminUser();
+}, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -193,7 +206,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
             </View>
           </View>
 
-        {showAdminMode ? (
+        {isRealAdmin || showAdminMode ? (
   <>
     <TouchableOpacity
       style={styles.adminStudioCard}
