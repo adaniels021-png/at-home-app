@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -88,7 +88,17 @@ export default function CurriculumSkillScreen() {
             <TouchableOpacity
               key={`${skillTitle}-${stage}`}
               style={styles.stageCard}
-              onPress={openLessonLibrary}
+              onPress={() =>
+  router.push({
+    pathname: '/admin/curriculum-stage',
+    params: {
+      category: categoryTitle,
+      skill: skillTitle,
+      stage,
+      stageNumber: String(index + 1),
+    },
+  } as any)
+}
               activeOpacity={0.85}
             >
               <View style={styles.stageNumber}>
