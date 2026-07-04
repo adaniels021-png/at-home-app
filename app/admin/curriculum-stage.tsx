@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,6 +9,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  LessonLibraryItem,
+  getLessonLibraryItems,
+} from '../../lib/lessonLibrary';
 
 export default function CurriculumStageScreen() {
   const router = useRouter();
@@ -25,6 +29,8 @@ export default function CurriculumStageScreen() {
   const stageTitle = String(stage || '');
   const stageLabel = `Stage ${stageNumber || '1'}`;
 
+  const [lessons, setLessons] = useState<LessonLibraryItem[]>([]);
+
  const openLessonLibrary = () => {
   router.push({
     pathname: '/admin/lesson-library',
@@ -39,6 +45,24 @@ export default function CurriculumStageScreen() {
   const openGenerateLessons = () => {
     router.push('/admin/generate-lessons' as any);
   };
+
+  useEffect(() => {
+  async function loadLessons() {
+    const data = await getLessonLibraryItems();
+
+    const matching = data.filter((lesson) => {
+      return (
+        lesson.category === categoryTitle &&
+        lesson.skill_area === skillTitle &&
+        Number(lesson.stage_number || 1) === Number(stageNumber || 1)
+      );
+    });
+
+    setLessons(matching);
+  }
+
+  void loadLessons();
+}, [categoryTitle, skillTitle, stageNumber]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -117,14 +141,34 @@ export default function CurriculumStageScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.placeholderCard}>
-          <Ionicons name="bar-chart-outline" size={24} color="#7C3AED" />
-          <Text style={styles.placeholderTitle}>Lesson counts coming next</Text>
-          <Text style={styles.placeholderText}>
-            Next upgrade: this stage will show lesson counts, coverage status,
-            and a filtered list of only lessons matching this stage.
+        <View style={styles.lessonListCard}>
+  <Text style={styles.sectionTitle}>
+    Lessons in this stage ({lessons.length})
+  </Text>
+
+  {lessons.length === 0 ? (
+    <Text style={styles.emptyLessonText}>
+      No lessons found for this stage yet.
+    </Text>
+  ) : (
+    lessons.map((lesson) => (
+      <TouchableOpacity
+        key={lesson.id}
+        style={styles.lessonRow}
+        onPress={() => router.push(`/admin/lesson-review/${lesson.id}` as any)}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={styles.lessonTitle}>{lesson.title}</Text>
+          <Text style={styles.lessonMeta}>
+            {lesson.is_active ? 'Active' : 'Inactive'} · Stage {lesson.stage_number || 1}
           </Text>
         </View>
+
+        <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      </TouchableOpacity>
+    ))
+  )}
+</View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,24 +276,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 17,
   },
-  placeholderCard: {
-    backgroundColor: '#F5F3FF',
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
-  },
-  placeholderTitle: {
-    marginTop: 10,
-    color: '#2E1065',
-    fontSize: 17,
-    fontWeight: '900',
-  },
-  placeholderText: {
-    marginTop: 7,
-    color: '#6D28D9',
-    fontWeight: '800',
-    lineHeight: 20,
-    fontSize: 13,
-  },
+
+  lessonListCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 28,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+},
+
+emptyLessonText: {
+  color: '#64748B',
+  fontWeight: '800',
+  lineHeight: 20,
+},
+
+lessonRow: {
+  backgroundColor: '#F8FAFC',
+  borderRadius: 18,
+  padding: 14,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+lessonTitle: {
+  color: '#1E1B4B',
+  fontSize: 15,
+  fontWeight: '900',
+},
+
+lessonMeta: {
+  marginTop: 4,
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '700',
+},
 });
