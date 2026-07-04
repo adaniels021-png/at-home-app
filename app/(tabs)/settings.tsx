@@ -193,32 +193,53 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
             </View>
           </View>
 
-          {showAdminMode ? (
-            <View style={styles.adminCard}>
-              <View style={styles.adminLeft}>
-                <View style={styles.adminIconWrap}>
-                  <Ionicons name="shield-checkmark" size={22} color="#92400E" />
-                </View>
+        {showAdminMode ? (
+  <>
+    <TouchableOpacity
+      style={styles.adminStudioCard}
+      onPress={() => openRoute('/admin/content-studio')}
+      activeOpacity={0.9}
+    >
+      <View style={styles.adminStudioIcon}>
+        <Ionicons name="sparkles-outline" size={22} color="#7C3AED" />
+      </View>
 
-                <View style={styles.adminTextWrap}>
-                  <Text style={styles.adminTitle}>Admin Mode</Text>
-                  <Text style={styles.adminText}>
-                    Testing access is currently {adminMode ? 'enabled' : 'disabled'}.
-                  </Text>
-                </View>
-              </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.adminStudioTitle}>AI Content Studio</Text>
+        <Text style={styles.adminStudioText}>
+          Generate and review lessons, activities, and future content tools.
+        </Text>
+      </View>
 
-              <TouchableOpacity
-                style={[styles.adminToggle, adminMode && styles.adminToggleActive]}
-                onPress={() => void toggleAdminMode()}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.adminToggleText}>
-                  {adminMode ? 'On' : 'Off'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+      <Ionicons name="chevron-forward" size={20} color="#7C3AED" />
+    </TouchableOpacity>
+
+    <View style={styles.adminCard}>
+      <View style={styles.adminLeft}>
+        <View style={styles.adminIconWrap}>
+          <Ionicons name="shield-checkmark" size={22} color="#92400E" />
+        </View>
+
+        <View style={styles.adminTextWrap}>
+          <Text style={styles.adminTitle}>Admin Mode</Text>
+          <Text style={styles.adminText}>
+            Testing access is currently {adminMode ? 'enabled' : 'disabled'}.
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.adminToggle, adminMode && styles.adminToggleActive]}
+        onPress={() => void toggleAdminMode()}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.adminToggleText}>
+          {adminMode ? 'On' : 'Off'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </>
+) : null}
 
           {!hasProAccess ? (
             <TouchableOpacity
@@ -774,5 +795,40 @@ itemTextWrap: {
 
 destructiveText: { 
   color: '#DC2626' 
+},
+
+adminStudioCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 22,
+  padding: 16,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+adminStudioIcon: {
+  width: 44,
+  height: 44,
+  borderRadius: 16,
+  backgroundColor: '#F5F3FF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12,
+},
+
+adminStudioTitle: {
+  fontSize: 15,
+  fontWeight: '900',
+  color: '#2E1065',
+},
+
+adminStudioText: {
+  marginTop: 4,
+  fontSize: 12,
+  color: '#64748B',
+  fontWeight: '700',
+  lineHeight: 17,
 },
 });
