@@ -97,7 +97,17 @@ export default function CurriculumBuilderScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.areaGenerateButton} onPress={openGenerateLessons}>
+        <TouchableOpacity
+  style={styles.areaGenerateButton}
+  onPress={() =>
+    router.push({
+      pathname: '/admin/generate-lessons',
+      params: {
+        category: area.title,
+      },
+    } as any)
+  }
+>
           <Text style={styles.areaGenerateText}>Generate</Text>
         </TouchableOpacity>
       </View>
