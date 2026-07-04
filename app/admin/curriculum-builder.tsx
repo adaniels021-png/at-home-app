@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -10,9 +10,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CURRICULUM } from '../../lib/curriculum';
+import {
+  CurriculumCoverage,
+  getCurriculumCoverage,
+} from '../../lib/curriculumCoverage';
 
 export default function CurriculumBuilderScreen() {
   const router = useRouter();
+  const [coverage, setCoverage] = useState<CurriculumCoverage | null>(null);
 
   const openLessonLibrary = () => {
     router.push('/admin/lesson-library' as any);
@@ -21,6 +26,15 @@ export default function CurriculumBuilderScreen() {
   const openGenerateLessons = () => {
     router.push('/admin/generate-lessons' as any);
   };
+
+  useEffect(() => {
+  async function loadCoverage() {
+    const data = await getCurriculumCoverage();
+    setCoverage(data);
+  }
+
+  void loadCoverage();
+}, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -63,56 +77,72 @@ export default function CurriculumBuilderScreen() {
 
         <Text style={styles.sectionTitle}>Curriculum Areas</Text>
 
-        {CURRICULUM.map((area) => (
-          <View key={area.title} style={styles.areaCard}>
-            <View style={styles.areaHeader}>
-              <View style={styles.areaIcon}>
-                <Ionicons name={area.icon} size={22} color="#7C3AED" />
-              </View>
+    {CURRICULUM.map((area) => {
+  const categoryCoverage = coverage?.categories.find(
+    (item) => item.category === area.title
+  );
 
-              <View style={{ flex: 1 }}>
-                <Text style={styles.areaTitle}>{area.title}</Text>
-                <Text style={styles.areaSub}>{area.skills.length} stages planned</Text>
-              </View>
+  return (
+    <View key={area.title} style={styles.areaCard}>
+      <View style={styles.areaHeader}>
+        <View style={styles.areaIcon}>
+          <Ionicons name={area.icon} size={22} color="#7C3AED" />
+        </View>
 
-              <TouchableOpacity style={styles.areaGenerateButton} onPress={openGenerateLessons}>
-                <Text style={styles.areaGenerateText}>Generate</Text>
-              </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.areaTitle}>{area.title}</Text>
+          <Text style={styles.areaSub}>
+            {categoryCoverage?.totalLessons ?? 0} lessons ·{' '}
+            {categoryCoverage?.coveragePercent ?? 0}% coverage
+          </Text>
+        </View>
+
+        <TouchableOpacity style={styles.areaGenerateButton} onPress={openGenerateLessons}>
+          <Text style={styles.areaGenerateText}>Generate</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.progressTrack}>
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${categoryCoverage?.coveragePercent ?? 0}%` },
+          ]}
+        />
+      </View>
+
+      <View style={styles.stageWrap}>
+        {area.skills.map((skill, index) => (
+          <TouchableOpacity
+            key={`${area.title}-${skill.id}`}
+            style={styles.stageCard}
+            onPress={() =>
+              router.push({
+                pathname: '/admin/curriculum-skill',
+                params: {
+                  category: area.title,
+                  skill: skill.title,
+                },
+              } as any)
+            }
+            activeOpacity={0.85}
+          >
+            <View style={styles.stageNumber}>
+              <Text style={styles.stageNumberText}>{index + 1}</Text>
             </View>
 
-            <View style={styles.stageWrap}>
-              {area.skills.map((skill, index) => (
-            <TouchableOpacity
-              key={`${area.title}-${skill.id}`}
-                  style={styles.stageCard}
-                 onPress={() =>
-  router.push({
-    pathname: '/admin/curriculum-skill',
-    params: {
-      category: area.title,
-      skill: skill.title,
-    },
-  } as any)
-}
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.stageNumber}>
-                    <Text style={styles.stageNumberText}>{index + 1}</Text>
-                  </View>
-
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.stageLabel}>
-                  {skill.stages.length} stages
-                </Text>
-                <Text style={styles.stageTitle}>{skill.title}</Text>
-                  </View>
-
-                  <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-                </TouchableOpacity>
-              ))}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stageLabel}>{skill.stages.length} stages</Text>
+              <Text style={styles.stageTitle}>{skill.title}</Text>
             </View>
-          </View>
+
+            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+          </TouchableOpacity>
         ))}
+      </View>
+    </View>
+  );
+})}
 
         <View style={styles.footerCard}>
           <Ionicons name="information-circle-outline" size={22} color="#7C3AED" />
@@ -121,7 +151,7 @@ export default function CurriculumBuilderScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+     </SafeAreaView>
   );
 }
 
@@ -330,4 +360,17 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontSize: 13,
   },
+  progressTrack: {
+  height: 8,
+  backgroundColor: '#EDE9FE',
+  borderRadius: 999,
+  overflow: 'hidden',
+  marginBottom: 14,
+},
+
+progressFill: {
+  height: '100%',
+  backgroundColor: '#7C3AED',
+  borderRadius: 999,
+},
 });
