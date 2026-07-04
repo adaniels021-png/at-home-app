@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import {
   LessonLibraryItem,
   getLessonLibraryItems,
@@ -23,6 +25,13 @@ export default function AdminLessonLibraryScreen() {
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<LessonLibraryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filteredLessons =
+  selectedCategory === 'All'
+    ? lessons
+    : lessons.filter((lesson) => lesson.category === selectedCategory);
 
   async function loadLessons() {
     try {
@@ -91,8 +100,30 @@ export default function AdminLessonLibraryScreen() {
   </TouchableOpacity>
 </View>
 
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.filterRow}
+>
+  {['All', ...CURRICULUM_CATEGORIES].map((item) => {
+    const active = selectedCategory === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.filterChip, active && styles.filterChipActive]}
+        onPress={() => setSelectedCategory(item)}
+      >
+        <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
+
       <FlatList
-        data={lessons}
+        data={filteredLessons}
         keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl
@@ -334,5 +365,35 @@ editButtonText: {
   marginLeft: 6,
   color: '#4F46E5',
   fontWeight: '900',
+},
+
+filterRow: {
+  paddingHorizontal: 20,
+  paddingBottom: 12,
+  gap: 8,
+},
+
+filterChip: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingHorizontal: 13,
+  paddingVertical: 9,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+},
+
+filterChipActive: {
+  backgroundColor: '#7C3AED',
+  borderColor: '#7C3AED',
+},
+
+filterChipText: {
+  color: '#7C3AED',
+  fontWeight: '900',
+  fontSize: 12,
+},
+
+filterChipTextActive: {
+  color: '#FFFFFF',
 },
 });
