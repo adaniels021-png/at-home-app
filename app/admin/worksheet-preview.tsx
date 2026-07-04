@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Print from 'expo-print';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -102,6 +104,39 @@ export default function WorksheetPreviewScreen() {
     );
   }
 
+  async function exportPdf() {
+  if (!worksheet?.html) {
+    Alert.alert('No Worksheet', 'There is no worksheet HTML to export.');
+    return;
+  }
+
+  try {
+    setSaving(true);
+
+    const { uri } = await Print.printToFileAsync({
+      html: worksheet.html,
+      base64: false,
+    });
+
+    const canShare = await Sharing.isAvailableAsync();
+
+    if (!canShare) {
+      Alert.alert('PDF Created', `PDF saved at: ${uri}`);
+      return;
+    }
+
+    await Sharing.shareAsync(uri, {
+      mimeType: 'application/pdf',
+      dialogTitle: worksheet.title || 'ABA at Home Worksheet',
+      UTI: 'com.adobe.pdf',
+    });
+  } catch (error: any) {
+    Alert.alert('PDF Error', error?.message || 'Could not create PDF.');
+  } finally {
+    setSaving(false);
+  }
+}
+
   if (!worksheet || !worksheet.html) {
     return (
       <SafeAreaView style={styles.container}>
@@ -144,34 +179,43 @@ export default function WorksheetPreviewScreen() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.rejectButton}
-          disabled={saving}
-          onPress={() => void updateStatus('rejected')}
-        >
-          <Text style={styles.rejectButtonText}>Reject</Text>
-        </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.pdfButton}
+    disabled={saving}
+    onPress={exportPdf}
+  >
+    <Ionicons name="document-text-outline" size={17} color="#FFFFFF" />
+    <Text style={styles.pdfButtonText}>PDF</Text>
+  </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.draftButton}
-          disabled={saving}
-          onPress={() => void updateStatus('draft')}
-        >
-          <Text style={styles.draftButtonText}>Draft</Text>
-        </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.rejectButton}
+    disabled={saving}
+    onPress={() => void updateStatus('rejected')}
+  >
+    <Text style={styles.rejectButtonText}>Reject</Text>
+  </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.approveButton}
-          disabled={saving}
-          onPress={confirmApprove}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.approveButtonText}>Approve</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity
+    style={styles.draftButton}
+    disabled={saving}
+    onPress={() => void updateStatus('draft')}
+  >
+    <Text style={styles.draftButtonText}>Draft</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={styles.approveButton}
+    disabled={saving}
+    onPress={confirmApprove}
+  >
+    {saving ? (
+      <ActivityIndicator color="#FFFFFF" />
+    ) : (
+      <Text style={styles.approveButtonText}>Approve</Text>
+    )}
+  </TouchableOpacity>
+</View>
     </SafeAreaView>
   );
 }
@@ -292,4 +336,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '900',
   },
+
+  pdfButton: {
+  flex: 1,
+  backgroundColor: '#7C3AED',
+  borderRadius: 16,
+  paddingVertical: 13,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+},
+
+pdfButtonText: {
+  color: '#FFFFFF',
+  fontWeight: '900',
+  marginLeft: 5,
+},
 });

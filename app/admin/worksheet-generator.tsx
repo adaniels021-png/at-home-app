@@ -2,24 +2,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getWorksheetBrandAssets } from '../../lib/worksheetBrandAssets';
 
 import { supabase } from '../../lib/supabase';
 import {
-    buildWorksheetHtml,
-    CATEGORIES,
-    DifficultyLevel,
-    WorksheetCategory,
-    WORKSHEETS,
+  buildWorksheetHtml,
+  CATEGORIES,
+  DifficultyLevel,
+  WorksheetCategory,
+  WORKSHEETS,
 } from '../../lib/worksheetTemplates';
 
 const DIFFICULTY_OPTIONS: DifficultyLevel[] = [
@@ -47,14 +48,20 @@ export default function WorksheetGeneratorScreen() {
       setSaving(true);
       setCreatedCount(0);
 
+      const brandAssets = await getWorksheetBrandAssets();
+
       const drafts = worksheetOptions.map((worksheet) => {
-        const customWorksheet = {
-          ...worksheet,
-          title: theme.trim() ? `${worksheet.title}: ${theme.trim()}` : worksheet.title,
-          description: theme.trim()
-            ? `${worksheet.description} Theme/focus: ${theme.trim()}`
-            : worksheet.description,
-        };
+
+
+const focus = theme.trim();
+
+const customWorksheet = {
+  ...worksheet,
+  title: worksheet.title,
+  description: focus
+    ? `${worksheet.description} Practice note: ${focus}.`
+    : worksheet.description,
+};
 
         return {
           title: customWorksheet.title,
@@ -63,11 +70,12 @@ export default function WorksheetGeneratorScreen() {
           age_range: customWorksheet.ageRange,
           difficulty,
           child_name: childName.trim() || 'Child',
-          html: buildWorksheetHtml({
-            worksheet: customWorksheet,
-            childName: childName.trim() || 'Child',
-            difficulty,
-          }),
+         html: buildWorksheetHtml({
+  worksheet: customWorksheet,
+  childName: childName.trim() || 'Child',
+  difficulty,
+  brandAssets,
+}),
           status: 'pending',
           source: 'template_draft',
           updated_at: new Date().toISOString(),
@@ -170,14 +178,14 @@ export default function WorksheetGeneratorScreen() {
           placeholderTextColor="#94A3B8"
         />
 
-        <Text style={styles.label}>Optional Theme / Focus</Text>
+        <Text style={styles.label}>Optional Practice Note</Text>
         <TextInput
           value={theme}
           onChangeText={setTheme}
           style={[styles.input, styles.themeInput]}
           multiline
           textAlignVertical="top"
-          placeholder="Example: bedtime routine, grocery store, handwashing, asking for help..."
+          placeholder="Example: use during bedtime, practice before school, use with a favorite snack..."
           placeholderTextColor="#94A3B8"
         />
 

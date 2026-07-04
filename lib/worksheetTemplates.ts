@@ -1,3 +1,7 @@
+import type { getWorksheetBrandAssets } from './worksheetBrandAssets';
+
+type WorksheetBrandAssets = Awaited<ReturnType<typeof getWorksheetBrandAssets>>;
+
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export type WorksheetCategory =
@@ -195,6 +199,18 @@ function esc(value: string) {
 
 const colorClasses = ['pink', 'purple', 'blue', 'green', 'yellow', 'orange'];
 
+function bunBunImage(
+  brandAssets: WorksheetBrandAssets | undefined,
+  key: string,
+  fallbackKey = 'default'
+) {
+  const src = brandAssets?.[key] || brandAssets?.[fallbackKey];
+
+  if (!src) return svgPicture('routine');
+
+  return `<img class="bun-bun-art" src="${src}" />`;
+}
+
 function svgPicture(type: string) {
   const bg: Record<string, string> = {
     routine: '#BFDBFE',
@@ -226,10 +242,17 @@ function svgPicture(type: string) {
   `;
 }
 
-function kidBox(label: string, height = 110, index = 0, type = 'task') {
+function kidBox(
+  label: string,
+  height = 110,
+  index = 0,
+  type = 'task',
+  brandAssets?: WorksheetBrandAssets,
+  bunBunKey = 'default'
+) {
   return `
     <div class="kid-box ${colorClasses[index % colorClasses.length]}" style="height:${height}px;">
-      ${svgPicture(type)}
+      ${bunBunImage(brandAssets, bunBunKey)}
       <div class="box-label">${esc(label)}</div>
     </div>
   `;
@@ -244,7 +267,7 @@ function visualBox(label: string, type = 'calm') {
   `;
 }
 
-function taskAnalysisWorksheet() {
+function taskAnalysisWorksheet(brandAssets?: WorksheetBrandAssets) {
   const steps = ['First', 'Next', 'Then', 'Last'];
 
   return `
@@ -259,17 +282,21 @@ function taskAnalysisWorksheet() {
     <div class="write-line">Routine Name: ________________________________________________</div>
 
     <div class="strip-grid">
-      ${steps.map((step, index) => kidBox(step, 135, index, 'routine')).join('')}
+      ${steps
+  .map((step, index) =>
+    kidBox(step, 135, index, 'routine', brandAssets, 'washingHands')
+  )
+  .join('')}
     </div>
 
     <div class="mini-row">
-      ${kidBox('I Finished!', 100, 4, 'reward')}
-      ${kidBox('My Reward', 100, 5, 'reward')}
+      ${kidBox('I Finished!', 100, 4, 'reward', brandAssets, 'proud')}
+${kidBox('My Reward', 100, 5, 'reward', brandAssets, 'star')}
     </div>
   `;
 }
 
-function firstThenWorksheet() {
+function firstThenWorksheet(brandAssets?: WorksheetBrandAssets) {
   return `
     <div class="activity-banner first-banner">
       <div class="banner-art">${svgPicture('task')}</div>
@@ -282,14 +309,14 @@ function firstThenWorksheet() {
     <div class="first-then">
       <div>
         <div class="big-label first-label">FIRST</div>
-        ${kidBox('Required Task', 235, 2, 'task')}
+        ${kidBox('Required Task', 235, 2, 'task', brandAssets, 'working')}
       </div>
 
       <div class="arrow">➜</div>
 
       <div>
         <div class="big-label then-label">THEN</div>
-        ${kidBox('Fun Activity', 235, 4, 'reward')}
+        ${kidBox('Fun Activity', 235, 4, 'reward', brandAssets, 'celebrate')}
       </div>
     </div>
 
@@ -297,7 +324,7 @@ function firstThenWorksheet() {
   `;
 }
 
-function sequencingWorksheet() {
+function sequencingWorksheet(brandAssets?: WorksheetBrandAssets) {
   const labels = ['First', 'Next', 'Then', 'Last'];
 
   return `
@@ -310,7 +337,11 @@ function sequencingWorksheet() {
     </div>
 
     <div class="sequence-grid">
-      ${labels.map((label, index) => kidBox(label, 150, index, 'book')).join('')}
+      ${labels
+  .map((label, index) =>
+    kidBox(label, 150, index, 'book', brandAssets, 'makingSandwich')
+  )
+  .join('')}
     </div>
 
     <div class="story-box">
@@ -625,17 +656,18 @@ function highContrastWorksheet() {
 function worksheetBody(
   worksheet: WorksheetItem,
   childName: string,
-  difficulty: DifficultyLevel
+  difficulty: DifficultyLevel,
+  brandAssets?: WorksheetBrandAssets
 ) {
   switch (worksheet.id) {
     case 'washing-hands-strip':
-      return taskAnalysisWorksheet();
+      return taskAnalysisWorksheet(brandAssets);
 
     case 'first-then-board':
-      return firstThenWorksheet();
+      return firstThenWorksheet(brandAssets);
 
     case 'sandwich-sequencing':
-      return sequencingWorksheet();
+      return sequencingWorksheet(brandAssets);
 
     case 'asking-to-play':
       return socialStoryWorksheet();
@@ -679,15 +711,24 @@ export function buildWorksheetHtml({
   worksheet,
   childName,
   difficulty,
+  brandAssets,
 }: {
   worksheet: WorksheetItem;
   childName: string;
   difficulty: DifficultyLevel;
+  brandAssets?: WorksheetBrandAssets;
 }) {
   const safeChildName = esc(childName || 'Child');
   const safeTitle = esc(worksheet.title);
   const safeDescription = esc(worksheet.description);
   const safeDifficulty = getDifficultyLabel(difficulty);
+  const logoImg = brandAssets?.logo
+  ? `<img class="brand-logo" src="${brandAssets.logo}" />`
+  : `<div class="brand-text">ABA at Home</div>`;
+
+const bunBunImg = brandAssets?.happy
+  ? `<img class="bun-bun-header" src="${brandAssets.happy}" />`
+  : '';
 
   return `
     <!DOCTYPE html>
@@ -716,6 +757,61 @@ export function buildWorksheetHtml({
             padding: 18px;
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
           }
+
+          .worksheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.logo-wrap {
+  width: 110px;
+  height: 46px;
+}
+
+.brand-logo {
+  max-width: 110px;
+  max-height: 46px;
+  object-fit: contain;
+}
+
+.brand-text {
+  font-size: 22px;
+  font-weight: 900;
+  color: #2E1065;
+}
+
+.name-date-row {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.bun-bun-header {
+  width: 95px;
+  height: 95px;
+  object-fit: contain;
+}
+  .bun-bun-art {
+  width: 95px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 6px;
+}
 
           .brand {
             display: inline-block;
@@ -1157,9 +1253,25 @@ export function buildWorksheetHtml({
 
       <body>
         <div class="page">
-          <div class="brand">ABA at Home Printable Worksheet</div>
+          <div class="worksheet-header">
+  <div class="logo-wrap">
+    ${logoImg}
+  </div>
 
-          <h1>${safeTitle}</h1>
+  <div class="name-date-row">
+    <div>Name: __________________________</div>
+    <div>Date: __________________</div>
+  </div>
+</div>
+
+<div class="title-row">
+  <div>
+    <div class="brand">ABA at Home Printable Worksheet</div>
+    <h1>${safeTitle}</h1>
+  </div>
+
+  ${bunBunImg}
+</div>
 
           <div class="subtitle">${safeDescription}</div>
 
@@ -1170,7 +1282,7 @@ export function buildWorksheetHtml({
             <div class="pill">${esc(worksheet.ageRange)}</div>
           </div>
 
-          ${worksheetBody(worksheet, safeChildName, difficulty)}
+          ${worksheetBody(worksheet, safeChildName, difficulty, brandAssets)}
 
           <div class="footer">
             Parent note: Use this worksheet for short, positive practice. Pair with praise,
