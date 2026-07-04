@@ -35,6 +35,8 @@ export default function ContentStudioScreen() {
   const [lessonCount, setLessonCount] = useState(0);
   const [activeLessonCount, setActiveLessonCount] = useState(0);
   const [inactiveLessonCount, setInactiveLessonCount] = useState(0);
+  const [draftLessonCount, setDraftLessonCount] = useState(0);
+  const [revisionLessonCount, setRevisionLessonCount] = useState(0);
 
   const loadStats = useCallback(async () => {
     try {
@@ -47,6 +49,14 @@ export default function ContentStudioScreen() {
       setInactiveLessonCount(
         lessons.filter((lesson) => lesson.is_active === false).length
       );
+
+    setDraftLessonCount(
+  lessons.filter((lesson: any) => lesson.quality_status === 'draft').length
+);
+
+setRevisionLessonCount(
+  lessons.filter((lesson: any) => lesson.quality_status === 'needs_revision').length
+);
     } catch (error) {
       console.error('Content Studio stats error:', error);
     } finally {
@@ -106,7 +116,8 @@ export default function ContentStudioScreen() {
           <View style={styles.statsGrid}>
             <StatCard icon="library-outline" label="Lessons" value={lessonCount} />
             <StatCard icon="checkmark-circle-outline" label="Active" value={activeLessonCount} />
-            <StatCard icon="clipboard-outline" label="Review" value={reviewCount} />
+            <StatCard icon="clipboard-outline" label="Drafts" value={draftLessonCount} />
+            <StatCard icon="refresh-outline" label="Revisions" value={revisionLessonCount} />
             <StatCard icon="hourglass-outline" label="Activities" value="Soon" />
           </View>
         )}
@@ -121,14 +132,22 @@ export default function ContentStudioScreen() {
           onPress={() => router.push('/admin/generate-lessons' as any)}
         />
 
-        <StudioCard
-          icon="library-outline"
-          title="Lesson Library"
-          description="Browse, edit, and review lesson content already in your library."
-          onPress={() => router.push('/admin/lesson-library' as any)}
+   <StudioCard
+  icon="analytics-outline"
+  title="Curriculum Dashboard"
+  description="Track curriculum coverage, missing stages, and low-coverage areas."
+  badge="New"
+  onPress={() => router.push('/admin/curriculum-dashboard' as any)}
 />
 
-         <StudioCard
+<StudioCard
+  icon="map-outline"
+  title="Curriculum Builder"
+  description="Browse categories, skills, stages, and curriculum progress."
+  onPress={() => router.push('/admin/curriculum-builder' as any)}
+/>
+
+<StudioCard
   icon="library-outline"
   title="All Lessons"
   description="Browse, search, and edit individual lessons in your curriculum."
