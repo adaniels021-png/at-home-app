@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,8 +9,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { getCurriculumSkill } from '../../lib/curriculum';
+import {
+  StageCoverage,
+  getCurriculumCoverage,
+} from '../../lib/curriculumCoverage';
 
 export default function CurriculumSkillScreen() {
   const router = useRouter();
@@ -18,6 +21,8 @@ export default function CurriculumSkillScreen() {
     category?: string;
     skill?: string;
   }>();
+
+  const [stageCoverage, setStageCoverage] = useState<StageCoverage[]>([]);
 
   const categoryTitle = String(category || '');
   const skillTitle = String(skill || '');
@@ -27,6 +32,22 @@ export default function CurriculumSkillScreen() {
   }, [categoryTitle, skillTitle]);
 
   const stages = selectedSkill?.stages ?? [];
+
+  useEffect(() => {
+  async function loadCoverage() {
+    const data = await getCurriculumCoverage();
+
+    const matchingStages =
+      data.categories
+        .find((item) => item.category === categoryTitle)
+        ?.skills.find((item) => item.skill === skillTitle)
+        ?.stages ?? [];
+
+    setStageCoverage(matchingStages);
+  }
+
+  void loadCoverage();
+}, [categoryTitle, skillTitle]);
 
   const openLessonLibrary = () => {
     router.push('/admin/lesson-library' as any);
@@ -84,7 +105,13 @@ export default function CurriculumSkillScreen() {
             </Text>
           </View>
         ) : (
-          stages.map((stage, index) => (
+          stages.map((stage, index) => {
+  const coverage = stageCoverage.find(
+    (item) => item.stageNumber === index + 1
+  );
+
+  return (
+            
             <TouchableOpacity
               key={`${skillTitle}-${stage}`}
               style={styles.stageCard}
@@ -109,13 +136,14 @@ export default function CurriculumSkillScreen() {
                 <Text style={styles.stageLabel}>Stage {index + 1}</Text>
                 <Text style={styles.stageTitle}>{stage}</Text>
                 <Text style={styles.stageMeta}>
-                  Tap to view matching lessons
+                  {coverage?.lessonCount ?? 0} lessons · {coverage?.activeLessonCount ?? 0} active
                 </Text>
               </View>
 
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </TouchableOpacity>
-          ))
+                      );
+          })
         )}
 
         <View style={styles.footerCard}>
