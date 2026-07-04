@@ -42,9 +42,17 @@ export default function CurriculumStageScreen() {
   } as any);
 };
 
-  const openGenerateLessons = () => {
-    router.push('/admin/generate-lessons' as any);
-  };
+ const openGenerateLessons = () => {
+  router.push({
+    pathname: '/admin/generate-lessons',
+    params: {
+      category: categoryTitle,
+      skill: skillTitle,
+      stage: stageTitle,
+      stageNumber: String(stageNumber || '1'),
+    },
+  } as any);
+};
 
   useEffect(() => {
   async function loadLessons() {

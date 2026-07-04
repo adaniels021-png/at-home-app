@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -33,6 +33,12 @@ function cleanText(value: any) {
 
 export default function GenerateLessonsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+  category?: string;
+  skill?: string;
+  stage?: string;
+  stageNumber?: string;
+}>();
 
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -63,9 +69,11 @@ const stageOptions = useMemo(() => {
 }, [category, skillArea]);
 
 useEffect(() => {
-  setSelectedStage(stageOptions[0] || '');
-  setStageStartText('1');
-}, [stageOptions]);
+  if (!params.stage) {
+    setSelectedStage(stageOptions[0] || '');
+    setStageStartText('1');
+  }
+}, [stageOptions, params.stage]);
 
   const count = useMemo(() => {
     const parsed = Number(countText);
@@ -93,8 +101,28 @@ useEffect(() => {
   }, []);
 
   useEffect(() => {
+  if (params.category) {
+    setCategory(String(params.category));
+  }
+
+  if (params.skill) {
+    setSkillArea(String(params.skill));
+  }
+
+  if (params.stage) {
+    setSelectedStage(String(params.stage));
+  }
+
+  if (params.stageNumber) {
+    setStageStartText(String(params.stageNumber));
+  }
+}, [params.category, params.skill, params.stage, params.stageNumber]);
+
+  useEffect(() => {
+  if (!params.skill) {
     setSkillArea(skillOptions[0] || '');
-  }, [category, skillOptions]);
+  }
+}, [category, skillOptions, params.skill]);
 
   async function handleGenerate() {
     if (!category.trim()) {
