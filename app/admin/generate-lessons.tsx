@@ -41,16 +41,31 @@ export default function GenerateLessonsScreen() {
   const [skillArea, setSkillArea] = useState('');
   const [countText, setCountText] = useState('5');
   const [stageStartText, setStageStartText] = useState('1');
+  const [selectedStage, setSelectedStage] = useState('');
   const [difficulty, setDifficulty] = useState('balanced');
   const [theme, setTheme] = useState('');
 
   const [generating, setGenerating] = useState(false);
   const [previewLessons, setPreviewLessons] = useState<any[]>([]);
 
- const skillOptions = useMemo(() => {
+const skillOptions = useMemo(() => {
   const selectedCategory = CURRICULUM.find((item) => item.title === category);
   return selectedCategory?.skills.map((skill) => skill.title) ?? [];
 }, [category]);
+
+const stageOptions = useMemo(() => {
+  const selectedCategory = CURRICULUM.find((item) => item.title === category);
+  const selectedSkill = selectedCategory?.skills.find(
+    (item) => item.title === skillArea
+  );
+
+  return selectedSkill?.stages ?? [];
+}, [category, skillArea]);
+
+useEffect(() => {
+  setSelectedStage(stageOptions[0] || '');
+  setStageStartText('1');
+}, [stageOptions]);
 
   const count = useMemo(() => {
     const parsed = Number(countText);
@@ -103,7 +118,7 @@ export default function GenerateLessonsScreen() {
       const createdLessons: any[] = [];
 
       for (let index = 0; index < count; index += 1) {
-        const stageNumber = stageStart + index;
+        const stageNumber = stageStart;
 
         const result = await generatePremiumLesson({
           childName: 'your child',
@@ -131,7 +146,7 @@ export default function GenerateLessonsScreen() {
           category: category.trim(),
           skill_area: cleanText(lesson.focus_skill) || skillArea.trim(),
           stage_number: stageNumber,
-          stage_name: `Stage ${stageNumber}`,
+          stage_name: selectedStage || `Stage ${stageNumber}`,
           lesson_type: 'guided_practice',
           title: cleanText(lesson.lesson_name) || `${skillArea} Practice`,
           description: cleanText(lesson.objective) || null,
@@ -303,31 +318,43 @@ export default function GenerateLessonsScreen() {
           placeholderTextColor="#94A3B8"
         />
 
-        <View style={styles.twoColumnRow}>
-          <View style={styles.twoColumnItem}>
-            <Text style={styles.label}>How many?</Text>
-            <TextInput
-              value={countText}
-              onChangeText={setCountText}
-              keyboardType="number-pad"
-              style={styles.input}
-              placeholder="5"
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
+        <View>
+  <Text style={styles.label}>How many?</Text>
+  <TextInput
+    value={countText}
+    onChangeText={setCountText}
+    keyboardType="number-pad"
+    style={styles.input}
+    placeholder="5"
+    placeholderTextColor="#94A3B8"
+  />
+</View>
 
-          <View style={styles.twoColumnItem}>
-            <Text style={styles.label}>Start stage</Text>
-            <TextInput
-              value={stageStartText}
-              onChangeText={setStageStartText}
-              keyboardType="number-pad"
-              style={styles.input}
-              placeholder="1"
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-        </View>
+<Text style={styles.label}>Stage</Text>
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.chipRow}
+>
+  {stageOptions.map((item, index) => {
+    const active = selectedStage === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.chip, active && styles.chipActive]}
+        onPress={() => {
+          setSelectedStage(item);
+          setStageStartText(String(index + 1));
+        }}
+      >
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+          Stage {index + 1}: {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
 
         <Text style={styles.label}>Difficulty</Text>
         <View style={styles.chipRowWrap}>
