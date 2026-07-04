@@ -1,6 +1,8 @@
 import { CURRICULUM } from './curriculum';
 import { supabase } from './supabase';
 
+export type CoverageStatus = 'empty' | 'low' | 'complete';
+
 export type CurriculumCoverageLesson = {
   id: string;
   title: string;
@@ -21,6 +23,8 @@ export type StageCoverage = {
   draftLessonCount: number;
   isMissing: boolean;
   isLowCoverage: boolean;
+  status: CoverageStatus;
+  statusLabel: string;
 };
 
 export type SkillCoverage = {
@@ -57,6 +61,21 @@ const MIN_LESSONS_PER_STAGE = 3;
 function calculatePercent(covered: number, total: number) {
   if (!total) return 0;
   return Math.round((covered / total) * 100);
+}
+
+function getStageStatus(lessonCount: number): {
+  status: CoverageStatus;
+  statusLabel: string;
+} {
+  if (lessonCount === 0) {
+    return { status: 'empty', statusLabel: 'Empty' };
+  }
+
+  if (lessonCount < MIN_LESSONS_PER_STAGE) {
+    return { status: 'low', statusLabel: 'Needs More' };
+  }
+
+  return { status: 'complete', statusLabel: 'Complete' };
 }
 
 export async function getCurriculumCoverage(): Promise<CurriculumCoverage> {
@@ -103,18 +122,21 @@ export async function getCurriculumCoverage(): Promise<CurriculumCoverage> {
         ).length;
 
         const lessonCount = matchingLessons.length;
+        const stageStatus = getStageStatus(lessonCount);
 
-        return {
-          category: category.title,
-          skill: skill.title,
-          stage,
-          stageNumber,
-          lessonCount,
-          activeLessonCount,
-          draftLessonCount,
-          isMissing: lessonCount === 0,
-          isLowCoverage: lessonCount > 0 && lessonCount < MIN_LESSONS_PER_STAGE,
-        };
+       return {
+  category: category.title,
+  skill: skill.title,
+  stage,
+  stageNumber,
+  lessonCount,
+  activeLessonCount,
+  draftLessonCount,
+  isMissing: lessonCount === 0,
+  isLowCoverage: lessonCount > 0 && lessonCount < MIN_LESSONS_PER_STAGE,
+  status: stageStatus.status,
+  statusLabel: stageStatus.statusLabel,
+};
       });
 
       const totalLessons = stages.reduce(
