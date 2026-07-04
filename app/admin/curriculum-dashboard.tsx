@@ -2,20 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-    CurriculumCoverage,
-    StageCoverage,
-    getCurriculumCoverage,
+  CurriculumCoverage,
+  StageCoverage,
+  getCurriculumCoverage,
 } from '../../lib/curriculumCoverage';
 
 export default function CurriculumDashboardScreen() {
@@ -124,7 +124,24 @@ export default function CurriculumDashboardScreen() {
 
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => router.push('/admin/generate-lessons' as any)}
+              onPress={() => {
+  const nextGap = missingStages[0] || lowCoverageStages[0];
+
+  if (nextGap) {
+    router.push({
+      pathname: '/admin/generate-lessons',
+      params: {
+        category: nextGap.category,
+        skill: nextGap.skill,
+        stage: nextGap.stage,
+        stageNumber: String(nextGap.stageNumber),
+      },
+    } as any);
+    return;
+  }
+
+  router.push('/admin/generate-lessons' as any);
+}}
             >
               <Ionicons name="sparkles-outline" size={18} color="#7C3AED" />
               <Text style={styles.secondaryButtonText}>Generate</Text>
@@ -221,7 +238,16 @@ function CoverageSection({
               </Text>
             </View>
 
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            <View style={styles.stageActions}>
+  <TouchableOpacity
+    style={styles.generateMiniButton}
+    onPress={() => onPressStage(stage)}
+  >
+    <Ionicons name="sparkles-outline" size={16} color="#7C3AED" />
+  </TouchableOpacity>
+
+  <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+</View>
           </TouchableOpacity>
         ))
       )}
@@ -445,4 +471,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+
+  stageActions: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+
+generateMiniButton: {
+  width: 34,
+  height: 34,
+  borderRadius: 13,
+  backgroundColor: '#EDE9FE',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
 });
