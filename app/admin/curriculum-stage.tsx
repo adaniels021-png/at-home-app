@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import {
   LessonLibraryItem,
   getLessonLibraryItems,
@@ -31,46 +32,61 @@ export default function CurriculumStageScreen() {
 
   const [lessons, setLessons] = useState<LessonLibraryItem[]>([]);
 
- const openLessonLibrary = () => {
-  router.push({
-    pathname: '/admin/lesson-library',
-    params: {
-      category: categoryTitle,
-      skill: skillTitle,
-      stageNumber: String(stageNumber || '1'),
-    },
-  } as any);
-};
+  const stats = useMemo(() => {
+    const total = lessons.length;
+    const active = lessons.filter((lesson) => lesson.is_active).length;
+    const drafts = lessons.filter((lesson) => lesson.quality_status === 'draft').length;
+    const revisions = lessons.filter(
+      (lesson) => lesson.quality_status === 'needs_revision'
+    ).length;
 
- const openGenerateLessons = () => {
-  router.push({
-    pathname: '/admin/generate-lessons',
-    params: {
-      category: categoryTitle,
-      skill: skillTitle,
-      stage: stageTitle,
-      stageNumber: String(stageNumber || '1'),
-    },
-  } as any);
-};
+    return { total, active, drafts, revisions };
+  }, [lessons]);
+
+  const openLessonLibrary = () => {
+    router.push({
+      pathname: '/admin/lesson-library',
+      params: {
+        category: categoryTitle,
+        skill: skillTitle,
+        stageNumber: String(stageNumber || '1'),
+      },
+    } as any);
+  };
+
+  const openGenerateLessons = () => {
+    router.push({
+      pathname: '/admin/generate-lessons',
+      params: {
+        category: categoryTitle,
+        skill: skillTitle,
+        stage: stageTitle,
+        stageNumber: String(stageNumber || '1'),
+      },
+    } as any);
+  };
+
+  const openReviewQueue = () => {
+    router.push('/admin/lesson-review' as any);
+  };
 
   useEffect(() => {
-  async function loadLessons() {
-    const data = await getLessonLibraryItems();
+    async function loadLessons() {
+      const data = await getLessonLibraryItems();
 
-    const matching = data.filter((lesson) => {
-      return (
-        lesson.category === categoryTitle &&
-        lesson.skill_area === skillTitle &&
-        Number(lesson.stage_number || 1) === Number(stageNumber || 1)
-      );
-    });
+      const matching = data.filter((lesson) => {
+        return (
+          lesson.category === categoryTitle &&
+          lesson.skill_area === skillTitle &&
+          Number(lesson.stage_number || 1) === Number(stageNumber || 1)
+        );
+      });
 
-    setLessons(matching);
-  }
+      setLessons(matching);
+    }
 
-  void loadLessons();
-}, [categoryTitle, skillTitle, stageNumber]);
+    void loadLessons();
+  }, [categoryTitle, skillTitle, stageNumber]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,88 +113,136 @@ export default function CurriculumStageScreen() {
           </Text>
         </View>
 
+        <View style={styles.dashboardCard}>
+          <Text style={styles.sectionTitle}>Stage Progress</Text>
+
+          <View style={styles.statsGrid}>
+            <StatBox label="Lessons" value={stats.total} icon="library-outline" />
+            <StatBox label="Active" value={stats.active} icon="checkmark-circle-outline" />
+            <StatBox label="Drafts" value={stats.drafts} icon="document-text-outline" />
+            <StatBox label="Revisions" value={stats.revisions} icon="refresh-outline" />
+          </View>
+
+          <View style={styles.statusNotice}>
+            <Ionicons
+              name={stats.total === 0 ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+              size={20}
+              color={stats.total === 0 ? '#C2410C' : '#047857'}
+            />
+            <Text
+              style={[
+                styles.statusNoticeText,
+                stats.total === 0 && styles.statusNoticeTextWarning,
+              ]}
+            >
+              {stats.total === 0
+                ? 'This stage needs lessons.'
+                : `${stats.active} active lesson(s) are ready for families.`}
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.actionCard}>
           <Text style={styles.sectionTitle}>Stage Tools</Text>
 
-          <TouchableOpacity style={styles.toolButton} onPress={openLessonLibrary}>
-            <View style={styles.toolIcon}>
-              <Ionicons name="library-outline" size={21} color="#7C3AED" />
-            </View>
+          <ToolButton
+            icon="sparkles-outline"
+            title="Generate More Lessons"
+            text="Create AI draft lessons already matched to this stage."
+            onPress={openGenerateLessons}
+          />
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toolTitle}>View Matching Lessons</Text>
-              <Text style={styles.toolText}>
-                Open the lesson library to review related lessons.
-              </Text>
-            </View>
+          <ToolButton
+            icon="library-outline"
+            title="View Matching Lessons"
+            text="Open the filtered lesson library for this stage."
+            onPress={openLessonLibrary}
+          />
 
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolButton} onPress={openGenerateLessons}>
-            <View style={styles.toolIcon}>
-              <Ionicons name="sparkles-outline" size={21} color="#7C3AED" />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toolTitle}>Generate More Lessons</Text>
-              <Text style={styles.toolText}>
-                Create AI draft lessons for this curriculum area.
-              </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.toolButton}
-            onPress={() => router.push('/admin/lesson-review' as any)}
-          >
-            <View style={styles.toolIcon}>
-              <Ionicons name="clipboard-outline" size={21} color="#7C3AED" />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.toolTitle}>Review Drafts</Text>
-              <Text style={styles.toolText}>
-                Approve, revise, or archive lessons waiting for review.
-              </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </TouchableOpacity>
+          <ToolButton
+            icon="clipboard-outline"
+            title="Review Drafts"
+            text="Approve, revise, or archive lessons waiting for review."
+            onPress={openReviewQueue}
+          />
         </View>
 
         <View style={styles.lessonListCard}>
-  <Text style={styles.sectionTitle}>
-    Lessons in this stage ({lessons.length})
-  </Text>
-
-  {lessons.length === 0 ? (
-    <Text style={styles.emptyLessonText}>
-      No lessons found for this stage yet.
-    </Text>
-  ) : (
-    lessons.map((lesson) => (
-      <TouchableOpacity
-        key={lesson.id}
-        style={styles.lessonRow}
-        onPress={() => router.push(`/admin/lesson-review/${lesson.id}` as any)}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={styles.lessonTitle}>{lesson.title}</Text>
-          <Text style={styles.lessonMeta}>
-            {lesson.is_active ? 'Active' : 'Inactive'} · Stage {lesson.stage_number || 1}
+          <Text style={styles.sectionTitle}>
+            Lessons in this stage ({lessons.length})
           </Text>
-        </View>
 
-        <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-      </TouchableOpacity>
-    ))
-  )}
-</View>
+          {lessons.length === 0 ? (
+            <Text style={styles.emptyLessonText}>
+              No lessons found for this stage yet. Generate draft lessons to begin filling this gap.
+            </Text>
+          ) : (
+            lessons.map((lesson) => (
+              <TouchableOpacity
+                key={lesson.id}
+                style={styles.lessonRow}
+                onPress={() => router.push(`/admin/lesson-review/${lesson.id}` as any)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.lessonTitle}>{lesson.title}</Text>
+                  <Text style={styles.lessonMeta}>
+                    {lesson.is_active ? 'Active' : 'Inactive'} ·{' '}
+                    {lesson.quality_status || 'draft'} · Stage {lesson.stage_number || 1}
+                  </Text>
+                </View>
+
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function StatBox({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: keyof typeof Ionicons.glyphMap;
+}) {
+  return (
+    <View style={styles.statBox}>
+      <Ionicons name={icon} size={20} color="#7C3AED" />
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ToolButton({
+  icon,
+  title,
+  text,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  text: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={styles.toolButton} onPress={onPress}>
+      <View style={styles.toolIcon}>
+        <Ionicons name={icon} size={21} color="#7C3AED" />
+      </View>
+
+      <View style={{ flex: 1 }}>
+        <Text style={styles.toolTitle}>{title}</Text>
+        <Text style={styles.toolText}>{text}</Text>
+      </View>
+
+      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+    </TouchableOpacity>
   );
 }
 
@@ -215,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
     padding: 22,
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E9D5FF',
   },
@@ -239,7 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 21,
   },
-  actionCard: {
+  dashboardCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 28,
     padding: 18,
@@ -252,6 +316,60 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#2E1065',
     marginBottom: 14,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  statBox: {
+    width: '48%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statValue: {
+    marginTop: 8,
+    color: '#2E1065',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  statLabel: {
+    marginTop: 2,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  statusNotice: {
+    marginTop: 14,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 18,
+    padding: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  statusNoticeText: {
+    flex: 1,
+    marginLeft: 8,
+    color: '#047857',
+    fontWeight: '800',
+    lineHeight: 18,
+    fontSize: 12,
+  },
+  statusNoticeTextWarning: {
+    color: '#C2410C',
+  },
+  actionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
   toolButton: {
     backgroundColor: '#F8FAFC',
@@ -284,42 +402,37 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 17,
   },
-
   lessonListCard: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 28,
-  padding: 18,
-  borderWidth: 1,
-  borderColor: '#E9D5FF',
-},
-
-emptyLessonText: {
-  color: '#64748B',
-  fontWeight: '800',
-  lineHeight: 20,
-},
-
-lessonRow: {
-  backgroundColor: '#F8FAFC',
-  borderRadius: 18,
-  padding: 14,
-  marginBottom: 10,
-  borderWidth: 1,
-  borderColor: '#E2E8F0',
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-lessonTitle: {
-  color: '#1E1B4B',
-  fontSize: 15,
-  fontWeight: '900',
-},
-
-lessonMeta: {
-  marginTop: 4,
-  color: '#64748B',
-  fontSize: 12,
-  fontWeight: '700',
-},
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  emptyLessonText: {
+    color: '#64748B',
+    fontWeight: '800',
+    lineHeight: 20,
+  },
+  lessonRow: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  lessonTitle: {
+    color: '#1E1B4B',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  lessonMeta: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
 });
