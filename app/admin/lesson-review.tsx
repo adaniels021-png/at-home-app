@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 import { supabase } from '../../lib/supabase';
 
 const ADMIN_EMAIL = 'adaniels021@gmail.com';
@@ -247,7 +248,7 @@ export default function LessonReviewQueueScreen() {
               <View style={styles.buttonRow}>
                 <TouchableOpacity
                   style={styles.viewButton}
-                  onPress={() => router.push(`/lesson-library/${lesson.id}` as any)}
+                  onPress={() => router.push(`/admin/lesson-review/${lesson.id}` as any)}
                 >
                   <Ionicons name="eye-outline" size={17} color="#4F46E5" />
                   <Text style={styles.viewButtonText}>Review</Text>
