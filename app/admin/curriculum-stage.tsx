@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,9 +25,16 @@ export default function CurriculumStageScreen() {
   const stageTitle = String(stage || '');
   const stageLabel = `Stage ${stageNumber || '1'}`;
 
-  const openLessonLibrary = () => {
-    router.push('/admin/lesson-library' as any);
-  };
+ const openLessonLibrary = () => {
+  router.push({
+    pathname: '/admin/lesson-library',
+    params: {
+      category: categoryTitle,
+      skill: skillTitle,
+      stageNumber: String(stageNumber || '1'),
+    },
+  } as any);
+};
 
   const openGenerateLessons = () => {
     router.push('/admin/generate-lessons' as any);

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -21,6 +21,15 @@ import {
 
 export default function AdminLessonLibraryScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+  category?: string;
+  skill?: string;
+  stageNumber?: string;
+}>();
+
+const routeCategory = params.category ? String(params.category) : '';
+const routeSkill = params.skill ? String(params.skill) : '';
+const routeStageNumber = params.stageNumber ? Number(params.stageNumber) : null;
 
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<LessonLibraryItem[]>([]);
@@ -28,10 +37,24 @@ export default function AdminLessonLibraryScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const filteredLessons =
-  selectedCategory === 'All'
-    ? lessons
-    : lessons.filter((lesson) => lesson.category === selectedCategory);
+const filteredLessons = lessons.filter((lesson) => {
+  const matchesCategory =
+    selectedCategory === 'All' || lesson.category === selectedCategory;
+
+  const matchesSkill =
+    !routeSkill || lesson.skill_area === routeSkill;
+
+  const matchesStage =
+    !routeStageNumber || Number(lesson.stage_number || 1) === routeStageNumber;
+
+  return matchesCategory && matchesSkill && matchesStage;
+});
+
+useEffect(() => {
+  if (routeCategory) {
+    setSelectedCategory(routeCategory);
+  }
+}, [routeCategory]);
 
   async function loadLessons() {
     try {
@@ -77,8 +100,10 @@ export default function AdminLessonLibraryScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Admin Lesson Library</Text>
           <Text style={styles.subtitle}>
-            Review and manage lesson content
-          </Text>
+  {routeSkill
+    ? `${routeSkill}${routeStageNumber ? ` · Stage ${routeStageNumber}` : ''}`
+    : 'Review and manage lesson content'}
+</Text>
         </View>
       </View>
 
