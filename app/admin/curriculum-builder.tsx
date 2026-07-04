@@ -85,7 +85,15 @@ export default function CurriculumBuilderScreen() {
             <TouchableOpacity
               key={`${area.title}-${skill.id}`}
                   style={styles.stageCard}
-                  onPress={openLessonLibrary}
+                 onPress={() =>
+  router.push({
+    pathname: '/admin/curriculum-skill',
+    params: {
+      category: area.title,
+      skill: skill.title,
+    },
+  } as any)
+}
                   activeOpacity={0.85}
                 >
                   <View style={styles.stageNumber}>
