@@ -170,26 +170,6 @@ setRevisionLessonCount(
           onPress={() => router.push('/admin/activity-library/ai-generate' as any)}
         />
 
-        <Text style={styles.sectionTitle}>Coming Next</Text>
-
-        <StudioCard
-          icon="heart-circle-outline"
-          title="Behavior Support Generator"
-          description="Create calming strategies and parent support plans."
-          badge="Soon"
-          disabled
-          onPress={() => {}}
-        />
-
-        <StudioCard
-          icon="document-text-outline"
-          title="Worksheet Generator"
-          description="Create printable worksheets and parent handouts."
-          badge="Soon"
-          disabled
-          onPress={() => {}}
-        /> 
-
         <StudioCard
   icon="document-text-outline"
   title="Worksheet Generator"
@@ -205,6 +185,17 @@ setRevisionLessonCount(
   badge="New"
   onPress={() => router.push('/admin/worksheet-review' as any)}
 />
+
+        <Text style={styles.sectionTitle}>Coming Next</Text>
+
+        <StudioCard
+          icon="heart-circle-outline"
+          title="Behavior Support Generator"
+          description="Create calming strategies and parent support plans."
+          badge="Soon"
+          disabled
+          onPress={() => {}}
+        />
       </ScrollView>
     </SafeAreaView>
   );
