@@ -129,7 +129,20 @@ export default function CurriculumSkillScreen() {
               activeOpacity={0.85}
             >
               <View style={styles.stageNumber}>
-                <Text style={styles.stageNumberText}>{index + 1}</Text>
+               <View style={styles.stageTopRow}>
+  <Text style={styles.stageLabel}>Stage {index + 1}</Text>
+
+  <Text
+    style={[
+      styles.statusLabel,
+      coverage?.status === 'complete' && styles.statusComplete,
+      coverage?.status === 'low' && styles.statusLow,
+      coverage?.status === 'empty' && styles.statusEmpty,
+    ]}
+  >
+    {coverage?.statusLabel || 'Empty'}
+  </Text>
+</View>
               </View>
 
               <View style={{ flex: 1 }}>
@@ -341,4 +354,35 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontSize: 13,
   },
+
+  stageTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 3,
+},
+
+statusLabel: {
+  fontSize: 10,
+  fontWeight: '900',
+  paddingHorizontal: 8,
+  paddingVertical: 4,
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+
+statusComplete: {
+  backgroundColor: '#DCFCE7',
+  color: '#15803D',
+},
+
+statusLow: {
+  backgroundColor: '#FEF3C7',
+  color: '#92400E',
+},
+
+statusEmpty: {
+  backgroundColor: '#FEE2E2',
+  color: '#DC2626',
+},
 });
