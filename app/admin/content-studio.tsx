@@ -189,6 +189,22 @@ setRevisionLessonCount(
           disabled
           onPress={() => {}}
         /> 
+
+        <StudioCard
+  icon="document-text-outline"
+  title="Worksheet Generator"
+  description="Create printable worksheet drafts for review."
+  badge="New"
+  onPress={() => router.push('/admin/worksheet-generator' as any)}
+/>
+
+<StudioCard
+  icon="clipboard-outline"
+  title="Worksheet Review Queue"
+  description="Approve, reject, or delete worksheet drafts."
+  badge="New"
+  onPress={() => router.push('/admin/worksheet-review' as any)}
+/>
       </ScrollView>
     </SafeAreaView>
   );
