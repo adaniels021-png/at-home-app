@@ -1,18 +1,22 @@
 import { useChild } from '@/lib/SelectedChildContext';
 import {
-    getPottyReadinessResult,
-    PottyReadinessLevel,
-    PottyReadinessResult,
+  getPottyReadinessResult,
+  PottyReadinessLevel,
+  PottyReadinessResult,
 } from '@/lib/toiletTrainingStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,7 +26,20 @@ type PlanStep = {
   icon: keyof typeof Ionicons.glyphMap;
 };
 
-function getPlanForLevel(level?: PottyReadinessLevel) {
+type PottyPlan = {
+  title: string;
+  subtitle: string;
+  color: string;
+  bg: string;
+  border: string;
+  schedule: string;
+  goal: string;
+  steps: PlanStep[];
+};
+
+function getPlanForLevel(
+  level?: PottyReadinessLevel
+): PottyPlan {
   if (level === 'not_ready') {
     return {
       title: 'Start with Bathroom Comfort',

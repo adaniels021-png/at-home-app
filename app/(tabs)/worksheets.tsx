@@ -43,8 +43,9 @@ type WorksheetWithPrintOptions = WorksheetItem & {
   printImage?: any;
 };
 
+
 function getCategoryLabel(category: DisplayCategory) {
-  const shortLabels: Partial<Record<DisplayCategory, string>> = {
+  const shortLabels: Record<string, string> = {
     All: 'All',
     'Visual Routines': 'Routines',
     'Communication & Social': 'Communication',

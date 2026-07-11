@@ -248,8 +248,13 @@ const { count, error } = await supabase
 if (USE_LIBRARY_LESSONS) {
   const skillAreaFilter = SKILL_PROGRESSION_PATHS[requestCategory];
 
-  let stageFilter: number | undefined = undefined;
-  let stageSkillArea: string | undefined = undefined;
+  const normalizedSkillAreaFilter: string | undefined =
+    Array.isArray(skillAreaFilter)
+      ? skillAreaFilter[0]
+      : skillAreaFilter;
+
+  let stageFilter: number | undefined;
+  let stageSkillArea: string | undefined;
 
   if (Array.isArray(skillAreaFilter) && skillAreaFilter.length > 0) {
     stageSkillArea = await getSmartRecommendedSkill(
@@ -264,13 +269,13 @@ if (USE_LIBRARY_LESSONS) {
         skillArea: stageSkillArea,
       });
     }
-  } else if (skillAreaFilter) {
-    stageSkillArea = skillAreaFilter;
+  } else if (normalizedSkillAreaFilter) {
+    stageSkillArea = normalizedSkillAreaFilter;
 
     stageFilter = await getRecommendedStageForSkill({
       childId: selectedChild.id,
       category: requestCategory,
-      skillArea: skillAreaFilter,
+      skillArea: normalizedSkillAreaFilter,
     });
   }
 
@@ -278,9 +283,7 @@ if (USE_LIBRARY_LESSONS) {
 
   const libraryLesson = await getRecommendedLesson({
     category: libraryCategory,
-    skillArea:
-      stageSkillArea ||
-      (Array.isArray(skillAreaFilter) ? undefined : skillAreaFilter),
+    skillArea: stageSkillArea,
     stageNumber: stageFilter,
     childId: selectedChild.id,
     excludeSkills: masteredSkills,
@@ -291,18 +294,20 @@ if (USE_LIBRARY_LESSONS) {
 
     setLessonData(mappedLesson);
 
-  const updatedPath = await getLearningPath(selectedChild.id);
+    const updatedPath = await getLearningPath(selectedChild.id);
 
-setLearningPath({
-  ...updatedPath,
-  nextFocus:
-    mappedLesson.focus_skill ||
-    updatedPath?.nextFocus ||
-    mappedLesson.lesson_name,
-  message:
-    updatedPath?.message ||
-    `Building ${mappedLesson.focus_skill || mappedLesson.lesson_name} skills.`,
-});
+    setLearningPath({
+      ...updatedPath,
+      nextFocus:
+        mappedLesson.focus_skill ||
+        mappedLesson.lesson_name,
+      message:
+        `Building ${
+          mappedLesson.focus_skill ||
+          mappedLesson.lesson_name
+        } skills.`,
+    });
+
     setLessonNumber(libraryLesson.stage_number || 1);
     setPreparingLesson(false);
     setLoading(false);
@@ -394,11 +399,14 @@ setLearningPath({
   ...updatedPath,
   nextFocus:
     lesson.focus_skill ||
-    updatedPath?.nextFocus ||
-    lesson.lesson_name,
+    lesson.lesson_name ||
+    'Building steady progress',
   message:
-    updatedPath?.message ||
-    `Building ${lesson.focus_skill || lesson.lesson_name} skills.`,
+    `Building ${
+      lesson.focus_skill ||
+      lesson.lesson_name ||
+      selectedCategory
+    } skills.`,
 });
 
       setLessonNumber(
@@ -463,26 +471,43 @@ setLearningPath({
     try {
       setIsCompleting(true);
 
-     if (lessonData?.library_lesson_id) {
+    if (lessonData?.library_lesson_id) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const performanceScore =
-    status === 'success' ? completionRating * 20 : 20;
+    status === 'success'
+      ? completionRating * 20
+      : 20;
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user?.id) {
+    throw new Error('User not authenticated.');
+  }
 
   const { data: insertedLesson, error } = await supabase
     .from('daily_lesson_instances')
     .insert({
       child_id: selectedChild.id,
-      user_id: selectedChild.user_id || null,
+      user_id: user.id,
       lesson_date: todayStr,
       category: selectedCategory,
-      lesson_number: lessonData.stage_number || lessonNumber || 1,
+      lesson_number:
+        lessonData.stage_number ||
+        lessonNumber ||
+        1,
       lesson_payload: lessonData,
       source: 'library',
-      status: 'opened',
-      library_lesson_id: lessonData.library_lesson_id,
-      skill_area: lessonData.focus_skill || null,
-      stage_number: lessonData.stage_number || null,
+      status: 'started',
+      library_lesson_id:
+        lessonData.library_lesson_id,
+      skill_area:
+        lessonData.focus_skill || null,
+      stage_number:
+        lessonData.stage_number || null,
     })
     .select('id')
     .single();
@@ -1184,6 +1209,10 @@ function GuidedLessonView({
   onUpgrade,
 }: any) {
   const [stepIndex, setStepIndex] = useState(0);
+
+  useEffect(() => {
+    setStepIndex(0);
+  }, [lessonData?.id]);
 
   const rawSteps =
   Array.isArray(lessonData?.teaching_steps) && lessonData.teaching_steps.length > 0
