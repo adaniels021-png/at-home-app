@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../../../lib/supabase';
 
+
 type WorksheetCategory =
   | 'Visual Routines'
   | 'Communication & Social Skills'
@@ -36,6 +37,8 @@ type UploadedFile = {
   url: string;
   storagePath: string;
 };
+
+type WorksheetOrientation = 'portrait' | 'landscape';
 
 const WORKSHEET_TABLE = 'worksheet_library';
 const WORKSHEET_BUCKET = 'worksheet-files';
@@ -62,6 +65,20 @@ const DIFFICULTIES: Array<{
   {
     value: 'advanced',
     label: 'Advanced',
+  },
+];
+
+const ORIENTATIONS: Array<{
+  value: WorksheetOrientation;
+  label: string;
+}> = [
+  {
+    value: 'portrait',
+    label: 'Portrait',
+  },
+  {
+    value: 'landscape',
+    label: 'Landscape',
   },
 ];
 
@@ -293,12 +310,15 @@ export default function AdminWorksheetUploadScreen() {
   const [tagsText, setTagsText] = useState('');
   const [pageCount, setPageCount] = useState('1');
   const [sortOrder, setSortOrder] = useState('0');
+  const [orientation, setOrientation] =
+  useState<WorksheetOrientation>('portrait');
 
   const [category, setCategory] =
     useState<WorksheetCategory>('Visual Routines');
 
   const [difficulty, setDifficulty] =
     useState<WorksheetDifficulty>('beginner');
+
 
   const [pdfFile, setPdfFile] =
     useState<PickedFile | null>(null);
@@ -307,7 +327,7 @@ export default function AdminWorksheetUploadScreen() {
     useState<PickedFile | null>(null);
 
   const [isPro, setIsPro] = useState(true);
-  const [isActive, setIsActive] = useState(true);
+
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -416,8 +436,8 @@ export default function AdminWorksheetUploadScreen() {
     setPdfFile(null);
     setPreviewFile(null);
     setIsPro(true);
-    setIsActive(true);
     setIsFeatured(false);
+    setOrientation('portrait');
   }
 
   async function uploadWorksheet() {
@@ -454,37 +474,37 @@ export default function AdminWorksheetUploadScreen() {
 
       const now = new Date().toISOString();
 
-      const record = {
-        title: title.trim(),
-        category,
-        description: description.trim(),
-        age_range: ageRange.trim(),
-        difficulty,
-        skill_focus: skillFocus.trim(),
+     const record = {
+  title: title.trim(),
+  category,
+  description: description.trim(),
+  age_range: ageRange.trim(),
+  difficulty,
+  skill_focus: skillFocus.trim(),
+  orientation,
 
-        pdf_storage_path: uploadedPdf.storagePath,
-        thumbnail_storage_path:
-          uploadedPreview.storagePath,
+  pdf_storage_path: uploadedPdf.storagePath,
+  thumbnail_storage_path: uploadedPreview.storagePath,
 
-        file_name: pdfFile.name,
-        page_count: normalizedPageCount,
+  file_name: pdfFile.name,
+  page_count: normalizedPageCount,
 
-        is_pro: isPro,
-        is_featured: isFeatured,
-        is_active: isActive,
+  is_pro: isPro,
+  is_featured: isFeatured,
+  is_active: false,
 
-        status: isActive ? 'published' : 'draft',
-        sort_order: normalizedSortOrder,
-        tags,
+  status: 'draft',
+  sort_order: normalizedSortOrder,
+  tags,
 
-        pdf_url: uploadedPdf.url,
-        preview_image_url: uploadedPreview.url,
-        preview_storage_path:
-          uploadedPreview.storagePath,
+  pdf_url: uploadedPdf.url,
+  preview_image_url: uploadedPreview.url,
+  preview_storage_path: uploadedPreview.storagePath,
 
-        created_at: now,
-        updated_at: now,
-      };
+  created_at: now,
+  updated_at: now,
+};
+
 
       const { error: insertError } = await supabase
         .from(WORKSHEET_TABLE)
@@ -497,21 +517,20 @@ export default function AdminWorksheetUploadScreen() {
       }
 
       Alert.alert(
-        'Worksheet Uploaded',
-        isActive
-          ? 'The worksheet is now available in the worksheet library.'
-          : 'The worksheet was saved as an inactive draft.',
-        [
-          {
-            text: 'Upload Another',
-            onPress: resetForm,
-          },
-          {
-            text: 'Done',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+  'Worksheet Uploaded',
+  'The worksheet was uploaded as a draft. Review and publish it from the Worksheet Library.',
+  [
+    {
+      text: 'Upload Another',
+      onPress: resetForm,
+    },
+    {
+      text: 'Review Library',
+      onPress: () =>
+        router.replace('/admin/worksheet-library' as any)
+    },
+  ]
+);
     } catch (error: any) {
       console.error('Worksheet upload error:', error);
 
@@ -573,11 +592,10 @@ export default function AdminWorksheetUploadScreen() {
             </Text>
 
             <Text style={styles.introText}>
-              Upload your completed worksheet PDF and its
-              preview image. Families can then view, print,
-              share, or email it without requiring another
-              app-code update.
-            </Text>
+  Upload your completed worksheet PDF and preview image. The worksheet
+  will be saved as a draft so you can preview it before publishing it
+  for families.
+</Text>
           </View>
         </View>
 
@@ -644,6 +662,42 @@ export default function AdminWorksheetUploadScreen() {
           />
 
           <Text style={styles.fieldLabel}>
+  Page Orientation
+</Text>
+
+<View style={styles.categoryWrap}>
+  {ORIENTATIONS.map((item) => {
+    const active =
+      item.value === orientation;
+
+    return (
+      <TouchableOpacity
+        key={item.value}
+        style={[
+          styles.categoryButton,
+          active &&
+            styles.categoryButtonActive,
+        ]}
+        onPress={() =>
+          setOrientation(item.value)
+        }
+        disabled={uploading}
+      >
+        <Text
+          style={[
+            styles.categoryButtonText,
+            active &&
+              styles.categoryButtonTextActive,
+          ]}
+        >
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
+
+          <Text style={styles.fieldLabel}>
             Category
           </Text>
 
@@ -677,40 +731,41 @@ export default function AdminWorksheetUploadScreen() {
           </View>
 
           <Text style={styles.fieldLabel}>
-            Difficulty
-          </Text>
+  Difficulty
+</Text>
 
-          <View style={styles.categoryWrap}>
-            {DIFFICULTIES.map((item) => {
-              const active =
-                item.value === difficulty;
+<View style={styles.categoryWrap}>
+  {DIFFICULTIES.map((item) => {
+    const active =
+      item.value === difficulty;
 
-              return (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.categoryButton,
-                    active &&
-                      styles.categoryButtonActive,
-                  ]}
-                  onPress={() =>
-                    setDifficulty(item.value)
-                  }
-                  disabled={uploading}
-                >
-                  <Text
-                    style={[
-                      styles.categoryButtonText,
-                      active &&
-                        styles.categoryButtonTextActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+    return (
+      <TouchableOpacity
+        key={item.value}
+        style={[
+          styles.categoryButton,
+          active &&
+            styles.categoryButtonActive,
+        ]}
+        onPress={() =>
+          setDifficulty(item.value)
+        }
+        disabled={uploading}
+      >
+        <Text
+          style={[
+            styles.categoryButtonText,
+            active &&
+              styles.categoryButtonTextActive,
+          ]}
+        >
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
+
 
           <Text style={styles.fieldLabel}>
             Tags
@@ -816,59 +871,25 @@ export default function AdminWorksheetUploadScreen() {
 
           <View style={styles.divider} />
 
-          <View style={styles.switchRow}>
-            <View style={styles.switchTextWrap}>
-              <Text style={styles.switchTitle}>
-                Featured Worksheet
-              </Text>
+<View style={styles.reviewNotice}>
+  <Ionicons
+    name="shield-checkmark-outline"
+    size={20}
+    color="#7C3AED"
+  />
 
-              <Text style={styles.switchDescription}>
-                Highlight this worksheet near the top of
-                the library.
-              </Text>
-            </View>
+  <View style={styles.reviewNoticeText}>
+    <Text style={styles.reviewNoticeTitle}>
+      Review required
+    </Text>
 
-            <Switch
-              value={isFeatured}
-              onValueChange={setIsFeatured}
-              disabled={uploading}
-              trackColor={{
-                false: '#CBD5E1',
-                true: '#FDE68A',
-              }}
-              thumbColor={
-                isFeatured ? '#F59E0B' : '#FFFFFF'
-              }
-            />
-          </View>
+    <Text style={styles.reviewNoticeDescription}>
+      Every worksheet is uploaded as a draft. It will not appear for
+      families until you preview and publish it from the Worksheet Library.
+    </Text>
+  </View>
+</View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchTextWrap}>
-              <Text style={styles.switchTitle}>
-                Visible in Library
-              </Text>
-
-              <Text style={styles.switchDescription}>
-                Turn this off to save the worksheet as a
-                draft without showing it to families.
-              </Text>
-            </View>
-
-            <Switch
-              value={isActive}
-              onValueChange={setIsActive}
-              disabled={uploading}
-              trackColor={{
-                false: '#CBD5E1',
-                true: '#A7F3D0',
-              }}
-              thumbColor={
-                isActive ? '#059669' : '#FFFFFF'
-              }
-            />
-          </View>
         </View>
 
         <View style={styles.noteCard}>
@@ -1259,4 +1280,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
+
+  reviewNotice: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  backgroundColor: '#FAF5FF',
+  borderRadius: 16,
+  padding: 13,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+},
+
+reviewNoticeText: {
+  flex: 1,
+  marginLeft: 9,
+},
+
+reviewNoticeTitle: {
+  color: '#5B21B6',
+  fontSize: 14,
+  fontWeight: '900',
+},
+
+reviewNoticeDescription: {
+  marginTop: 4,
+  color: '#6D28D9',
+  fontSize: 12,
+  lineHeight: 18,
+  fontWeight: '700',
+},
 });

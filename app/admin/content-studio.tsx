@@ -211,10 +211,9 @@ onPress={() => router.push('/admin/ai-asset-library' as any)}
 <StudioCard
   icon="documents-outline"
   title="Worksheet Library"
-  description="Review and manage the finished worksheets available to families."
-  badge="Next"
-  disabled
-  onPress={() => {}}
+  description="Review, preview, publish, hide, edit, or delete uploaded worksheets."
+  badge="New"
+  onPress={() => router.push('/admin/worksheet-library' as any)}
 />
 
         <Text style={styles.sectionTitle}>Coming Next</Text>

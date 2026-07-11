@@ -24,6 +24,7 @@ import { WebView } from 'react-native-webview';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { supabase } from '../../lib/supabase';
 import {
   buildWorksheetHtml,
   CATEGORIES,
@@ -41,6 +42,35 @@ type WorksheetOrientation = 'portrait' | 'landscape';
 type WorksheetWithPrintOptions = WorksheetItem & {
   orientation?: WorksheetOrientation;
   printImage?: any;
+  previewImageUrl?: string;
+  pdfUrl?: string;
+  skillFocus?: string;
+  isUploaded?: boolean;
+  isProWorksheet?: boolean;
+  isFeatured?: boolean;
+  sortOrder?: number;
+};
+
+type UploadedWorksheetRow = {
+  id: string;
+  title: string;
+  category: WorksheetCategory;
+  description: string;
+  age_range: string | null;
+  difficulty?: DifficultyLevel | null;
+  skill_focus?: string | null;
+  orientation?: WorksheetOrientation | null;
+
+  pdf_url: string | null;
+  preview_image_url: string | null;
+
+  page_count?: number | null;
+  is_pro?: boolean | null;
+  is_featured?: boolean | null;
+  is_active?: boolean | null;
+  status?: string | null;
+  sort_order?: number | null;
+  created_at?: string | null;
 };
 
 
@@ -68,6 +98,49 @@ function getPrintableImageSource(worksheet: WorksheetItem) {
   return item.printImage || item.image;
 }
 
+function mapUploadedWorksheet(
+  row: UploadedWorksheetRow
+): WorksheetWithPrintOptions {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description,
+    ageRange: row.age_range || 'All ages',
+
+    orientation:
+      row.orientation === 'landscape'
+        ? 'landscape'
+        : 'portrait',
+
+    previewImageUrl:
+      row.preview_image_url || undefined,
+
+    pdfUrl:
+      row.pdf_url || undefined,
+
+    skillFocus:
+      row.skill_focus || undefined,
+
+    isUploaded: true,
+    isProWorksheet: row.is_pro !== false,
+    isFeatured: row.is_featured === true,
+    sortOrder: row.sort_order || 0,
+  };
+}
+
+function getWorksheetPreviewSource(
+  worksheet: WorksheetWithPrintOptions
+) {
+  if (worksheet.previewImageUrl) {
+    return {
+      uri: worksheet.previewImageUrl,
+    };
+  }
+
+  return worksheet.image || null;
+}
+
 export default function WorksheetsScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
@@ -75,19 +148,111 @@ export default function WorksheetsScreen() {
 
   const scrollRef = useRef<ScrollView | null>(null);
 
+   const [uploadedWorksheets, setUploadedWorksheets] =
+  useState<WorksheetWithPrintOptions[]>([]);
+
+  const [loadingUploadedWorksheets, setLoadingUploadedWorksheets] =
+  useState(true);
   const [selectedCategory, setSelectedCategory] = useState<DisplayCategory>('All');
   const [selectedWorksheet, setSelectedWorksheet] = useState<WorksheetItem | null>(null);
   const [childName, setChildName] = useState('');
   const [exporting, setExporting] = useState(false);
-  const [showPersonalize, setShowPersonalize] = useState(false);
+const [showPersonalize, setShowPersonalize] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const profileName = selectedChild?.child_name || selectedChild?.name || '';
 
     if (profileName && !childName.trim()) {
       setChildName(profileName);
     }
   }, [selectedChild, childName]);
+
+  useEffect(() => {
+  let mounted = true;
+
+  async function loadUploadedWorksheets() {
+    try {
+      setLoadingUploadedWorksheets(true);
+
+      const { data, error } = await supabase
+        .from('worksheet_library')
+        .select(
+          `
+          id,
+          title,
+          category,
+          description,
+          age_range,
+          difficulty,
+          skill_focus,
+          orientation,
+          pdf_url,
+          preview_image_url,
+          page_count,
+          is_pro,
+          is_featured,
+          is_active,
+          status,
+          sort_order,
+          created_at
+          `
+        )
+        .eq('is_active', true)
+        .eq('status', 'published')
+        .order('is_featured', {
+          ascending: false,
+        })
+        .order('sort_order', {
+          ascending: true,
+        })
+        .order('created_at', {
+          ascending: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!mounted) return;
+
+      const mapped = (
+        (data || []) as UploadedWorksheetRow[]
+      )
+        .filter(
+          (row) =>
+            Boolean(
+              row.title &&
+                row.category &&
+                row.description &&
+                row.pdf_url &&
+                row.preview_image_url
+            )
+        )
+        .map(mapUploadedWorksheet);
+
+      setUploadedWorksheets(mapped);
+    } catch (error) {
+      console.error(
+        'Uploaded worksheet load error:',
+        error
+      );
+
+      if (mounted) {
+        setUploadedWorksheets([]);
+      }
+    } finally {
+      if (mounted) {
+        setLoadingUploadedWorksheets(false);
+      }
+    }
+  }
+
+  void loadUploadedWorksheets();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   const categoryOptions = useMemo<DisplayCategory[]>(() => {
     const baseCategories = CATEGORIES as DisplayCategory[];
@@ -97,10 +262,31 @@ export default function WorksheetsScreen() {
       : ['All', ...baseCategories];
   }, []);
 
-  const filteredWorksheets = useMemo(() => {
-    if (selectedCategory === 'All') return WORKSHEETS;
-    return WORKSHEETS.filter((item) => item.category === selectedCategory);
-  }, [selectedCategory]);
+const allWorksheets = useMemo<
+  WorksheetWithPrintOptions[]
+>(() => {
+  const builtInWorksheets =
+    WORKSHEETS as WorksheetWithPrintOptions[];
+
+  return [
+    ...uploadedWorksheets,
+    ...builtInWorksheets,
+  ];
+}, [uploadedWorksheets]);
+
+ const filteredWorksheets = useMemo(() => {
+  if (selectedCategory === 'All') {
+    return allWorksheets;
+  }
+
+  return allWorksheets.filter(
+    (item) =>
+      item.category === selectedCategory
+  );
+}, [
+  allWorksheets,
+  selectedCategory,
+]);
 
   const selectedChildName =
     childName.trim() ||
@@ -210,13 +396,50 @@ export default function WorksheetsScreen() {
     return file.uri;
   };
 
+  const getWorksheetPdfUri = async (
+  worksheet: WorksheetItem
+) => {
+  const item =
+    worksheet as WorksheetWithPrintOptions;
+
+  if (!item.pdfUrl) {
+    return createWorksheetPdf(worksheet);
+  }
+
+  const safeName =
+    worksheet.title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    'worksheet';
+
+  const destination =
+    `${FileSystem.cacheDirectory}` +
+    `${safeName}-${Date.now()}.pdf`;
+
+  const result =
+    await FileSystem.downloadAsync(
+      item.pdfUrl,
+      destination
+    );
+
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(
+      'The worksheet PDF could not be downloaded.'
+    );
+  }
+
+  return result.uri;
+};
+
   const handleShareWorksheet = async (worksheet: WorksheetItem) => {
     if (requireProForWorksheet()) return;
 
     setExporting(true);
 
     try {
-      const uri = await createWorksheetPdf(worksheet);
+      const uri = await getWorksheetPdfUri(worksheet);
       const canShare = await Sharing.isAvailableAsync();
 
       if (!canShare) {
@@ -245,7 +468,7 @@ export default function WorksheetsScreen() {
     setExporting(true);
 
     try {
-      const uri = await createWorksheetPdf(worksheet);
+      const uri = await getWorksheetPdfUri(worksheet);
 
       await MailComposer.composeAsync({
         subject: `${worksheet.title} - ABA at Home`,
@@ -260,26 +483,78 @@ export default function WorksheetsScreen() {
     }
   };
 
-  const handlePrintWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet()) return;
+  const handlePrintWorksheet = async (
+  worksheet: WorksheetItem
+) => {
+  if (requireProForWorksheet()) return;
 
-    setExporting(true);
+  setExporting(true);
 
-    try {
-      const html = await buildPrintableWorksheetHtml(worksheet);
-      const orientation = getWorksheetOrientation(worksheet);
+  try {
+    const item =
+      worksheet as WorksheetWithPrintOptions;
 
-      await Print.printAsync({
-        html,
-        orientation,
+    /*
+     * Uploaded worksheets already have a completed PDF.
+     * Open the system PDF actions so the parent can choose Print.
+     */
+    if (item.pdfUrl) {
+      const uri =
+        await getWorksheetPdfUri(worksheet);
+
+      const canShare =
+        await Sharing.isAvailableAsync();
+
+      if (!canShare) {
+        Alert.alert(
+          'PDF Ready',
+          'The worksheet PDF was downloaded, but the system print and sharing menu is not available on this device.'
+        );
+
+        return;
+      }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle:
+          `Print ${worksheet.title}`,
+        UTI: 'com.adobe.pdf',
       });
-    } catch (error: any) {
-      console.error('Print worksheet error:', error);
-      Alert.alert('Print Failed', error?.message || 'Could not open the print dialog.');
-    } finally {
-      setExporting(false);
+
+      return;
     }
-  };
+
+    /*
+     * Existing built-in worksheets continue using
+     * the current direct HTML print workflow.
+     */
+    const html =
+      await buildPrintableWorksheetHtml(
+        worksheet
+      );
+
+    const orientation =
+      getWorksheetOrientation(worksheet);
+
+    await Print.printAsync({
+      html,
+      orientation,
+    });
+  } catch (error: any) {
+    console.error(
+      'Print worksheet error:',
+      error
+    );
+
+    Alert.alert(
+      'Print Failed',
+      error?.message ||
+        'Could not open the print dialog.'
+    );
+  } finally {
+    setExporting(false);
+  }
+};
 
   const nameWorksheet = WORKSHEETS.find((item) => item.id === 'paths-to-objects');
 
@@ -343,11 +618,20 @@ export default function WorksheetsScreen() {
             <Text style={styles.heroTitle}>Printable Worksheets</Text>
 
             <View style={styles.heroBadge}>
-              <Ionicons name="document-text-outline" size={13} color="#2563EB" />
-              <Text style={styles.heroBadgeText}>{WORKSHEETS.length} printables</Text>
-            </View>
+  <Ionicons
+    name="document-text-outline"
+    size={13}
+    color="#2563EB"
+  />
 
-            <Text style={styles.heroSubtitle}>
+  <Text style={styles.heroBadgeText}>
+    {loadingUploadedWorksheets
+      ? `${WORKSHEETS.length} printables`
+      : `${allWorksheets.length} printables`}
+  </Text>
+</View>
+
+<Text style={styles.heroSubtitle}>
               Evidence-based printables for routines, behavior, regulation, and home learning.
             </Text>
 
@@ -532,13 +816,19 @@ export default function WorksheetsScreen() {
               onPress={() => setSelectedWorksheet(item)}
               activeOpacity={0.9}
             >
-              {item.image ? (
-                <Image
-                  source={item.image}
-                  style={styles.cardImage}
-                  resizeMode="cover"
-                />
-              ) : null}
+             {getWorksheetPreviewSource(
+  item as WorksheetWithPrintOptions
+) ? (
+  <Image
+    source={
+      getWorksheetPreviewSource(
+        item as WorksheetWithPrintOptions
+      )!
+    }
+    style={styles.cardImage}
+    resizeMode="cover"
+  />
+) : null}
 
               <View style={styles.cardTopRow}>
                 <View style={styles.categoryPill}>
@@ -643,13 +933,20 @@ export default function WorksheetsScreen() {
               <Text style={styles.modalSubtitle}>{selectedWorksheet?.description}</Text>
 
               <View style={styles.previewBox}>
-                {selectedWorksheet?.image ? (
-                  <Image
-                    source={selectedWorksheet.image}
-                    style={styles.previewImage}
-                    resizeMode="contain"
-                  />
-                ) : selectedWorksheet ? (
+                {selectedWorksheet &&
+getWorksheetPreviewSource(
+  selectedWorksheet as WorksheetWithPrintOptions
+) ? (
+  <Image
+    source={
+      getWorksheetPreviewSource(
+        selectedWorksheet as WorksheetWithPrintOptions
+      )!
+    }
+    style={styles.previewImage}
+    resizeMode="contain"
+  />
+) : selectedWorksheet ? (
                   <WebView
                     originWhitelist={['*']}
                     source={{ html: previewHtml }}
@@ -674,8 +971,15 @@ export default function WorksheetsScreen() {
               <View style={styles.detailSection}>
                 <Text style={styles.detailTitle}>Skill Focus</Text>
                 <Text style={styles.detailText}>
-                  {getSkillFocus(selectedWorksheet?.category)}
-                </Text>
+  {(
+    selectedWorksheet as
+      | WorksheetWithPrintOptions
+      | null
+  )?.skillFocus ||
+    getSkillFocus(
+      selectedWorksheet?.category
+    )}
+</Text>
               </View>
 
               <View style={styles.actionRow}>

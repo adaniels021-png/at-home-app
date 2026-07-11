@@ -727,88 +727,111 @@ export function buildWorksheetHtml({
   const safeTitle = esc(worksheet.title);
   const safeDescription = esc(worksheet.description);
   const safeDifficulty = getDifficultyLabel(difficulty);
-  const logoImg = brandAssets?.logo
-  ? `<img class="brand-logo" src="${brandAssets.logo}" />`
-  : `<div class="brand-text">ABA at Home</div>`;
 
-const bunBunImg = brandAssets?.happy
-  ? `<img class="bun-bun-header" src="${brandAssets.happy}" />`
-  : '';
+  const logoImg = brandAssets?.logo
+    ? `<img class="brand-logo" src="${brandAssets.logo}" />`
+    : `<div class="brand-text">ABA at Home</div>`;
+
+  const bunBunImg = brandAssets?.happy
+    ? `<img class="bun-bun-header" src="${brandAssets.happy}" />`
+    : '';
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8" />
+
         <style>
-          @page { size: Letter; margin: 22px; }
-          * { box-sizing: border-box; }
+          @page {
+            size: Letter;
+            margin: 22px;
+          }
+
+          * {
+            box-sizing: border-box;
+          }
+
           body {
+            margin: 0;
             font-family: Arial, Helvetica, sans-serif;
             color: #0f172a;
             background: #ffffff;
           }
+
           .page {
             border: 5px solid #c7d2fe;
             border-radius: 28px;
             padding: 18px;
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            background: linear-gradient(
+              180deg,
+              #ffffff 0%,
+              #f8fafc 100%
+            );
           }
 
           .worksheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 12px;
-}
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 14px;
+          }
 
-.logo-wrap {
-  width: 110px;
-  height: 46px;
-}
+          .logo-wrap {
+            width: 110px;
+            min-width: 110px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+          }
 
-.brand-logo {
-  max-width: 110px;
-  max-height: 46px;
-  object-fit: contain;
-}
+          .brand-logo {
+            max-width: 110px;
+            max-height: 46px;
+            object-fit: contain;
+          }
 
-.brand-text {
-  font-size: 22px;
-  font-weight: 900;
-  color: #2E1065;
-}
+          .brand-text {
+            font-size: 21px;
+            font-weight: 900;
+            color: #2e1065;
+          }
 
-.name-date-row {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-  gap: 28px;
-  font-size: 14px;
-  font-weight: 900;
-  color: #0f172a;
-}
+          .name-date-row {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 24px;
+            font-size: 13px;
+            font-weight: 900;
+            color: #0f172a;
+          }
 
-.title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 10px;
-}
+          .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 8px;
+          }
 
-.bun-bun-header {
-  width: 95px;
-  height: 95px;
-  object-fit: contain;
-}
-  .bun-bun-art {
-  width: 95px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 6px;
-}
+          .title-content {
+            flex: 1;
+          }
+
+          .bun-bun-header {
+            width: 95px;
+            height: 95px;
+            object-fit: contain;
+          }
+
+          .bun-bun-art {
+            width: 95px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 6px;
+          }
 
           .brand {
             display: inline-block;
@@ -822,11 +845,14 @@ const bunBunImg = brandAssets?.happy
             text-transform: uppercase;
             margin-bottom: 10px;
           }
+
           h1 {
             font-size: 30px;
-            margin: 0 0 8px;
+            line-height: 1.15;
+            margin: 0;
             color: #0f172a;
           }
+
           .subtitle {
             font-size: 14px;
             color: #475569;
@@ -834,12 +860,14 @@ const bunBunImg = brandAssets?.happy
             margin-bottom: 14px;
             font-weight: 700;
           }
+
           .meta {
             display: flex;
             gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
           }
+
           .pill {
             border: 2px solid #c7d2fe;
             background: #eef2ff;
@@ -849,16 +877,7 @@ const bunBunImg = brandAssets?.happy
             font-size: 11px;
             font-weight: 900;
           }
-          .image-note {
-            border: 3px dashed #c7d2fe;
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 24px;
-            color: #64748b;
-            font-size: 14px;
-            font-weight: 800;
-            text-align: center;
-          }
+
           .footer {
             margin-top: 20px;
             padding: 12px;
@@ -874,45 +893,68 @@ const bunBunImg = brandAssets?.happy
 
       <body>
         <div class="page">
-          <div class="brand">ABA at Home Printable Worksheet</div>
-          <h1>${safeTitle}</h1>
           <div class="worksheet-header">
-  <div class="logo-wrap">
-    ${logoImg}
-  </div>
+            <div class="logo-wrap">
+              ${logoImg}
+            </div>
 
-  <div class="name-date-row">
-    <div>Name: __________________________</div>
-    <div>Date: __________________</div>
-  </div>
-</div>
+            <div class="name-date-row">
+              <div>
+                Name: ______________________
+              </div>
 
-<div class="title-row">
-  <div>
-    <div class="brand">ABA at Home Printable Worksheet</div>
-    <h1>${safeTitle}</h1>
-  </div>
+              <div>
+                Date: ______________
+              </div>
+            </div>
+          </div>
 
-  ${bunBunImg}
-</div>
+          <div class="title-row">
+            <div class="title-content">
+              <div class="brand">
+                ABA at Home Printable Worksheet
+              </div>
 
-          <div class="subtitle">${safeDescription}</div>
+              <h1>${safeTitle}</h1>
+            </div>
+
+            ${bunBunImg}
+          </div>
+
+          <div class="subtitle">
+            ${safeDescription}
+          </div>
 
           <div class="meta">
-            <div class="pill">Child: ${safeChildName}</div>
-            <div class="pill">Level: ${safeDifficulty}</div>
-            <div class="pill">${esc(worksheet.category)}</div>
-            <div class="pill">${esc(worksheet.ageRange)}</div>
+            <div class="pill">
+              Child: ${safeChildName}
+            </div>
+
+            <div class="pill">
+              Level: ${safeDifficulty}
+            </div>
+
+            <div class="pill">
+              ${esc(worksheet.category)}
+            </div>
+
+            <div class="pill">
+              ${esc(worksheet.ageRange)}
+            </div>
           </div>
 
-          <div class="image-note">
-            This worksheet uses its dedicated printable file.
-          </div>
-          ${worksheetBody(worksheet, safeChildName, difficulty, brandAssets)}
+          ${worksheetBody(
+            worksheet,
+            childName,
+            difficulty,
+            brandAssets
+          )}
 
           <div class="footer">
-            Parent note: Use this worksheet for short, positive practice. Pair with praise,
-            breaks, visual supports, and caregiver supervision. Educational support only.
+            Parent note: Use this worksheet for short,
+            positive practice. Pair with praise, breaks,
+            visual supports, and caregiver supervision.
+            Educational support only.
           </div>
         </div>
       </body>
