@@ -125,6 +125,21 @@ setRevisionLessonCount(
         <Text style={styles.sectionTitle}>Quick Actions</Text>
 
         <StudioCard
+  icon="images-outline"
+  title="AI Asset Library"
+description="Upload and manage reusable visual assets for worksheets, lessons, activities, and default visuals."
+onPress={() => router.push('/admin/ai-asset-library' as any)}
+/>
+
+<StudioCard
+  icon="sparkles-outline"
+  title="AI Image Generator"
+  description="Create image prompts and save approved visuals into the AI Asset Library."
+  badge="New"
+  onPress={() => router.push('/admin/ai-asset-generator' as any)}
+/>
+
+        <StudioCard
           icon="school-outline"
           title="Generate Lessons"
           description="Create new ABA lesson content using your AI lesson generator."
@@ -185,20 +200,21 @@ setRevisionLessonCount(
   onPress={() => router.push('/admin/activity-library' as any)}
 />
 
-        <StudioCard
-  icon="document-text-outline"
-  title="Worksheet Generator"
-  description="Create printable worksheet drafts for review."
+<StudioCard
+  icon="cloud-upload-outline"
+  title="Upload Worksheet"
+  description="Upload a finished worksheet PDF and preview image to the worksheet library."
   badge="New"
-  onPress={() => router.push('/admin/worksheet-generator' as any)}
+  onPress={() => router.push('/admin/worksheets/upload' as any)}
 />
 
 <StudioCard
-  icon="clipboard-outline"
-  title="Worksheet Review Queue"
-  description="Approve, reject, or delete worksheet drafts."
-  badge="New"
-  onPress={() => router.push('/admin/worksheet-review' as any)}
+  icon="documents-outline"
+  title="Worksheet Library"
+  description="Review and manage the finished worksheets available to families."
+  badge="Next"
+  disabled
+  onPress={() => {}}
 />
 
         <Text style={styles.sectionTitle}>Coming Next</Text>

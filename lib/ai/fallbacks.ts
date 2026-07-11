@@ -209,3 +209,11 @@ export function buildFallbackBehaviorSupportPlan() {
       'You are doing a great job supporting your child.',
   };
 }
+
+// ---------------------------------------------------------------------
+// Legacy aliases (temporary during refactor)
+// ---------------------------------------------------------------------
+
+export const getLessonFallback = buildFallbackLesson;
+export const fallbackLesson = buildFallbackLesson;
+export const generateFallbackLesson = buildFallbackLesson;

@@ -146,7 +146,7 @@ useEffect(() => {
       const createdLessons: any[] = [];
 
       for (let index = 0; index < count; index += 1) {
-        const stageNumber = stageStart;
+        const stageNumber = stageStart + index;
 
         const result = await generatePremiumLesson({
           childName: 'your child',
@@ -189,15 +189,8 @@ useEffect(() => {
             cleanText(lesson.difficulty_reason) ||
             `This lesson supports ${skillArea} through short parent-led practice.`,
 
-            mastery_criteria: cleanText(lesson.success_criteria) || null,
-
-            next_lesson_preview:
-            cleanText(lesson.lesson_variation) ||
-         `Next, continue building ${skillArea} with more independence or a new everyday routine.`,
-         
-         setup_instructions: toArray(lesson.setup).join('\n') || null,
+         setup_instructions: toArray(lesson.setup),
           parent_script: null,
-          expected_child_response: cleanText(lesson.success_criteria) || null,
           prompting_tips: toArray(lesson.prompting_hierarchy),
           reinforcement_tips: toArray(lesson.reinforcement),
           if_child_struggles: toArray(lesson.error_correction),

@@ -31,6 +31,9 @@ type WorksheetQueueItem = {
   admin_notes: string | null;
   created_at: string | null;
   updated_at: string | null;
+  layout_type?: string | null;
+missing_asset_keys?: string[] | null;
+worksheet_dna?: any | null;
 };
 
 const STATUS_FILTERS: { id: 'all' | WorksheetStatus; label: string }[] = [
@@ -86,8 +89,8 @@ export default function WorksheetReviewScreen() {
       const { data, error } = await supabase
         .from('worksheet_queue')
         .select(
-          'id,title,category,description,age_range,difficulty,child_name,html,status,source,admin_notes,created_at,updated_at'
-        )
+  'id,title,category,description,age_range,difficulty,child_name,html,status,source,admin_notes,created_at,updated_at,layout_type,missing_asset_keys,worksheet_dna'
+)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -720,4 +723,5 @@ previewButtonText: {
   color: '#4F46E5',
   fontWeight: '900',
 },
+
 });

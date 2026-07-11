@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MailComposer from 'expo-mail-composer';
 import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
@@ -9,270 +10,643 @@ import {
   Alert,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
 
-import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
-import {
-  buildWorksheetHtml,
-  CATEGORIES,
-  DifficultyLevel,
-  getSkillFocus,
-  WorksheetCategory,
-  WorksheetItem,
-  WORKSHEETS,
-} from '../../lib/worksheetTemplates';
+import { supabase } from '../../lib/supabase';
 
-const DEFAULT_DIFFICULTY: DifficultyLevel = 'beginner';
+type WorksheetCategory =
+  | 'Visual Routines'
+  | 'Communication & Social Skills'
+  | 'Behavior & Regulation'
+  | 'Learning & Life Skills';
+
+type WorksheetCategoryFilter = WorksheetCategory | 'All';
+
+type WorksheetLibraryItem = {
+  id: string;
+  title: string;
+  category: WorksheetCategory;
+  description: string;
+  age_range: string;
+  skill_focus: string;
+  pdf_url: string | null;
+  pdf_storage_path: string | null;
+  preview_image_url: string | null;
+  preview_storage_path: string | null;
+  thumbnail_storage_path: string | null;
+  is_pro: boolean;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+const WORKSHEET_TABLE = 'worksheet_library';
+const WORKSHEET_BUCKET = 'worksheet-files';
+
+const CATEGORIES: WorksheetCategoryFilter[] = [
+  'All',
+  'Visual Routines',
+  'Communication & Social Skills',
+  'Behavior & Regulation',
+  'Learning & Life Skills',
+];
+
+function sanitizeFileName(value: string) {
+  const cleaned = value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return cleaned || `aba-at-home-worksheet-${Date.now()}`;
+}
+
+function getCategoryIcon(
+  category?: WorksheetCategory
+): keyof typeof Ionicons.glyphMap {
+  switch (category) {
+    case 'Visual Routines':
+      return 'list-outline';
+
+    case 'Communication & Social Skills':
+      return 'chatbubbles-outline';
+
+    case 'Behavior & Regulation':
+      return 'heart-outline';
+
+    case 'Learning & Life Skills':
+      return 'school-outline';
+
+    default:
+      return 'document-text-outline';
+  }
+}
+
+function getCategoryColor(category?: WorksheetCategory) {
+  switch (category) {
+    case 'Visual Routines':
+      return {
+        background: '#EDE9FE',
+        text: '#6D28D9',
+      };
+
+    case 'Communication & Social Skills':
+      return {
+        background: '#DBEAFE',
+        text: '#1D4ED8',
+      };
+
+    case 'Behavior & Regulation':
+      return {
+        background: '#FCE7F3',
+        text: '#BE185D',
+      };
+
+    case 'Learning & Life Skills':
+      return {
+        background: '#DCFCE7',
+        text: '#15803D',
+      };
+
+    default:
+      return {
+        background: '#F1F5F9',
+        text: '#475569',
+      };
+  }
+}
+
+function getWorksheetPublicUrl(storagePath?: string | null) {
+  if (!storagePath) {
+    return null;
+  }
+
+  const normalizedPath = storagePath.replace(/^\/+/, '');
+
+  const { data } = supabase.storage
+    .from(WORKSHEET_BUCKET)
+    .getPublicUrl(normalizedPath);
+
+  return data?.publicUrl || null;
+}
+
+function prepareWorksheetItem(
+  worksheet: WorksheetLibraryItem
+): WorksheetLibraryItem {
+  const previewStoragePath =
+    worksheet.preview_storage_path ||
+    worksheet.thumbnail_storage_path;
+
+  return {
+    ...worksheet,
+
+    // Build fresh URLs using the real Supabase bucket.
+    pdf_url:
+      getWorksheetPublicUrl(worksheet.pdf_storage_path) ||
+      worksheet.pdf_url,
+
+    preview_image_url:
+      getWorksheetPublicUrl(previewStoragePath) ||
+      worksheet.preview_image_url,
+  };
+}
 
 export default function WorksheetsScreen() {
   const router = useRouter();
-  const { selectedChild } = useChild() as any;
   const { isPro } = useSubscription();
 
-  const [selectedCategory, setSelectedCategory] = useState<
-    WorksheetCategory | 'All'
-  >('All');
-
+  const [worksheets, setWorksheets] = useState<WorksheetLibraryItem[]>([]);
+  const [selectedCategory, setSelectedCategory] =
+    useState<WorksheetCategoryFilter>('All');
   const [selectedWorksheet, setSelectedWorksheet] =
-    useState<WorksheetItem | null>(null);
+    useState<WorksheetLibraryItem | null>(null);
 
-  const [childName, setChildName] = useState('');
-  const [exporting, setExporting] = useState(false);
-
-  useEffect(() => {
-    const profileName = selectedChild?.child_name || selectedChild?.name || '';
-
-    if (profileName && !childName.trim()) {
-      setChildName(profileName);
-    }
-  }, [selectedChild, childName]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exportingAction, setExportingAction] = useState<
+    'print' | 'share' | 'email' | null
+  >(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const filteredWorksheets = useMemo(() => {
-    if (selectedCategory === 'All') return WORKSHEETS;
-    return WORKSHEETS.filter((item) => item.category === selectedCategory);
-  }, [selectedCategory]);
+    if (selectedCategory === 'All') {
+      return worksheets;
+    }
 
-  const selectedChildName =
-    childName.trim() ||
-    selectedChild?.child_name ||
-    selectedChild?.name ||
-    'Child';
+    return worksheets.filter(
+      (worksheet) => worksheet.category === selectedCategory
+    );
+  }, [selectedCategory, worksheets]);
 
-  const requireProForWorksheet = (worksheet: WorksheetItem) => {
-  if (!isPro) {
+  useEffect(() => {
+    void loadWorksheets();
+  }, []);
+
+  async function loadWorksheets(showRefreshSpinner = false) {
+    try {
+      if (showRefreshSpinner) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setLoadError(null);
+
+      const { data, error } = await supabase
+        .from(WORKSHEET_TABLE)
+        .select(
+          `
+            id,
+            title,
+            category,
+            description,
+            age_range,
+            skill_focus,
+            pdf_url,
+            pdf_storage_path,
+            preview_image_url,
+            preview_storage_path,
+            thumbnail_storage_path,
+            is_pro,
+            is_active,
+            created_at,
+            updated_at
+          `
+        )
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+     const preparedWorksheets = (
+  (data || []) as WorksheetLibraryItem[]
+).map(prepareWorksheetItem);
+
+setWorksheets(preparedWorksheets);
+    } catch (error: any) {
+      console.error('Load worksheet library error:', error);
+
+      const message =
+        error?.message || 'The worksheet library could not be loaded.';
+
+      setLoadError(message);
+
+      Alert.alert('Worksheet Library Error', message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  function worksheetRequiresUpgrade(worksheet: WorksheetLibraryItem) {
+    if (!worksheet.is_pro) {
+      return false;
+    }
+
+    if (isPro) {
+      return false;
+    }
+
+    setSelectedWorksheet(null);
     router.push('/subscription');
+
     return true;
   }
 
-  return false;
-};
+ async function downloadWorksheetPdf(
+  worksheet: WorksheetLibraryItem
+) {
+  if (!FileSystem.cacheDirectory) {
+    throw new Error('The app cache directory is unavailable.');
+  }
 
-  const createWorksheetPdf = async (worksheet: WorksheetItem) => {
-    const html = buildWorksheetHtml({
-      worksheet,
-      childName: selectedChildName,
-      difficulty: DEFAULT_DIFFICULTY,
+  const freshPublicUrl =
+    getWorksheetPublicUrl(worksheet.pdf_storage_path) ||
+    worksheet.pdf_url;
+
+  if (!freshPublicUrl) {
+    throw new Error(
+      'This worksheet does not have a valid PDF file.'
+    );
+  }
+
+  const fileName = `${sanitizeFileName(
+    worksheet.title
+  )}.pdf`;
+
+  const localUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+  const existingFile =
+    await FileSystem.getInfoAsync(localUri);
+
+  if (existingFile.exists) {
+    await FileSystem.deleteAsync(localUri, {
+      idempotent: true,
     });
+  }
 
-    const file = await Print.printToFileAsync({ html });
-    return file.uri;
-  };
+  console.log('Downloading worksheet PDF:', {
+    title: worksheet.title,
+    storagePath: worksheet.pdf_storage_path,
+    publicUrl: freshPublicUrl,
+  });
 
-  const handleShareWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet(worksheet)) return;
+  const result = await FileSystem.downloadAsync(
+    freshPublicUrl,
+    localUri
+  );
 
-    setExporting(true);
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(
+      `The worksheet PDF could not be downloaded. Server status: ${result.status}.`
+    );
+  }
+
+  const downloadedFile =
+    await FileSystem.getInfoAsync(result.uri);
+
+  if (!downloadedFile.exists) {
+    throw new Error(
+      'The worksheet PDF download did not create a local file.'
+    );
+  }
+
+  return result.uri;
+}
+
+  async function handlePrintWorksheet(worksheet: WorksheetLibraryItem) {
+    if (worksheetRequiresUpgrade(worksheet)) {
+      return;
+    }
 
     try {
-      const uri = await createWorksheetPdf(worksheet);
-      const canShare = await Sharing.isAvailableAsync();
+      setExportingAction('print');
 
-      if (!canShare) {
+      const localUri = await downloadWorksheetPdf(worksheet);
+
+      await Print.printAsync({
+        uri: localUri,
+      });
+    } catch (error: any) {
+      console.error('Print worksheet error:', error);
+
+      Alert.alert(
+        'Print Failed',
+        error?.message || 'The worksheet could not be printed.'
+      );
+    } finally {
+      setExportingAction(null);
+    }
+  }
+
+  async function handleShareWorksheet(worksheet: WorksheetLibraryItem) {
+    if (worksheetRequiresUpgrade(worksheet)) {
+      return;
+    }
+
+    try {
+      setExportingAction('share');
+
+      const sharingAvailable = await Sharing.isAvailableAsync();
+
+      if (!sharingAvailable) {
         Alert.alert(
-          'PDF Created',
-          'The worksheet PDF was created, but sharing is not available on this device.'
+          'Sharing Unavailable',
+          'Sharing is not available on this device.'
         );
         return;
       }
 
-      await Sharing.shareAsync(uri, {
+      const localUri = await downloadWorksheetPdf(worksheet);
+
+      await Sharing.shareAsync(localUri, {
         mimeType: 'application/pdf',
+        UTI: 'com.adobe.pdf',
         dialogTitle: `Share ${worksheet.title}`,
       });
     } catch (error: any) {
       console.error('Share worksheet error:', error);
+
       Alert.alert(
         'Share Failed',
-        error?.message || 'Could not share this worksheet.'
+        error?.message || 'The worksheet could not be shared.'
       );
     } finally {
-      setExporting(false);
+      setExportingAction(null);
     }
-  };
+  }
 
-  const handleEmailWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet(worksheet)) return;
-
-    setExporting(true);
+  async function handleEmailWorksheet(worksheet: WorksheetLibraryItem) {
+    if (worksheetRequiresUpgrade(worksheet)) {
+      return;
+    }
 
     try {
-      const uri = await createWorksheetPdf(worksheet);
+      setExportingAction('email');
+
+      const mailAvailable = await MailComposer.isAvailableAsync();
+
+      if (!mailAvailable) {
+        Alert.alert(
+          'Email Unavailable',
+          'No compatible email app is available on this device.'
+        );
+        return;
+      }
+
+      const localUri = await downloadWorksheetPdf(worksheet);
 
       await MailComposer.composeAsync({
-        subject: `${worksheet.title} - ABA at Home`,
-        body: `Hi,\n\nI’m sending this printable worksheet.\n\nWorksheet: ${worksheet.title}\nChild: ${selectedChildName}\n\nSent from ABA at Home.`,
-        attachments: [uri],
+        subject: `${worksheet.title} — ABA at Home`,
+        body:
+          `Hi,\n\n` +
+          `I’m sending this printable ABA at Home worksheet.\n\n` +
+          `Worksheet: ${worksheet.title}\n` +
+          `Category: ${worksheet.category}\n\n` +
+          `Sent from ABA at Home.`,
+        attachments: [localUri],
       });
     } catch (error: any) {
       console.error('Email worksheet error:', error);
+
       Alert.alert(
         'Email Failed',
-        error?.message || 'Could not open email for this worksheet.'
+        error?.message || 'The worksheet could not be attached to an email.'
       );
     } finally {
-      setExporting(false);
+      setExportingAction(null);
     }
-  };
+  }
 
-  const handlePrintWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet(worksheet)) return;
+  function openWorksheet(worksheet: WorksheetLibraryItem) {
+    setSelectedWorksheet(worksheet);
+  }
 
-    setExporting(true);
-
-    try {
-      const html = buildWorksheetHtml({
-        worksheet,
-        childName: selectedChildName,
-        difficulty: DEFAULT_DIFFICULTY,
-      });
-
-      await Print.printAsync({ html });
-    } catch (error: any) {
-      console.error('Print worksheet error:', error);
-      Alert.alert(
-        'Print Failed',
-        error?.message || 'Could not open the print dialog.'
-      );
-    } finally {
-      setExporting(false);
+  function closeWorksheet() {
+    if (exportingAction) {
+      return;
     }
-  };
 
-  const nameWorksheet = WORKSHEETS.find(
-  (item) => item.id === 'paths-to-objects'
-);
+    setSelectedWorksheet(null);
+  }
 
-  const previewHtml = selectedWorksheet
-    ? buildWorksheetHtml({
-        worksheet: selectedWorksheet,
-        childName: selectedChildName,
-        difficulty: DEFAULT_DIFFICULTY,
-      })
-    : '';
+  function renderWorksheetCard(worksheet: WorksheetLibraryItem) {
+    const categoryColors = getCategoryColor(worksheet.category);
+    const locked = worksheet.is_pro && !isPro;
+
+    return (
+      <TouchableOpacity
+        key={worksheet.id}
+        style={styles.card}
+        activeOpacity={0.88}
+        onPress={() => openWorksheet(worksheet)}
+      >
+        <View style={styles.cardImageWrap}>
+          {worksheet.preview_image_url ? (
+            <Image
+  source={{ uri: worksheet.preview_image_url }}
+  style={styles.cardImage}
+  resizeMode="contain"
+/>
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons
+                name={getCategoryIcon(worksheet.category)}
+                size={42}
+                color="#7C3AED"
+              />
+              <Text style={styles.imagePlaceholderText}>
+                Worksheet Preview
+              </Text>
+            </View>
+          )}
+
+          {worksheet.is_pro ? (
+            <View style={styles.imageProBadge}>
+              <Ionicons name="star" size={12} color="#FFFFFF" />
+              <Text style={styles.imageProBadgeText}>PRO</Text>
+            </View>
+          ) : (
+            <View style={styles.imageFreeBadge}>
+              <Text style={styles.imageFreeBadgeText}>FREE</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.cardBody}>
+          <View style={styles.cardTopRow}>
+            <View
+              style={[
+                styles.categoryPill,
+                {
+                  backgroundColor: categoryColors.background,
+                },
+              ]}
+            >
+              <Ionicons
+                name={getCategoryIcon(worksheet.category)}
+                size={13}
+                color={categoryColors.text}
+              />
+
+              <Text
+                style={[
+                  styles.categoryPillText,
+                  {
+                    color: categoryColors.text,
+                  },
+                ]}
+              >
+                {worksheet.category}
+              </Text>
+            </View>
+
+            {locked ? (
+              <View style={styles.lockedPill}>
+                <Ionicons
+                  name="lock-closed"
+                  size={12}
+                  color="#7C3AED"
+                />
+                <Text style={styles.lockedPillText}>Preview</Text>
+              </View>
+            ) : (
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#94A3B8"
+              />
+            )}
+          </View>
+
+          <Text style={styles.cardTitle}>{worksheet.title}</Text>
+
+          <Text style={styles.cardDescription} numberOfLines={3}>
+            {worksheet.description}
+          </Text>
+
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="people-outline"
+                size={15}
+                color="#64748B"
+              />
+              <Text style={styles.metaText}>
+                {worksheet.age_range}
+              </Text>
+            </View>
+
+            <View style={styles.metaItem}>
+              <Ionicons
+                name="document-text-outline"
+                size={15}
+                color="#64748B"
+              />
+              <Text style={styles.metaText}>Printable PDF</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  const selectedCategoryColors = getCategoryColor(
+    selectedWorksheet?.category
+  );
+
+  const selectedWorksheetLocked =
+    Boolean(selectedWorksheet?.is_pro) && !isPro;
+
+  const actionInProgress = Boolean(exportingAction);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor="#7C3AED"
+            colors={['#7C3AED']}
+            onRefresh={() => void loadWorksheets(true)}
+          />
+        }
       >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={22}
+            color="#29145F"
+          />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Worksheets</Text>
+        <Text style={styles.headerEyebrow}>ABA AT HOME</Text>
+        <Text style={styles.headerTitle}>Worksheet Library</Text>
 
         <Text style={styles.headerSubtitle}>
-          Colorful printable ABA-style worksheets for visual routines,
-          communication, regulation, behavior support, and life skills.
+          Premium printable worksheets for routines, communication,
+          regulation, social skills, and everyday learning.
         </Text>
 
         {!isPro ? (
-          <View style={styles.lockedBanner}>
-            <View style={styles.lockedHeader}>
-              <Ionicons name="lock-closed" size={18} color="#7C2D12" />
-              <Text style={styles.lockedTitle}>Pro Feature Preview</Text>
+          <View style={styles.proPreviewBanner}>
+            <View style={styles.proPreviewIcon}>
+              <Ionicons
+                name="star"
+                size={21}
+                color="#FFFFFF"
+              />
             </View>
 
-            <Text style={styles.lockedText}>
-              You can preview worksheet options here. Printing, PDF sharing,
-              email export, and personalized worksheets are unlocked with Pro.
-            </Text>
+            <View style={styles.proPreviewContent}>
+              <Text style={styles.proPreviewTitle}>
+                Explore the worksheet library
+              </Text>
+
+              <Text style={styles.proPreviewText}>
+                Preview every worksheet. Pro worksheets can be printed,
+                shared, and emailed with an active membership.
+              </Text>
+            </View>
 
             <TouchableOpacity
-              style={styles.lockedButton}
+              style={styles.proPreviewButton}
               onPress={() => router.push('/subscription')}
             >
-              <Text style={styles.lockedButtonText}>Upgrade to Pro</Text>
+              <Text style={styles.proPreviewButtonText}>Upgrade</Text>
             </TouchableOpacity>
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.readyBanner}>
+            <Ionicons
+              name="checkmark-circle"
+              size={21}
+              color="#047857"
+            />
 
-        <View style={styles.accessCard}>
-          <Ionicons name="document-text-outline" size={18} color="#4F46E5" />
-          <Text style={styles.accessText}>
-            {isPro
-              ? 'Printable PDFs are ready to preview, print, share, and email.'
-              : 'Preview worksheet packs now. Upgrade to create printable PDFs.'}
-          </Text>
-        </View>
-
-        <View style={styles.nameBox}>
-          <View style={styles.nameHeader}>
-            <Ionicons name="create-outline" size={20} color="#4F46E5" />
-            <Text style={styles.nameTitle}>Personalized Child Name</Text>
+            <Text style={styles.readyBannerText}>
+              Your printable worksheets are ready to preview, print,
+              share, and email.
+            </Text>
           </View>
-
-          <Text style={styles.nameDescription}>
-            Enter your child’s name so personalized worksheets use their real
-            name.
-          </Text>
-
-          <TextInput
-            value={childName}
-            onChangeText={setChildName}
-            placeholder="Enter child name"
-            placeholderTextColor="#94A3B8"
-            style={styles.input}
-          />
-
-          <TouchableOpacity
-            style={[styles.generateBtn, !isPro && styles.disabledBtn]}
-            onPress={() => {
-              if (nameWorksheet) {
-                void handleShareWorksheet(nameWorksheet);
-              }
-            }}
-            disabled={exporting}
-          >
-            {exporting ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Ionicons
-                  name={isPro ? 'document-text-outline' : 'lock-closed-outline'}
-                  size={18}
-                  color="#FFFFFF"
-                />
-
-                <Text style={styles.generateBtnText}>
-                  {isPro
-                    ? 'Create Personalized Tracing PDF'
-                    : 'Pro Required for PDF'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        )}
 
         <ScrollView
           horizontal
@@ -285,7 +659,10 @@ export default function WorksheetsScreen() {
             return (
               <TouchableOpacity
                 key={category}
-                style={[styles.categoryChip, active && styles.categoryChipActive]}
+                style={[
+                  styles.categoryChip,
+                  active && styles.categoryChipActive,
+                ]}
                 onPress={() => setSelectedCategory(category)}
               >
                 <Text
@@ -301,207 +678,427 @@ export default function WorksheetsScreen() {
           })}
         </ScrollView>
 
-        <View style={styles.cardList}>
-  {filteredWorksheets.map((item) => (
-    <TouchableOpacity
-      key={item.id}
-      style={styles.card}
-      onPress={() => setSelectedWorksheet(item)}
-      activeOpacity={0.88}
-    >
-      {item.image ? (
-        <Image
-          source={item.image}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
-      ) : null}
+        <View style={styles.libraryHeadingRow}>
+          <View>
+            <Text style={styles.libraryHeading}>
+              {selectedCategory === 'All'
+                ? 'All Worksheets'
+                : selectedCategory}
+            </Text>
 
-      <View style={styles.cardTopRow}>
-        <View style={styles.categoryPill}>
-          <Text style={styles.categoryPillText}>{item.category}</Text>
+            {!loading ? (
+              <Text style={styles.libraryCount}>
+                {filteredWorksheets.length}{' '}
+                {filteredWorksheets.length === 1
+                  ? 'worksheet'
+                  : 'worksheets'}
+              </Text>
+            ) : null}
+          </View>
+
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={() => void loadWorksheets(true)}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <ActivityIndicator
+                size="small"
+                color="#7C3AED"
+              />
+            ) : (
+              <Ionicons
+                name="refresh"
+                size={19}
+                color="#7C3AED"
+              />
+            )}
+          </TouchableOpacity>
         </View>
 
-        {!isPro ? (
-          <View style={styles.proPill}>
-            <Ionicons name="lock-closed" size={12} color="#7C3AED" />
-            <Text style={styles.proPillText}>Preview</Text>
+        {loading ? (
+          <View style={styles.stateCard}>
+            <ActivityIndicator
+              size="large"
+              color="#7C3AED"
+            />
+
+            <Text style={styles.stateTitle}>
+              Loading worksheets...
+            </Text>
+
+            <Text style={styles.stateText}>
+              Your worksheet library is being prepared.
+            </Text>
           </View>
-        ) : (
-          <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-        )}
-      </View>
+        ) : null}
 
-      <Text style={styles.cardTitle}>{item.title}</Text>
-      <Text style={styles.cardDescription}>{item.description}</Text>
+        {!loading && loadError ? (
+          <View style={styles.errorCard}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={34}
+              color="#B91C1C"
+            />
 
-      <View style={styles.metaRow}>
-        <Ionicons name="people-outline" size={15} color="#64748B" />
-        <Text style={styles.metaText}>{item.ageRange}</Text>
-      </View>
-    </TouchableOpacity>
-  ))}
-</View>
+            <Text style={styles.errorTitle}>
+              Could not load worksheets
+            </Text>
 
-        <View style={styles.proCard}>
-          <View style={styles.proHeader}>
-            <Ionicons name="star" size={18} color="#F59E0B" />
-            <Text style={styles.proTitle}>Premium Printable Worksheets</Text>
+            <Text style={styles.errorText}>
+              {loadError}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => void loadWorksheets()}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {!loading &&
+        !loadError &&
+        filteredWorksheets.length === 0 ? (
+          <View style={styles.stateCard}>
+            <Ionicons
+              name="documents-outline"
+              size={42}
+              color="#94A3B8"
+            />
+
+            <Text style={styles.stateTitle}>
+              No worksheets here yet
+            </Text>
+
+            <Text style={styles.stateText}>
+              New worksheets uploaded through the admin uploader will
+              appear here automatically.
+            </Text>
+          </View>
+        ) : null}
+
+        {!loading && !loadError ? (
+          <View style={styles.cardList}>
+            {filteredWorksheets.map(renderWorksheetCard)}
+          </View>
+        ) : null}
+
+        <View style={styles.bottomInfoCard}>
+          <View style={styles.bottomInfoHeader}>
+            <Ionicons
+              name="print-outline"
+              size={20}
+              color="#7C3AED"
+            />
+
+            <Text style={styles.bottomInfoTitle}>
+              Designed for home practice
+            </Text>
           </View>
 
-          <Text style={styles.proText}>
-            Pro unlocks colorful printable PDFs, worksheet previews, email
-            export, sharing, and parent-friendly ABA tools.
+          <Text style={styles.bottomInfoText}>
+            Keep worksheet practice short, positive, and successful.
+            Offer help when needed and praise effort instead of
+            perfection.
           </Text>
         </View>
       </ScrollView>
 
       <Modal
-        visible={!!selectedWorksheet}
-        animationType="slide"
+        visible={Boolean(selectedWorksheet)}
         transparent
-        onRequestClose={() => setSelectedWorksheet(null)}
+        animationType="slide"
+        onRequestClose={closeWorksheet}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.modalHeader}>
-                <View style={styles.modalCategoryPill}>
-                  <Text style={styles.modalCategoryPillText}>
+          <SafeAreaView style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalContent}
+            >
+              <View style={styles.modalTopRow}>
+                <View
+                  style={[
+                    styles.modalCategoryPill,
+                    {
+                      backgroundColor:
+                        selectedCategoryColors.background,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={getCategoryIcon(
+                      selectedWorksheet?.category
+                    )}
+                    size={14}
+                    color={selectedCategoryColors.text}
+                  />
+
+                  <Text
+                    style={[
+                      styles.modalCategoryText,
+                      {
+                        color: selectedCategoryColors.text,
+                      },
+                    ]}
+                  >
                     {selectedWorksheet?.category}
                   </Text>
                 </View>
 
-                <TouchableOpacity onPress={() => setSelectedWorksheet(null)}>
-                  <Ionicons name="close-circle" size={30} color="#64748B" />
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={closeWorksheet}
+                  disabled={actionInProgress}
+                >
+                  <Ionicons
+                    name="close"
+                    size={22}
+                    color="#29145F"
+                  />
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.modalTitle}>{selectedWorksheet?.title}</Text>
+              <Text style={styles.modalTitle}>
+                {selectedWorksheet?.title}
+              </Text>
 
-              <Text style={styles.modalSubtitle}>
+              <Text style={styles.modalDescription}>
                 {selectedWorksheet?.description}
               </Text>
 
-              <View style={styles.previewBox}>
-  {selectedWorksheet?.image ? (
-    <Image
-      source={selectedWorksheet.image}
-      style={styles.previewImage}
-      resizeMode="contain"
-    />
-  ) : selectedWorksheet ? (
-    <WebView
-      originWhitelist={['*']}
-      source={{ html: previewHtml }}
-      style={styles.previewWebView}
-      showsVerticalScrollIndicator={false}
-    />
-  ) : null}
-</View>
+              <View style={styles.previewCard}>
+                {selectedWorksheet?.preview_image_url ? (
+                  <Image
+                    source={{
+                      uri: selectedWorksheet.preview_image_url,
+                    }}
+                    style={styles.previewImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.previewPlaceholder}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={54}
+                      color="#7C3AED"
+                    />
 
-              <View style={styles.detailSection}>
-                <Text style={styles.detailTitle}>Best For</Text>
-                <Text style={styles.detailText}>
-                  {selectedWorksheet?.ageRange}
-                </Text>
-              </View>
+                    <Text style={styles.previewPlaceholderTitle}>
+                      Printable Worksheet
+                    </Text>
+                  </View>
+                )}
 
-              <View style={styles.detailSection}>
-                <Text style={styles.detailTitle}>Skill Focus</Text>
-                <Text style={styles.detailText}>
-                  {getSkillFocus(selectedWorksheet?.category)}
-                </Text>
-              </View>
-
-              <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={[styles.secondaryBtn, !isPro && styles.disabledLightBtn]}
-                  onPress={() =>
-                    selectedWorksheet && void handlePrintWorksheet(selectedWorksheet)
-                  }
-                  disabled={exporting}
-                >
-                  {exporting ? (
-                    <ActivityIndicator color="#475569" />
-                  ) : (
-                    <>
+                {selectedWorksheetLocked ? (
+                  <View style={styles.previewLockedOverlay}>
+                    <View style={styles.previewLockCircle}>
                       <Ionicons
-                        name={isPro ? 'print-outline' : 'lock-closed-outline'}
-                        size={18}
-                        color="#475569"
-                      />
-                      <Text style={styles.secondaryBtnText}>Print</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.primaryBtn, !isPro && styles.disabledBtn]}
-                  onPress={() =>
-                    selectedWorksheet && void handleShareWorksheet(selectedWorksheet)
-                  }
-                  disabled={exporting}
-                >
-                  {exporting ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <Ionicons
-                        name={isPro ? 'download-outline' : 'lock-closed-outline'}
-                        size={18}
+                        name="lock-closed"
+                        size={24}
                         color="#FFFFFF"
                       />
-                      <Text style={styles.primaryBtnText}>Share PDF</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.previewLockedTitle}>
+                      Pro Worksheet
+                    </Text>
+
+                    <Text style={styles.previewLockedText}>
+                      Upgrade to print, share, or email this worksheet.
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
-              <TouchableOpacity
-                style={[styles.emailBtn, !isPro && styles.disabledLightBtn]}
-                onPress={() =>
-                  selectedWorksheet && void handleEmailWorksheet(selectedWorksheet)
-                }
-                disabled={exporting}
-              >
-                {exporting ? (
-                  <ActivityIndicator color="#4F46E5" />
-                ) : (
-                  <>
+              <View style={styles.detailsGrid}>
+                <View style={styles.detailCard}>
+                  <View style={styles.detailIcon}>
                     <Ionicons
-                      name={isPro ? 'mail-outline' : 'lock-closed-outline'}
-                      size={18}
+                      name="people-outline"
+                      size={19}
                       color="#4F46E5"
                     />
-                    <Text style={styles.emailBtnText}>Email PDF</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                  </View>
 
-              {!isPro ? (
-                <TouchableOpacity
-                  style={styles.upgradeModalBtn}
-                  onPress={() => router.push('/subscription')}
-                >
-                  <Ionicons name="star" size={18} color="#FFFFFF" />
-                  <Text style={styles.upgradeModalText}>Upgrade to Pro</Text>
-                </TouchableOpacity>
-              ) : null}
+                  <Text style={styles.detailLabel}>Best For</Text>
 
-              <View style={styles.tipBox}>
-                <View style={styles.tipHeader}>
-                  <Ionicons name="bulb" size={18} color="#F59E0B" />
-                  <Text style={styles.tipTitle}>Parent Tip</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedWorksheet?.age_range}
+                  </Text>
                 </View>
 
-                <Text style={styles.tipText}>
-                  Keep worksheet practice short and successful. Pair written
-                  tasks with praise, breaks, and visual supports when needed.
+                <View style={styles.detailCard}>
+                  <View style={styles.detailIcon}>
+                    <Ionicons
+                      name="star-outline"
+                      size={19}
+                      color="#4F46E5"
+                    />
+                  </View>
+
+                  <Text style={styles.detailLabel}>Access</Text>
+
+                  <Text style={styles.detailValue}>
+                    {selectedWorksheet?.is_pro
+                      ? 'Pro Membership'
+                      : 'Free Worksheet'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.skillFocusCard}>
+                <View style={styles.skillFocusHeader}>
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={19}
+                    color="#7C3AED"
+                  />
+
+                  <Text style={styles.skillFocusTitle}>
+                    Skill Focus
+                  </Text>
+                </View>
+
+                <Text style={styles.skillFocusText}>
+                  {selectedWorksheet?.skill_focus ||
+                    'Parent-supported skill practice and everyday learning.'}
+                </Text>
+              </View>
+
+              {selectedWorksheetLocked ? (
+                <TouchableOpacity
+                  style={styles.upgradeButton}
+                  onPress={() => {
+                    setSelectedWorksheet(null);
+                    router.push('/subscription');
+                  }}
+                >
+                  <Ionicons
+                    name="star"
+                    size={19}
+                    color="#FFFFFF"
+                  />
+
+                  <Text style={styles.upgradeButtonText}>
+                    Unlock with Pro
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={styles.printButton}
+                      disabled={actionInProgress}
+                      onPress={() => {
+                        if (selectedWorksheet) {
+                          void handlePrintWorksheet(
+                            selectedWorksheet
+                          );
+                        }
+                      }}
+                    >
+                      {exportingAction === 'print' ? (
+                        <ActivityIndicator color="#475569" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="print-outline"
+                            size={19}
+                            color="#475569"
+                          />
+
+                          <Text style={styles.printButtonText}>
+                            Print
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.shareButton}
+                      disabled={actionInProgress}
+                      onPress={() => {
+                        if (selectedWorksheet) {
+                          void handleShareWorksheet(
+                            selectedWorksheet
+                          );
+                        }
+                      }}
+                    >
+                      {exportingAction === 'share' ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="share-outline"
+                            size={19}
+                            color="#FFFFFF"
+                          />
+
+                          <Text style={styles.shareButtonText}>
+                            Share PDF
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.emailButton}
+                    disabled={actionInProgress}
+                    onPress={() => {
+                      if (selectedWorksheet) {
+                        void handleEmailWorksheet(
+                          selectedWorksheet
+                        );
+                      }
+                    }}
+                  >
+                    {exportingAction === 'email' ? (
+                      <ActivityIndicator color="#4F46E5" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="mail-outline"
+                          size={19}
+                          color="#4F46E5"
+                        />
+
+                        <Text style={styles.emailButtonText}>
+                          Email PDF
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+
+              <View style={styles.parentTipCard}>
+                <View style={styles.parentTipHeader}>
+                  <Ionicons
+                    name="bulb"
+                    size={19}
+                    color="#D97706"
+                  />
+
+                  <Text style={styles.parentTipTitle}>
+                    Parent Tip
+                  </Text>
+                </View>
+
+                <Text style={styles.parentTipText}>
+                  Let your child explore the worksheet at their own
+                  pace. Model the activity, offer gentle prompts, and
+                  celebrate participation.
                 </Text>
               </View>
             </ScrollView>
-          </View>
+          </SafeAreaView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -511,441 +1108,751 @@ export default function WorksheetsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF9F2',
   },
+
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 50,
   },
-  backBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    marginBottom: 19,
   },
-  headerTitle: {
-    fontSize: 30,
+
+  headerEyebrow: {
+    color: '#7C3AED',
+    fontSize: 12,
     fontWeight: '900',
-    color: '#0F172A',
-    marginBottom: 6,
+    letterSpacing: 0.9,
+    marginBottom: 4,
   },
+
+  headerTitle: {
+    color: '#29145F',
+    fontSize: 31,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+
   headerSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 20,
+    marginTop: 8,
     marginBottom: 20,
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: '600',
   },
-  lockedBanner: {
-    backgroundColor: '#FFF7ED',
+
+  proPreviewBanner: {
+    backgroundColor: '#F5F3FF',
     borderRadius: 22,
-    padding: 16,
-    marginBottom: 18,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F97316',
-  },
-  lockedHeader: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 20,
   },
-  lockedTitle: {
-    marginLeft: 8,
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#9A3412',
+
+  proPreviewIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  lockedText: {
-    color: '#9A3412',
-    lineHeight: 20,
+
+  proPreviewContent: {
+    flex: 1,
+    marginLeft: 11,
+    marginRight: 8,
+  },
+
+  proPreviewTitle: {
+    color: '#2E1065',
     fontSize: 14,
-    marginBottom: 12,
-    fontWeight: '600',
-  },
-  lockedButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#F97316',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  lockedButtonText: {
-    color: '#FFFFFF',
     fontWeight: '900',
-    fontSize: 13,
   },
-  accessCard: {
-    backgroundColor: '#EEF2FF',
+
+  proPreviewText: {
+    marginTop: 3,
+    color: '#6B7280',
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '700',
+  },
+
+  proPreviewButton: {
+    borderRadius: 13,
+    backgroundColor: '#7C3AED',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+
+  proPreviewButtonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  readyBanner: {
+    backgroundColor: '#ECFDF5',
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
-  accessText: {
-    marginLeft: 8,
-    color: '#3730A3',
-    fontWeight: '800',
+
+  readyBannerText: {
     flex: 1,
-    lineHeight: 20,
-  },
-  nameBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  nameHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  nameTitle: {
-    marginLeft: 8,
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#1E293B',
-  },
-  nameDescription: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 20,
-    marginBottom: 14,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  generateBtn: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  disabledBtn: {
-    opacity: 0.72,
-  },
-  disabledLightBtn: {
-    opacity: 0.75,
-  },
-  generateBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  categoryRow: {
-    paddingBottom: 10,
-    marginBottom: 8,
-  },
-  categoryChip: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  categoryChipActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  categoryChipText: {
-    color: '#475569',
-    fontWeight: '800',
+    marginLeft: 9,
+    color: '#065F46',
     fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '800',
   },
+
+  categoryRow: {
+    paddingBottom: 8,
+    marginBottom: 13,
+  },
+
+  categoryChip: {
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginRight: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  categoryChipActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+
+  categoryChipText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
   categoryChipTextActive: {
     color: '#FFFFFF',
   },
-  cardList: {
-    marginTop: 4,
+
+  libraryHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
+
+  libraryHeading: {
+    color: '#29145F',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+
+  libraryCount: {
+    marginTop: 3,
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  cardList: {
+    gap: 15,
+  },
+
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 14,
+    borderRadius: 25,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E9E5F0',
+    shadowColor: '#29145F',
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
+
+  cardImageWrap: {
+  height: 310,
+  backgroundColor: '#FFFFFF',
+  position: 'relative',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 12,
+},
+
+cardImage: {
+  width: '100%',
+  height: '100%',
+  backgroundColor: '#FFFFFF',
+},
+
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F3FF',
+  },
+
+  imagePlaceholderText: {
+    marginTop: 8,
+    color: '#7C3AED',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  imageProBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#7C3AED',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  imageProBadgeText: {
+    marginLeft: 4,
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  imageFreeBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#059669',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  imageFreeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  cardBody: {
+    padding: 17,
+  },
+
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   categoryPill: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  categoryPillText: {
-    color: '#4F46E5',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  proPill: {
-    backgroundColor: '#F5F3FF',
-    borderRadius: 12,
+    maxWidth: '85%',
+    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  proPillText: {
+
+  categoryPillText: {
+    marginLeft: 5,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  lockedPill: {
+    borderRadius: 999,
+    backgroundColor: '#F5F3FF',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  lockedPillText: {
     marginLeft: 4,
     color: '#7C3AED',
+    fontSize: 10,
     fontWeight: '900',
-    fontSize: 12,
   },
+
   cardTitle: {
+    marginTop: 13,
+    color: '#1E293B',
     fontSize: 19,
+    lineHeight: 24,
     fontWeight: '900',
-    color: '#1E293B',
-    marginTop: 14,
-    marginBottom: 6,
   },
+
   cardDescription: {
+    marginTop: 6,
     color: '#64748B',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 12,
-    fontWeight: '600',
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metaText: {
-    marginLeft: 6,
-    color: '#64748B',
-    fontWeight: '700',
     fontSize: 13,
-  },
-  proCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  proHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  proTitle: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#1E293B',
-  },
-  proText: {
-    color: '#64748B',
-    lineHeight: 21,
-    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '600',
   },
+
+  metaRow: {
+    marginTop: 13,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  metaText: {
+    marginLeft: 5,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  stateCard: {
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9E5F0',
+    padding: 30,
+    alignItems: 'center',
+  },
+
+  stateTitle: {
+    marginTop: 13,
+    color: '#29145F',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+
+  stateText: {
+    marginTop: 6,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+
+  errorCard: {
+    borderRadius: 24,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    padding: 25,
+    alignItems: 'center',
+  },
+
+  errorTitle: {
+    marginTop: 10,
+    color: '#991B1B',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+
+  errorText: {
+    marginTop: 6,
+    color: '#B91C1C',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+
+  retryButton: {
+    marginTop: 15,
+    borderRadius: 14,
+    backgroundColor: '#B91C1C',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
+
+  bottomInfoCard: {
+    marginTop: 20,
+    backgroundColor: '#F5F3FF',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    padding: 17,
+  },
+
+  bottomInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  bottomInfoTitle: {
+    marginLeft: 8,
+    color: '#2E1065',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  bottomInfoText: {
+    marginTop: 8,
+    color: '#6B7280',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.42)',
     justifyContent: 'flex-end',
   },
+
   modalSheet: {
-    backgroundColor: '#F8FAFC',
-    maxHeight: '90%',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 20,
+    maxHeight: '94%',
+    backgroundColor: '#FFF9F2',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
-  modalHeader: {
+
+  modalHandle: {
+    width: 46,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+
+  modalContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 35,
+  },
+
+  modalTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
+
   modalCategoryPill: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 12,
+    maxWidth: '82%',
+    borderRadius: 999,
+    paddingHorizontal: 11,
     paddingVertical: 7,
-    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  modalCategoryPillText: {
-    color: '#4F46E5',
+
+  modalCategoryText: {
+    marginLeft: 5,
+    fontSize: 11,
     fontWeight: '900',
-    fontSize: 12,
   },
+
+  modalCloseButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#0F172A',
     marginTop: 16,
-    marginBottom: 8,
+    color: '#29145F',
+    fontSize: 25,
+    lineHeight: 31,
+    fontWeight: '900',
   },
-  modalSubtitle: {
-    fontSize: 15,
+
+  modalDescription: {
+    marginTop: 8,
     color: '#64748B',
-    marginBottom: 14,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: '600',
   },
-  previewBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+
+  previewCard: {
     height: 430,
-    marginBottom: 14,
+    marginTop: 16,
+    borderRadius: 23,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E9E5F0',
     overflow: 'hidden',
+    position: 'relative',
   },
-  previewWebView: {
+
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+  },
+
+  previewPlaceholder: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F3FF',
   },
-  detailSection: {
-    backgroundColor: '#FFFFFF',
+
+  previewPlaceholderTitle: {
+    marginTop: 10,
+    color: '#7C3AED',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  previewLockedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(46, 16, 101, 0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 25,
+  },
+
+  previewLockCircle: {
+    width: 52,
+    height: 52,
     borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  detailTitle: {
+
+  previewLockedTitle: {
+    marginTop: 12,
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '900',
+  },
+
+  previewLockedText: {
+    marginTop: 5,
+    color: '#EDE9FE',
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+
+  detailsGrid: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 11,
+  },
+
+  detailCard: {
+    flex: 1,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9E5F0',
+    padding: 14,
+  },
+
+  detailIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 13,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  detailLabel: {
+    marginTop: 9,
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  detailValue: {
+    marginTop: 4,
+    color: '#1E293B',
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '900',
+  },
+
+  skillFocusCard: {
+    marginTop: 13,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9E5F0',
+    padding: 16,
+  },
+
+  skillFocusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  skillFocusTitle: {
+    marginLeft: 7,
+    color: '#2E1065',
     fontSize: 15,
     fontWeight: '900',
-    color: '#1E293B',
-    marginBottom: 10,
   },
-  detailText: {
-    color: '#475569',
-    lineHeight: 22,
-    fontSize: 14,
+
+  skillFocusText: {
+    marginTop: 8,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 20,
     fontWeight: '600',
   },
+
   actionRow: {
+    marginTop: 15,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
+    gap: 11,
   },
-  secondaryBtn: {
+
+  printButton: {
     flex: 1,
+    minHeight: 52,
+    borderRadius: 17,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  secondaryBtnText: {
-    marginLeft: 8,
+
+  printButtonText: {
+    marginLeft: 7,
     color: '#475569',
-    fontWeight: '900',
     fontSize: 14,
+    fontWeight: '900',
   },
-  primaryBtn: {
+
+  shareButton: {
     flex: 1,
-    backgroundColor: '#4F46E5',
-    borderRadius: 16,
-    paddingVertical: 14,
+    minHeight: 52,
+    borderRadius: 17,
+    backgroundColor: '#7C3AED',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
   },
-  primaryBtnText: {
-    marginLeft: 8,
+
+  shareButtonText: {
+    marginLeft: 7,
     color: '#FFFFFF',
-    fontWeight: '900',
     fontSize: 14,
+    fontWeight: '900',
   },
-  emailBtn: {
+
+  emailButton: {
+    minHeight: 52,
+    marginTop: 11,
+    borderRadius: 17,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#C7D2FE',
-    marginBottom: 12,
-  },
-  emailBtnText: {
-    marginLeft: 8,
-    color: '#4F46E5',
-    fontWeight: '900',
-    fontSize: 14,
-  },
-  upgradeModalBtn: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 16,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    marginBottom: 16,
   },
-  upgradeModalText: {
-    marginLeft: 8,
-    color: '#FFFFFF',
-    fontWeight: '900',
+
+  emailButtonText: {
+    marginLeft: 7,
+    color: '#4F46E5',
     fontSize: 14,
+    fontWeight: '900',
   },
-  tipBox: {
-    backgroundColor: '#FFFBEB',
+
+  upgradeButton: {
+    minHeight: 54,
+    marginTop: 15,
     borderRadius: 18,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    marginBottom: 24,
-  },
-  tipHeader: {
+    backgroundColor: '#7C3AED',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
   },
-  tipTitle: {
+
+  upgradeButtonText: {
     marginLeft: 8,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '900',
-    color: '#92400E',
   },
-  tipText: {
-    color: '#B45309',
-    lineHeight: 21,
+
+  parentTipCard: {
+    marginTop: 15,
+    borderRadius: 20,
+    backgroundColor: '#FFFBEB',
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+    padding: 16,
+  },
+
+  parentTipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  parentTipTitle: {
+    marginLeft: 7,
+    color: '#92400E',
     fontSize: 14,
+    fontWeight: '900',
+  },
+
+  parentTipText: {
+    marginTop: 7,
+    color: '#B45309',
+    fontSize: 13,
+    lineHeight: 20,
     fontWeight: '600',
   },
-  cardImage: {
-  width: '100%',
-  height: 190,
-  borderRadius: 18,
-  marginBottom: 14,
-  backgroundColor: '#F8FAFC',
-},
-
-previewImage: {
-  width: '100%',
-  height: '100%',
-  backgroundColor: '#FFFFFF',
-},
 });

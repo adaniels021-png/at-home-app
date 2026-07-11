@@ -3,8 +3,8 @@ import { Lesson } from '../lessonTypes';
 import { generateJsonWithEdgeFunction } from './edgeAI';
 import { buildFallbackLesson } from './fallbacks';
 import {
-    coerceLessonShape,
-    hasUsableLessonContent,
+  coerceLessonShape,
+  hasUsableLessonContent,
 } from './normalizers';
 import { buildLessonPrompt } from './prompts';
 
@@ -54,9 +54,9 @@ function buildSafeLesson(
     ...aiLesson,
 
     lesson_name:
-      aiLesson.lesson_name ||
-      `${params.skillTarget || params.skill} Lesson ${params.lessonNumber}`,
-
+  aiLesson.lesson_name ||
+  fallback.lesson_name,
+  
     setting:
       aiLesson.setting ||
       params.location ||
@@ -211,6 +211,7 @@ export async function generatePremiumLesson(
       console.warn(
         'AI lesson incomplete. Using fallback.'
       );
+
 
       return {
         lesson: fallback,

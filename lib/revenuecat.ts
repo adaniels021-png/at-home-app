@@ -6,16 +6,29 @@ import Purchases, {
   PurchasesOffering,
   PurchasesPackage,
 } from 'react-native-purchases';
-import { supabase } from './supabase';
 
-const APPLE_API_KEY = process.env.EXPO_PUBLIC_RC_APPLE_API_KEY;
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_RC_GOOGLE_API_KEY;
-const TEST_STORE_API_KEY = process.env.EXPO_PUBLIC_RC_TEST_STORE_API_KEY;
-const ENTITLEMENT_ID = process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID || 'pro';
+const APPLE_API_KEY =
+  process.env.EXPO_PUBLIC_RC_APPLE_API_KEY;
+
+const GOOGLE_API_KEY =
+  process.env.EXPO_PUBLIC_RC_GOOGLE_API_KEY;
+
+const TEST_STORE_API_KEY =
+  process.env.EXPO_PUBLIC_RC_TEST_STORE_API_KEY;
+
+const ENTITLEMENT_ID =
+  process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID || 'pro';
 
 let configured = false;
 let configuringPromise: Promise<void> | null = null;
 let revenueCatAvailable = true;
+
+/**
+ * Tracks the Supabase user ID we intentionally logged into.
+ *
+ * Do not use CustomerInfo.originalAppUserId for this check because
+ * RevenueCat may preserve an older anonymous/original identifier.
+ */
 let currentRevenueCatAppUserId: string | null = null;
 
 function isExpoGo(): boolean {
@@ -46,8 +59,18 @@ async function isNativeRevenueCatConfigured(): Promise<boolean> {
   }
 }
 
-export async function configureRevenueCat(): Promise<void> {
-  if (configured) return;
+/**
+ * Configure the native RevenueCat SDK.
+ *
+ * This function does not query Supabase. Authentication is handled by
+ * the root layout, which can pass the known user ID into this function.
+ */
+export async function configureRevenueCat(
+  appUserID?: string
+): Promise<void> {
+  if (configured) {
+    return;
+  }
 
   if (configuringPromise) {
     await configuringPromise;
@@ -73,55 +96,58 @@ export async function configureRevenueCat(): Promise<void> {
           'RevenueCat skipped on iOS: missing EXPO_PUBLIC_RC_APPLE_API_KEY.'
         );
       } else {
-        console.log('RevenueCat skipped: unsupported platform.');
+        console.log(
+          'RevenueCat skipped: unsupported platform.'
+        );
       }
 
       return;
     }
 
     try {
-      const alreadyConfigured = await isNativeRevenueCatConfigured();
+      const alreadyConfigured =
+        await isNativeRevenueCatConfigured();
 
       if (alreadyConfigured) {
         configured = true;
         revenueCatAvailable = true;
-
-        try {
-          const info = await Purchases.getCustomerInfo();
-          currentRevenueCatAppUserId = info?.originalAppUserId || null;
-        } catch {
-          currentRevenueCatAppUserId = null;
-        }
-
         return;
       }
 
-      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const appUserID = session?.user?.id ?? undefined;
+      /**
+       * Avoid verbose RevenueCat logging in production builds.
+       */
+      Purchases.setLogLevel(
+        __DEV__
+          ? LOG_LEVEL.DEBUG
+          : LOG_LEVEL.ERROR
+      );
 
       Purchases.configure({
         apiKey,
-        appUserID,
+        appUserID: appUserID || undefined,
       });
 
       configured = true;
       revenueCatAvailable = true;
-      currentRevenueCatAppUserId = appUserID ?? null;
+      currentRevenueCatAppUserId =
+        appUserID || null;
 
       console.log(
         `RevenueCat configured for ${
-          isExpoGo() ? 'Expo Go/Test Store' : Platform.OS
+          isExpoGo()
+            ? 'Expo Go/Test Store'
+            : Platform.OS
         }.`
       );
     } catch (error) {
       revenueCatAvailable = false;
       configured = false;
-      console.error('RevenueCat configure failed:', error);
+
+      console.error(
+        'RevenueCat configure failed:',
+        error
+      );
     }
   })();
 
@@ -132,62 +158,106 @@ export async function configureRevenueCat(): Promise<void> {
   }
 }
 
-export async function logInRevenueCat(appUserID: string): Promise<void> {
-  await configureRevenueCat();
+/**
+ * Connect the authenticated Supabase user to RevenueCat.
+ */
+export async function logInRevenueCat(
+  appUserID: string
+): Promise<void> {
+  if (!appUserID) return;
 
-  if (!revenueCatAvailable || !configured || !appUserID) return;
+  /**
+   * Configure with the known user ID when possible. This avoids first
+   * configuring anonymously and immediately performing a second login.
+   */
+  await configureRevenueCat(appUserID);
+
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return;
+  }
 
   try {
-    if (currentRevenueCatAppUserId === appUserID) {
+    if (
+      currentRevenueCatAppUserId === appUserID
+    ) {
       return;
     }
 
-    const result = await Purchases.logIn(appUserID);
+    await Purchases.logIn(appUserID);
 
-    currentRevenueCatAppUserId =
-      result.customerInfo?.originalAppUserId || appUserID;
+    /**
+     * Track the ID that we explicitly requested, rather than
+     * CustomerInfo.originalAppUserId.
+     */
+    currentRevenueCatAppUserId = appUserID;
   } catch (error) {
-    console.error('RevenueCat login failed:', error);
+    console.error(
+      'RevenueCat login failed:',
+      error
+    );
   }
 }
 
 export async function logOutRevenueCat(): Promise<void> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured) return;
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return;
+  }
 
   try {
-    const isAnonymous = await Purchases.isAnonymous();
+    const isAnonymous =
+      await Purchases.isAnonymous();
 
     if (isAnonymous) {
       currentRevenueCatAppUserId = null;
       return;
     }
 
-    const info = await Purchases.logOut();
+    await Purchases.logOut();
 
-    currentRevenueCatAppUserId = info?.originalAppUserId || null;
+    currentRevenueCatAppUserId = null;
   } catch (error: any) {
-    const message = String(error?.message || '').toLowerCase();
+    const message = String(
+      error?.message || ''
+    ).toLowerCase();
 
     if (message.includes('anonymous')) {
       currentRevenueCatAppUserId = null;
       return;
     }
 
-    console.error('RevenueCat logout failed:', error);
+    console.error(
+      'RevenueCat logout failed:',
+      error
+    );
   }
 }
 
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured) return null;
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return null;
+  }
 
   try {
     return await Purchases.getCustomerInfo();
   } catch (error) {
-    console.error('RevenueCat getCustomerInfo failed:', error);
+    console.error(
+      'RevenueCat getCustomerInfo failed:',
+      error
+    );
+
     return null;
   }
 }
@@ -195,13 +265,24 @@ export async function getCustomerInfo(): Promise<CustomerInfo | null> {
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured) return null;
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return null;
+  }
 
   try {
-    const offerings = await Purchases.getOfferings();
+    const offerings =
+      await Purchases.getOfferings();
+
     return offerings.current;
   } catch (error) {
-    console.error('RevenueCat getOfferings failed:', error);
+    console.error(
+      'RevenueCat getOfferings failed:',
+      error
+    );
+
     return null;
   }
 }
@@ -209,23 +290,36 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
 export function hasProAccess(
   customerInfo: CustomerInfo | null | undefined
 ): boolean {
-  if (!customerInfo) return false;
+  if (!customerInfo) {
+    return false;
+  }
 
-  return typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
+  return Boolean(
+    customerInfo.entitlements.active[
+      ENTITLEMENT_ID
+    ]
+  );
 }
 
 export async function isProUser(): Promise<boolean> {
   const info = await getCustomerInfo();
+
   return hasProAccess(info);
 }
 
-function isCancelledPurchaseError(error: any): boolean {
-  const message = String(error?.message || '').toLowerCase();
+function isCancelledPurchaseError(
+  error: any
+): boolean {
+  const message = String(
+    error?.message || ''
+  ).toLowerCase();
 
   return (
     message.includes('cancelled') ||
     message.includes('canceled') ||
-    message.includes('purchase was cancelled')
+    message.includes(
+      'purchase was cancelled'
+    )
   );
 }
 
@@ -234,22 +328,32 @@ export async function purchasePackage(
 ): Promise<CustomerInfo | null> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured) return null;
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return null;
+  }
 
   try {
-    const result = await Purchases.purchasePackage(pkg);
-
-    currentRevenueCatAppUserId =
-      result.customerInfo.originalAppUserId || currentRevenueCatAppUserId;
+    const result =
+      await Purchases.purchasePackage(pkg);
 
     return result.customerInfo;
   } catch (error) {
     if (isCancelledPurchaseError(error)) {
-      console.log('RevenueCat purchase cancelled by user.');
+      console.log(
+        'RevenueCat purchase cancelled by user.'
+      );
+
       return null;
     }
 
-    console.error('RevenueCat purchase failed:', error);
+    console.error(
+      'RevenueCat purchase failed:',
+      error
+    );
+
     return null;
   }
 }
@@ -257,19 +361,25 @@ export async function purchasePackage(
 export async function restorePurchases(): Promise<CustomerInfo | null> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured) return null;
+  if (
+    !revenueCatAvailable ||
+    !configured
+  ) {
+    return null;
+  }
 
   try {
-    const info = await Purchases.restorePurchases();
-
-    currentRevenueCatAppUserId =
-      info.originalAppUserId || currentRevenueCatAppUserId;
-
-    return info;
+    return await Purchases.restorePurchases();
   } catch (error) {
-    console.error('RevenueCat restore failed:', error);
+    console.error(
+      'RevenueCat restore failed:',
+      error
+    );
+
     return null;
   }
 }
 
-export { ENTITLEMENT_ID };
+export {
+  ENTITLEMENT_ID
+};

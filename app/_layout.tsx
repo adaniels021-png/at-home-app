@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ChildProvider } from '../lib/SelectedChildContext';
@@ -10,8 +10,44 @@ import {
   requestNotificationPermission,
   setupNotificationChannel,
 } from '../lib/notifications';
-import * as revenuecat from '../lib/revenuecat';
 import { supabase } from '../lib/supabase';
+
+/**
+ * Keep the native splash screen visible until the root app is ready.
+ * This must run outside the component.
+ */
+void SplashScreen.preventAutoHideAsync().catch((error) => {
+  console.warn('Could not keep splash screen visible:', error);
+});
+
+SplashScreen.setOptions({
+  duration: 300,
+  fade: true,
+});
+
+const SESSION_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  milliseconds: number,
+  message: string
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(message));
+    }, milliseconds);
+
+    Promise.resolve(promise)
+      .then((result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -20,55 +56,46 @@ export default function RootLayout() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initNotifications = async () => {
-      try {
-        await setupNotificationChannel();
-        await requestNotificationPermission();
-      } catch (error) {
-        console.error('Notification init error:', error);
-      }
-    };
+  const splashHiddenRef = useRef(false);
 
-    void initNotifications();
-  }, []);
-
+  /**
+   * Load the saved Supabase session.
+   *
+   * RevenueCat is intentionally not handled here.
+   * SubscriptionProvider now owns all subscription initialization.
+   */
   useEffect(() => {
     let mounted = true;
 
-    const safeConfigureRevenueCat = async (userId?: string) => {
-      try {
-        if (typeof revenuecat.configureRevenueCat === 'function') {
-          await revenuecat.configureRevenueCat();
-        }
-
-        if (userId && typeof revenuecat.logInRevenueCat === 'function') {
-          await revenuecat.logInRevenueCat(userId);
-        }
-      } catch (error) {
-        console.error('RevenueCat init error:', error);
-      }
-    };
-
     const loadSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const result = await withTimeout(
+          supabase.auth.getSession(),
+          SESSION_TIMEOUT_MS,
+          'Session loading timed out.'
+        );
 
-        if (error) {
-          console.error('Error loading session:', error.message);
+        if (!mounted) return;
+
+        if (result.error) {
+          console.error(
+            'Error loading session:',
+            result.error.message
+          );
         }
 
-        await safeConfigureRevenueCat(data.session?.user?.id);
-
-        if (mounted) {
-          setSession(data.session ?? null);
-          setLoading(false);
-        }
+        setSession(result.data.session ?? null);
       } catch (error) {
-        console.error('Root layout session load error:', error);
+        console.error(
+          'Root layout session load error:',
+          error
+        );
 
         if (mounted) {
           setSession(null);
+        }
+      } finally {
+        if (mounted) {
           setLoading(false);
         }
       }
@@ -78,27 +105,16 @@ export default function RootLayout() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth change:', event);
+    } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        console.log('Auth change:', event);
 
-      setSession(newSession ?? null);
+        if (!mounted) return;
 
-      try {
-        if (
-          newSession?.user?.id &&
-          typeof revenuecat.logInRevenueCat === 'function'
-        ) {
-          await revenuecat.logInRevenueCat(newSession.user.id);
-        } else if (
-          !newSession?.user?.id &&
-          typeof revenuecat.logOutRevenueCat === 'function'
-        ) {
-          await revenuecat.logOutRevenueCat();
-        }
-      } catch (error) {
-        console.error('RevenueCat auth sync error:', error);
+        setSession(newSession ?? null);
+        setLoading(false);
       }
-    });
+    );
 
     return () => {
       mounted = false;
@@ -106,40 +122,85 @@ export default function RootLayout() {
     };
   }, []);
 
+  /**
+   * Initialize notifications after startup.
+   *
+   * Notification setup should never delay the first screen.
+   */
+  useEffect(() => {
+    if (loading) return;
+
+    const timeoutId = setTimeout(() => {
+      const initializeNotifications = async () => {
+        try {
+          await setupNotificationChannel();
+          await requestNotificationPermission();
+        } catch (error) {
+          console.error(
+            'Notification initialization error:',
+            error
+          );
+        }
+      };
+
+      void initializeNotifications();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [loading]);
+
+  /**
+   * Route users according to their authentication state.
+   */
   useEffect(() => {
     if (loading) return;
 
     const firstSegment = segments[0];
-    const inAuth = firstSegment === 'auth';
+    const inAuthGroup = firstSegment === 'auth';
 
     if (!session) {
-      if (!inAuth) {
+      if (!inAuthGroup) {
         router.replace('/auth');
       }
 
       return;
     }
 
-    if (session && inAuth) {
+    if (inAuthGroup) {
+      /**
+       * Send authenticated users through app/index.tsx.
+       * That screen decides whether they need onboarding,
+       * assessment, or the main tabs.
+       */
       router.replace('/');
     }
   }, [session, loading, segments, router]);
 
+  /**
+   * Hide the native splash only after React can render
+   * the root navigation tree.
+   */
+  useEffect(() => {
+    if (loading || splashHiddenRef.current) return;
+
+    splashHiddenRef.current = true;
+
+    void SplashScreen.hideAsync().catch((error) => {
+      console.warn(
+        'Could not hide splash screen:',
+        error
+      );
+    });
+  }, [loading]);
+
+  /**
+   * Keep the native splash visible while the session loads.
+   * Returning null prevents a temporary white React screen.
+   */
   if (loading) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#FFFFFF',
-          }}
-        >
-          <ActivityIndicator size="large" color="#4F46E5" />
-        </View>
-      </GestureHandlerRootView>
-    );
+    return null;
   }
 
   return (
@@ -147,7 +208,14 @@ export default function RootLayout() {
       <SettingsProvider>
         <SubscriptionProvider>
           <ChildProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: {
+                  backgroundColor: '#FFF7ED',
+                },
+              }}
+            />
           </ChildProvider>
         </SubscriptionProvider>
       </SettingsProvider>

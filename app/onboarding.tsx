@@ -12,6 +12,7 @@ type ChildRecord = {
   caregiver_access_role?: string | null;
 };
 
+
 export default function OnboardingScreen() {
   const router = useRouter();
 
@@ -39,21 +40,25 @@ export default function OnboardingScreen() {
 
         const userId = session.user.id;
 
-        const { data: ownedChildren, error: ownedError } = await supabase
-          .from('children')
-          .select('*')
-          .eq('parent_id', userId)
-          .order('created_at', { ascending: true });
+        const [ownedResult, caregiverResult] = await Promise.all([
+  supabase
+    .from('children')
+    .select('*')
+    .eq('parent_id', userId)
+    .order('created_at', { ascending: true }),
 
-        if (ownedError) throw ownedError;
+  supabase
+    .from('child_caregivers')
+    .select('child_id, role, status')
+    .eq('caregiver_user_id', userId)
+    .eq('status', 'accepted'),
+]);
 
-        const { data: caregiverRows, error: caregiverError } = await supabase
-          .from('child_caregivers')
-          .select('child_id, role, status')
-          .eq('caregiver_user_id', userId)
-          .eq('status', 'accepted');
+if (ownedResult.error) throw ownedResult.error;
+if (caregiverResult.error) throw caregiverResult.error;
 
-        if (caregiverError) throw caregiverError;
+const ownedChildren = ownedResult.data || [];
+const caregiverRows = caregiverResult.data || [];
 
         const sharedChildIds = (caregiverRows || [])
           .map((row: any) => row.child_id)
@@ -108,9 +113,9 @@ export default function OnboardingScreen() {
           setSelectedChild(firstChild);
         }
 
-        if (typeof refreshChildren === 'function') {
-          await refreshChildren();
-        }
+       if (typeof refreshChildren === 'function') {
+  void refreshChildren();
+}
 
         const isSharedChild = firstChild.caregiver_access_role !== 'owner';
 
@@ -137,10 +142,17 @@ export default function OnboardingScreen() {
         hasNavigatedRef.current = true;
         router.replace('/(tabs)');
       } catch (error) {
-        console.error('Onboarding routing error:', error);
-        hasNavigatedRef.current = true;
-        router.replace('/auth');
-      }
+  console.error('Onboarding routing error:', error);
+
+  if (!mounted || hasNavigatedRef.current) return;
+
+  hasNavigatedRef.current = true;
+
+  // The root layout already handles authentication.
+  // Avoid sending an authenticated user back to login because of
+  // a temporary child or assessment lookup failure.
+  router.replace('/(tabs)');
+}
     };
 
     void routeOnboarding();

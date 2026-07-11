@@ -1,13 +1,44 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
 import { supabase } from '../lib/supabase';
 
 type ChildRecord = {
   id: string;
   child_name?: string | null;
   name?: string | null;
+  caregiver_access_role?: string | null;
 };
+
+const ROUTING_TIMEOUT_MS = 7000;
+
+function withTimeout<T>(
+  promise: PromiseLike<T>,
+  milliseconds: number,
+  message: string
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(message));
+    }, milliseconds);
+
+    Promise.resolve(promise)
+      .then((result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -16,109 +47,241 @@ export default function IndexScreen() {
   useEffect(() => {
     let mounted = true;
 
+    const navigateOnce = (pathname: string) => {
+      if (!mounted || hasNavigatedRef.current) return;
+
+      hasNavigatedRef.current = true;
+      router.replace(pathname as any);
+    };
+
     const routeUser = async () => {
       try {
-        if (hasNavigatedRef.current || !mounted) return;
+        /*
+         * The root layout already resolves authentication.
+         * This check only confirms the currently cached session.
+         */
+        const sessionResult = await withTimeout(
+          supabase.auth.getSession(),
+          ROUTING_TIMEOUT_MS,
+          'Session check timed out.'
+        );
 
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        if (!mounted || hasNavigatedRef.current) return;
 
-        if (sessionError) {
-          console.error('Root session check error:', sessionError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/auth');
+        if (sessionResult.error) {
+          console.error(
+            'Index session check error:',
+            sessionResult.error.message
+          );
+
+          navigateOnce('/auth');
           return;
         }
 
-        if (!session?.user?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/auth');
+        const userId = sessionResult.data.session?.user?.id;
+
+        if (!userId) {
+          navigateOnce('/auth');
           return;
         }
 
-        const userId = session.user.id;
+        /*
+         * Owned children and caregiver access can be loaded together.
+         */
+        const [ownedResult, caregiverResult] = await withTimeout(
+          Promise.all([
+            supabase
+              .from('children')
+              .select('id, child_name, name, created_at')
+              .eq('parent_id', userId)
+              .order('created_at', { ascending: true }),
 
-        const { data: children, error: childError } = await supabase
-          .from('children')
-          .select('id, child_name, name')
-          .eq('parent_id', userId)
-          .order('created_at', { ascending: true })
-          .limit(1);
+            supabase
+              .from('child_caregivers')
+              .select('child_id, role, status')
+              .eq('caregiver_user_id', userId)
+              .eq('status', 'accepted'),
+          ]),
+          ROUTING_TIMEOUT_MS,
+          'Child access lookup timed out.'
+        );
 
-        if (childError) {
-          console.error('Child lookup error:', childError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/add-child')     
-          return;
+        if (!mounted || hasNavigatedRef.current) return;
+
+        if (ownedResult.error) {
+          console.error(
+            'Owned-child lookup error:',
+            ownedResult.error.message
+          );
         }
 
-        const firstChild = (children?.[0] || null) as ChildRecord | null;
+        if (caregiverResult.error) {
+          console.error(
+            'Caregiver-child lookup error:',
+            caregiverResult.error.message
+          );
+        }
+
+        const ownedChildren: ChildRecord[] = (
+          ownedResult.data ?? []
+        ).map((child: any) => ({
+          ...child,
+          caregiver_access_role: 'owner',
+        }));
+
+        const caregiverRows = caregiverResult.data ?? [];
+
+        const sharedChildIds = caregiverRows
+          .map((row: any) => row.child_id)
+          .filter(Boolean);
+
+        let sharedChildren: ChildRecord[] = [];
+
+        if (sharedChildIds.length > 0) {
+          const sharedResult = await withTimeout(
+            supabase
+              .from('children')
+              .select('id, child_name, name, created_at')
+              .in('id', sharedChildIds)
+              .order('created_at', { ascending: true }),
+            ROUTING_TIMEOUT_MS,
+            'Shared-child lookup timed out.'
+          );
+
+          if (sharedResult.error) {
+            console.error(
+              'Shared-child lookup error:',
+              sharedResult.error.message
+            );
+          } else {
+            sharedChildren = (sharedResult.data ?? []).map(
+              (child: any) => {
+                const accessRow = caregiverRows.find(
+                  (row: any) => row.child_id === child.id
+                );
+
+                return {
+                  ...child,
+                  caregiver_access_role:
+                    accessRow?.role ?? 'caregiver',
+                };
+              }
+            );
+          }
+        }
+
+        /*
+         * Merge the lists so a child cannot appear twice.
+         */
+        const childMap = new Map<string, ChildRecord>();
+
+        ownedChildren.forEach((child) => {
+          childMap.set(child.id, child);
+        });
+
+        sharedChildren.forEach((child) => {
+          if (!childMap.has(child.id)) {
+            childMap.set(child.id, child);
+          }
+        });
+
+        const firstChild =
+          Array.from(childMap.values())[0] ?? null;
 
         if (!firstChild?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/add-child');
+          /*
+           * Only route to Add Child when both child lookups completed
+           * without database errors.
+           */
+          if (!ownedResult.error && !caregiverResult.error) {
+            navigateOnce('/onboarding/add-child');
+          } else {
+            console.warn(
+              'Child lookup was unavailable. Opening the app instead.'
+            );
+
+            navigateOnce('/(tabs)');
+          }
+
           return;
         }
 
-        const { data: assessment, error: assessmentError } = await supabase
-          .from('assessments')
-          .select('id')
-          .eq('child_id', firstChild.id)
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        /*
+         * Shared caregivers do not need to complete the owner's
+         * onboarding assessment.
+         */
+        const isSharedChild =
+          firstChild.caregiver_access_role !== 'owner';
 
-        if (assessmentError) {
-          console.error('Assessment lookup error:', assessmentError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/assessment');
+        if (isSharedChild) {
+          navigateOnce('/(tabs)');
           return;
         }
 
-        if (!assessment?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/assessment');
-          return;
-        }
+        const assessmentResult = await withTimeout(
+          supabase
+            .from('assessments')
+            .select('id')
+            .eq('child_id', firstChild.id)
+            .order('completed_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          ROUTING_TIMEOUT_MS,
+          'Assessment lookup timed out.'
+        );
 
         if (!mounted || hasNavigatedRef.current) return;
-        hasNavigatedRef.current = true;
-        router.replace('/(tabs)');
+
+        if (assessmentResult.error) {
+          console.error(
+            'Assessment lookup error:',
+            assessmentResult.error.message
+          );
+
+          /*
+           * A temporary assessment lookup failure should not trap an
+           * existing user on the loading screen.
+           */
+          navigateOnce('/(tabs)');
+          return;
+        }
+
+        if (!assessmentResult.data?.id) {
+          navigateOnce('/onboarding/assessment');
+          return;
+        }
+
+        navigateOnce('/(tabs)');
       } catch (error) {
         console.error('Root routing error:', error);
-        if (!mounted || hasNavigatedRef.current) return;
-        hasNavigatedRef.current = true;
-        router.replace('/auth');
+
+        /*
+         * The root layout handles authentication. If startup data is
+         * temporarily unavailable, open the app instead of showing a
+         * permanent loading or blank screen.
+         */
+        navigateOnce('/(tabs)');
       }
     };
 
     void routeUser();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      if (!mounted || hasNavigatedRef.current) return;
-      await routeUser();
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, [router]);
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#4F46E5" />
-      <Text style={styles.text}>Loading ABA at Home...</Text>
+      <View style={styles.loadingCard}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+
+        <Text style={styles.title}>ABA at Home</Text>
+
+        <Text style={styles.text}>
+          Preparing your family’s dashboard...
+        </Text>
+      </View>
     </View>
   );
 }
@@ -126,15 +289,37 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFF7ED',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+
+  loadingCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+
+  title: {
+    marginTop: 16,
+    color: '#2E1065',
+    fontSize: 22,
+    fontWeight: '900',
+  },
+
   text: {
-    marginTop: 14,
+    marginTop: 7,
     color: '#64748B',
     fontSize: 14,
+    lineHeight: 20,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

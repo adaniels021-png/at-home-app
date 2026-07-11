@@ -35,11 +35,12 @@ export async function generateDailyABAActivities({
 
   try {
     const prompt = buildActivityPrompt({
-      childName,
-      location,
-      skillFocus,
-      count,
-    });
+  childName,
+  location,
+  skillFocus,
+  count,
+});
+
 
     const raw = await generateJsonWithEdgeFunction<any[]>(
       prompt,
@@ -47,11 +48,17 @@ export async function generateDailyABAActivities({
       'activities'
     );
 
-    return normalizeActivities(
-      raw,
-      childName,
-      count
-    ) as DailyABAActivity[];
+   const activities = normalizeActivities(
+  raw,
+  childName,
+  count
+) as DailyABAActivity[];
+
+if (!activities.length) {
+  return fallback;
+}
+
+return activities;
   } catch (error) {
     console.error(
       'Activity generation failed:',

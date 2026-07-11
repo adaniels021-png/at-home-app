@@ -1,12 +1,9 @@
 // lib/aiService.ts
 
-import { supabase } from './supabase';
-
-import * as activityGenerator from './ai/activityGenerator';
-import * as behaviorGenerator from './ai/behaviorGenerator';
+import AIManager from './ai/AIManager';
 import * as fallbacks from './ai/fallbacks';
-import * as lessonGenerator from './ai/lessonGenerator';
 import * as normalizers from './ai/normalizers';
+import { supabase } from './supabase';
 
 type Json = Record<string, any>;
 
@@ -55,36 +52,6 @@ type AIContext = {
   [key: string]: any;
 };
 
-const asCallable = <TArgs extends any[], TResult>(
-  moduleObject: unknown,
-  names: string[]
-): ((...args: TArgs) => Promise<TResult>) | null => {
-  const record = moduleObject as Record<string, unknown>;
-
-  for (const name of names) {
-    const fn = record[name];
-    if (typeof fn === 'function') {
-      return fn as (...args: TArgs) => Promise<TResult>;
-    }
-  }
-
-  return null;
-};
-
-const callModule = async <TResult>(
-  moduleObject: unknown,
-  names: string[],
-  context: AIContext
-): Promise<TResult> => {
-  const fn = asCallable<[AIContext], TResult>(moduleObject, names);
-
-  if (!fn) {
-    throw new Error(`Missing AI generator export. Tried: ${names.join(', ')}`);
-  }
-
-  return fn(context);
-};
-
 const normalizeWith = <T>(
   value: T,
   names: string[]
@@ -105,7 +72,15 @@ const fallbackWith = async <T>(
   names: string[],
   context: AIContext
 ): Promise<T> => {
-  return callModule<T>(fallbacks, names, context);
+  const record = fallbacks as Record<string, any>;
+
+  for (const name of names) {
+    if (typeof record[name] === 'function') {
+      return await record[name](context);
+    }
+  }
+
+  throw new Error(`Missing fallback: ${names.join(', ')}`);
 };
 
 export const getChildProfile = async (
@@ -167,6 +142,21 @@ export const buildAIContext = async (
   childId: string,
   extra: Partial<AIContext> = {}
 ): Promise<AIContext> => {
+
+  // Admin lesson generator doesn't use a real child.
+  // Skip all database lookups.
+  if (childId === 'admin-preview') {
+  return {
+    child: {
+      id: 'admin-preview',
+      name: 'Your Child',
+    },
+    assessment: null,
+    recentLessonLogs: [],
+    ...extra,
+  };
+}
+
   const [child, assessment, recentLessonLogs] = await Promise.all([
     getChildProfile(childId),
     getLatestAssessment(childId),
@@ -188,16 +178,13 @@ export const generateLesson = async (
   const context = await buildAIContext(childId, options);
 
   try {
-    const lesson = await callModule<any>(
-      lessonGenerator,
-      [
-        'generateLesson',
-        'generateAILesson',
-        'generatePersonalizedLesson',
-        'createLesson',
-      ],
-      context
-    );
+   const lesson = await AIManager.generateLesson({
+  childId,
+  childName: context.child?.name ?? 'Child',
+  skill: options.skillArea ?? 'Communication',
+  location: options.setting ?? 'Home',
+  lessonNumber: Number(options.lessonNumber ?? 1),
+});
 
     return normalizeWith(lesson, [
       'normalizeLesson',
@@ -284,17 +271,14 @@ export const generateActivity = async (
   const context = await buildAIContext(childId, options);
 
   try {
-    const activity = await callModule<any>(
-      activityGenerator,
-      [
-        'generateActivity',
-        'generateAIActivity',
-        'generateDailyActivity',
-        'createActivity',
-      ],
-      context
-    );
-
+   const activity = await AIManager.generateActivities({
+  childName: context.child?.name ?? 'Child',
+  location: options.setting ?? 'Home',
+  skillFocus: options.skillArea,
+  assessmentContext: context.assessment,
+  recentLessons: context.recentLessonLogs,
+  count: options.count ?? 1,
+});
     return normalizeWith(activity, [
       'normalizeActivity',
       'normalizeAIActivity',
@@ -429,17 +413,14 @@ export const generateBehaviorSupport = async (
   const context = await buildAIContext(childId, options);
 
   try {
-    const support = await callModule<any>(
-      behaviorGenerator,
-      [
-        'generateBehaviorSupport',
-        'generateBehaviorPlan',
-        'generateBehaviorStrategy',
-        'generateAIBehaviorSupport',
-      ],
-      context
-    );
-
+    const support = await AIManager.generateBehaviorSupport({
+  childId,
+  childName: context.child?.name ?? 'Child',
+  behavior: options.behavior ?? options.concern ?? 'General behavior',
+  beforeBehavior: options.trigger ?? 'Unknown trigger',
+  afterBehavior: '',
+  location: options.setting ?? 'Home',
+});
     return normalizeWith(support, [
       'normalizeBehaviorSupport',
       'normalizeBehaviorPlan',
