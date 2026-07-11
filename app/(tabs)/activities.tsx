@@ -143,6 +143,21 @@ function buildInstantActivities(childName: string): DailyAdventure[] {
   ]) as DailyAdventure[];
 }
 
+function isLibraryActivitySet(
+  activityList: DailyAdventure[]
+): boolean {
+  if (!Array.isArray(activityList) || activityList.length === 0) {
+    return false;
+  }
+
+  return activityList.some((activity: any) => {
+    return (
+      activity?.source === 'library' ||
+      Boolean(activity?.library_activity_id)
+    );
+  });
+}
+
 function getAdventureAccent(index: number) {
   const accents = [
     {
@@ -409,55 +424,214 @@ export default function ActivitiesScreen() {
     }
   }, [selectedChild?.id]);
 
-  const loadSavedTodayActivities = useCallback(
-    async (filter: AdventureCategory = 'surprise') => {
-      if (!selectedChild?.id) return [];
+const loadSavedTodayActivities = useCallback(
+  async (
+    filter: AdventureCategory = 'surprise'
+  ): Promise<DailyAdventure[]> => {
+    if (!selectedChild?.id) {
+      return [];
+    }
 
-      const { data, error } = await supabase
-        .from('daily_fun_activities')
-        .select('activities_json')
-        .eq('child_id', selectedChild.id)
-        .eq('activity_date', getTodayLocalDateString())
-        .eq('activity_filter', filter)
-        .maybeSingle();
+    const { data, error } = await supabase
+      .from('daily_fun_activities')
+      .select('activities_json')
+      .eq('child_id', selectedChild.id)
+      .eq(
+        'activity_date',
+        getTodayLocalDateString()
+      )
+      .eq('activity_filter', filter)
+      .maybeSingle();
 
-      if (error) {
-        console.error('Load saved today adventures error:', error);
-        return [];
-      }
+    if (error) {
+      console.error(
+        'Load saved today adventures error:',
+        error
+      );
 
-      return normalizeActivities(data?.activities_json || []) as DailyAdventure[];
-    },
-    [selectedChild?.id]
-  );
+      return [];
+    }
+
+    const normalized = normalizeActivities(
+      data?.activities_json || []
+    ) as DailyAdventure[];
+
+    /*
+     * Ignore old generic cached activities.
+     *
+     * Only reuse today's cache when it contains activities
+     * pulled from the approved activity library.
+     */
+    if (
+      normalized.length > 0 &&
+      !isLibraryActivitySet(normalized)
+    ) {
+      console.log(
+        'Ignoring old non-library adventure cache:',
+        {
+          filter,
+          titles: normalized.map((activity) =>
+            getAdventureTitle(activity)
+          ),
+        }
+      );
+
+      return [];
+    }
+
+    return normalized;
+  },
+  [selectedChild?.id]
+);
 
 const generateActivitiesForFilter = useCallback(
   async (
     filter: AdventureCategory,
     count: number,
     extraRecentTitles: string[] = []
-  ) => {
-    if (!selectedChild?.id) return [];
-
-    const recentTitles = await getRecentAdventureTitles();
-    const allRecentTitles = [...recentTitles, ...extraRecentTitles];
-
-    const libraryActivities = await getRecommendedActivitiesFromLibrary({
-      filter,
-      count,
-      excludeTitles: allRecentTitles,
-    });
-
-    if (libraryActivities.length > 0) {
-      return libraryActivities.slice(0, count) as DailyAdventure[];
+  ): Promise<DailyAdventure[]> => {
+    if (!selectedChild?.id) {
+      return [];
     }
 
-    return buildInstantActivities(childName).filter((activity) => {
-      if (filter === 'surprise') return true;
-      return getAdventureCategory(activity) === filter;
-    }).slice(0, count);
+    const recentTitles =
+      await getRecentAdventureTitles();
+
+    const allRecentTitles = Array.from(
+      new Set([
+        ...recentTitles,
+        ...extraRecentTitles,
+      ])
+    );
+
+    console.log(
+      'Loading Daily Adventures from library:',
+      {
+        filter,
+        count,
+        excludedCount: allRecentTitles.length,
+      }
+    );
+
+    const libraryActivities =
+      await getRecommendedActivitiesFromLibrary({
+        filter,
+        count,
+        excludeTitles: allRecentTitles,
+      });
+
+    if (libraryActivities.length > 0) {
+      const selected =
+        libraryActivities.slice(
+          0,
+          count
+        ) as DailyAdventure[];
+
+      console.log(
+        'Daily Adventures library results:',
+        selected.map((activity: any) => ({
+          title:
+            activity.title ||
+            activity.name,
+          category: activity.category,
+          location: activity.location,
+          source: activity.source,
+          libraryActivityId:
+            activity.library_activity_id,
+        }))
+      );
+
+      return selected;
+    }
+
+    console.warn(
+      'No approved library activities matched:',
+      {
+        filter,
+        excludedTitles: allRecentTitles,
+      }
+    );
+
+    /*
+     * Emergency offline fallback only.
+     *
+     * This should not normally appear when the approved
+     * activity library contains matching records.
+     */
+    const fallbackActivities =
+      buildInstantActivities(childName).filter(
+        (activity) => {
+          if (filter === 'surprise') {
+            return true;
+          }
+
+          const category =
+            getAdventureCategory(activity);
+
+          if (filter === 'home') {
+            return (
+              category === 'home' ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('home') ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('living room')
+            );
+          }
+
+          if (filter === 'outdoor') {
+            return (
+              category === 'outdoor' ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('park') ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('backyard')
+            );
+          }
+
+          if (filter === 'community') {
+            return (
+              category === 'community' ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('store') ||
+              String(
+                activity.location || ''
+              )
+                .toLowerCase()
+                .includes('errand')
+            );
+          }
+
+          return category === filter;
+        }
+      );
+
+    return fallbackActivities
+      .slice(0, count)
+      .map((activity) => ({
+        ...activity,
+        source: 'offline-fallback',
+      })) as DailyAdventure[];
   },
-  [childName, getRecentAdventureTitles, selectedChild?.id]
+  [
+    childName,
+    getRecentAdventureTitles,
+    selectedChild?.id,
+  ]
 );
   
   const preloadTodayAdventureFilters = useCallback(async () => {
@@ -535,15 +709,15 @@ const generateActivitiesForFilter = useCallback(
           }
         }
 
-        const instantActivities = buildInstantActivities(childName);
-
-        if (!forceRefresh && isMountedRef.current) {
-          setActivities(
-            isPro ? instantActivities : instantActivities.slice(0, 1)
-          );
-          setCurrentIndex(0);
-          setLoading(false);
-        }
+        /*
+ * Keep the loading state visible while the approved library
+ * activities are retrieved.
+ *
+ * Do not briefly display generic fallback activities first.
+ */
+if (!forceRefresh && isMountedRef.current) {
+  setLoading(true);
+}
 
         const generated = await generateActivitiesForFilter(
           filter,
@@ -648,13 +822,23 @@ const generateActivitiesForFilter = useCallback(
     try {
       const saved = await loadSavedTodayActivities(filter);
 
-      if (saved.length > 0) {
-        setActivities(isPro ? saved : saved.slice(0, 1));
-        setCurrentIndex(0);
-        await loadSavedActivityState(saved);
-      } else {
-        await loadActivities(true, filter);
-      }
+    if (
+  saved.length > 0 &&
+  isLibraryActivitySet(saved)
+) {
+  const visibleSaved = isPro
+    ? saved
+    : saved.slice(0, 1);
+
+  setActivities(visibleSaved);
+  setCurrentIndex(0);
+
+  await loadSavedActivityState(
+    visibleSaved
+  );
+} else {
+  await loadActivities(true, filter);
+}
 
       scrollRef.current?.scrollTo({
         x: 0,
