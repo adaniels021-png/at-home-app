@@ -2,16 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 
 import { supabase } from '../../lib/supabase';
 
@@ -177,7 +178,28 @@ export default function CreateLessonScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Input label="Category" value={category} onChangeText={setCategory} />
+        <Text style={styles.inputLabel}>Category</Text>
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.chipRow}
+>
+  {CURRICULUM_CATEGORIES.map((item) => {
+    const active = category === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.chip, active && styles.chipActive]}
+        onPress={() => setCategory(item)}
+      >
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
         <Input label="Skill Area" value={skillArea} onChangeText={setSkillArea} />
         <Input label="Stage Number" value={stageNumber} onChangeText={setStageNumber} keyboardType="numeric" />
         <Input label="Stage Name" value={stageName} onChangeText={setStageName} />
@@ -295,4 +317,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
+
+  chipRow: {
+  paddingBottom: 14,
+  gap: 8,
+},
+
+chip: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingVertical: 9,
+  paddingHorizontal: 13,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+},
+
+chipActive: {
+  backgroundColor: '#7C3AED',
+  borderColor: '#7C3AED',
+},
+
+chipText: {
+  color: '#7C3AED',
+  fontSize: 12,
+  fontWeight: '900',
+},
+
+chipTextActive: {
+  color: '#FFFFFF',
+},
 });

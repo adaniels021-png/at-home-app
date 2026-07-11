@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,9 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import { supabase } from '../../lib/supabase';
 
 const ADMIN_EMAIL = 'adaniels021@gmail.com';
+
+type ReviewTab = 'all' | 'draft' | 'needs_revision' | 'reviewed' | 'approved';
 
 type LessonRow = {
   id: string;
@@ -30,6 +33,14 @@ type LessonRow = {
   created_at: string;
 };
 
+const REVIEW_TABS: { label: string; value: ReviewTab }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Drafts', value: 'draft' },
+  { label: 'Revisions', value: 'needs_revision' },
+  { label: 'Reviewed', value: 'reviewed' },
+  { label: 'Approved', value: 'approved' },
+];
+
 export default function LessonReviewQueueScreen() {
   const router = useRouter();
 
@@ -39,6 +50,9 @@ export default function LessonReviewQueueScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [lessons, setLessons] = useState<LessonRow[]>([]);
+  const [selectedTab, setSelectedTab] = useState<ReviewTab>('all');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -46,8 +60,7 @@ export default function LessonReviewQueueScreen() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      const allowed = user?.email === ADMIN_EMAIL;
-      setIsAdmin(allowed);
+      setIsAdmin(user?.email === ADMIN_EMAIL);
       setCheckingAdmin(false);
     }
 
@@ -56,11 +69,28 @@ export default function LessonReviewQueueScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (isAdmin) {
-        void loadLessons();
-      }
+      if (isAdmin) void loadLessons();
     }, [isAdmin])
   );
+
+  const filteredLessons = useMemo(() => {
+    return lessons.filter((lesson) => {
+      const matchesTab =
+        selectedTab === 'all' || lesson.quality_status === selectedTab;
+
+      const matchesCategory =
+        selectedCategory === 'All' || lesson.category === selectedCategory;
+
+      return matchesTab && matchesCategory;
+    });
+  }, [lessons, selectedTab, selectedCategory]);
+
+  const selectedCount = selectedIds.length;
+
+  function getTabCount(tab: ReviewTab) {
+    if (tab === 'all') return lessons.length;
+    return lessons.filter((lesson) => lesson.quality_status === tab).length;
+  }
 
   async function loadLessons() {
     try {
@@ -80,12 +110,13 @@ export default function LessonReviewQueueScreen() {
           is_active,
           created_at
         `)
-        .in('quality_status', ['draft', 'needs_revision', 'reviewed'])
+        .in('quality_status', ['draft', 'needs_revision', 'reviewed', 'approved'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       setLessons((data || []) as LessonRow[]);
+      setSelectedIds([]);
     } catch (error: any) {
       console.error('Load review lessons error:', error);
       Alert.alert('Load Error', error?.message || 'Could not load lesson queue.');
@@ -95,64 +126,96 @@ export default function LessonReviewQueueScreen() {
     }
   }
 
-  async function updateStatus(id: string, status: string) {
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  async function updateStatus(ids: string[], status: string) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const updatePayload: any = {
-      quality_status: status,
-      reviewed_by: user?.id || null,
-      reviewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+      const updatePayload: any = {
+        quality_status: status,
+        reviewed_by: user?.email || null,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-    if (status === 'approved') {
-      updatePayload.is_active = true;
+      if (status === 'approved') updatePayload.is_active = true;
+      if (status === 'needs_revision') updatePayload.is_active = false;
+
+      const { error } = await supabase
+        .from('lesson_library')
+        .update(updatePayload)
+        .in('id', ids);
+
+      if (error) throw error;
+
+      await loadLessons();
+    } catch (error: any) {
+      console.error('Update lesson status error:', error);
+      Alert.alert('Update Error', error?.message || 'Could not update lesson.');
     }
-
-    const { error } = await supabase
-      .from('lesson_library')
-      .update(updatePayload)
-      .eq('id', id);
-
-    if (error) throw error;
-
-    await loadLessons();
-  } catch (error: any) {
-    console.error('Update lesson status error:', error);
-    Alert.alert('Update Error', error?.message || 'Could not update lesson.');
   }
-}
 
-  function confirmApprove(lesson: LessonRow) {
+  function toggleSelected(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
+    );
+  }
+
+  function confirmBulkApprove() {
+    if (!selectedCount) return;
+
     Alert.alert(
-      'Approve Lesson?',
-      `Approve "${lesson.title}" for the lesson library?`,
+      'Approve Selected?',
+      `Approve ${selectedCount} selected lesson(s)?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Approve',
-          onPress: () => void updateStatus(lesson.id, 'approved'),
+          onPress: () => void updateStatus(selectedIds, 'approved'),
         },
       ]
     );
   }
 
-  function confirmRevision(lesson: LessonRow) {
+  function confirmBulkArchive() {
+    if (!selectedCount) return;
+
     Alert.alert(
-      'Mark Needs Revision?',
-      `Send "${lesson.title}" back for edits?`,
+      'Archive Selected?',
+      `Move ${selectedCount} selected lesson(s) to needs revision and hide them from the app?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Needs Revision',
+          text: 'Archive',
           style: 'destructive',
-          onPress: () => void updateStatus(lesson.id, 'needs_revision'),
+          onPress: () => void updateStatus(selectedIds, 'needs_revision'),
         },
       ]
     );
+  }
+
+  function confirmApprove(lesson: LessonRow) {
+    Alert.alert('Approve Lesson?', `Approve "${lesson.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Approve',
+        onPress: () => void updateStatus([lesson.id], 'approved'),
+      },
+    ]);
+  }
+
+  function confirmRevision(lesson: LessonRow) {
+    Alert.alert('Mark Needs Revision?', `Send "${lesson.title}" back for edits?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Needs Revision',
+        style: 'destructive',
+        onPress: () => void updateStatus([lesson.id], 'needs_revision'),
+      },
+    ]);
   }
 
   const onRefresh = () => {
@@ -190,22 +253,24 @@ export default function LessonReviewQueueScreen() {
 
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Lesson Review Queue</Text>
-          <Text style={styles.headerSubtitle}>{lessons.length} lesson(s) waiting</Text>
+          <Text style={styles.headerSubtitle}>
+            {filteredLessons.length} shown · {lessons.length} total
+          </Text>
         </View>
 
         <TouchableOpacity
-  style={styles.headerButton}
-  onPress={() => router.push('/admin/generate-lessons' as any)}
->
-  <Ionicons name="sparkles-outline" size={22} color="#7C3AED" />
-</TouchableOpacity>
+          style={styles.headerButton}
+          onPress={() => router.push('/admin/generate-lessons' as any)}
+        >
+          <Ionicons name="sparkles-outline" size={22} color="#7C3AED" />
+        </TouchableOpacity>
 
-<TouchableOpacity
-  style={styles.headerButton}
-  onPress={() => router.push('/admin/create-lesson' as any)}
->
-  <Ionicons name="add" size={24} color="#7C3AED" />
-</TouchableOpacity>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/admin/create-lesson' as any)}
+        >
+          <Ionicons name="add" size={24} color="#7C3AED" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -215,61 +280,132 @@ export default function LessonReviewQueueScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
         }
       >
-        {lessons.length === 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {REVIEW_TABS.map((tab) => {
+            const active = selectedTab === tab.value;
+
+            return (
+              <TouchableOpacity
+                key={tab.value}
+                style={[styles.filterChip, active && styles.filterChipActive]}
+                onPress={() => {
+                  setSelectedTab(tab.value);
+                  setSelectedIds([]);
+                }}
+              >
+                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                  {tab.label} ({getTabCount(tab.value)})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {['All', ...CURRICULUM_CATEGORIES].map((item) => {
+            const active = selectedCategory === item;
+
+            return (
+              <TouchableOpacity
+                key={item}
+                style={[styles.categoryChip, active && styles.filterChipActive]}
+                onPress={() => {
+                  setSelectedCategory(item);
+                  setSelectedIds([]);
+                }}
+              >
+                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {selectedCount > 0 ? (
+          <View style={styles.bulkBar}>
+            <Text style={styles.bulkText}>{selectedCount} selected</Text>
+
+            <TouchableOpacity style={styles.bulkApprove} onPress={confirmBulkApprove}>
+              <Text style={styles.bulkApproveText}>Approve</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.bulkArchive} onPress={confirmBulkArchive}>
+              <Text style={styles.bulkArchiveText}>Archive</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {filteredLessons.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="checkmark-circle-outline" size={40} color="#10B981" />
             <Text style={styles.emptyTitle}>All caught up</Text>
-            <Text style={styles.emptyText}>There are no lessons waiting for review.</Text>
+            <Text style={styles.emptyText}>There are no lessons in this view.</Text>
           </View>
         ) : (
-          lessons.map((lesson) => (
-            <View key={lesson.id} style={styles.lessonCard}>
-              <View style={styles.cardTopRow}>
-                <View style={styles.statusPill}>
-                  <Text style={styles.statusText}>
-                    {(lesson.quality_status || 'draft').replace('_', ' ').toUpperCase()}
-                  </Text>
+          filteredLessons.map((lesson) => {
+            const checked = selectedIds.includes(lesson.id);
+
+            return (
+              <View key={lesson.id} style={styles.lessonCard}>
+                <View style={styles.cardTopRow}>
+                  <TouchableOpacity
+                    style={[styles.checkCircle, checked && styles.checkCircleActive]}
+                    onPress={() => toggleSelected(lesson.id)}
+                  >
+                    {checked ? (
+                      <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    ) : null}
+                  </TouchableOpacity>
+
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusText}>
+                      {(lesson.quality_status || 'draft').replace('_', ' ').toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.stageText}>Stage {lesson.stage_number}</Text>
                 </View>
 
-                <Text style={styles.stageText}>Stage {lesson.stage_number}</Text>
+                <Text style={styles.lessonTitle}>{lesson.title}</Text>
+
+                <Text style={styles.lessonMeta}>
+                  {lesson.category} · {lesson.skill_area}
+                </Text>
+
+                {lesson.stage_name ? (
+                  <Text style={styles.lessonSubText}>{lesson.stage_name}</Text>
+                ) : null}
+
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.viewButton}
+                    onPress={() => router.push(`/admin/lesson-review/${lesson.id}` as any)}
+                  >
+                    <Ionicons name="eye-outline" size={17} color="#4F46E5" />
+                    <Text style={styles.viewButtonText}>Review</Text>
+                  </TouchableOpacity>
+
+                  {lesson.quality_status !== 'approved' ? (
+                    <TouchableOpacity
+                      style={styles.approveButton}
+                      onPress={() => confirmApprove(lesson)}
+                    >
+                      <Ionicons name="checkmark" size={17} color="#FFFFFF" />
+                      <Text style={styles.approveButtonText}>Approve</Text>
+                    </TouchableOpacity>
+                  ) : null}
+
+                  <TouchableOpacity
+                    style={styles.revisionButton}
+                    onPress={() => confirmRevision(lesson)}
+                  >
+                    <Ionicons name="refresh-outline" size={17} color="#92400E" />
+                  </TouchableOpacity>
+                </View>
               </View>
-
-              <Text style={styles.lessonTitle}>{lesson.title}</Text>
-
-              <Text style={styles.lessonMeta}>
-                {lesson.category} · {lesson.skill_area}
-              </Text>
-
-              {lesson.stage_name ? (
-                <Text style={styles.lessonSubText}>{lesson.stage_name}</Text>
-              ) : null}
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={() => router.push(`/lesson-library/${lesson.id}` as any)}
-                >
-                  <Ionicons name="eye-outline" size={17} color="#4F46E5" />
-                  <Text style={styles.viewButtonText}>Review</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.approveButton}
-                  onPress={() => confirmApprove(lesson)}
-                >
-                  <Ionicons name="checkmark" size={17} color="#FFFFFF" />
-                  <Text style={styles.approveButtonText}>Approve</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.revisionButton}
-                  onPress={() => confirmRevision(lesson)}
-                >
-                  <Ionicons name="refresh-outline" size={17} color="#92400E" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     </SafeAreaView>
@@ -335,6 +471,76 @@ const styles = StyleSheet.create({
     padding: 18,
     paddingBottom: 140,
   },
+  filterRow: {
+    gap: 8,
+    paddingBottom: 12,
+  },
+  filterChip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  categoryChip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  filterChipActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+  filterChipText: {
+    color: '#7C3AED',
+    fontWeight: '900',
+    fontSize: 12,
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+  },
+  bulkBar: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bulkText: {
+    flex: 1,
+    color: '#2E1065',
+    fontWeight: '900',
+  },
+  bulkApprove: {
+    backgroundColor: '#10B981',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  bulkApproveText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 12,
+  },
+  bulkArchive: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  bulkArchiveText: {
+    color: '#92400E',
+    fontWeight: '900',
+    fontSize: 12,
+  },
   emptyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 28,
@@ -350,16 +556,25 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E9D5FF',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 2,
   },
   cardTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
+  },
+  checkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: '#DDD6FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  checkCircleActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
   },
   statusPill: {
     backgroundColor: '#F5F3FF',
@@ -374,6 +589,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   stageText: {
+    marginLeft: 'auto',
     color: '#64748B',
     fontSize: 12,
     fontWeight: '900',

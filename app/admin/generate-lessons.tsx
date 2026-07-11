@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,19 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { generatePremiumLesson } from '../../lib/aiService';
-import { SKILL_PROGRESSION_PATHS } from '../../lib/lessonTypes';
+import { CURRICULUM, CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import { supabase } from '../../lib/supabase';
 
 const ADMIN_EMAIL = 'adaniels021@gmail.com';
-
-const CATEGORY_OPTIONS = [
-  'Communication',
-  'Daily Routines',
-  'Play & Social Skills',
-  'Learning & Attention',
-  'Movement & Coordination',
-  'Emotions & Behavior',
-];
 
 const DIFFICULTY_OPTIONS = ['support', 'balanced', 'challenge'];
 
@@ -42,6 +33,12 @@ function cleanText(value: any) {
 
 export default function GenerateLessonsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+  category?: string;
+  skill?: string;
+  stage?: string;
+  stageNumber?: string;
+}>();
 
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -50,16 +47,33 @@ export default function GenerateLessonsScreen() {
   const [skillArea, setSkillArea] = useState('');
   const [countText, setCountText] = useState('5');
   const [stageStartText, setStageStartText] = useState('1');
+  const [selectedStage, setSelectedStage] = useState('');
   const [difficulty, setDifficulty] = useState('balanced');
   const [theme, setTheme] = useState('');
 
   const [generating, setGenerating] = useState(false);
   const [previewLessons, setPreviewLessons] = useState<any[]>([]);
 
-  const skillOptions = useMemo(() => {
-    const skills = SKILL_PROGRESSION_PATHS[category] || [];
-    return Array.isArray(skills) ? skills : [skills].filter(Boolean);
-  }, [category]);
+const skillOptions = useMemo(() => {
+  const selectedCategory = CURRICULUM.find((item) => item.title === category);
+  return selectedCategory?.skills.map((skill) => skill.title) ?? [];
+}, [category]);
+
+const stageOptions = useMemo(() => {
+  const selectedCategory = CURRICULUM.find((item) => item.title === category);
+  const selectedSkill = selectedCategory?.skills.find(
+    (item) => item.title === skillArea
+  );
+
+  return selectedSkill?.stages ?? [];
+}, [category, skillArea]);
+
+useEffect(() => {
+  if (!params.stage) {
+    setSelectedStage(stageOptions[0] || '');
+    setStageStartText('1');
+  }
+}, [stageOptions, params.stage]);
 
   const count = useMemo(() => {
     const parsed = Number(countText);
@@ -87,8 +101,28 @@ export default function GenerateLessonsScreen() {
   }, []);
 
   useEffect(() => {
+  if (params.category) {
+    setCategory(String(params.category));
+  }
+
+  if (params.skill) {
+    setSkillArea(String(params.skill));
+  }
+
+  if (params.stage) {
+    setSelectedStage(String(params.stage));
+  }
+
+  if (params.stageNumber) {
+    setStageStartText(String(params.stageNumber));
+  }
+}, [params.category, params.skill, params.stage, params.stageNumber]);
+
+  useEffect(() => {
+  if (!params.skill) {
     setSkillArea(skillOptions[0] || '');
-  }, [category, skillOptions]);
+  }
+}, [category, skillOptions, params.skill]);
 
   async function handleGenerate() {
     if (!category.trim()) {
@@ -140,7 +174,7 @@ export default function GenerateLessonsScreen() {
           category: category.trim(),
           skill_area: cleanText(lesson.focus_skill) || skillArea.trim(),
           stage_number: stageNumber,
-          stage_name: `Stage ${stageNumber}`,
+          stage_name: selectedStage || `Stage ${stageNumber}`,
           lesson_type: 'guided_practice',
           title: cleanText(lesson.lesson_name) || `${skillArea} Practice`,
           description: cleanText(lesson.objective) || null,
@@ -155,15 +189,8 @@ export default function GenerateLessonsScreen() {
             cleanText(lesson.difficulty_reason) ||
             `This lesson supports ${skillArea} through short parent-led practice.`,
 
-            mastery_criteria: cleanText(lesson.success_criteria) || null,
-
-            next_lesson_preview:
-            cleanText(lesson.lesson_variation) ||
-         `Next, continue building ${skillArea} with more independence or a new everyday routine.`,
-         
-         setup_instructions: toArray(lesson.setup).join('\n') || null,
+         setup_instructions: toArray(lesson.setup),
           parent_script: null,
-          expected_child_response: cleanText(lesson.success_criteria) || null,
           prompting_tips: toArray(lesson.prompting_hierarchy),
           reinforcement_tips: toArray(lesson.reinforcement),
           if_child_struggles: toArray(lesson.error_correction),
@@ -268,7 +295,7 @@ export default function GenerateLessonsScreen() {
 
         <Text style={styles.label}>Category</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          {CATEGORY_OPTIONS.map((item) => {
+          {CURRICULUM_CATEGORIES.map((item) => {
             const active = category === item;
 
             return (
@@ -312,31 +339,43 @@ export default function GenerateLessonsScreen() {
           placeholderTextColor="#94A3B8"
         />
 
-        <View style={styles.twoColumnRow}>
-          <View style={styles.twoColumnItem}>
-            <Text style={styles.label}>How many?</Text>
-            <TextInput
-              value={countText}
-              onChangeText={setCountText}
-              keyboardType="number-pad"
-              style={styles.input}
-              placeholder="5"
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
+        <View>
+  <Text style={styles.label}>How many?</Text>
+  <TextInput
+    value={countText}
+    onChangeText={setCountText}
+    keyboardType="number-pad"
+    style={styles.input}
+    placeholder="5"
+    placeholderTextColor="#94A3B8"
+  />
+</View>
 
-          <View style={styles.twoColumnItem}>
-            <Text style={styles.label}>Start stage</Text>
-            <TextInput
-              value={stageStartText}
-              onChangeText={setStageStartText}
-              keyboardType="number-pad"
-              style={styles.input}
-              placeholder="1"
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-        </View>
+<Text style={styles.label}>Stage</Text>
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.chipRow}
+>
+  {stageOptions.map((item, index) => {
+    const active = selectedStage === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.chip, active && styles.chipActive]}
+        onPress={() => {
+          setSelectedStage(item);
+          setStageStartText(String(index + 1));
+        }}
+      >
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+          Stage {index + 1}: {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
 
         <Text style={styles.label}>Difficulty</Text>
         <View style={styles.chipRowWrap}>

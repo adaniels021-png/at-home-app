@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import {
   LessonLibraryItem,
   getLessonLibraryItems,
@@ -19,10 +21,40 @@ import {
 
 export default function AdminLessonLibraryScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+  category?: string;
+  skill?: string;
+  stageNumber?: string;
+}>();
+
+const routeCategory = params.category ? String(params.category) : '';
+const routeSkill = params.skill ? String(params.skill) : '';
+const routeStageNumber = params.stageNumber ? Number(params.stageNumber) : null;
 
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<LessonLibraryItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+const filteredLessons = lessons.filter((lesson) => {
+  const matchesCategory =
+    selectedCategory === 'All' || lesson.category === selectedCategory;
+
+  const matchesSkill =
+    !routeSkill || lesson.skill_area === routeSkill;
+
+  const matchesStage =
+    !routeStageNumber || Number(lesson.stage_number || 1) === routeStageNumber;
+
+  return matchesCategory && matchesSkill && matchesStage;
+});
+
+useEffect(() => {
+  if (routeCategory) {
+    setSelectedCategory(routeCategory);
+  }
+}, [routeCategory]);
 
   async function loadLessons() {
     try {
@@ -68,8 +100,10 @@ export default function AdminLessonLibraryScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Admin Lesson Library</Text>
           <Text style={styles.subtitle}>
-            Review and manage lesson content
-          </Text>
+  {routeSkill
+    ? `${routeSkill}${routeStageNumber ? ` · Stage ${routeStageNumber}` : ''}`
+    : 'Review and manage lesson content'}
+</Text>
         </View>
       </View>
 
@@ -91,8 +125,30 @@ export default function AdminLessonLibraryScreen() {
   </TouchableOpacity>
 </View>
 
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.filterRow}
+>
+  {['All', ...CURRICULUM_CATEGORIES].map((item) => {
+    const active = selectedCategory === item;
+
+    return (
+      <TouchableOpacity
+        key={item}
+        style={[styles.filterChip, active && styles.filterChipActive]}
+        onPress={() => setSelectedCategory(item)}
+      >
+        <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
+
       <FlatList
-        data={lessons}
+        data={filteredLessons}
         keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl
@@ -334,5 +390,35 @@ editButtonText: {
   marginLeft: 6,
   color: '#4F46E5',
   fontWeight: '900',
+},
+
+filterRow: {
+  paddingHorizontal: 20,
+  paddingBottom: 12,
+  gap: 8,
+},
+
+filterChip: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 999,
+  paddingHorizontal: 13,
+  paddingVertical: 9,
+  borderWidth: 1,
+  borderColor: '#E9D5FF',
+},
+
+filterChipActive: {
+  backgroundColor: '#7C3AED',
+  borderColor: '#7C3AED',
+},
+
+filterChipText: {
+  color: '#7C3AED',
+  fontWeight: '900',
+  fontSize: 12,
+},
+
+filterChipTextActive: {
+  color: '#FFFFFF',
 },
 });
