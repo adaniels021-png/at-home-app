@@ -191,68 +191,12 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
 
          {isAppAdmin ? (
   <Section title="Admin Tools">
-
-    {/* ---------- LESSONS ---------- */}
-
     <SettingItem
-      icon="library-outline"
-      label="Admin Lesson Library"
-      helper="Review, approve, edit, and manage lessons before families see them"
-      onPress={() => openRoute('/admin/lesson-library')}
+      icon="sparkles-outline"
+      label="AI Content Studio"
+      helper="Open the complete admin command center for lessons, curriculum, activities, AI assets, and worksheets"
+      onPress={() => openRoute('/admin/content-studio')}
     />
-
-    <SettingItem
-      icon="shield-checkmark-outline"
-      label="Lesson Review Queue"
-      helper="Approve lessons that are waiting for review"
-      onPress={() => openRoute('/admin/lesson-review')}
-    />
-
-    <SettingItem
-      icon="create-outline"
-      label="Create / Draft Lesson"
-      helper="Add a new lesson draft for review"
-      onPress={() => openRoute('/admin/create-lesson')}
-    />
-
-    {/* ---------- ACTIVITIES ---------- */}
-
-
-<SettingItem
-  icon="happy-outline"
-  label="Admin Activity Library"
-  helper="Review, approve, edit, and manage Daily Adventures"
-  onPress={() => openRoute('/admin/activity-library')}
-/>
-
-<SettingItem
-  icon="cloud-upload-outline"
-  label="Bulk Import Activities"
-  helper="Paste a JSON list and add many activities at once"
-  onPress={() => openRoute('/admin/activity-library/bulk-import')}
-/>
-
-    <SettingItem
-  icon="clipboard-outline"
-  label="Activity Review Queue"
-  helper="Approve pending Daily Adventures"
-  onPress={() => openRoute('/admin/activity-review')}
-/>
-
-    <SettingItem
-  icon="sparkles-outline"
-  label="AI Generate Activities"
-  helper="Use AI to create pending activity drafts for review"
-  onPress={() => openRoute('/admin/activity-library/ai-generate')}
-/>
-
-    <SettingItem
-      icon="add-circle-outline"
-      label="Create Activity"
-      helper="Create a new Daily Adventure"
-      onPress={() => openRoute('/admin/activity-library/new')}
-    />
-
   </Section>
 ) : null}
 
