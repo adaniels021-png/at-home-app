@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
@@ -393,7 +394,7 @@ export default function AdminWorksheetUploadScreen() {
     }
   }
 
-  async function choosePreviewImage() {
+  async function choosePreviewFromFiles() {
   try {
     const result = await DocumentPicker.getDocumentAsync({
       type: 'image/*',
@@ -421,6 +422,77 @@ export default function AdminWorksheetUploadScreen() {
       error?.message || 'Could not select the preview image.'
     );
   }
+}
+
+async function choosePreviewFromPhotos() {
+  try {
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        'Photo Access Needed',
+        'Please allow photo access so you can select a worksheet preview image.'
+      );
+      return;
+    }
+
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+
+    if (result.canceled || !result.assets?.length) {
+      return;
+    }
+
+    const asset = result.assets[0];
+
+    setPreviewFile({
+      name:
+        asset.fileName ||
+        `worksheet-preview-${Date.now()}.jpg`,
+      uri: asset.uri,
+      mimeType: asset.mimeType || 'image/jpeg',
+      size: asset.fileSize,
+    });
+  } catch (error: any) {
+    console.error(
+      'Preview photo selection error:',
+      error
+    );
+
+    Alert.alert(
+      'Photo Selection Error',
+      error?.message ||
+        'Could not select the preview image from Photos.'
+    );
+  }
+}
+
+function choosePreviewImage() {
+  Alert.alert(
+    'Select Preview Image',
+    'Choose where you want to select the preview image.',
+    [
+      {
+        text: 'Photos',
+        onPress: () =>
+          void choosePreviewFromPhotos(),
+      },
+      {
+        text: 'Files',
+        onPress: () =>
+          void choosePreviewFromFiles(),
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]
+  );
 }
 
   function resetForm() {
@@ -506,15 +578,25 @@ export default function AdminWorksheetUploadScreen() {
 };
 
 
-      const { error: insertError } = await supabase
-        .from(WORKSHEET_TABLE)
-        .insert(record);
+    const { data: insertedWorksheet, error: insertError } = await supabase
+  .from(WORKSHEET_TABLE)
+  .insert(record)
+  .select('id, title, status, is_active')
+  .single();
 
-      if (insertError) {
-        throw new Error(
-          `Worksheet record could not be saved: ${insertError.message}`
-        );
-      }
+if (insertError) {
+  throw new Error(
+    `Worksheet record could not be saved: ${insertError.message}`
+  );
+}
+
+if (!insertedWorksheet) {
+  throw new Error(
+    'The worksheet files uploaded, but the worksheet database record was not created.'
+  );
+}
+
+console.log('Worksheet draft created:', insertedWorksheet);
 
       Alert.alert(
   'Worksheet Uploaded',
@@ -828,15 +910,15 @@ export default function AdminWorksheetUploadScreen() {
         />
 
         <FilePickerCard
-          title="Preview Image"
-          description="Select a clear PNG, JPEG, or WebP image to display on the worksheet card and preview screen."
-          file={previewFile}
-          icon="image-outline"
-          buttonText="Select Preview Image"
-          disabled={uploading}
-          onPress={choosePreviewImage}
-          onClear={() => setPreviewFile(null)}
-        />
+  title="Preview Image"
+  description="Select a clear PNG, JPEG, or WebP image to display on the worksheet card and preview screen."
+  file={previewFile}
+  icon="image-outline"
+  buttonText="Select Preview Image"
+  disabled={uploading}
+  onPress={choosePreviewImage}
+  onClear={() => setPreviewFile(null)}
+/>
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>

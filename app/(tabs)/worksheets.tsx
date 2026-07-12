@@ -3,9 +3,12 @@ import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MailComposer from 'expo-mail-composer';
 import * as Print from 'expo-print';
-import { useRouter } from 'expo-router';
+import {
+  useFocusEffect,
+  useRouter,
+} from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import {
   ActivityIndicator,
@@ -55,7 +58,7 @@ type UploadedWorksheetRow = {
   id: string;
   title: string;
   category: WorksheetCategory;
-  description: string;
+  description: string | null;
   age_range: string | null;
   difficulty?: DifficultyLevel | null;
   skill_focus?: string | null;
@@ -105,7 +108,9 @@ function mapUploadedWorksheet(
     id: row.id,
     title: row.title,
     category: row.category,
-    description: row.description,
+    description:
+  row.description ||
+  'Printable ABA at Home worksheet.',
     ageRange: row.age_range || 'All ages',
 
     orientation:
@@ -167,92 +172,107 @@ useEffect(() => {
     }
   }, [selectedChild, childName]);
 
-  useEffect(() => {
-  let mounted = true;
+ useFocusEffect(
+  useCallback(() => {
+    let mounted = true;
 
-  async function loadUploadedWorksheets() {
-    try {
-      setLoadingUploadedWorksheets(true);
+    async function loadUploadedWorksheets() {
+      try {
+        setLoadingUploadedWorksheets(true);
 
-      const { data, error } = await supabase
-        .from('worksheet_library')
-        .select(
-          `
-          id,
-          title,
-          category,
-          description,
-          age_range,
-          difficulty,
-          skill_focus,
-          orientation,
-          pdf_url,
-          preview_image_url,
-          page_count,
-          is_pro,
-          is_featured,
-          is_active,
-          status,
-          sort_order,
-          created_at
-          `
+        const { data, error } = await supabase
+          .from('worksheet_library')
+          .select(
+            `
+            id,
+            title,
+            category,
+            description,
+            age_range,
+            difficulty,
+            skill_focus,
+            orientation,
+            pdf_url,
+            preview_image_url,
+            page_count,
+            is_pro,
+            is_featured,
+            is_active,
+            status,
+            sort_order,
+            created_at
+            `
+          )
+          .eq('status', 'approved')
+          .eq('is_active', true)
+          .order('is_featured', {
+            ascending: false,
+          })
+          .order('sort_order', {
+            ascending: true,
+          })
+          .order('created_at', {
+            ascending: false,
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        console.log(
+          'Approved uploaded worksheets:',
+          data?.length ?? 0,
+          data
+        );
+
+        const mapped = (
+          (data ?? []) as UploadedWorksheetRow[]
         )
-        .eq('is_active', true)
-        .eq('status', 'published')
-        .order('is_featured', {
-          ascending: false,
-        })
-        .order('sort_order', {
-          ascending: true,
-        })
-        .order('created_at', {
-          ascending: false,
-        });
+          .filter(
+            (row) =>
+              Boolean(
+                row.title &&
+                  row.category &&
+                  row.pdf_url &&
+                  row.preview_image_url
+              )
+          )
+          .map(mapUploadedWorksheet);
 
-      if (error) {
-        throw error;
-      }
+        setUploadedWorksheets(mapped);
+      } catch (error: any) {
+        console.error(
+          'Uploaded worksheet load error:',
+          error
+        );
 
-      if (!mounted) return;
+        if (mounted) {
+          setUploadedWorksheets([]);
 
-      const mapped = (
-        (data || []) as UploadedWorksheetRow[]
-      )
-        .filter(
-          (row) =>
-            Boolean(
-              row.title &&
-                row.category &&
-                row.description &&
-                row.pdf_url &&
-                row.preview_image_url
-            )
-        )
-        .map(mapUploadedWorksheet);
-
-      setUploadedWorksheets(mapped);
-    } catch (error) {
-      console.error(
-        'Uploaded worksheet load error:',
-        error
-      );
-
-      if (mounted) {
-        setUploadedWorksheets([]);
-      }
-    } finally {
-      if (mounted) {
-        setLoadingUploadedWorksheets(false);
+          Alert.alert(
+            'Worksheet Library Error',
+            error?.message ||
+              'Uploaded worksheets could not be loaded.'
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoadingUploadedWorksheets(false);
+        }
       }
     }
-  }
 
-  void loadUploadedWorksheets();
+    void loadUploadedWorksheets();
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+    return () => {
+      mounted = false;
+    };
+  }, [])
+);
 
   const categoryOptions = useMemo<DisplayCategory[]>(() => {
     const baseCategories = CATEGORIES as DisplayCategory[];
@@ -819,15 +839,17 @@ const allWorksheets = useMemo<
              {getWorksheetPreviewSource(
   item as WorksheetWithPrintOptions
 ) ? (
-  <Image
-    source={
-      getWorksheetPreviewSource(
-        item as WorksheetWithPrintOptions
-      )!
-    }
-    style={styles.cardImage}
-    resizeMode="cover"
-  />
+  <View style={styles.cardImageFrame}>
+    <Image
+      source={
+        getWorksheetPreviewSource(
+          item as WorksheetWithPrintOptions
+        )!
+      }
+      style={styles.cardImage}
+      resizeMode="contain"
+    />
+  </View>
 ) : null}
 
               <View style={styles.cardTopRow}>
@@ -1558,13 +1580,23 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
 
-  cardImage: {
-    width: '100%',
-    height: 184,
-    borderRadius: 20,
-    marginBottom: 13,
-    backgroundColor: '#F8FAFC',
-  },
+cardImageFrame: {
+  width: '100%',
+  aspectRatio: 1.55,
+  borderRadius: 20,
+  marginBottom: 13,
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  overflow: 'hidden',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+cardImage: {
+  width: '100%',
+  height: '100%',
+},
 
   cardTopRow: {
     flexDirection: 'row',

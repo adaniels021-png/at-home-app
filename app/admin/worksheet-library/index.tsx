@@ -3,21 +3,21 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, {
-    useCallback,
-    useMemo,
-    useState,
+  useCallback,
+  useMemo,
+  useState,
 } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,7 +26,7 @@ import { supabase } from '../../../lib/supabase';
 type WorksheetStatusFilter =
   | 'all'
   | 'draft'
-  | 'published';
+  | 'approved';
 
 type WorksheetOrientation =
   | 'portrait'
@@ -36,7 +36,7 @@ type WorksheetLibraryRow = {
   id: string;
   title: string;
   category: string;
-  description: string;
+  description: string | null;
   age_range: string | null;
   difficulty: string | null;
   skill_focus: string | null;
@@ -78,8 +78,8 @@ const FILTERS: Array<{
     label: 'Drafts',
   },
   {
-    value: 'published',
-    label: 'Published',
+    value: 'approved',
+    label: 'Approved',
   },
 ];
 
@@ -87,10 +87,10 @@ function getStatusLabel(
   worksheet: WorksheetLibraryRow
 ) {
   if (
-    worksheet.status === 'published' &&
+    worksheet.status === 'approved' &&
     worksheet.is_active
   ) {
-    return 'Published';
+    return 'Approved';
   }
 
   return 'Draft';
@@ -99,11 +99,11 @@ function getStatusLabel(
 function getStatusColors(
   worksheet: WorksheetLibraryRow
 ) {
-  const published =
-    worksheet.status === 'published' &&
+  const approved =
+    worksheet.status === 'approved' &&
     worksheet.is_active;
 
-  return published
+  return approved
     ? {
         background: '#ECFDF5',
         text: '#047857',
@@ -149,6 +149,31 @@ function getStoragePaths(
   );
 }
 
+function getPublicFileUrl(path: string | null) {
+  if (!path) return null;
+
+  const { data } = supabase.storage
+    .from(WORKSHEET_BUCKET)
+    .getPublicUrl(path);
+
+  return data.publicUrl || null;
+}
+
+function getPreviewUrl(worksheet: WorksheetLibraryRow) {
+  return (
+    getPublicFileUrl(worksheet.preview_storage_path) ||
+    getPublicFileUrl(worksheet.thumbnail_storage_path) ||
+    worksheet.preview_image_url
+  );
+}
+
+function getPdfUrl(worksheet: WorksheetLibraryRow) {
+  return (
+    worksheet.pdf_url ||
+    getPublicFileUrl(worksheet.pdf_storage_path)
+  );
+}
+
 export default function AdminWorksheetLibraryScreen() {
   const router = useRouter();
 
@@ -163,53 +188,70 @@ export default function AdminWorksheetLibraryScreen() {
     useState<WorksheetStatusFilter>('all');
 
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] =
     useState(false);
 
   const [processingId, setProcessingId] =
-    useState<string | null>(null);
+  useState<string | null>(null);
+
+const selectedPreviewUrl = selectedWorksheet
+  ? getPreviewUrl(selectedWorksheet)
+  : null;
 
   const loadWorksheets = useCallback(
-    async (showRefresh = false) => {
-      try {
-        if (showRefresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-
-        const { data, error } = await supabase
-          .from('worksheet_library')
-          .select('*')
-          .order('created_at', {
-            ascending: false,
-          });
-
-        if (error) {
-          throw error;
-        }
-
-        setWorksheets(
-          (data || []) as WorksheetLibraryRow[]
-        );
-      } catch (error: any) {
-        console.error(
-          'Worksheet library load error:',
-          error
-        );
-
-        Alert.alert(
-          'Library Error',
-          error?.message ||
-            'Could not load the worksheet library.'
-        );
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+  async (showRefresh = false) => {
+    try {
+      if (showRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    },
-    []
-  );
+
+      /*
+       * Admin library must load every worksheet:
+       * drafts, approved worksheets, and inactive worksheets.
+       *
+       * Do not filter by status or is_active here.
+       */
+      const { data, error } = await supabase
+        .from('worksheet_library')
+        .select('*')
+        .order('created_at', {
+          ascending: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log(
+        'Admin worksheet library rows:',
+        data?.length ?? 0,
+        data
+      );
+
+      setWorksheets(
+        (data ?? []) as WorksheetLibraryRow[]
+      );
+    } catch (error: any) {
+      console.error(
+        'Worksheet library load error:',
+        error
+      );
+
+      Alert.alert(
+        'Library Error',
+        error?.message ||
+          'Could not load the worksheet library.'
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  },
+  []
+);
 
   useFocusEffect(
     useCallback(() => {
@@ -222,184 +264,186 @@ export default function AdminWorksheetLibraryScreen() {
       return worksheets;
     }
 
-    if (activeFilter === 'published') {
+    if (activeFilter === 'approved') {
       return worksheets.filter(
         (worksheet) =>
-          worksheet.status === 'published' &&
+          worksheet.status === 'approved' &&
           worksheet.is_active
       );
     }
 
     return worksheets.filter(
       (worksheet) =>
-        worksheet.status !== 'published' ||
+        worksheet.status !== 'approved' ||
         !worksheet.is_active
     );
   }, [activeFilter, worksheets]);
 
   const counts = useMemo(() => {
-    const published = worksheets.filter(
+    const approved = worksheets.filter(
       (worksheet) =>
-        worksheet.status === 'published' &&
+        worksheet.status === 'approved' &&
         worksheet.is_active
     ).length;
 
     return {
       all: worksheets.length,
-      published,
-      draft: worksheets.length - published,
+      approved,
+      draft: worksheets.length - approved,
     };
   }, [worksheets]);
 
-  async function publishWorksheet(
-    worksheet: WorksheetLibraryRow
-  ) {
-    try {
-      setProcessingId(worksheet.id);
+ async function publishWorksheet(
+  worksheet: WorksheetLibraryRow
+) {
+  try {
+    setProcessingId(worksheet.id);
 
-      const { error } = await supabase
-        .from('worksheet_library')
-        .update({
-          status: 'published',
-          is_active: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', worksheet.id);
+    const updatedAt = new Date().toISOString();
 
-      if (error) {
-        throw error;
-      }
+    const { data, error } = await supabase
+      .from('worksheet_library')
+      .update({
+        status: 'approved',
+        is_active: true,
+        updated_at: updatedAt,
+      })
+      .eq('id', worksheet.id)
+      .select('*')
+      .single();
 
-      setWorksheets((current) =>
-        current.map((item) =>
-          item.id === worksheet.id
-            ? {
-                ...item,
-                status: 'published',
-                is_active: true,
-                updated_at:
-                  new Date().toISOString(),
-              }
-            : item
-        )
-      );
-
-      setSelectedWorksheet((current) =>
-        current?.id === worksheet.id
-          ? {
-              ...current,
-              status: 'published',
-              is_active: true,
-              updated_at:
-                new Date().toISOString(),
-            }
-          : current
-      );
-
-      Alert.alert(
-        'Worksheet Published',
-        'This worksheet is now visible in the parent Worksheet tab.'
-      );
-    } catch (error: any) {
-      console.error(
-        'Publish worksheet error:',
-        error
-      );
-
-      Alert.alert(
-        'Publish Failed',
-        error?.message ||
-          'Could not publish this worksheet.'
-      );
-    } finally {
-      setProcessingId(null);
+    if (error) {
+      throw error;
     }
-  }
 
-  async function unpublishWorksheet(
-    worksheet: WorksheetLibraryRow
-  ) {
-    try {
-      setProcessingId(worksheet.id);
-
-      const { error } = await supabase
-        .from('worksheet_library')
-        .update({
-          status: 'draft',
-          is_active: false,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', worksheet.id);
-
-      if (error) {
-        throw error;
-      }
-
-      setWorksheets((current) =>
-        current.map((item) =>
-          item.id === worksheet.id
-            ? {
-                ...item,
-                status: 'draft',
-                is_active: false,
-                updated_at:
-                  new Date().toISOString(),
-              }
-            : item
-        )
+    if (!data) {
+      throw new Error(
+        'The worksheet was not updated. Check the worksheet_library update policy.'
       );
-
-      setSelectedWorksheet((current) =>
-        current?.id === worksheet.id
-          ? {
-              ...current,
-              status: 'draft',
-              is_active: false,
-              updated_at:
-                new Date().toISOString(),
-            }
-          : current
-      );
-
-      Alert.alert(
-        'Worksheet Unpublished',
-        'This worksheet is no longer visible to parents.'
-      );
-    } catch (error: any) {
-      console.error(
-        'Unpublish worksheet error:',
-        error
-      );
-
-      Alert.alert(
-        'Update Failed',
-        error?.message ||
-          'Could not unpublish this worksheet.'
-      );
-    } finally {
-      setProcessingId(null);
     }
-  }
 
-  function confirmPublish(
-    worksheet: WorksheetLibraryRow
-  ) {
-    Alert.alert(
-      'Publish Worksheet?',
-      `“${worksheet.title}” will become visible to families in the Worksheet tab.`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Publish',
-          onPress: () =>
-            void publishWorksheet(worksheet),
-        },
-      ]
+    const updatedWorksheet =
+      data as WorksheetLibraryRow;
+
+    setWorksheets((current) =>
+      current.map((item) =>
+        item.id === worksheet.id
+          ? updatedWorksheet
+          : item
+      )
     );
+
+    setSelectedWorksheet((current) =>
+      current?.id === worksheet.id
+        ? updatedWorksheet
+        : current
+    );
+
+    Alert.alert(
+      'Worksheet Approved',
+      'This worksheet is now visible in the parent Worksheet tab.'
+    );
+  } catch (error: any) {
+    console.error(
+      'Publish worksheet error:',
+      error
+    );
+
+    Alert.alert(
+      'Publish Failed',
+      error?.message ||
+        'Could not publish this worksheet.'
+    );
+  } finally {
+    setProcessingId(null);
   }
+}
+
+ async function unpublishWorksheet(
+  worksheet: WorksheetLibraryRow
+) {
+  try {
+    setProcessingId(worksheet.id);
+
+    const updatedAt = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('worksheet_library')
+      .update({
+        status: 'draft',
+        is_active: false,
+        updated_at: updatedAt,
+      })
+      .eq('id', worksheet.id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error(
+        'The worksheet was not updated. Check the worksheet_library update policy.'
+      );
+    }
+
+    const updatedWorksheet =
+      data as WorksheetLibraryRow;
+
+    setWorksheets((current) =>
+      current.map((item) =>
+        item.id === worksheet.id
+          ? updatedWorksheet
+          : item
+      )
+    );
+
+    setSelectedWorksheet((current) =>
+      current?.id === worksheet.id
+        ? updatedWorksheet
+        : current
+    );
+
+    Alert.alert(
+      'Worksheet Unpublished',
+      'This worksheet is no longer visible to parents.'
+    );
+  } catch (error: any) {
+    console.error(
+      'Unpublish worksheet error:',
+      error
+    );
+
+    Alert.alert(
+      'Update Failed',
+      error?.message ||
+        'Could not unpublish this worksheet.'
+    );
+  } finally {
+    setProcessingId(null);
+  }
+}
+
+ function confirmPublish(
+  worksheet: WorksheetLibraryRow
+) {
+  Alert.alert(
+    'Approve & Publish Worksheet?',
+    `“${worksheet.title}” will become visible to families in the Worksheet tab.`,
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Approve & Publish',
+        onPress: () =>
+          void publishWorksheet(worksheet),
+      },
+    ]
+  );
+}
 
   function confirmUnpublish(
     worksheet: WorksheetLibraryRow
@@ -422,81 +466,81 @@ export default function AdminWorksheetLibraryScreen() {
     );
   }
 
-  async function openPdf(
-    worksheet: WorksheetLibraryRow
-  ) {
-    if (!worksheet.pdf_url) {
-      Alert.alert(
-        'PDF Missing',
-        'This worksheet does not have an uploaded PDF.'
+ async function openPdf(
+  worksheet: WorksheetLibraryRow
+) {
+  const pdfUrl = getPdfUrl(worksheet);
+
+  if (!pdfUrl) {
+    Alert.alert(
+      'PDF Missing',
+      'This worksheet does not have an uploaded PDF.'
+    );
+    return;
+  }
+
+  try {
+    setProcessingId(worksheet.id);
+
+    const safeName =
+      worksheet.title
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') ||
+      'worksheet';
+
+    const destination =
+      `${FileSystem.cacheDirectory}` +
+      `${safeName}-${Date.now()}.pdf`;
+
+    const result =
+      await FileSystem.downloadAsync(
+        pdfUrl,
+        destination
       );
 
+    if (
+      result.status < 200 ||
+      result.status >= 300
+    ) {
+      throw new Error(
+        'The worksheet PDF could not be downloaded.'
+      );
+    }
+
+    const canShare =
+      await Sharing.isAvailableAsync();
+
+    if (!canShare) {
+      Alert.alert(
+        'PDF Downloaded',
+        'The PDF was downloaded, but the system preview menu is unavailable.'
+      );
       return;
     }
 
-    try {
-      setProcessingId(worksheet.id);
+    await Sharing.shareAsync(result.uri, {
+      mimeType: 'application/pdf',
+      UTI: 'com.adobe.pdf',
+      dialogTitle:
+        `Preview ${worksheet.title}`,
+    });
+  } catch (error: any) {
+    console.error(
+      'Worksheet PDF preview error:',
+      error
+    );
 
-      const safeName =
-        worksheet.title
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '') ||
-        'worksheet';
-
-      const destination =
-        `${FileSystem.cacheDirectory}` +
-        `${safeName}-${Date.now()}.pdf`;
-
-      const result =
-        await FileSystem.downloadAsync(
-          worksheet.pdf_url,
-          destination
-        );
-
-      if (
-        result.status < 200 ||
-        result.status >= 300
-      ) {
-        throw new Error(
-          'The worksheet PDF could not be downloaded.'
-        );
-      }
-
-      const canShare =
-        await Sharing.isAvailableAsync();
-
-      if (!canShare) {
-        Alert.alert(
-          'PDF Downloaded',
-          'The PDF was downloaded, but the system preview menu is unavailable.'
-        );
-
-        return;
-      }
-
-      await Sharing.shareAsync(result.uri, {
-        mimeType: 'application/pdf',
-        UTI: 'com.adobe.pdf',
-        dialogTitle:
-          `Preview ${worksheet.title}`,
-      });
-    } catch (error: any) {
-      console.error(
-        'Worksheet PDF preview error:',
-        error
-      );
-
-      Alert.alert(
-        'Preview Failed',
-        error?.message ||
-          'Could not open the worksheet PDF.'
-      );
-    } finally {
-      setProcessingId(null);
-    }
+    Alert.alert(
+      'Preview Failed',
+      error?.message ||
+        'Could not open the worksheet PDF.'
+    );
+  } finally {
+    setProcessingId(null);
   }
+}
 
   async function deleteWorksheet(
     worksheet: WorksheetLibraryRow
@@ -624,8 +668,8 @@ export default function AdminWorksheetLibraryScreen() {
           style={styles.uploadShortcut}
           onPress={() =>
             router.push(
-              '/admin/worksheet-library/upload'
-            )
+  '/admin/worksheets/upload' as any
+)
           }
         >
           <Ionicons
@@ -693,11 +737,11 @@ export default function AdminWorksheetLibraryScreen() {
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>
-              {counts.published}
+              {counts.approved}
             </Text>
 
             <Text style={styles.summaryLabel}>
-              Published
+              Approved
             </Text>
           </View>
         </View>
@@ -716,7 +760,7 @@ export default function AdminWorksheetLibraryScreen() {
                 ? counts.all
                 : filter.value === 'draft'
                 ? counts.draft
-                : counts.published;
+                : counts.approved;
 
             return (
               <TouchableOpacity
@@ -762,13 +806,13 @@ export default function AdminWorksheetLibraryScreen() {
             </Text>
 
             <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() =>
-                router.push(
-                  '/admin/worksheet-library/upload'
-                )
-              }
-            >
+  style={styles.emptyButton}
+  onPress={() =>
+    router.push(
+      '/admin/worksheets/upload' as any
+    )
+  }
+>
               <Text style={styles.emptyButtonText}>
                 Upload Worksheet
               </Text>
@@ -776,16 +820,14 @@ export default function AdminWorksheetLibraryScreen() {
           </View>
         ) : (
           filteredWorksheets.map((worksheet) => {
-            const statusColors =
-              getStatusColors(worksheet);
+  const statusColors = getStatusColors(worksheet);
+  const previewUrl = getPreviewUrl(worksheet);
 
-            const processing =
-              processingId === worksheet.id;
+  const processing = processingId === worksheet.id;
 
-            const published =
-              worksheet.status === 'published' &&
-              worksheet.is_active;
-
+  const approved =
+    worksheet.status === 'approved' &&
+    worksheet.is_active === true;
             return (
               <TouchableOpacity
                 key={worksheet.id}
@@ -795,28 +837,27 @@ export default function AdminWorksheetLibraryScreen() {
                   setSelectedWorksheet(worksheet)
                 }
               >
-                {worksheet.preview_image_url ? (
-                  <Image
-                    source={{
-                      uri:
-                        worksheet.preview_image_url,
-                    }}
-                    style={styles.previewImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={
-                      styles.previewPlaceholder
-                    }
-                  >
-                    <Ionicons
-                      name="image-outline"
-                      size={32}
-                      color="#94A3B8"
-                    />
-                  </View>
-                )}
+                <View style={styles.previewFrame}>
+  {previewUrl ? (
+    <Image
+      source={{ uri: previewUrl }}
+      style={styles.previewImage}
+      resizeMode="cover"
+    />
+  ) : (
+    <View style={styles.previewPlaceholder}>
+      <Ionicons
+        name="image-outline"
+        size={32}
+        color="#94A3B8"
+      />
+
+      <Text style={styles.previewPlaceholderText}>
+        No preview image
+      </Text>
+    </View>
+  )}
+</View>
 
                 <View style={styles.cardHeader}>
                   <View
@@ -830,7 +871,7 @@ export default function AdminWorksheetLibraryScreen() {
                   >
                     <Ionicons
                       name={
-                        published
+                        approved
                           ? 'checkmark-circle'
                           : 'time-outline'
                       }
@@ -884,7 +925,8 @@ export default function AdminWorksheetLibraryScreen() {
                   style={styles.cardDescription}
                   numberOfLines={3}
                 >
-                  {worksheet.description}
+                  {worksheet.description ||
+  'No description has been provided.'}
                 </Text>
 
                 <View style={styles.metaWrap}>
@@ -969,12 +1011,12 @@ export default function AdminWorksheetLibraryScreen() {
                   <TouchableOpacity
                     style={[
                       styles.publishButton,
-                      published &&
+                      approved &&
                         styles.unpublishButton,
                     ]}
                     disabled={processing}
                     onPress={() =>
-                      published
+                      approved
                         ? confirmUnpublish(
                             worksheet
                           )
@@ -992,7 +1034,7 @@ export default function AdminWorksheetLibraryScreen() {
                       <>
                         <Ionicons
                           name={
-                            published
+                            approved
                               ? 'eye-off-outline'
                               : 'checkmark-circle-outline'
                           }
@@ -1005,7 +1047,7 @@ export default function AdminWorksheetLibraryScreen() {
                             styles.publishButtonText
                           }
                         >
-                          {published
+                          {approved
                             ? 'Unpublish'
                             : 'Publish'}
                         </Text>
@@ -1038,46 +1080,51 @@ export default function AdminWorksheetLibraryScreen() {
               }
             >
               <View style={styles.modalTopRow}>
-                <Text style={styles.modalEyebrow}>
-                  WORKSHEET REVIEW
-                </Text>
+  <Text style={styles.modalEyebrow}>
+    WORKSHEET REVIEW
+  </Text>
 
-                <TouchableOpacity
-                  onPress={() =>
-                    setSelectedWorksheet(null)
-                  }
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={31}
-                    color="#64748B"
-                  />
-                </TouchableOpacity>
-              </View>
+  <TouchableOpacity
+    onPress={() => setSelectedWorksheet(null)}
+  >
+    <Ionicons
+      name="close-circle"
+      size={31}
+      color="#64748B"
+    />
+  </TouchableOpacity>
+</View>
 
-              {selectedWorksheet
-                ?.preview_image_url ? (
-                <View style={styles.modalPreview}>
-                  <Image
-                    source={{
-                      uri:
-                        selectedWorksheet.preview_image_url,
-                    }}
-                    style={
-                      styles.modalPreviewImage
-                    }
-                    resizeMode="contain"
-                  />
-                </View>
-              ) : null}
+<View style={styles.modalPreview}>
+  {selectedPreviewUrl ? (
+    <Image
+      source={{ uri: selectedPreviewUrl }}
+      style={styles.modalPreviewImage}
+      resizeMode="contain"
+    />
+  ) : (
+    <View style={styles.modalPreviewPlaceholder}>
+      <Ionicons
+        name="image-outline"
+        size={36}
+        color="#94A3B8"
+      />
 
-              <Text style={styles.modalTitle}>
-                {selectedWorksheet?.title}
-              </Text>
+      <Text style={styles.modalPreviewPlaceholderText}>
+        No preview image was uploaded
+      </Text>
+    </View>
+  )}
+</View>
 
-              <Text style={styles.modalDescription}>
-                {selectedWorksheet?.description}
-              </Text>
+<Text style={styles.modalTitle}>
+  {selectedWorksheet?.title}
+</Text>
+
+<Text style={styles.modalDescription}>
+  {selectedWorksheet?.description ||
+    'No description has been provided.'}
+</Text>
 
               <View style={styles.detailCard}>
                 <Text style={styles.detailLabel}>
@@ -1155,7 +1202,7 @@ export default function AdminWorksheetLibraryScreen() {
 
               {selectedWorksheet ? (
                 selectedWorksheet.status ===
-                  'published' &&
+                  'approved' &&
                 selectedWorksheet.is_active ? (
                   <TouchableOpacity
                     style={styles.modalUnpublishButton}
@@ -1422,23 +1469,19 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  previewImage: {
-    width: '100%',
-    height: 185,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    marginBottom: 13,
-  },
-
   previewPlaceholder: {
-    width: '100%',
-    height: 185,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 13,
-  },
+  flex: 1,
+  backgroundColor: '#F8FAFC',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+previewPlaceholderText: {
+  marginTop: 8,
+  color: '#94A3B8',
+  fontSize: 12,
+  fontWeight: '800',
+},
 
   cardHeader: {
     flexDirection: 'row',
@@ -1778,4 +1821,37 @@ const styles = StyleSheet.create({
     color: '#B91C1C',
     fontWeight: '900',
   },
+
+ previewFrame: {
+  width: '100%',
+  aspectRatio: 1.55,
+  borderRadius: 22,
+  backgroundColor: '#F8FAFC',
+  borderWidth: 1,
+  borderColor: '#E2E8F0',
+  overflow: 'hidden',
+  marginBottom: 13,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+previewImage: {
+  width: '100%',
+  height: '100%',
+},
+
+modalPreviewPlaceholder: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 20,
+},
+
+modalPreviewPlaceholderText: {
+  marginTop: 8,
+  color: '#94A3B8',
+  fontSize: 13,
+  fontWeight: '800',
+  textAlign: 'center',
+},
 });
