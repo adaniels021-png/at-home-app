@@ -1,124 +1,236 @@
-import { useRouter } from 'expo-router';
+import {
+  useRootNavigationState,
+  useRouter,
+} from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
 import { supabase } from '../lib/supabase';
 
 type ChildRecord = {
   id: string;
-  child_name?: string | null;
-  name?: string | null;
 };
+
+type AppRoute =
+  | '/auth'
+  | '/onboarding/add-child'
+  | '/onboarding/assessment'
+  | '/(tabs)';
+
+const STARTUP_TIMEOUT_MS = 10_000;
 
 export default function IndexScreen() {
   const router = useRouter();
-  const hasNavigatedRef = useRef(false);
+  const navigationState = useRootNavigationState();
+
+  const mountedRef = useRef(true);
+  const navigationStartedRef = useRef(false);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    /*
+     * Wait until Expo Router has mounted its root navigator.
+     * Redirecting before this exists can cause an unmatched-route
+     * screen or a failed startup redirect.
+     */
+    if (!navigationState?.key) {
+      return;
+    }
+
+    if (navigationStartedRef.current) {
+      return;
+    }
+
+    navigationStartedRef.current = true;
+
+    let completed = false;
+
+    const navigate = (route: AppRoute) => {
+      if (!mountedRef.current || completed) {
+        return;
+      }
+
+      completed = true;
+      clearTimeout(startupTimeout);
+
+      router.replace(route as any);
+    };
+
+    /*
+     * If a database request hangs during startup, do not leave the
+     * user trapped on a blank or loading screen.
+     *
+     * The valid route for your tab layout is "/(tabs)", not
+     * "/(tabs)/index".
+     */
+    const startupTimeout = setTimeout(() => {
+      if (!mountedRef.current || completed) {
+        return;
+      }
+
+      console.warn(
+        'Startup routing timed out. Opening the main app.'
+      );
+
+      navigate('/(tabs)');
+    }, STARTUP_TIMEOUT_MS);
 
     const routeUser = async () => {
       try {
-        if (hasNavigatedRef.current || !mounted) return;
-
         const {
           data: { session },
           error: sessionError,
         } = await supabase.auth.getSession();
 
+        if (!mountedRef.current || completed) {
+          return;
+        }
+
         if (sessionError) {
-          console.error('Root session check error:', sessionError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/auth');
+          console.error(
+            'Root session check error:',
+            sessionError
+          );
+
+          navigate('/auth');
           return;
         }
 
-        if (!session?.user?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/auth');
+        const userId = session?.user?.id;
+
+        if (!userId) {
+          navigate('/auth');
           return;
         }
 
-        const userId = session.user.id;
-
-        const { data: children, error: childError } = await supabase
+        const {
+          data: children,
+          error: childError,
+        } = await supabase
           .from('children')
-          .select('id, child_name, name')
+          .select('id')
           .eq('parent_id', userId)
-          .order('created_at', { ascending: true })
+          .order('created_at', {
+            ascending: true,
+          })
           .limit(1);
 
-        if (childError) {
-          console.error('Child lookup error:', childError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/add-child')     
+        if (!mountedRef.current || completed) {
           return;
         }
 
-        const firstChild = (children?.[0] || null) as ChildRecord | null;
+        if (childError) {
+          console.error(
+            'Child lookup error:',
+            childError
+          );
+
+          /*
+           * The user is authenticated. A temporary child-table error
+           * should not prevent the app from opening.
+           */
+          navigate('/(tabs)');
+          return;
+        }
+
+        const firstChild =
+          (children?.[0] || null) as
+            | ChildRecord
+            | null;
 
         if (!firstChild?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/add-child');
+          navigate('/onboarding/add-child');
           return;
         }
 
-        const { data: assessment, error: assessmentError } = await supabase
+        const {
+          data: assessment,
+          error: assessmentError,
+        } = await supabase
           .from('assessments')
           .select('id')
           .eq('child_id', firstChild.id)
-          .order('completed_at', { ascending: false })
+          .order('completed_at', {
+            ascending: false,
+          })
           .limit(1)
           .maybeSingle();
 
+        if (!mountedRef.current || completed) {
+          return;
+        }
+
         if (assessmentError) {
-          console.error('Assessment lookup error:', assessmentError);
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/assessment');
+          console.error(
+            'Assessment lookup error:',
+            assessmentError
+          );
+
+          /*
+           * Do not send an established user through onboarding again
+           * because of a temporary database error.
+           */
+          navigate('/(tabs)');
           return;
         }
 
         if (!assessment?.id) {
-          if (!mounted || hasNavigatedRef.current) return;
-          hasNavigatedRef.current = true;
-          router.replace('/onboarding/assessment');
+          navigate('/onboarding/assessment');
           return;
         }
 
-        if (!mounted || hasNavigatedRef.current) return;
-        hasNavigatedRef.current = true;
-        router.replace('/(tabs)');
+        navigate('/(tabs)');
       } catch (error) {
-        console.error('Root routing error:', error);
-        if (!mounted || hasNavigatedRef.current) return;
-        hasNavigatedRef.current = true;
-        router.replace('/auth');
+        console.error(
+          'Root routing error:',
+          error
+        );
+
+        if (!mountedRef.current || completed) {
+          return;
+        }
+
+        /*
+         * The session was not confirmed as signed out, so open the
+         * existing main app instead of leaving a blank screen.
+         */
+        navigate('/(tabs)');
       }
     };
 
     void routeUser();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      if (!mounted || hasNavigatedRef.current) return;
-      await routeUser();
-    });
-
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
+      clearTimeout(startupTimeout);
     };
-  }, [router]);
+  }, [navigationState?.key, router]);
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#4F46E5" />
-      <Text style={styles.text}>Loading ABA at Home...</Text>
+      <ActivityIndicator
+        size="large"
+        color="#4F46E5"
+      />
+
+      <Text style={styles.title}>
+        ABA at Home
+      </Text>
+
+      <Text style={styles.text}>
+        Preparing your family dashboard...
+      </Text>
     </View>
   );
 }
@@ -131,10 +243,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
+
+  title: {
+    marginTop: 18,
+    color: '#1E1B4B',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+
   text: {
-    marginTop: 14,
+    marginTop: 7,
     color: '#64748B',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

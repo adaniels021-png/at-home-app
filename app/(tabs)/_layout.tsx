@@ -5,43 +5,55 @@ import React from 'react';
 export default function TabLayout() {
   return (
     <Tabs
+      initialRouteName="index"
       screenOptions={{
-  headerShown: false,
-  tabBarActiveTintColor: '#4F46E5',
-  tabBarInactiveTintColor: '#64748B',
-  tabBarStyle: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 14,
-    height: 76,
-    borderRadius: 28,
-    borderTopWidth: 0,
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    paddingBottom: 12,
-    paddingTop: 10,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 22,
-    elevation: 8,
-  },
-  tabBarLabelStyle: {
-    fontSize: 11,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  tabBarIconStyle: {
-    marginTop: 2,
-  },
-}}
+        headerShown: false,
+        lazy: true,
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: '#64748B',
+        sceneStyle: {
+          backgroundColor: '#F8FAFC',
+        },
+        tabBarStyle: {
+          position: 'absolute',
+          left: 16,
+          right: 16,
+          bottom: 14,
+          height: 76,
+          borderRadius: 28,
+          borderTopWidth: 0,
+          backgroundColor: 'rgba(255,255,255,0.96)',
+          paddingBottom: 12,
+          paddingTop: 10,
+          shadowColor: '#0F172A',
+          shadowOffset: {
+            width: 0,
+            height: 10,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 22,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '800',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
+        },
+      }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons
+              name="home"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -51,7 +63,11 @@ export default function TabLayout() {
         options={{
           title: 'Lessons',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
+            <Ionicons
+              name="book"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -61,7 +77,11 @@ export default function TabLayout() {
         options={{
           title: 'Routine',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+            <Ionicons
+              name="calendar"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -71,7 +91,11 @@ export default function TabLayout() {
         options={{
           title: 'Talk',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size} color={color} />
+            <Ionicons
+              name="chatbubbles"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -81,7 +105,11 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
+            <Ionicons
+              name="settings"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
