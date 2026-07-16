@@ -32,6 +32,8 @@ export type LessonLibraryItem = {
   harder_version: string | null;
   generalization_ideas: string[] | null;
   safety_notes: string[] | null;
+  mastery_criteria: string | null;
+  next_lesson_preview: string | null; 
   difficulty: string | null;
   estimated_minutes: number | null;
   pro_only: boolean;
