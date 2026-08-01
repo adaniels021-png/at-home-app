@@ -1,6 +1,7 @@
 import { ensureLessonQueue } from '@/lib/lessonQueue';
 import { useChild } from '@/lib/SelectedChildContext';
 import { useSubscription } from '@/lib/SubscriptionContext';
+import { hasEntitlement } from '@/lib/entitlements';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -16,7 +17,11 @@ export default function PlanReadyScreen() {
   const router = useRouter();
 
   const { selectedChild } = useChild() as any;
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const isPro = hasEntitlement(
+    { isPro: subscriptionIsPro },
+    'premium_tool'
+  );
 
   useEffect(() => {
   if (!selectedChild?.id) return;

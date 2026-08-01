@@ -104,7 +104,7 @@ export default function ParentJournalHomeScreen() {
           </View>
 
           <View style={styles.cardTextWrap}>
-            <Text style={styles.promptEyebrow}>Today's Reflection</Text>
+            <Text style={styles.promptEyebrow}>Today&apos;s Reflection</Text>
             <Text style={styles.promptText}>{TODAY_PROMPT}</Text>
           </View>
 

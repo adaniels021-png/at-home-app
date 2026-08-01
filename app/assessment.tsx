@@ -385,7 +385,7 @@ const changedCount = comparisonItems.length;
         </Text>
 
         <Text style={styles.emptyText}>
-          Assessments can only be completed by the child's
+          Assessments can only be completed by the child&apos;s
           parent or account owner.
         </Text>
       </View>

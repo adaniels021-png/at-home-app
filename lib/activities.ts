@@ -1,4 +1,5 @@
 import { generateDailyABAActivities } from './aiService';
+import { hasEntitlement } from './entitlements';
 
 import { supabase } from './supabase';
 
@@ -45,6 +46,7 @@ export type DailyActivity = {
   materials?: string[];
   instructions?: string[];
   success_criteria?: string;
+  pro_only?: boolean;
 };
 
 export type SavedActivityRow = {
@@ -245,6 +247,7 @@ export function normalizeActivity(
     instructions: safeArray(activity?.instructions || activity?.steps),
     goal: safeString(activity?.goal || activity?.objective),
     success_criteria: safeString(activity?.success_criteria || activity?.successCriteria),
+    pro_only: activity?.pro_only !== false,
   };
 }
 
@@ -517,6 +520,18 @@ export async function getOrCreateDailyActivities({
   const today = getTodayLocalDateString();
 
   try {
+    if (!hasEntitlement({ isPro }, 'activities')) {
+      const { data, error } = await supabase
+        .from('activity_library')
+        .select('*')
+        .eq('status', 'approved')
+        .eq('pro_only', false)
+        .order('title', { ascending: true });
+
+      if (error) throw error;
+      return normalizeActivities(data || []);
+    }
+
     if (!forceRefresh) {
       const { data: existing, error } = await supabase
         .from('daily_fun_activities')
@@ -535,7 +550,7 @@ export async function getOrCreateDailyActivities({
    const activities = await generateCreativeDailyActivities({
   childId,
   childName,
-  count: isPro ? 5 : 3,
+  count: 5,
   setting: 'either',
   difficulty: 'beginner',
 });
@@ -560,7 +575,7 @@ export async function getOrCreateDailyActivities({
     return activities;
   } catch (error) {
     console.error('getOrCreateDailyActivities error:', error);
-    return buildFallbackActivities(childName);
+    return isPro ? buildFallbackActivities(childName) : [];
   }
 }
 
@@ -569,12 +584,18 @@ export async function regenerateActivityAtIndex({
   childName,
   activities,
   index,
+  isPro = false,
 }: {
   childId: string;
   childName: string;
   activities: DailyActivity[];
   index: number;
+  isPro?: boolean;
 }): Promise<DailyActivity[]> {
+  if (!hasEntitlement({ isPro }, 'activities')) {
+    return activities;
+  }
+
   const today = getTodayLocalDateString();
 
   const generated = await generateCreativeDailyActivities({

@@ -1,4 +1,5 @@
-  import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -19,6 +20,10 @@ import { getRecommendedActivitiesFromLibrary } from '../../lib/activityLibrary';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import {
+  canAccessActivity as hasActivityAccess,
+  hasEntitlement,
+} from '../../lib/entitlements';
 import {
   DailyActivity,
   buildActivityId,
@@ -56,6 +61,14 @@ type DailyAdventure = DailyActivity & {
   why_it_helps?: string;
   whyItHelps?: string;
 };
+
+type ActivityCarouselItem =
+  | {
+      kind: 'activity';
+      activity: DailyAdventure;
+      originalIndex: number;
+    }
+  | { kind: 'locked' };
 
 const FILTERS: {
   id: AdventureCategory;
@@ -255,7 +268,10 @@ function getCategoryLabel(category: string) {
 export default function ActivitiesScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const isPro = hasEntitlement({ isPro: subscriptionIsPro }, 'activities');
+  const canAccessActivity = (activity: DailyAdventure) =>
+    hasActivityAccess(subscriptionIsPro, activity);
 
   const [activities, setActivities] = useState<DailyAdventure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -285,11 +301,25 @@ export default function ActivitiesScreen() {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
 
-  const visibleActivities = useMemo(() => {
-    return isPro ? activities : activities.slice(0, 1);
-  }, [activities, isPro]);
+  const carouselItems = useMemo<ActivityCarouselItem[]>(() => {
+    const accessibleItems = activities.flatMap((activity, originalIndex) =>
+      hasActivityAccess(subscriptionIsPro, activity)
+        ? [{ kind: 'activity' as const, activity, originalIndex }]
+        : []
+    );
 
-  const lockedActivities = !isPro && activities.length > 1;
+    const hasLockedActivity = activities.some(
+      (activity) => !hasActivityAccess(subscriptionIsPro, activity)
+    );
+
+    return hasLockedActivity
+      ? [...accessibleItems, { kind: 'locked' as const }]
+      : accessibleItems;
+  }, [activities, subscriptionIsPro]);
+
+  const accessibleActivityCount = carouselItems.filter(
+    (item) => item.kind === 'activity'
+  ).length;
 
   const loadSavedActivityState = useCallback(
     async (activityList: DailyAdventure[]) => {
@@ -691,24 +721,6 @@ const generateActivitiesForFilter = useCallback(
       const requestId = ++filterRequestIdRef.current;
 
       try {
-        if (!forceRefresh) {
-          const savedToday = await loadSavedTodayActivities(filter);
-
-          if (
-            savedToday.length > 0 &&
-            requestId === filterRequestIdRef.current
-          ) {
-            setActivities(savedToday);
-            setCurrentIndex(0);
-
-            await loadSavedActivityState(savedToday);
-
-            setLoading(false);
-            setRefreshing(false);
-            return;
-          }
-        }
-
         /*
  * Keep the loading state visible while the approved library
  * activities are retrieved.
@@ -721,7 +733,7 @@ if (!forceRefresh && isMountedRef.current) {
 
         const generated = await generateActivitiesForFilter(
           filter,
-          isPro ? 3 : 1
+          100
         );
 
         if (
@@ -731,9 +743,7 @@ if (!forceRefresh && isMountedRef.current) {
           return;
         }
 
-        const finalActivities = isPro
-          ? generated
-          : generated.slice(0, 1);
+        const finalActivities = generated;
 
         setActivities(finalActivities);
         setCurrentIndex(0);
@@ -810,35 +820,12 @@ if (!forceRefresh && isMountedRef.current) {
 
     filterRequestIdRef.current += 1;
 
-    if (!isPro && filter !== 'surprise') {
-      router.push('/subscription');
-      return;
-    }
-
     setActiveFilter(filter);
     setFilterLoading(true);
     setRefreshing(true);
 
     try {
-      const saved = await loadSavedTodayActivities(filter);
-
-    if (
-  saved.length > 0 &&
-  isLibraryActivitySet(saved)
-) {
-  const visibleSaved = isPro
-    ? saved
-    : saved.slice(0, 1);
-
-  setActivities(visibleSaved);
-  setCurrentIndex(0);
-
-  await loadSavedActivityState(
-    visibleSaved
-  );
-} else {
-  await loadActivities(true, filter);
-}
+      await loadActivities(true, filter);
 
       scrollRef.current?.scrollTo({
         x: 0,
@@ -850,10 +837,18 @@ if (!forceRefresh && isMountedRef.current) {
     }
   };
 
+  const requireActivityAccess = (activity: DailyAdventure) => {
+    if (canAccessActivity(activity)) return false;
+    router.push('/subscription');
+    return true;
+  };
+
   const toggleSaved = async (
     activity: DailyAdventure,
     activityId: string
   ) => {
+    if (requireActivityAccess(activity)) return;
+
     const alreadySaved = savedIds.includes(activityId);
     const nextSaved = !alreadySaved;
 
@@ -887,6 +882,8 @@ if (!forceRefresh && isMountedRef.current) {
     activity: DailyAdventure,
     activityId: string
   ) => {
+    if (requireActivityAccess(activity)) return;
+
     const alreadyFavorite = favoriteIds.includes(activityId);
     const nextFavorite = !alreadyFavorite;
 
@@ -930,6 +927,8 @@ if (!forceRefresh && isMountedRef.current) {
     activityId: string,
     feedback: AdventureFeedback
   ) => {
+    if (requireActivityAccess(activity)) return;
+
     setCompletedIds((prev) =>
       prev.includes(activityId)
         ? prev
@@ -965,6 +964,8 @@ if (!forceRefresh && isMountedRef.current) {
     activity: DailyAdventure,
     activityId: string
   ) => {
+    if (requireActivityAccess(activity)) return;
+
     Alert.alert(
       'How did it go?',
       'This helps make future adventures better.',
@@ -1073,7 +1074,15 @@ if (!forceRefresh && isMountedRef.current) {
     );
   }
 
-  const currentActivity = visibleActivities[currentIndex];
+  const currentCarouselItem = carouselItems[currentIndex];
+  const currentActivity =
+    currentCarouselItem?.kind === 'activity'
+      ? currentCarouselItem.activity
+      : null;
+  const currentActivityOriginalIndex =
+    currentCarouselItem?.kind === 'activity'
+      ? currentCarouselItem.originalIndex
+      : -1;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1132,7 +1141,6 @@ if (!forceRefresh && isMountedRef.current) {
         >
           {FILTERS.map((filter) => {
             const active = activeFilter === filter.id;
-            const locked = filter.id !== 'surprise' && !isPro;
 
             return (
               <TouchableOpacity
@@ -1149,7 +1157,7 @@ if (!forceRefresh && isMountedRef.current) {
   <ActivityIndicator size="small" color="#FFFFFF" />
 ) : (
   <Ionicons
-    name={locked ? 'lock-closed-outline' : filter.icon}
+    name={filter.icon}
     size={15}
     color={active ? '#FFFFFF' : '#7C3AED'}
   />
@@ -1178,12 +1186,12 @@ if (!forceRefresh && isMountedRef.current) {
           <View style={styles.feedMetaChip}>
             <Ionicons name="albums-outline" size={14} color="#7C3AED" />
             <Text style={styles.feedMetaText}>
-              {visibleActivities.length} ideas
+              {accessibleActivityCount} ideas
             </Text>
           </View>
         </View>
 
-        {visibleActivities.length === 0 ? (
+        {carouselItems.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="sparkles-outline" size={30} color="#94A3B8" />
             <Text style={styles.emptyCardTitle}>No adventures yet</Text>
@@ -1205,16 +1213,33 @@ if (!forceRefresh && isMountedRef.current) {
               onMomentumScrollEnd={handleHorizontalScroll}
               contentContainerStyle={styles.horizontalFeed}
             >
-              {visibleActivities.map((activity, index) => {
+              {carouselItems.map((item, index) => {
+                if (item.kind === 'locked') {
+                  return (
+                    <LockedActivityCard
+                      key="locked-activity-card"
+                      width={CARD_WIDTH}
+                      onUnlock={() => router.push('/subscription')}
+                      onMaybeLater={() => {
+                        if (accessibleActivityCount > 0) {
+                          scrollToCard(0);
+                        }
+                      }}
+                    />
+                  );
+                }
+
+                const { activity, originalIndex } = item;
                 const accent = getAdventureAccent(index);
-                const activityId = buildActivityId(activity, index);
+                const activityId = buildActivityId(activity, originalIndex);
                 const isSaved = savedIds.includes(activityId);
                 const isFavorite = favoriteIds.includes(activityId);
                 const isCompleted = completedIds.includes(activityId);
                 const category = getAdventureCategory(activity);
+                const isFreeActivity = activity.pro_only === false;
 
                 return (
-                  <View
+                  <TouchableOpacity
                     key={activityId}
                     style={[
                       styles.feedCard,
@@ -1224,6 +1249,7 @@ if (!forceRefresh && isMountedRef.current) {
                         borderColor: accent.border,
                       },
                     ]}
+                    activeOpacity={1}
                   >
                     <View style={styles.feedCardTop}>
                       <View
@@ -1273,6 +1299,28 @@ if (!forceRefresh && isMountedRef.current) {
                           {getCategoryLabel(category)}
                         </Text>
                       </View>
+
+                      <View
+                        style={[
+                          styles.activityAccessBadge,
+                          isFreeActivity && styles.activityAccessBadgeFree,
+                        ]}
+                      >
+                        <Ionicons
+                          name={isFreeActivity ? 'checkmark-circle' : 'lock-closed'}
+                          size={12}
+                          color={isFreeActivity ? '#047857' : '#7C3AED'}
+                        />
+                        <Text
+                          style={[
+                            styles.activityAccessText,
+                            isFreeActivity && styles.activityAccessTextFree,
+                          ]}
+                        >
+                          {isFreeActivity ? 'Free' : 'Pro'}
+                        </Text>
+                      </View>
+
                     </View>
 
                     <Text style={styles.feedCardTitle}>
@@ -1304,10 +1352,10 @@ if (!forceRefresh && isMountedRef.current) {
                         styles.regenerateActivityBtn,
                         !isPro && styles.regenerateActivityBtnDisabled,
                       ]}
-                      onPress={() => void regenerateActivity(index)}
-                      disabled={regeneratingIndex === index}
+                      onPress={() => void regenerateActivity(originalIndex)}
+                      disabled={regeneratingIndex === originalIndex}
                     >
-                      {regeneratingIndex === index ? (
+                      {regeneratingIndex === originalIndex ? (
                         <ActivityIndicator size="small" color="#7C3AED" />
                       ) : (
                         <>
@@ -1366,15 +1414,15 @@ if (!forceRefresh && isMountedRef.current) {
                         {isCompleted ? 'Adventure Completed' : 'We Did This'}
                       </Text>
                     </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </ScrollView>
 
             <View style={styles.paginationRow}>
-              {visibleActivities.map((_, index) => (
+              {carouselItems.map((item, index) => (
                 <TouchableOpacity
-                  key={index}
+                  key={item.kind === 'locked' ? 'locked-dot' : item.activity.id || index}
                   onPress={() => scrollToCard(index)}
                   style={[
                     styles.paginationDot,
@@ -1383,20 +1431,6 @@ if (!forceRefresh && isMountedRef.current) {
                 />
               ))}
             </View>
-
-            {lockedActivities && (
-              <TouchableOpacity
-                style={styles.lockedCard}
-                onPress={() => router.push('/subscription')}
-              >
-                <Ionicons name="lock-closed-outline" size={28} color="#7C3AED" />
-                <Text style={styles.lockedTitle}>Unlock More Adventures</Text>
-                <Text style={styles.lockedText}>
-                  Get all daily adventures, category filters, unlimited new ideas,
-                  saved favorites, and smarter personalization with Pro.
-                </Text>
-              </TouchableOpacity>
-            )}
 
             {currentActivity ? (
               <View style={styles.quickActionsCard}>
@@ -1408,7 +1442,7 @@ if (!forceRefresh && isMountedRef.current) {
                     onPress={() =>
                       askCompletedFeedback(
                         currentActivity,
-                        buildActivityId(currentActivity, currentIndex)
+                        buildActivityId(currentActivity, currentActivityOriginalIndex)
                       )
                     }
                   >
@@ -1421,7 +1455,7 @@ if (!forceRefresh && isMountedRef.current) {
                     onPress={() =>
                       void toggleFavorite(
                         currentActivity,
-                        buildActivityId(currentActivity, currentIndex)
+                        buildActivityId(currentActivity, currentActivityOriginalIndex)
                       )
                     }
                   >
@@ -1434,7 +1468,7 @@ if (!forceRefresh && isMountedRef.current) {
                     onPress={() =>
                       void toggleSaved(
                         currentActivity,
-                        buildActivityId(currentActivity, currentIndex)
+                        buildActivityId(currentActivity, currentActivityOriginalIndex)
                       )
                     }
                   >
@@ -1461,6 +1495,74 @@ if (!forceRefresh && isMountedRef.current) {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function LockedActivityCard({
+  width: cardWidth,
+  onUnlock,
+  onMaybeLater,
+}: {
+  width: number;
+  onUnlock: () => void;
+  onMaybeLater: () => void;
+}) {
+  const benefits = [
+    'Hundreds of expert-created activities',
+    'Fresh personalized ideas',
+    'Unlimited regenerations',
+    'Save favorite activities',
+  ];
+
+  return (
+    <LinearGradient
+      colors={['#FFFDF8', '#F7F0FF', '#FFF7ED']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.lockedActivityCard, { width: cardWidth }]}
+    >
+      <View pointerEvents="none" style={styles.lockedActivityGlow} />
+
+      <View style={styles.lockedActivityIconWrap}>
+        <Ionicons name="lock-closed" size={30} color="#D97706" />
+      </View>
+
+      <Text style={styles.lockedActivityTitle}>
+        Unlock Unlimited Daily Adventures
+      </Text>
+      <Text style={styles.lockedActivityDescription}>
+        Discover hundreds of therapist-inspired activities, with fresh ideas
+        added regularly.
+      </Text>
+
+      <View style={styles.lockedActivityBenefits}>
+        {benefits.map((benefit) => (
+          <View key={benefit} style={styles.lockedActivityBenefitRow}>
+            <View style={styles.lockedActivityCheck}>
+              <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+            </View>
+            <Text style={styles.lockedActivityBenefitText}>{benefit}</Text>
+          </View>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={styles.lockedActivityUnlockButton}
+        onPress={onUnlock}
+        activeOpacity={0.9}
+      >
+        <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+        <Text style={styles.lockedActivityUnlockText}>Unlock Pro</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.lockedActivityLaterButton}
+        onPress={onMaybeLater}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.lockedActivityLaterText}>Maybe Later</Text>
+      </TouchableOpacity>
+    </LinearGradient>
   );
 }
 
@@ -1751,6 +1853,32 @@ const styles = StyleSheet.create({
   categoryRow: {
     marginTop: 14,
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  activityAccessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    backgroundColor: '#F3E8FF',
+  },
+
+  activityAccessBadgeFree: {
+    backgroundColor: '#D1FAE5',
+  },
+
+  activityAccessText: {
+    color: '#7C3AED',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  activityAccessTextFree: {
+    color: '#047857',
   },
 
   categoryChip: {
@@ -1924,30 +2052,128 @@ const styles = StyleSheet.create({
     backgroundColor: '#7C3AED',
   },
 
-  lockedCard: {
-    backgroundColor: '#F5F3FF',
-    borderRadius: 24,
-    padding: 20,
+  lockedActivityCard: {
+    minHeight: 520,
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    marginRight: 12,
+    overflow: 'hidden',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#DDD6FE',
-    marginBottom: 16,
+    shadowColor: '#6D28D9',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
   },
 
-  lockedTitle: {
-    marginTop: 10,
-    fontSize: 18,
+  lockedActivityGlow: {
+    position: 'absolute',
+    top: -70,
+    right: -55,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: 'rgba(196,181,253,0.28)',
+  },
+
+  lockedActivityIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    shadowColor: '#D97706',
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+
+  lockedActivityTitle: {
+    marginTop: 20,
+    color: '#3B1D6E',
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '900',
-    color: '#5B21B6',
     textAlign: 'center',
   },
 
-  lockedText: {
-    marginTop: 8,
-    color: '#6D28D9',
-    lineHeight: 20,
+  lockedActivityDescription: {
+    marginTop: 10,
+    color: '#6B5A7E',
+    fontSize: 14,
+    lineHeight: 21,
     fontWeight: '700',
     textAlign: 'center',
+  },
+
+  lockedActivityBenefits: {
+    width: '100%',
+    marginTop: 22,
+    gap: 12,
+  },
+
+  lockedActivityBenefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  lockedActivityCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
+  lockedActivityBenefitText: {
+    flex: 1,
+    color: '#4C3D5E',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  lockedActivityUnlockButton: {
+    width: '100%',
+    minHeight: 52,
+    marginTop: 24,
+    borderRadius: 18,
+    backgroundColor: '#7C3AED',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#7C3AED',
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 4,
+  },
+
+  lockedActivityUnlockText: {
+    marginLeft: 8,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  lockedActivityLaterButton: {
+    marginTop: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+
+  lockedActivityLaterText: {
+    color: '#7C6F92',
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   quickActionsCard: {

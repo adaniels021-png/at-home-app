@@ -18,6 +18,7 @@ import { runInBackground } from '../../lib/performance';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 export default function AddChild() {
@@ -28,9 +29,12 @@ export default function AddChild() {
   const refreshChildren = childContext?.refreshChildren;
   const setSelectedChild = childContext?.setSelectedChild;
   
-  const { isPro, adminMode } = useSubscription();
+  const { isPro } = useSubscription();
 
-  const hasProAccess = isPro || adminMode;
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'multi_child'
+  );
 
   const [caregiverName, setCaregiverName] = useState('');
   const [caregiverRelationship, setCaregiverRelationship] = useState('');
@@ -467,7 +471,7 @@ runInBackground(async () => {
             </View>
 
             <Text style={styles.infoText}>
-              Next, we'll learn about your child's communication,
+              Next, we&apos;ll learn about your child&apos;s communication,
               routines, learning style, and support needs so ABA at Home
               can create a personalized starting plan.
           </Text>

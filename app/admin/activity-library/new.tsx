@@ -167,6 +167,7 @@ export default function NewActivityLibraryScreen() {
         materials: materialsList,
         status,
         source: 'admin',
+        pro_only: true,
       };
 
       const { error } = await supabase.from('activity_library').insert(payload);

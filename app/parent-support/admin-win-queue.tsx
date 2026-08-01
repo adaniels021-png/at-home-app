@@ -186,8 +186,10 @@ export default function AdminWinQueueScreen() {
           },
         },
       ]
-    );
-  };
+  );
+};
+
+PendingPostCard.displayName = 'PendingPostCard';
 
   const handleRefresh = () => {
     void loadPendingPosts(true);

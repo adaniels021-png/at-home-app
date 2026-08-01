@@ -15,6 +15,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -65,10 +66,10 @@ type WorksheetLibraryRow = {
 
 const WORKSHEET_BUCKET = 'worksheet-files';
 
-const FILTERS: Array<{
+const FILTERS: {
   value: WorksheetStatusFilter;
   label: string;
-}> = [
+}[] = [
   {
     value: 'all',
     label: 'All',
@@ -198,6 +199,43 @@ export default function AdminWorksheetLibraryScreen() {
 const selectedPreviewUrl = selectedWorksheet
   ? getPreviewUrl(selectedWorksheet)
   : null;
+
+  async function updateWorksheetAvailability(
+    worksheet: WorksheetLibraryRow,
+    isProWorksheet: boolean
+  ) {
+    try {
+      setProcessingId(worksheet.id);
+
+      const { data, error } = await supabase
+        .from('worksheet_library')
+        .update({
+          is_pro: isProWorksheet,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', worksheet.id)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      const updatedWorksheet = data as WorksheetLibraryRow;
+
+      setWorksheets((current) =>
+        current.map((item) =>
+          item.id === updatedWorksheet.id ? updatedWorksheet : item
+        )
+      );
+      setSelectedWorksheet(updatedWorksheet);
+    } catch (error: any) {
+      Alert.alert(
+        'Availability Update Failed',
+        error?.message || 'Could not update worksheet availability.'
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  }
 
   const loadWorksheets = useCallback(
   async (showRefresh = false) => {
@@ -894,6 +932,28 @@ const selectedPreviewUrl = selectedWorksheet
                     </Text>
                   </View>
 
+                  <View style={styles.cardBadgeRow}>
+                    <View
+                      style={[
+                        styles.accessBadge,
+                        worksheet.is_pro === false && styles.accessBadgeFree,
+                      ]}
+                    >
+                      <Ionicons
+                        name={worksheet.is_pro === false ? 'checkmark-circle' : 'lock-closed'}
+                        size={12}
+                        color={worksheet.is_pro === false ? '#047857' : '#7C3AED'}
+                      />
+                      <Text
+                        style={[
+                          styles.accessBadgeText,
+                          worksheet.is_pro === false && styles.accessBadgeTextFree,
+                        ]}
+                      >
+                        {worksheet.is_pro === false ? 'FREE' : 'PRO'}
+                      </Text>
+                    </View>
+
                   {worksheet.is_featured ? (
                     <View
                       style={
@@ -915,6 +975,7 @@ const selectedPreviewUrl = selectedWorksheet
                       </Text>
                     </View>
                   ) : null}
+                  </View>
                 </View>
 
                 <Text style={styles.cardTitle}>
@@ -1135,6 +1196,28 @@ const selectedPreviewUrl = selectedWorksheet
                   {selectedWorksheet?.category}
                 </Text>
               </View>
+
+              {selectedWorksheet ? (
+                <View style={styles.availabilityCard}>
+                  <View style={styles.availabilityTextWrap}>
+                    <Text style={styles.availabilityHeading}>Availability</Text>
+                    <Text style={styles.availabilityTitle}>Pro Worksheet</Text>
+                    <Text style={styles.availabilityDescription}>
+                      Require an active Pro subscription.
+                    </Text>
+                  </View>
+
+                  <Switch
+                    value={selectedWorksheet.is_pro !== false}
+                    onValueChange={(value) =>
+                      void updateWorksheetAvailability(selectedWorksheet, value)
+                    }
+                    disabled={processingId === selectedWorksheet.id}
+                    trackColor={{ false: '#CBD5E1', true: '#C4B5FD' }}
+                    thumbColor={selectedWorksheet.is_pro !== false ? '#7C3AED' : '#FFFFFF'}
+                  />
+                </View>
+              ) : null}
 
               <View style={styles.detailRow}>
                 <View style={styles.detailHalf}>
@@ -1489,6 +1572,36 @@ previewPlaceholderText: {
     alignItems: 'center',
   },
 
+  cardBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+  accessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    backgroundColor: '#F3E8FF',
+  },
+
+  accessBadgeFree: {
+    backgroundColor: '#D1FAE5',
+  },
+
+  accessBadgeText: {
+    color: '#7C3AED',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  accessBadgeTextFree: {
+    color: '#047857',
+  },
+
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1758,6 +1871,45 @@ previewPlaceholderText: {
     lineHeight: 19,
     fontWeight: '700',
     textTransform: 'capitalize',
+  },
+
+  availabilityCard: {
+    marginTop: 12,
+    borderRadius: 17,
+    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+
+  availabilityTextWrap: {
+    flex: 1,
+  },
+
+  availabilityHeading: {
+    color: '#7C3AED',
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+
+  availabilityTitle: {
+    marginTop: 4,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  availabilityDescription: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
   },
 
   openPdfButton: {

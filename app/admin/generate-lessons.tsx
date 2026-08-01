@@ -206,7 +206,7 @@ useEffect(() => {
           safety_notes: [],
           difficulty,
           estimated_minutes: 5,
-          pro_only: false,
+          pro_only: true,
           is_active: false,
           admin_notes: `AI draft generated from admin tool. Source: ${result.source}.`,
           quality_status: 'draft',

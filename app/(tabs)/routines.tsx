@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
 
@@ -177,8 +178,11 @@ export default function RoutinesScreen() {
   const canCustomize = canCustomizeRoutines(role);
   const canTrack = canLogProgress(role);
 
-  const { isPro, adminMode } = useSubscription();
-  const hasProAccess = isPro || adminMode;
+  const { isPro } = useSubscription();
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'routines_customize'
+  );
 
 const openProRoute = (path: string) => {
   if (!hasProAccess || !canCustomize) {

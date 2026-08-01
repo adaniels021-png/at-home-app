@@ -8,14 +8,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Purchases, {
-  PurchasesPackage,
-} from 'react-native-purchases';
+import type { PurchasesPackage } from 'react-native-purchases';
 
-const ENTITLEMENT_ID =
-  process.env.EXPO_PUBLIC_RC_ENTITLEMENT_ID || 'pro';
+import { useSubscription } from '../lib/SubscriptionContext';
+import {
+  getCurrentOffering,
+  hasRevenueCatProEntitlement,
+  purchasePackage,
+} from '../lib/revenuecat';
+
+   const TERMS_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vSdEK03Z4x_j27vnpt7ZpOx7tLBVtzFfIdbYsRULhoGh5Ubi0fehW3V-O9hzVrCQ6yXIQIGoSfF5IBx/pub';
+
+const PRIVACY_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vS_YJJ2JENjbHXysMq8WWI5xectm8aERFu_V7EaRrWSj_JMTc02q5x5MlvIj94BDp8JJt25Z4sR23vP/pub';
+
 
 export default function PaywallScreen() {
+  const { refreshSubscription } = useSubscription();
   const [packageToBuy, setPackageToBuy] =
     useState<PurchasesPackage | null>(null);
 
@@ -32,11 +42,7 @@ export default function PaywallScreen() {
       try {
         setLoadingOffering(true);
 
-        const offerings =
-          await Purchases.getOfferings();
-
-        const currentOffering =
-          offerings.current;
+        const currentOffering = await getCurrentOffering();
 
         if (!currentOffering) {
           throw new Error(
@@ -99,16 +105,11 @@ export default function PaywallScreen() {
     try {
       setPurchasing(true);
 
-      const result =
-        await Purchases.purchasePackage(
-          packageToBuy
-        );
-
-      const hasPro =
-        result.customerInfo.entitlements
-          .active[ENTITLEMENT_ID];
+      const customerInfo = await purchasePackage(packageToBuy);
+      const hasPro = hasRevenueCatProEntitlement(customerInfo);
 
       if (hasPro) {
+        await refreshSubscription();
         Alert.alert(
           'Welcome to Pro!',
           'All Pro features are now unlocked.'
@@ -151,11 +152,15 @@ export default function PaywallScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
-        Unlock ABA at Home Pro
+        Start Your FREE 2-Week Trial
       </Text>
 
+      <Text style={styles.trialText}>
+  Eligible subscribers may receive 2 weeks free, then {displayPrice} unless canceled.
+</Text>
+
       <Text style={styles.benefit}>
-        ✅ Unlimited daily lessons
+        ✅ Unlimited Daily Lessons
       </Text>
 
       <Text style={styles.benefit}>
@@ -163,11 +168,11 @@ export default function PaywallScreen() {
       </Text>
 
       <Text style={styles.benefit}>
-        ✅ Printable worksheets
+        ✅ Complete Worksheet Library
       </Text>
 
       <Text style={styles.benefit}>
-        ✅ Multi-child profile support
+        ✅ Multi-Child Profiles
       </Text>
 
       <TouchableOpacity
@@ -186,7 +191,7 @@ export default function PaywallScreen() {
           />
         ) : (
           <Text style={styles.buttonText}>
-            Subscribe — {displayPrice}
+            Start FREE 2-Week Trial
           </Text>
         )}
       </TouchableOpacity>
@@ -199,17 +204,18 @@ export default function PaywallScreen() {
           </Text>
         )}
 
-      <Text
-        style={styles.footer}
-        onPress={() =>
-          Linking.openURL(
-            'https://docs.google.com/document/d/YOUR_ID'
-          )
-        }
-      >
-        Privacy Policy & Terms of Use
-      </Text>
-    </View>
+        <View style={styles.footerLinks}>
+  <TouchableOpacity onPress={() => Linking.openURL(TERMS_URL)}>
+    <Text style={styles.footerLink}>Terms of Use</Text>
+  </TouchableOpacity>
+
+  <Text style={styles.footerText}> • </Text>
+
+  <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)}>
+    <Text style={styles.footerLink}>Privacy Policy</Text>
+  </TouchableOpacity>
+</View>
+</View>
   );
 }
 
@@ -262,10 +268,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  footer: {
-    marginTop: 40,
-    color: '#8E8E93',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
+  footerLinks: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: 40,
+},
+
+footerText: {
+  color: '#8E8E93',
+  marginHorizontal: 6,
+},
+
+footerLink: {
+  color: '#007AFF',
+  textDecorationLine: 'underline',
+  fontWeight: '600',
+},
+
+trialText: {
+  textAlign: 'center',
+  marginBottom: 24,
+  color: '#6B7280',
+  fontSize: 13,
+  lineHeight: 18,
+},
 });

@@ -1,34 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Purchases from 'react-native-purchases';
+
+import { useSubscription } from '../lib/SubscriptionContext';
+import { hasEntitlement } from '../lib/entitlements';
 
 export default function ProGuard({ children }: { children: React.ReactNode }) {
-  const [isPro, setIsPro] = useState<boolean | null>(null);
   const router = useRouter();
+  const { isPro, loading } = useSubscription();
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'premium_tool'
+  );
 
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const customerInfo = await Purchases.getCustomerInfo();
-        setIsPro(customerInfo.entitlements.active['pro'] !== undefined);
-      } catch (e) {
-        setIsPro(false);
-      }
-    };
-    checkStatus();
-  }, []);
+  if (loading) return null;
 
-  if (isPro === null) return null; // Loading state
-
-  if (!isPro) {
+  if (!hasProAccess) {
     return (
       <View style={styles.overlay}>
         <Ionicons name="lock-closed" size={80} color="#007AFF" />
         <Text style={styles.title}>Pro Feature</Text>
         <Text style={styles.subtitle}>
-          Unlock the 30-Day Curriculum and Advanced Analytics to track your child's progress.
+          Unlock the 30-Day Curriculum and Advanced Analytics to track your child&apos;s progress.
         </Text>
         <TouchableOpacity 
           style={styles.button} 

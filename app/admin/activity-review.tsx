@@ -7,6 +7,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -30,6 +31,7 @@ type ActivityQueueItem = {
   status: ActivityStatus | string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  pro_only: boolean;
 };
 
 const ADMIN_EMAILS = ['adaniels021@gmail.com'];
@@ -138,7 +140,7 @@ function toggleSelected(id: string) {
       const { data, error } = await supabase
         .from('activity_queue')
         .select(
-          'id,title,name,category,location,time,description,try_this,why_it_helps,status,created_at,updated_at'
+          'id,title,name,category,location,time,description,try_this,why_it_helps,status,pro_only,created_at,updated_at'
         )
         .order('created_at', { ascending: false });
 
@@ -192,6 +194,7 @@ function toggleSelected(id: string) {
             why_it_helps: activity.why_it_helps,
             status: 'approved',
             source: 'approved_from_queue',
+            pro_only: activity.pro_only !== false,
             updated_at: new Date().toISOString(),
           },
         ]);
@@ -235,6 +238,40 @@ function toggleSelected(id: string) {
     setSaving(false);
   }
 };
+
+  const updateAvailability = async (
+    activity: ActivityQueueItem,
+    proOnly: boolean
+  ) => {
+    try {
+      setSaving(true);
+
+      const { error } = await supabase
+        .from('activity_queue')
+        .update({
+          pro_only: proOnly,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', activity.id);
+
+      if (error) throw error;
+
+      setActivities((current) =>
+        current.map((item) =>
+          item.id === activity.id
+            ? { ...item, pro_only: proOnly }
+            : item
+        )
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Availability Update Failed',
+        error?.message || 'Could not update activity availability.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const confirmDelete = (activity: ActivityQueueItem) => {
     Alert.alert(
@@ -435,6 +472,7 @@ function toggleSelected(id: string) {
               why_it_helps: activity.why_it_helps,
               status: 'approved',
               source: 'approved_from_queue',
+              pro_only: activity.pro_only !== false,
               updated_at: new Date().toISOString(),
             }));
 
@@ -534,6 +572,10 @@ function toggleSelected(id: string) {
               onReject={() => void updateStatus(activity, 'rejected')}
               onDraft={() => void updateStatus(activity, 'draft')}
               onDelete={() => confirmDelete(activity)}
+              onAvailabilityChange={(value) =>
+                void updateAvailability(activity, value)
+              }
+              availabilityDisabled={saving}
             />
           ))
         )}
@@ -551,6 +593,8 @@ function ActivityReviewCard({
   onReject,
   onDraft,
   onDelete,
+  onAvailabilityChange,
+  availabilityDisabled,
 }: {
   activity: ActivityQueueItem;
   selected: boolean;
@@ -560,6 +604,8 @@ function ActivityReviewCard({
   onReject: () => void;
   onDraft: () => void;
   onDelete: () => void;
+  onAvailabilityChange: (value: boolean) => void;
+  availabilityDisabled: boolean;
 }) {
   const tryThis = normalizeTryThis(activity.try_this);
   const status = activity.status || 'pending';
@@ -641,6 +687,24 @@ function ActivityReviewCard({
         </View>
       )}
 
+      <View style={styles.availabilityCard}>
+        <View style={styles.availabilityTextWrap}>
+          <Text style={styles.availabilityHeading}>Availability</Text>
+          <Text style={styles.availabilityTitle}>Pro Activity</Text>
+          <Text style={styles.availabilityDescription}>
+            Require an active Pro subscription.
+          </Text>
+        </View>
+
+        <Switch
+          value={activity.pro_only !== false}
+          onValueChange={onAvailabilityChange}
+          disabled={availabilityDisabled}
+          trackColor={{ false: '#CBD5E1', true: '#C4B5FD' }}
+          thumbColor={activity.pro_only !== false ? '#7C3AED' : '#FFFFFF'}
+        />
+      </View>
+
       <View style={styles.actionGrid}>
         <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
           <Ionicons name="create-outline" size={17} color="#475569" />
@@ -680,6 +744,45 @@ const styles = StyleSheet.create({
   pageContent: {
     padding: 20,
     paddingBottom: 48,
+  },
+
+  availabilityCard: {
+    marginTop: 14,
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+
+  availabilityTextWrap: {
+    flex: 1,
+  },
+
+  availabilityHeading: {
+    color: '#7C3AED',
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+
+  availabilityTitle: {
+    marginTop: 4,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  availabilityDescription: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
   },
 
   centerWrap: {

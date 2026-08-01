@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { canAccessLesson } from './entitlements';
 
 export type LessonQualityStatus =
   | 'draft'
@@ -82,6 +83,7 @@ async function runLibrarySearch({
   stageNumber,
   completedLessonIds,
   excludeSkills,
+  isPro,
   label,
 }: {
   category?: string;
@@ -89,9 +91,14 @@ async function runLibrarySearch({
   stageNumber?: number;
   completedLessonIds?: string[];
   excludeSkills?: string[];
+  isPro: boolean;
   label: string;
 }) {
   let query = baseLessonQuery();
+
+  if (!isPro) {
+    query = query.eq('pro_only', false);
+  }
 
   if (category) {
     query = query.eq('category', category);
@@ -148,16 +155,18 @@ export async function getRecommendedLesson({
   stageNumber,
   childId,
   excludeSkills,
+  isPro,
 }: {
   category?: string;
   skillArea?: string | string[];
   stageNumber?: number;
   childId?: string;
   excludeSkills?: string[];
+  isPro: boolean;
 }): Promise<LessonLibraryItem | null> {
   const completedLessonIds = await getCompletedLibraryLessonIds(childId);
 
-  const searches = [
+  const categorySearches = [
     {
       label: 'exact category + skill + stage',
       category,
@@ -165,6 +174,7 @@ export async function getRecommendedLesson({
       stageNumber,
       completedLessonIds,
       excludeSkills,
+      isPro,
     },
     {
       label: 'category + skill, no stage',
@@ -172,38 +182,62 @@ export async function getRecommendedLesson({
       skillArea,
       completedLessonIds,
       excludeSkills,
+      isPro,
     },
     {
       label: 'category only',
       category,
       completedLessonIds,
+      isPro,
     },
+    {
+      label: 'category including completed',
+      category,
+      isPro,
+    },
+  ];
+
+  const proFallbackSearches = [
     {
       label: 'skill only',
       skillArea,
       completedLessonIds,
+      isPro,
     },
     {
       label: 'any active lesson',
       completedLessonIds,
+      isPro,
     },
     {
       label: 'any active lesson including completed',
+      isPro,
     },
   ];
+
+  const searches = isPro
+    ? [
+        ...categorySearches.slice(0, 3),
+        ...proFallbackSearches,
+      ]
+    : categorySearches;
 
   for (const search of searches) {
     const lessons = await runLibrarySearch(search);
 
-    if (lessons.length > 0) {
+    const accessibleLesson = lessons.find((lesson) =>
+      canAccessLesson(isPro, lesson)
+    );
+
+    if (accessibleLesson) {
       console.log('USING LIBRARY LESSON:', {
-        title: lessons[0].title,
-        category: lessons[0].category,
-        skill_area: lessons[0].skill_area,
-        stage_number: lessons[0].stage_number,
+        title: accessibleLesson.title,
+        category: accessibleLesson.category,
+        skill_area: accessibleLesson.skill_area,
+        stage_number: accessibleLesson.stage_number,
       });
 
-      return lessons[0];
+      return accessibleLesson;
     }
   }
 
@@ -211,7 +245,9 @@ export async function getRecommendedLesson({
   return null;
 }
 
-export async function getLessonLibraryItems(): Promise<LessonLibraryItem[]> {
+export async function getLessonLibraryItems(
+  _isPro?: boolean
+): Promise<LessonLibraryItem[]> {
   const { data, error } = await baseLessonQuery()
     .order('category', { ascending: true })
     .order('skill_area', { ascending: true })
@@ -223,14 +259,20 @@ export async function getLessonLibraryItems(): Promise<LessonLibraryItem[]> {
 }
 
 export async function getLessonById(
-  id: string
+  id: string,
+  isPro: boolean
 ): Promise<LessonLibraryItem | null> {
-  const { data, error } = await supabase
+  const query = supabase
     .from('lesson_library')
     .select('*')
-    .eq('id', id)
-    .maybeSingle();
+    .eq('id', id);
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) throw error;
-  return data ?? null;
+  if (!data || !canAccessLesson(isPro, data)) {
+    return null;
+  }
+
+  return data;
 }

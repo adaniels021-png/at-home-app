@@ -1,4 +1,5 @@
 import { generatePremiumLesson } from '@/lib/aiService';
+import { hasEntitlement } from '@/lib/entitlements';
 import { supabase } from '@/lib/supabase';
 
 const FREE_QUEUE_LIMIT = 1;
@@ -6,7 +7,9 @@ const PRO_QUEUE_LIMIT = 3;
 const MAX_GENERATION_ATTEMPTS = 1;
 
 function getQueueLimit(isPro: boolean) {
-  return isPro ? PRO_QUEUE_LIMIT : FREE_QUEUE_LIMIT;
+  return hasEntitlement({ isPro }, 'premium_tool')
+    ? PRO_QUEUE_LIMIT
+    : FREE_QUEUE_LIMIT;
 }
 
 function todayString() {

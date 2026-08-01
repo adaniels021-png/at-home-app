@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { PrintGridSize, printPecsCards } from '../../lib/communicationPrint';
 import {
   flushPecsUsageQueue,
@@ -145,7 +146,8 @@ export default function CommunicationScreen() {
   const router = useRouter();
   const layout = useResponsiveLayout();
   const { selectedChild } = useChild() as any;
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const isPro = hasEntitlement({ isPro: subscriptionIsPro }, 'pecs_customize');
 
   const itemWidth: DimensionValue = layout.isLargeTablet
   ? '23.5%'

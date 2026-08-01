@@ -97,7 +97,13 @@ export async function configureRevenueCat(): Promise<void> {
       if (alreadyConfigured) {
         configured = true;
         revenueCatAvailable = true;
-        currentRevenueCatAppUserId = (await getCurrentSupabaseUserId()) ?? null;
+
+        try {
+          currentRevenueCatAppUserId = await Purchases.getAppUserID();
+        } catch {
+          // Force the authenticated-user login path before reading entitlements.
+          currentRevenueCatAppUserId = null;
+        }
         return;
       }
 
@@ -133,22 +139,24 @@ export async function configureRevenueCat(): Promise<void> {
   }
 }
 
-export async function logInRevenueCat(appUserID: string): Promise<void> {
+export async function logInRevenueCat(appUserID: string): Promise<boolean> {
   await configureRevenueCat();
 
-  if (!revenueCatAvailable || !configured || !appUserID) return;
+  if (!revenueCatAvailable || !configured || !appUserID) return false;
 
   try {
     if (currentRevenueCatAppUserId === appUserID) {
-      return;
+      return true;
     }
 
-    const result = await Purchases.logIn(appUserID);
+    await Purchases.logIn(appUserID);
 
-    currentRevenueCatAppUserId =
-      result.customerInfo?.originalAppUserId || appUserID;
+    currentRevenueCatAppUserId = appUserID;
+    return true;
   } catch (error) {
     console.error('RevenueCat login failed:', error);
+    currentRevenueCatAppUserId = null;
+    return false;
   }
 }
 
@@ -165,9 +173,8 @@ export async function logOutRevenueCat(): Promise<void> {
       return;
     }
 
-    const info = await Purchases.logOut();
-
-    currentRevenueCatAppUserId = info?.originalAppUserId || null;
+    await Purchases.logOut();
+    currentRevenueCatAppUserId = null;
   } catch (error: any) {
     const message = String(error?.message || '').toLowerCase();
 
@@ -207,7 +214,7 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   }
 }
 
-export function hasProAccess(
+export function hasRevenueCatProEntitlement(
   customerInfo: CustomerInfo | null | undefined
 ): boolean {
   if (!customerInfo) return false;
@@ -217,7 +224,7 @@ export function hasProAccess(
 
 export async function isProUser(): Promise<boolean> {
   const info = await getCustomerInfo();
-  return hasProAccess(info);
+  return hasRevenueCatProEntitlement(info);
 }
 
 function isCancelledPurchaseError(error: any): boolean {
@@ -240,9 +247,6 @@ export async function purchasePackage(
   try {
     const result = await Purchases.purchasePackage(pkg);
 
-    currentRevenueCatAppUserId =
-      result.customerInfo.originalAppUserId || currentRevenueCatAppUserId;
-
     return result.customerInfo;
   } catch (error) {
     if (isCancelledPurchaseError(error)) {
@@ -262,9 +266,6 @@ export async function restorePurchases(): Promise<CustomerInfo | null> {
 
   try {
     const info = await Purchases.restorePurchases();
-
-    currentRevenueCatAppUserId =
-      info.originalAppUserId || currentRevenueCatAppUserId;
 
     return info;
   } catch (error) {

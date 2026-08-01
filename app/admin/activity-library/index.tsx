@@ -31,6 +31,7 @@ type ActivityLibraryItem = {
   source: string | null;
   created_at: string | null;
   updated_at: string | null;
+  pro_only: boolean;
 };
 
 const CATEGORY_FILTERS = [
@@ -59,7 +60,7 @@ export default function AdminActivityLibraryScreen() {
       const { data, error } = await supabase
         .from('activity_library')
         .select(
-          'id,title,category,location,time,description,try_this,why_it_helps,status,source,created_at,updated_at'
+          'id,title,category,location,time,description,try_this,why_it_helps,status,source,pro_only,created_at,updated_at'
         )
         .order('updated_at', { ascending: false });
 
@@ -320,10 +321,33 @@ function ActivityAdminCard({
           </Text>
         </View>
 
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>
-            {activity.status || 'approved'}
-          </Text>
+        <View style={styles.badgeColumn}>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>
+              {activity.status || 'approved'}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.accessBadge,
+              !activity.pro_only && styles.accessBadgeFree,
+            ]}
+          >
+            <Ionicons
+              name={activity.pro_only ? 'lock-closed' : 'checkmark-circle'}
+              size={12}
+              color={activity.pro_only ? '#7C3AED' : '#047857'}
+            />
+            <Text
+              style={[
+                styles.accessText,
+                !activity.pro_only && styles.accessTextFree,
+              ]}
+            >
+              {activity.pro_only ? 'PRO' : 'FREE'}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -591,6 +615,30 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
+  },
+  badgeColumn: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  accessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+  },
+  accessBadgeFree: {
+    backgroundColor: '#D1FAE5',
+  },
+  accessText: {
+    color: '#7C3AED',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  accessTextFree: {
+    color: '#047857',
   },
   locationRow: {
     flexDirection: 'row',

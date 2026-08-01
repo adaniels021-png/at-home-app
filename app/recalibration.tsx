@@ -19,14 +19,14 @@ export default function RecalibrationScreen() {
 
         <Text style={styles.title}>Curriculum Recalibrated</Text>
         <Text style={styles.subtitle}>
-          Your assessment is complete. We've analyzed the results and updated your Daily Play activities.
+          Your assessment is complete. We&apos;ve analyzed the results and updated your Daily Play activities.
         </Text>
 
         <View style={styles.card}>
           <Text style={styles.cardTag}>NEW FOCUS AREA</Text>
           <Text style={styles.cardTitle}>{focusSkill}</Text>
           <Text style={styles.cardBody}>
-            Based on your answers, we're increasing the frequency of {focusSkill} activities to bridge the current developmental gap.
+            Based on your answers, we&apos;re increasing the frequency of {focusSkill} activities to bridge the current developmental gap.
           </Text>
         </View>
 

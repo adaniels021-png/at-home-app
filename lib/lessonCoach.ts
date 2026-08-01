@@ -67,6 +67,7 @@ export function mapLibraryLessonToDailyLessonV2(lesson: UnknownLesson) {
       'Keep the lesson short, positive, and focused on small wins.',
     lesson_summary: lesson.description || lesson.goal || lesson.why_skill_matters || null,
     lesson_type: lesson.lesson_type,
+    pro_only: lesson.pro_only !== false,
     stage_number: lesson.stage_number,
     stage_name: lesson.stage_name,
   };

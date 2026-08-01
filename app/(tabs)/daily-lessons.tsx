@@ -1,6 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,11 +18,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AnimatedPressable from '../../components/AnimatedPressable';
 import FadeInView from '../../components/FadeInView';
+import GettingStartedGuide from '../../components/GettingStartedGuide';
+import {
+  completeGettingStarted,
+  hasCompletedGettingStarted,
+} from '../../lib/gettingStarted';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { canAccessLesson } from '../../lib/entitlements';
 import { getLearningPath } from '../../lib/learningPath';
 import { completeLesson } from '../../lib/lessonEngine';
-import { getRecommendedLesson } from '../../lib/lessonLibrary';
+import { getLessonById, getRecommendedLesson } from '../../lib/lessonLibrary';
 import { getRecommendedStageForSkill } from '../../lib/lessonProgression';
 import { ensureLessonQueue, getNextQueuedLesson } from '../../lib/lessonQueue';
 import {
@@ -90,17 +99,83 @@ function cleanLessonTitle(title: any, category: string) {
   return raw;
 }
 
-function getFreeLessonLockKey(childId: string) {
-  const today = new Date().toISOString().split('T')[0];
-  return `free-lesson-used-${childId}-${today}`;
-}
-
-
-
 export default function DailyLessonsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ replay?: string }>();
+  const replayRequested = params.replay === '1';
+  const [checkingGuide, setCheckingGuide] = useState(true);
+  const [showGuide, setShowGuide] = useState(false);
+  const [guideSession, setGuideSession] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const checkGuide = async () => {
+        setCheckingGuide(true);
+
+        try {
+          const completed = await hasCompletedGettingStarted();
+
+          if (!active) return;
+
+          const shouldShow = replayRequested || !completed;
+          setShowGuide(shouldShow);
+
+          if (shouldShow) {
+            setGuideSession((current) => current + 1);
+          }
+        } catch (error) {
+          console.error('Getting Started status check failed:', error);
+
+          if (active) {
+            setShowGuide(true);
+            setGuideSession((current) => current + 1);
+          }
+        } finally {
+          if (active) {
+            setCheckingGuide(false);
+          }
+        }
+      };
+
+      void checkGuide();
+
+      return () => {
+        active = false;
+      };
+    }, [replayRequested])
+  );
+
+  const finishGuide = async () => {
+    await completeGettingStarted();
+    setShowGuide(false);
+
+    if (replayRequested) {
+      router.replace('/(tabs)/daily-lessons');
+    }
+  };
+
+  if (checkingGuide) {
+    return <LoadingScreen label="Preparing your guide..." />;
+  }
+
+  if (showGuide) {
+    return (
+      <GettingStartedGuide
+        key={guideSession}
+        onComplete={finishGuide}
+      />
+    );
+  }
+
+  return <DailyLessonsContent />;
+}
+
+function DailyLessonsContent() {
+  const router = useRouter();
   const { selectedChild } = useChild();
-  const { isPro } = useSubscription();
+  const { isPro, loading: subscriptionLoading } = useSubscription();
 
   const loadRequestRef = useRef(0);
 
@@ -118,16 +193,11 @@ const retryCountRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isStartingLesson, setIsStartingLesson] = useState(false);
 
   const [preparingLesson, setPreparingLesson] = useState(false);
 
   const [lessonNumber, setLessonNumber] = useState(1);
-
-  const [dailyLimitReached, setDailyLimitReached] =
-    useState(false);
-
-  const [freeLessonsUsedToday, setFreeLessonsUsedToday] =
-    useState(0);
 
   const [completionRating, setCompletionRating] =
     useState<1 | 2 | 3 | 4 | 5>(4);
@@ -149,52 +219,8 @@ const retryCountRef = useRef(0);
     );
   }, [selectedChild]);
 
-  const checkFreeLessonLimit = useCallback(async () => {
-    if (!selectedChild?.id || isPro) {
-      setDailyLimitReached(false);
-      setFreeLessonsUsedToday(0);
-      return false;
-    }
-
-    const localLock = await AsyncStorage.getItem(
-      getFreeLessonLockKey(selectedChild.id)
-    );
-
-    if (localLock === 'true') {
-      setFreeLessonsUsedToday(1);
-      setDailyLimitReached(true);
-      return true;
-    }
-
-    const todayStr = new Date().toISOString().split('T')[0];
-
-const { count, error } = await supabase
-  .from('daily_lesson_instances')
-  .select('id', { count: 'exact', head: true })
-  .eq('child_id', selectedChild.id)
-  .eq('status', 'completed')
-  .eq('lesson_date', todayStr);
-
-    if (error) {
-      console.log('Free lesson limit check error:', error);
-      return false;
-    }
-
-    const used = count || 0;
-
-    setFreeLessonsUsedToday(used);
-
-    if (used >= 1) {
-      setDailyLimitReached(true);
-      return true;
-    }
-
-    setDailyLimitReached(false);
-    return false;
-  }, [selectedChild?.id, isPro]);
-
   const loadLesson = useCallback(async () => {
-    if (!selectedChild?.id) return;
+    if (!selectedChild?.id || subscriptionLoading) return;
 
 
     const requestId = loadRequestRef.current + 1;
@@ -206,16 +232,6 @@ const { count, error } = await supabase
     try {
       setStarted(false);
       setLoading(true);
-
-      const limitReached =
-        await checkFreeLessonLimit();
-
-      if (limitReached) {
-        setLessonData(null);
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
 
       const path = await getLearningPath(selectedChild.id);
     setLearningPath(path);
@@ -265,6 +281,7 @@ if (USE_LIBRARY_LESSONS) {
     stageNumber: stageFilter,
     childId: selectedChild.id,
     excludeSkills: masteredSkills,
+    isPro,
   });
 
   if (libraryLesson) {
@@ -293,6 +310,14 @@ if (USE_LIBRARY_LESSONS) {
     return;
   }
 }
+
+      if (!isPro) {
+        setLessonData(null);
+        setPreparingLesson(false);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
 
       const lessonRow = await getNextQueuedLesson({
         childId: selectedChild.id,
@@ -406,20 +431,12 @@ setLearningPath({
       if (loadRequestRef.current !== requestId)
         return;
 
-      if (
-        error?.message
-          ?.toLowerCase()
-          .includes('limit')
-      ) {
-        setDailyLimitReached(true);
-      } else {
-        console.log('Lesson load error:', error);
+      console.log('Lesson load error:', error);
 
-        Alert.alert(
-          'Lesson Loading Issue',
-          'The app could not load a full lesson right now. Please pull down to refresh.'
-        );
-      }
+      Alert.alert(
+        'Lesson Loading Issue',
+        'The app could not load a full lesson right now. Please pull down to refresh.'
+      );
     } finally {
       if (
         loadRequestRef.current === requestId
@@ -433,7 +450,7 @@ setLearningPath({
     selectedCategory,
     childName,
     isPro,
-    checkFreeLessonLimit,
+    subscriptionLoading,
   ]);
 
   const handleLogLesson = async (
@@ -514,32 +531,6 @@ const { data: insertedLesson, error } = await supabase
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
-  if (!isPro && status === 'success') {
-    await AsyncStorage.setItem(
-      getFreeLessonLockKey(selectedChild.id),
-      'true'
-    );
-
-    setFreeLessonsUsedToday(1);
-    setDailyLimitReached(true);
-    setLessonData(null);
-    setStarted(false);
-
-    Alert.alert(
-      'Today’s free lesson completed 🎉',
-      'You’ve used your free lesson. Upgrade for unlimited access.',
-      [
-        { text: 'Later', style: 'cancel' },
-        {
-          text: 'Upgrade',
-          onPress: () => router.push('/subscription'),
-        },
-      ]
-    );
-
-    return;
-  }
-
   Alert.alert(
     status === 'success' ? 'Lesson Completed 🎉' : 'Lesson Saved',
     'A new lesson is ready.'
@@ -572,42 +563,6 @@ const { data: insertedLesson, error } = await supabase
   status: status === 'success' ? 'completed' : 'unsuccessful',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
-
-      if (
-        !isPro &&
-        status === 'success'
-      ) {
-        await AsyncStorage.setItem(
-          getFreeLessonLockKey(
-            selectedChild.id
-          ),
-          'true'
-        );
-
-        setFreeLessonsUsedToday(1);
-        setDailyLimitReached(true);
-        setLessonData(null);
-
-        Alert.alert(
-          'Today’s free lesson completed 🎉',
-          'You’ve used your free lesson. Upgrade for unlimited access.',
-          [
-            {
-              text: 'Later',
-              style: 'cancel',
-            },
-            {
-              text: 'Upgrade',
-              onPress: () =>
-                router.push(
-                  '/subscription'
-                ),
-            },
-          ]
-        );
-
-        return;
-      }
 
       if (status === 'success') {
         ensureLessonQueue({
@@ -652,6 +607,43 @@ const { data: insertedLesson, error } = await supabase
       );
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleStartLesson = async () => {
+    if (!lessonData || isStartingLesson) return;
+
+    try {
+      setIsStartingLesson(true);
+
+      if (!canAccessLesson(isPro, lessonData)) {
+        setStarted(false);
+        setLessonData(null);
+        return;
+      }
+
+      if (lessonData.library_lesson_id) {
+        const currentLesson = await getLessonById(
+          lessonData.library_lesson_id,
+          isPro
+        );
+
+        if (!currentLesson) {
+          setStarted(false);
+          setLessonData(null);
+          return;
+        }
+
+        setLessonData(mapLibraryLessonToDailyLesson(currentLesson));
+      }
+
+      setStarted(true);
+    } catch (error) {
+      console.error('Lesson access revalidation failed:', error);
+      setStarted(false);
+      setLessonData(null);
+    } finally {
+      setIsStartingLesson(false);
     }
   };
 
@@ -710,11 +702,15 @@ useEffect(() => {
 
   const showLockedPreviews = !isPro;
 
+  const lessonAccessible = lessonData
+    ? canAccessLesson(isPro, lessonData)
+    : false;
+
   if (!selectedChild) {
     return <NoChildSelected />;
   }
 
-  if (loading && !refreshing) {
+  if (subscriptionLoading || (loading && !refreshing)) {
     return <LoadingScreen />;
   }
 
@@ -772,13 +768,8 @@ useEffect(() => {
   }}
 />
 
-        {!dailyLimitReached && !preparingLesson && !lessonData ? (
-  <PreparingLessonCard
-    selectedCategory={selectedCategory}
-    onRefresh={() => void loadLesson()}
-  />
-) : dailyLimitReached ? (
-          <DailyLimitView
+        {!preparingLesson && !lessonData && !isPro ? (
+          <ProLessonLockedView
             selectedCategory={
               selectedCategory
             }
@@ -797,17 +788,27 @@ useEffect(() => {
               void loadLesson()
             }
           />
-        ) : preparingLesson ? (
+        ) : preparingLesson || !lessonData ? (
   <PreparingLessonCard
     selectedCategory={selectedCategory}
     onRefresh={() => void loadLesson()}
   />
-) : !started ? (
+        ) : !lessonAccessible ? (
+          <ProLessonLockedView
+            selectedCategory={selectedCategory}
+            lockedPreviewLessons={lockedPreviewLessons}
+            showLockedPreviews={showLockedPreviews}
+            onUpgrade={() => router.push('/subscription')}
+            onRefresh={() => void loadLesson()}
+          />
+        ) : !started ? (
   <LessonStartCard
   lessonData={lessonData}
   selectedCategory={selectedCategory}
   childName={childName}
-  onStart={() => setStarted(true)}
+  onStart={() => void handleStartLesson()}
+  isStarting={isStartingLesson}
+  accessible={lessonAccessible}
 />
         ) : (
           <GuidedLessonView
@@ -928,12 +929,16 @@ function NoChildSelected() {
   );
 }
 
-function LoadingScreen() {
+function LoadingScreen({
+  label = 'Loading today’s lesson...',
+}: {
+  label?: string;
+}) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={styles.loadingText}>Loading today’s lesson...</Text>
+        <Text style={styles.loadingText}>{label}</Text>
       </View>
     </SafeAreaView>
   );
@@ -1037,7 +1042,7 @@ function PreparingLessonCard({
   );
 }
 
-function DailyLimitView({
+function ProLessonLockedView({
   selectedCategory,
   lockedPreviewLessons,
   showLockedPreviews,
@@ -1059,15 +1064,15 @@ function DailyLimitView({
           <Ionicons name="lock-closed" size={28} color="#F59E0B" />
         </View>
 
-        <Text style={styles.limitTitlePremium}>You’re done for today</Text>
+        <Text style={styles.limitTitlePremium}>Continue with Pro</Text>
 
         <Text style={styles.limitTextPremium}>
-          You completed your free {selectedCategory} lesson. Pro unlocks unlimited daily lessons and continued practice.
+          The next available {selectedCategory} lesson requires Pro. Upgrade to continue this learning path.
         </Text>
 
         <AnimatedPressable style={styles.limitUpgradeButton} onPress={onUpgrade}>
           <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-          <Text style={styles.limitUpgradeText}>Unlock Unlimited Lessons</Text>
+          <Text style={styles.limitUpgradeText}>Unlock Pro Lessons</Text>
         </AnimatedPressable>
 
         <AnimatedPressable style={styles.limitRefreshButton} onPress={onRefresh}>
@@ -1111,6 +1116,8 @@ function LessonStartCard({
   lessonData,
   selectedCategory,
   onStart,
+  isStarting,
+  accessible,
 }: any) {
   const materials = Array.isArray(lessonData?.materials)
     ? lessonData.materials
@@ -1256,10 +1263,10 @@ const setupText =
         <AnimatedPressable
           style={[
             styles.startLessonButton,
-            !lessonData?.id && { opacity: 0.55 },
+            (!lessonData?.id || !accessible || isStarting) && { opacity: 0.55 },
           ]}
           onPress={onStart}
-          disabled={!lessonData?.id}
+          disabled={!lessonData?.id || !accessible || isStarting}
         >
           <Ionicons name="play" size={18} color="#FFFFFF" />
           <Text style={styles.startLessonButtonText}>Start Lesson</Text>
@@ -1726,7 +1733,7 @@ function LessonHero({ lessonData, selectedCategory }: any) {
 
         <View style={styles.heroTopRow}>
           <View style={styles.heroBadge}>
-            <Text style={styles.heroBadgeText}>✨ TODAY'S PERSONALIZED LESSON</Text>
+            <Text style={styles.heroBadgeText}>✨ TODAY’S PERSONALIZED LESSON</Text>
           </View>
 
           <View style={styles.heroSparkleIcon}>

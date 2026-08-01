@@ -120,7 +120,7 @@ export default function CreateLessonScreen() {
         safety_notes: toArray(safetyNotes),
         difficulty: difficulty.trim() || 'balanced',
         estimated_minutes: Number(estimatedMinutes) || 5,
-        pro_only: false,
+        pro_only: true,
         is_active: true,
         admin_notes: adminNotes.trim() || null,
         quality_status: 'draft',

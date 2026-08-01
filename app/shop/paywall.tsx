@@ -10,14 +10,29 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import Purchases, { PurchasesPackage } from 'react-native-purchases';
+import type { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getCurrentOffering } from '../../lib/revenuecat';
+import { useSubscription } from '../../lib/SubscriptionContext';
+import {
+  getCurrentOffering,
+  hasRevenueCatProEntitlement,
+  purchasePackage,
+} from '../../lib/revenuecat';
 
 export default function Paywall() {
   const router = useRouter();
+  const { refreshSubscription } = useSubscription();
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const dismissPaywall = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)/worksheets');
+  };
 
   useEffect(() => {
     loadOfferings();
@@ -48,9 +63,10 @@ export default function Paywall() {
   const handlePurchase = async (pkg: PurchasesPackage) => {
     try {
       setLoading(true);
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
+      const customerInfo = await purchasePackage(pkg);
       
-      if (customerInfo.entitlements.active['pro'] !== undefined) {
+      if (hasRevenueCatProEntitlement(customerInfo)) {
+        await refreshSubscription();
         Alert.alert("Welcome to Pro!", "You now have full access to ABA at Home.");
         router.replace('/(tabs)/dashboard');
       }
@@ -65,7 +81,7 @@ export default function Paywall() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.closeBtn} onPress={dismissPaywall}>
         <Ionicons name="close" size={28} color="#FFF" />
       </TouchableOpacity>
 
@@ -75,7 +91,7 @@ export default function Paywall() {
             <Ionicons name="flash" size={40} color="#2563EB" />
           </View>
           <Text style={styles.title}>Unlock Full Access</Text>
-          <Text style={styles.subtitle}>Supporting your child's growth with expert-designed tools.</Text>
+          <Text style={styles.subtitle}>Supporting your child&apos;s growth with expert-designed tools.</Text>
         </View>
 
         <View style={styles.benefits}>

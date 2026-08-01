@@ -2,8 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 export default function Plan() {
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const isPro = hasEntitlement(
+    { isPro: subscriptionIsPro },
+    'premium_tool'
+  );
 
   if (!isPro) {
     return (

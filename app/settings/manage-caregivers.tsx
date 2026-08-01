@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { canManageCaregivers } from '../../lib/caregiverPermissions';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 type Caregiver = {
@@ -29,8 +30,11 @@ export default function ManageCaregiversScreen() {
   const router = useRouter();
 
   const { selectedChild } = useChild() as any;
-  const { isPro, adminMode } = useSubscription();
-  const hasProAccess = isPro || adminMode;
+  const { isPro } = useSubscription();
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'manage_caregivers'
+  );
 
   const role = selectedChild?.caregiver_access_role;
   const canInvite = canManageCaregivers(role);
@@ -84,10 +88,15 @@ setPendingInvites(invites || []);
   };
 
   useFocusEffect(
-  useCallback(() => {
-    void loadCaregivers();
-  }, [selectedChild?.id, canInvite])
-);
+    useCallback(() => {
+      if (!hasProAccess) {
+        router.replace('/subscription');
+        return;
+      }
+
+      void loadCaregivers();
+    }, [selectedChild?.id, canInvite, hasProAccess, router])
+  );
 
   const cancelInvite = (inviteId: string) => {
   Alert.alert(
@@ -275,11 +284,11 @@ setPendingInvites(invites || []);
 
   <View style={styles.infoContent}>
     <Text style={styles.infoTitle}>
-      Share Your Child's Progress
+      Share Your Child&apos;s Progress
     </Text>
 
     <Text style={styles.infoText}>
-      Invite parents, caregivers, family members, or therapists to securely access and support your child's learning journey.
+      Invite parents, caregivers, family members, or therapists to securely access and support your child&apos;s learning journey.
     </Text>
   </View>
 </View>

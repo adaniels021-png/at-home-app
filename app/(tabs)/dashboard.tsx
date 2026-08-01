@@ -20,6 +20,7 @@ import { isReassessmentDue } from '../../lib/reassessment';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { canAccessRoute, hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 type LessonLogRow = {
@@ -107,7 +108,8 @@ export default function Dashboard() {
   const layout = useResponsiveLayout();
 
   const { selectedChild, loading: childLoading } = useChild();
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const isPro = hasEntitlement({ isPro: subscriptionIsPro }, 'premium_tool');
 
   const reassessmentDue = isReassessmentDue(
   (selectedChild as any)?.next_reassessment_due_at
@@ -366,11 +368,7 @@ useEffect(() => {
   }, [selectedChild?.id, loadDashboard]);
 
   const openRoute = (path: string) => {
-    router.push(path as any);
-  };
-
-  const openPremiumRoute = (path: string) => {
-    if (!isPro) {
+    if (!canAccessRoute({ isPro: subscriptionIsPro }, path)) {
       router.push('/subscription');
       return;
     }
@@ -476,7 +474,7 @@ useEffect(() => {
     <View style={{ flex: 1 }}>
       <Text style={styles.reassessmentTitle}>Reassessment Recommended</Text>
       <Text style={styles.reassessmentText}>
-        It has been about 30 days since the last assessment. Update {childName}'s
+        It has been about 30 days since the last assessment. Update {childName}&apos;s
         profile so lessons stay current.
       </Text>
     </View>
@@ -567,18 +565,18 @@ useEffect(() => {
               bg="#FFF7ED"
               color="#EA580C"
               accent="#EA580C"
-              onPress={() => openPremiumRoute('/worksheets')}
+              onPress={() => openRoute('/worksheets')}
             />
 
             <FeaturedToolCard
               itemWidth={featuredItemWidth}
               icon="heart-circle"
               label="Parent Support"
-              subtitle={isPro ? 'Guidance tools for daily ABA support at home.' : 'Upgrade to unlock parent support tools.'}
+              subtitle={isPro ? 'Guidance tools for daily ABA support at home.' : 'Free encouragement with expanded support in Pro.'}
               bg="#F3E8FF"
               color="#7C3AED"
               accent="#7C3AED"
-              onPress={() => openPremiumRoute('/parent-support')}
+              onPress={() => openRoute('/parent-support')}
             />
 
             <FeaturedToolCard
@@ -634,7 +632,7 @@ useEffect(() => {
                 subtitle={isPro ? 'Edit and organize cards' : 'Pro feature'}
                 color="#059669"
                 bg="#ECFDF5"
-                onPress={() => openPremiumRoute('/manage-pecs')}
+                onPress={() => openRoute('/manage-pecs')}
               />
 
               <LibraryItem

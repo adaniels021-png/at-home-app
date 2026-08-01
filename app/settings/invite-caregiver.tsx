@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
+import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 type CaregiverRole = 'parent' | 'caregiver' | 'therapist';
@@ -53,6 +55,17 @@ function createInviteCode() {
 export default function InviteCaregiverScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
+  const { isPro, loading: subscriptionLoading } = useSubscription();
+  const canInviteCaregiver = hasEntitlement(
+    { isPro },
+    'manage_caregivers'
+  );
+
+  useEffect(() => {
+    if (!subscriptionLoading && !canInviteCaregiver) {
+      router.replace('/subscription');
+    }
+  }, [canInviteCaregiver, router, subscriptionLoading]);
 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<CaregiverRole>('caregiver');
@@ -63,6 +76,11 @@ export default function InviteCaregiverScreen() {
   }, [selectedChild]);
 
   const handleInvite = async () => {
+    if (!canInviteCaregiver) {
+      router.replace('/subscription');
+      return;
+    }
+
     const cleanEmail = email.trim().toLowerCase();
 
     if (!selectedChild?.id) {

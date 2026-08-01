@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useSubscription } from '../lib/SubscriptionContext';
+import { hasEntitlement } from '../lib/entitlements';
 
 type SupportSection = {
   id: string;
@@ -93,9 +94,12 @@ const SUPPORT_SECTIONS: SupportSection[] = [
 
 export default function ParentSupportScreen() {
   const router = useRouter();
-  const { isPro, adminMode, loading } = useSubscription();
+  const { isPro, loading } = useSubscription();
 
-  const hasProAccess = isPro || adminMode;
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'parent_support'
+  );
 
   function handleBack() {
     if (router.canGoBack()) {

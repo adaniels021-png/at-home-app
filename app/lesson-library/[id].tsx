@@ -4,20 +4,27 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AnimatedPressable from '../../components/AnimatedPressable';
 import { getLessonById, LessonLibraryItem } from '../../lib/lessonLibrary';
+import { useSubscription } from '../../lib/SubscriptionContext';
 
 export default function LessonLibraryDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isPro, loading: subscriptionLoading } = useSubscription();
 
   const [lesson, setLesson] = useState<LessonLibraryItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadLesson() {
-      if (!id) return;
+      if (subscriptionLoading) return;
+
+      if (!id) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        const data = await getLessonById(id);
+        const data = await getLessonById(id, isPro);
         setLesson(data);
       } catch (error) {
         console.error('Lesson detail error:', error);
@@ -27,7 +34,7 @@ export default function LessonLibraryDetailScreen() {
     }
 
     loadLesson();
-  }, [id]);
+  }, [id, isPro, subscriptionLoading]);
 
   if (loading) {
     return (

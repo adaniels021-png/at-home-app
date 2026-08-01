@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { hasEntitlement } from '../../lib/entitlements';
 import { canCustomizeRoutines } from '../../lib/caregiverPermissions';
 import { withTimeout } from '../../lib/performance';
 import { supabase } from '../../lib/supabase';
@@ -154,8 +155,11 @@ export default function CustomizeRoutineScreen() {
   const role = selectedChild?.caregiver_access_role;
   const canCustomize = canCustomizeRoutines(role);  
 
-  const { isPro, adminMode, loading: subscriptionLoading } = useSubscription();
-  const hasProAccess = isPro || adminMode;
+  const { isPro, loading: subscriptionLoading } = useSubscription();
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'routines_customize'
+  );
 
   const [selectedTime, setSelectedTime] = useState<TimePeriod>('morning');
   const [selectedDayType, setSelectedDayType] = useState<DayType>('everyday');
@@ -609,7 +613,7 @@ export default function CustomizeRoutineScreen() {
   </View>
 
   <Text style={styles.heroTitle}>
-    Customize {childName}'s Routine
+    Customize {childName}&apos;s Routine
   </Text>
 
   <Text style={styles.heroSubtitle}>

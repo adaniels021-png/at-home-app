@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSubscription } from '../lib/SubscriptionContext';
+import { hasEntitlement } from '../lib/entitlements';
 
 import { useChild } from '../lib/SelectedChildContext';
 import { canManagePecs } from '../lib/caregiverPermissions';
@@ -135,8 +136,11 @@ export default function ManagePECS() {
     }
   };
 
-const { isPro, adminMode } = useSubscription();
-const hasProAccess = isPro || adminMode;
+const { isPro } = useSubscription();
+const hasProAccess = hasEntitlement(
+  { isPro },
+  'pecs_customize'
+);
 
 useEffect(() => {
   if (!hasProAccess) {

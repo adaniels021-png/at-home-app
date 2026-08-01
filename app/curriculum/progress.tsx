@@ -83,7 +83,7 @@ export default function ProgressScreen() {
               {(selectedChild?.child_name || selectedChild?.name || '?').charAt(0)}
           </Text>
           </View>
-          <Text style={styles.summaryTitle}>{selectedChild?.child_name}'s Growth</Text>
+          <Text style={styles.summaryTitle}>{selectedChild?.child_name}&apos;s Growth</Text>
           <View style={styles.badgeRow}>
             <View style={styles.countBadge}>
               <Text style={styles.countNumber}>{activityCount}</Text>
@@ -110,7 +110,7 @@ export default function ProgressScreen() {
         <View style={styles.insightCard}>
           <Ionicons name="sparkles" size={24} color="#2563EB" />
           <Text style={styles.insightText}>
-            You're doing great! Focusing on <Text style={{fontWeight: '800'}}>Communication</Text> this week will help bridge the gap in social eye contact.
+            You&apos;re doing great! Focusing on <Text style={{fontWeight: '800'}}>Communication</Text> this week will help bridge the gap in social eye contact.
           </Text>
         </View>
 

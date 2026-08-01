@@ -11,13 +11,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Purchases from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 import { useSubscription } from '../lib/SubscriptionContext';
 import {
   getCurrentOffering,
-  hasProAccess,
+  getCustomerInfo,
+  hasRevenueCatProEntitlement,
   purchasePackage,
   restorePurchases,
 } from '../lib/revenuecat';
@@ -39,6 +40,10 @@ const PRIVACY_URL =
   'https://docs.google.com/document/d/e/2PACX-1vS_YJJ2JENjbHXysMq8WWI5xectm8aERFu_V7EaRrWSj_JMTc02q5x5MlvIj94BDp8JJt25Z4sR23vP/pub';
 
 function detectPlanFromCustomerInfo(customerInfo: any): CurrentPlan {
+  if (!hasRevenueCatProEntitlement(customerInfo)) {
+    return 'free';
+  }
+
   const activeSubscriptions: string[] = customerInfo?.activeSubscriptions || [];
 
   const hasYearly = activeSubscriptions.some((id) => {
@@ -61,17 +66,22 @@ function detectPlanFromCustomerInfo(customerInfo: any): CurrentPlan {
 
   if (hasYearly) return 'yearly';
   if (hasMonthly) return 'monthly';
-  return hasProAccess(customerInfo) ? 'monthly' : 'free';
+  return 'monthly';
 }
 
 export default function SubscriptionScreen() {
   const router = useRouter();
 
-  const { isPro, setIsPro, refreshSubscription } = useSubscription() as {
-    isPro?: boolean;
-    setIsPro: (value: boolean) => void;
-    refreshSubscription?: () => Promise<void>;
+  const dismissSubscription = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)/worksheets');
   };
+
+  const { isPro, refreshSubscription } = useSubscription();
 
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -86,15 +96,15 @@ export default function SubscriptionScreen() {
 
   const [monthlyPlan, setMonthlyPlan] = useState<RevenueCatPlan>({
     title: 'Monthly',
-    priceString: '$9.99/mo',
-    subtext: 'Flexible monthly access',
+    priceString: '$9.99/month',
+    subtext: 'Perfect if you prefer paying month-to-month.',
     packageObject: null,
   });
 
   const [yearlyPlan, setYearlyPlan] = useState<RevenueCatPlan>({
     title: 'Yearly',
-    priceString: '$59.99/yr',
-    subtext: 'Best value • Save more over time',
+    priceString: '$59.99/year',
+    subtext:'Save nearly $60 per year compared with monthly.',
     packageObject: null,
   });
 
@@ -103,11 +113,9 @@ export default function SubscriptionScreen() {
     void loadCurrentPlan();
   }, []);
 
- useEffect(() => {
-  if (currentPlan === 'monthly') {
+useEffect(() => {
+  if (currentPlan !== 'yearly') {
     setSelectedPlan('yearly');
-  } else if (currentPlan === 'free') {
-    setSelectedPlan('monthly');
   }
 }, [currentPlan]);
 
@@ -131,11 +139,10 @@ export default function SubscriptionScreen() {
     setCheckingPlan(true);
 
     try {
-      const customerInfo = await Purchases.getCustomerInfo();
+      const customerInfo = await getCustomerInfo();
       const detectedPlan = detectPlanFromCustomerInfo(customerInfo);
 
       setCurrentPlan(detectedPlan);
-      setIsPro(detectedPlan !== 'free');
     } catch (error) {
       console.error('Plan check error:', error);
       setCurrentPlan(isPro ? 'monthly' : 'free');
@@ -181,18 +188,18 @@ export default function SubscriptionScreen() {
         setMonthlyPlan({
           title: 'Monthly',
           priceString: monthlyPkg.product?.priceString || '$9.99/mo',
-          subtext: 'Flexible monthly access',
+          subtext: 'Perfect if you prefer paying month-to-month.',
           packageObject: monthlyPkg,
         });
       }
 
       if (yearlyPkg) {
         setYearlyPlan({
-          title: 'Yearly',
-          priceString: yearlyPkg.product?.priceString || '$59.99/yr',
-          subtext: 'Best value • Save more over time',
-          packageObject: yearlyPkg,
-        });
+  title: 'Yearly',
+  priceString: yearlyPkg.product?.priceString || '$59.99/yr',
+  subtext: 'Save nearly $60 per year compared with monthly.',
+  packageObject: yearlyPkg,
+});
       }
 
       if (!monthlyPkg && yearlyPkg) {
@@ -205,30 +212,19 @@ export default function SubscriptionScreen() {
     }
   };
 
- const selectedPlanDetails = useMemo(() => {
+const selectedPlanDetails = useMemo(() => {
   if (selectedPlan === 'yearly') {
     return {
-      title: 'Yearly Pro',
-      price: yearlyPlan.priceString,
-      subtext: yearlyPlan.subtext,
-      badge: currentPlan === 'monthly' ? 'UPGRADE' : 'BEST VALUE',
-      cta:
-        currentPlan === 'monthly'
-          ? 'Unlock Pro & Save'
-          : 'Unlock Pro & Save',
       packageObject: yearlyPlan.packageObject,
+      cta: 'Start FREE 2-Week Trial',
     };
   }
 
   return {
-    title: 'Monthly Pro',
-    price: monthlyPlan.priceString,
-    subtext: monthlyPlan.subtext,
-    badge: 'MOST POPULAR',
-    cta: 'Unlock Pro Access',
     packageObject: monthlyPlan.packageObject,
+    cta: 'Start FREE 2-Week Trial',
   };
-}, [selectedPlan, monthlyPlan, yearlyPlan, currentPlan]);
+}, [selectedPlan, monthlyPlan, yearlyPlan]);
 
   const handlePurchase = async () => {
     if (currentPlan === 'yearly') return;
@@ -291,7 +287,7 @@ export default function SubscriptionScreen() {
       }
 
       const detectedPlan = detectPlanFromCustomerInfo(customerInfo);
-      const proActive = hasProAccess(customerInfo);
+      const proActive = hasRevenueCatProEntitlement(customerInfo);
 
       setCurrentPlan(detectedPlan);
 
@@ -303,11 +299,7 @@ export default function SubscriptionScreen() {
         return;
       }
 
-      setIsPro(true);
-
-      if (refreshSubscription) {
-        await refreshSubscription();
-      }
+      await refreshSubscription();
 
       Alert.alert('Welcome to Pro 🎉', 'Your Pro access is now unlocked.', [
         {
@@ -348,7 +340,7 @@ export default function SubscriptionScreen() {
       }
 
       const detectedPlan = detectPlanFromCustomerInfo(customerInfo);
-      const proActive = hasProAccess(customerInfo);
+      const proActive = hasRevenueCatProEntitlement(customerInfo);
 
       setCurrentPlan(detectedPlan);
 
@@ -360,11 +352,7 @@ export default function SubscriptionScreen() {
         return;
       }
 
-      setIsPro(true);
-
-      if (refreshSubscription) {
-        await refreshSubscription();
-      }
+      await refreshSubscription();
 
       Alert.alert('Restored', 'Your Pro access has been restored.', [
         {
@@ -394,12 +382,12 @@ export default function SubscriptionScreen() {
     }
   };
 
-  const statusText =
-    currentPlan === 'yearly'
-      ? 'You are currently on the Yearly Pro plan.'
-      : currentPlan === 'monthly'
-        ? 'You are currently on the Monthly Pro plan.'
-        : 'Choose monthly or yearly Pro access.';
+ const statusText =
+  currentPlan === 'yearly'
+    ? 'Your Yearly Pro subscription is active.'
+    : currentPlan === 'monthly'
+      ? 'Your Monthly Pro subscription is active.'
+      : 'Your Free plan is active.';
 
 const showMonthlyPlan = currentPlan !== 'yearly';
 const showYearlyPlan = currentPlan !== 'yearly';
@@ -412,7 +400,7 @@ const cancelEnabled = currentPlan !== 'free';
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={dismissSubscription}>
           <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </TouchableOpacity>
 
@@ -425,14 +413,16 @@ const cancelEnabled = currentPlan !== 'free';
             <Text style={styles.heroBadgeText}>ABA AT HOME PRO</Text>
           </View>
 
-          <Text style={styles.title}>
-            Help Your Child Learn More at Home
-          </Text>
+         <Text style={styles.title}>
+Start Your FREE 2-Week Trial
+</Text>
 
-          <Text style={styles.subtitle}>
-            Get unlimited lessons, communication tools, routines,
-            worksheets, and parent support designed for everyday life.
-          </Text>
+<Text style={styles.subtitle}>
+  Unlock every Pro feature, including unlimited lessons, worksheets, communication tools,
+  routines, AI activities, and every future Pro feature.
+  {'\n\n'}
+  If your store account is eligible, the trial begins only after you confirm the subscription with Apple or Google Play.
+</Text>
 
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStatCard}>
@@ -447,77 +437,14 @@ const cancelEnabled = currentPlan !== 'free';
           </View>
         </View>
 
-        <View style={styles.familyBenefitCard}>
-  <Text style={styles.familyBenefitTitle}>
-    Why families choose Pro
-  </Text>
-
-  <Benefit
-    icon="chatbubble-ellipses-outline"
-    title="Build Communication"
-    text="Practice requesting, answering questions, and everyday communication skills."
-  />
-
-  <Benefit
-    icon="people-outline"
-    title="Support Daily Routines"
-    text="Create more successful mornings, meals, transitions, and bedtime routines."
-  />
-
-  <Benefit
-    icon="school-outline"
-    title="Practice Important Skills"
-    text="Access unlimited lessons and activities tailored to your child's needs."
-  />
-</View>
-
-        <View style={styles.statusCard}>
-          <Ionicons
-            name={
-              currentPlan === 'free' ? 'lock-closed-outline' : 'checkmark-circle'
-            }
-            size={18}
-            color={currentPlan === 'free' ? '#64748B' : '#059669'}
-          />
-          <Text style={styles.statusText}>
-            {checkingPlan ? 'Checking subscription status...' : statusText}
-          </Text>
-        </View>
-
-        <View style={styles.featuresCard}>
-          <Text style={styles.sectionTitle}>What unlocks with Pro</Text>
-
-          <Feature text="Unlimited Daily Lessons" />
-          <Feature text="Communication Activities" />
-          <Feature text="Printable Worksheets" />
-          <Feature text="PECS Communication Tools" />
-          <Feature text="Parent Support Toolkit" />
-          <Feature text="Routine Builders" />
-          <Feature text="AI Activity Generator" />
-          <Feature text="Future Pro Features Included" />
-        </View>
-
-        <View style={styles.socialProofCard}>
-  <Ionicons
-    name="heart"
-    size={22}
-    color="#EC4899"
-  />
-
-  <Text style={styles.socialProofText}>
-    Built specifically for parents supporting children
-    with autism at home.
-  </Text>
-</View>
-
-        <View style={styles.planSection}>
+  <View style={styles.planSection}>
           <Text style={styles.sectionTitle}>
-            {currentPlan === 'monthly'
-              ? 'Upgrade your plan'
-              : currentPlan === 'yearly'
-                ? 'Manage your subscription'
-                : 'Choose your plan'}
-          </Text>
+  {currentPlan === 'monthly'
+    ? 'Choose Your Plan'
+    : currentPlan === 'yearly'
+      ? 'Manage Your Subscription'
+      : "Choose the Plan That's Right for You"}
+</Text>
 
           {plansLoading ? (
             <View style={styles.loadingPlansCard}>
@@ -539,9 +466,21 @@ const cancelEnabled = currentPlan !== 'free';
             >
               <View style={styles.planTopRow}>
                 <View>
-                  <Text style={styles.planTitle}>{monthlyPlan.title}</Text>
-                  <Text style={styles.planPrice}>{monthlyPlan.priceString}</Text>
-                  <Text style={styles.planSubtext}>{monthlyPlan.subtext}</Text>
+                 <Text style={styles.planTitle}>
+  {monthlyPlan.title}
+</Text>
+
+<Text style={styles.freeTrialLabel}>
+  FREE for 2 Weeks
+</Text>
+
+<Text style={styles.planPrice}>
+  Then {monthlyPlan.priceString}
+</Text>
+
+<Text style={styles.planSubtext}>
+  {monthlyPlan.subtext}
+</Text>
                 </View>
 
                 {selectedPlan === 'monthly' ? (
@@ -571,9 +510,21 @@ const cancelEnabled = currentPlan !== 'free';
 
               <View style={styles.planTopRow}>
                 <View>
-                  <Text style={styles.planTitle}>{yearlyPlan.title}</Text>
-                  <Text style={styles.planPrice}>{yearlyPlan.priceString}</Text>
-                  <Text style={styles.savings}>{yearlyPlan.subtext}</Text>
+                  <Text style={styles.planTitle}>
+  {yearlyPlan.title}
+</Text>
+
+<Text style={styles.freeTrialLabel}>
+  FREE for 2 Weeks
+</Text>
+
+<Text style={styles.planPrice}>
+  Then {yearlyPlan.priceString}
+</Text>
+
+<Text style={styles.savings}>
+  {yearlyPlan.subtext}
+</Text>
                 </View>
 
                 {selectedPlan === 'yearly' ? (
@@ -613,6 +564,12 @@ const cancelEnabled = currentPlan !== 'free';
           </TouchableOpacity>
         ) : null}
 
+<Text style={styles.trialPricing}>
+  {selectedPlan === 'monthly'
+    ? `Eligible subscribers may receive 2 weeks free, then ${monthlyPlan.priceString} unless canceled.`
+    : `Eligible subscribers may receive 2 weeks free, then ${yearlyPlan.priceString} unless canceled.`}
+</Text>
+
         {showPurchaseButton ? (
           <View style={styles.subscriptionTermsBox}>
             <Text style={styles.subscriptionTermsText}>
@@ -629,6 +586,72 @@ const cancelEnabled = currentPlan !== 'free';
           </View>
         ) : null}
 
+        <View style={styles.familyBenefitCard}>
+  <Text style={styles.familyBenefitTitle}>
+    What You&apos;ll Get During Your FREE Trial
+  </Text>
+
+  <Benefit
+    icon="chatbubble-ellipses-outline"
+    title="Build Communication"
+    text="Practice requesting, answering questions, and everyday communication skills."
+  />
+
+  <Benefit
+    icon="people-outline"
+    title="Support Daily Routines"
+    text="Create more successful mornings, meals, transitions, and bedtime routines."
+  />
+
+  <Benefit
+    icon="school-outline"
+    title="Practice Important Skills"
+    text="Access unlimited lessons and activities tailored to your child's needs."
+  />
+</View>
+
+        {currentPlan !== 'free' && (
+  <View style={styles.statusCard}>
+    <Ionicons
+      name="checkmark-circle"
+      size={18}
+      color="#059669"
+    />
+
+    <Text style={styles.statusText}>
+      {checkingPlan
+        ? 'Checking subscription status...'
+        : statusText}
+    </Text>
+  </View>
+)}
+
+        <View style={styles.featuresCard}>
+          <Text style={styles.sectionTitle}>Everything Included During Your FREE Trial</Text>
+
+          <Feature text="Unlimited Daily Lessons" />
+          <Feature text="Communication Activities" />
+          <Feature text="Printable Worksheets" />
+          <Feature text="PECS Communication Tools" />
+          <Feature text="Parent Support Toolkit" />
+          <Feature text="Routine Builders" />
+          <Feature text="AI Activity Generator" />
+          <Feature text="Future Pro Features Included" />
+        </View>
+
+        <View style={styles.socialProofCard}>
+  <Ionicons
+    name="heart"
+    size={22}
+    color="#EC4899"
+  />
+
+  <Text style={styles.socialProofText}>
+    Built specifically for parents supporting children
+    with autism at home.
+  </Text>
+</View>
+
         <TouchableOpacity
           style={[styles.restoreBtn, restoring && styles.restoreBtnDisabled]}
           onPress={handleRestore}
@@ -644,7 +667,65 @@ const cancelEnabled = currentPlan !== 'free';
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
+        <View style={styles.compareCard}>
+  <Text style={styles.compareTitle}>
+    Starter Library vs Pro
+  </Text>
+
+  {/* Starter Library */}
+
+  <View style={styles.compareSection}>
+    <Text style={styles.compareLabel}>
+      Included with Free
+    </Text>
+
+   <CompareItem text="Starter Lessons" />
+<CompareItem text="Sample Worksheets" />
+<CompareItem text="Sample Activities" />
+<CompareItem text="Basic Routine Builder" />
+<CompareItem text="Default PECS Board" />
+<CompareItem text="Calm Toolkit" />
+  </View>
+
+  <View style={styles.compareDivider} />
+
+  {/* Pro */}
+
+  <View style={styles.compareSection}>
+    <Text style={styles.compareLabelPro}>
+   Included with Pro
+</Text>
+
+    <CompareItem text="Everything in Starter Library" />
+<CompareItem text="Unlimited Lessons" />
+<CompareItem text="Full Worksheet Library" />
+<CompareItem text="Unlimited Activities" />
+<CompareItem text="Custom PECS Boards" />
+<CompareItem text="Multiple Child Profiles" />
+<CompareItem text="AI Activity Generator" />
+<CompareItem text="All Future Pro Features" />
+  </View>
+</View>
+
+<View style={styles.trustBox}>
+  <View style={styles.trustHeader}>
+    <Ionicons
+      name="shield-checkmark-outline"
+      size={18}
+      color="#3730A3"
+    />
+    <Text style={styles.trustTitle}>
+      Built for real daily support
+    </Text>
+  </View>
+
+  <Text style={styles.trustText}>
+    Designed for parents, guided by ABA principles, and built to support
+    daily routines, communication, learning, and independence at home.
+  </Text>
+</View>
+
+ <TouchableOpacity
           style={[styles.cancelButton, !cancelEnabled && styles.disabledButton]}
           disabled={!cancelEnabled}
           onPress={handleCancelSubscription}
@@ -684,40 +765,6 @@ const cancelEnabled = currentPlan !== 'free';
             </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.compareCard}>
-          <Text style={styles.compareTitle}>Why upgrade?</Text>
-
-          <View style={styles.compareRow}>
-            <Text style={styles.compareLabel}>Free</Text>
-            <Text style={styles.compareValue}>1 lesson per day</Text>
-          </View>
-
-          <View style={styles.compareDivider} />
-
-          <View style={styles.compareRow}>
-            <Text style={styles.compareLabelPro}>Pro</Text>
-            <Text style={styles.compareValuePro}>
-              Unlimited lessons + premium tools
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.trustBox}>
-          <View style={styles.trustHeader}>
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={18}
-              color="#3730A3"
-            />
-            <Text style={styles.trustTitle}>Built for real daily support</Text>
-          </View>
-
-          <Text style={styles.trustText}>
-            Designed for parents, guided by ABA principles, and built to support
-            daily routines, communication, learning, and independence at home.
-          </Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -728,6 +775,21 @@ function Feature({ text }: { text: string }) {
     <View style={styles.featureRow}>
       <Ionicons name="checkmark-circle" size={20} color="#7C3AED" />
       <Text style={styles.featureText}>{text}</Text>
+    </View>
+  );
+}
+
+function CompareItem({ text }: { text: string }) {
+  return (
+    <View style={styles.compareItem}>
+      <Ionicons
+        name="checkmark-circle"
+        size={18}
+        color="#22C55E"
+      />
+      <Text style={styles.compareItemText}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -949,20 +1011,22 @@ const styles = StyleSheet.create({
   },
 
   bestValue: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-  },
+  position: 'absolute',
+  top: 10,
+  right: 10,
+  backgroundColor: '#7C3AED',
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  borderRadius: 999,
+  elevation: 4,
+},
 
-  bestValueText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
+ bestValueText: {
+  color: '#FFFFFF',
+  fontSize: 12,
+  fontWeight: '900',
+  letterSpacing: .5,
+},
 
   planTopRow: {
     flexDirection: 'row',
@@ -983,6 +1047,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0F172A',
   },
+
+  freeTrialLabel: {
+  color: '#059669',
+  fontSize: 13,
+  fontWeight: '900',
+  marginTop: 8,
+},
 
   planPrice: {
     fontSize: 24,
@@ -1325,5 +1396,33 @@ socialProofText: {
   fontWeight: '800',
   fontSize: 13,
   lineHeight: 19,
+},
+
+trialPricing: {
+  marginTop: 12,
+  marginBottom: 8,
+  textAlign: 'center',
+  color: '#64748B',
+  fontSize: 12,
+  fontWeight: '700',
+  lineHeight: 18,
+},
+
+compareSection: {
+  marginVertical: 4,
+},
+
+compareItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10,
+},
+
+compareItemText: {
+  marginLeft: 10,
+  color: '#334155',
+  fontSize: 14,
+  fontWeight: '600',
+  flex: 1,
 },
 });

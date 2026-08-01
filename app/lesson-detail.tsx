@@ -12,23 +12,27 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getLessonById, LessonLibraryItem } from '../lib/lessonLibrary';
+import { useSubscription } from '../lib/SubscriptionContext';
 
 export default function LessonDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isPro, loading: subscriptionLoading } = useSubscription();
 
   const [lesson, setLesson] = useState<LessonLibraryItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadLesson() {
+      if (subscriptionLoading) return;
+
       if (!id) {
         setLoading(false);
         return;
       }
 
       try {
-        const data = await getLessonById(id);
+        const data = await getLessonById(id, isPro);
         setLesson(data);
       } catch (error) {
         console.error('Lesson detail error:', error);
@@ -38,7 +42,7 @@ export default function LessonDetail() {
     }
 
     void loadLesson();
-  }, [id]);
+  }, [id, isPro, subscriptionLoading]);
 
   if (loading) {
     return (

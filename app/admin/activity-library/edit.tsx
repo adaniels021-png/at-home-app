@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -43,6 +44,7 @@ type ActivityQueueItem = {
   source: string | null;
   created_at: string | null;
   updated_at: string | null;
+  pro_only: boolean;
 };
 
 const CATEGORY_OPTIONS: {
@@ -163,6 +165,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
   const [tryThisText, setTryThisText] = useState('');
   const [whyItHelps, setWhyItHelps] = useState('');
   const [materialsText, setMaterialsText] = useState('');
+  const [proOnly, setProOnly] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -195,7 +198,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
       const { data, error } = await supabase
         .from(tableName)
         .select(
-          'id,title,category,location,time,description,try_this,why_it_helps,materials,status,source,created_at,updated_at'
+          'id,title,category,location,time,description,try_this,why_it_helps,materials,status,source,pro_only,created_at,updated_at'
         )
         .eq('id', activityId)
         .maybeSingle();
@@ -221,6 +224,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
       setTryThisText(listToText(activity.try_this));
       setWhyItHelps(activity.why_it_helps || '');
       setMaterialsText(listToText(activity.materials));
+      setProOnly(activity.pro_only !== false);
     } catch (error: any) {
       console.log('Load edit activity error:', error);
       Alert.alert(
@@ -249,7 +253,8 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
       description.trim() !== String(originalActivity.description || '').trim() ||
       tryThisText.trim() !== listToText(originalActivity.try_this).trim() ||
       whyItHelps.trim() !== String(originalActivity.why_it_helps || '').trim() ||
-      materialsText.trim() !== listToText(originalActivity.materials).trim()
+      materialsText.trim() !== listToText(originalActivity.materials).trim() ||
+      proOnly !== (originalActivity.pro_only !== false)
     );
   }, [
     originalActivity,
@@ -262,6 +267,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
     tryThisText,
     whyItHelps,
     materialsText,
+    proOnly,
   ]);
 
   const validateForm = () => {
@@ -323,26 +329,41 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
         why_it_helps: whyItHelps.trim(),
         materials: materialsList,
         status,
+        pro_only: proOnly,
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from(tableName)
         .update(payload)
-        .eq('id', activityId);
+        .eq('id', activityId)
+        .select(
+          'id,title,category,location,time,description,try_this,why_it_helps,materials,status,source,pro_only,created_at,updated_at'
+        )
+        .single();
 
       if (error) throw error;
 
-    Alert.alert(
-  'Draft Updated',
-  'Your review draft has been updated.',
-  [
-    {
-      text: 'Back to Review Queue',
-      onPress: () => router.back(),
-    },
-  ]
-);
+      const updatedActivity = data as ActivityQueueItem;
+      setOriginalActivity(updatedActivity);
+      setProOnly(updatedActivity.pro_only !== false);
+
+      const editingPublishedActivity = source === 'library';
+
+      Alert.alert(
+        editingPublishedActivity ? 'Activity Updated' : 'Draft Updated',
+        editingPublishedActivity
+          ? 'The published activity and its availability have been updated.'
+          : 'Your review draft has been updated.',
+        [
+          {
+            text: editingPublishedActivity
+              ? 'Back to Activity Library'
+              : 'Back to Review Queue',
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } catch (error: any) {
       console.log('Update activity library error:', error);
       Alert.alert(
@@ -371,6 +392,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
         materials: materialsList,
         status: 'draft',
         source: 'admin_duplicate',
+        pro_only: true,
       };
 
       const { error } = await supabase
@@ -718,6 +740,27 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
             })}
           </View>
 
+          <View style={styles.formCard}>
+            <Text style={styles.sectionTitle}>Availability</Text>
+
+            <View style={styles.availabilityRow}>
+              <View style={styles.availabilityTextWrap}>
+                <Text style={styles.availabilityTitle}>Pro Activity</Text>
+                <Text style={styles.sectionHelper}>
+                  Require an active Pro subscription to access this activity.
+                </Text>
+              </View>
+
+              <Switch
+                value={proOnly}
+                onValueChange={setProOnly}
+                disabled={saving}
+                trackColor={{ false: '#CBD5E1', true: '#C4B5FD' }}
+                thumbColor={proOnly ? '#7C3AED' : '#FFFFFF'}
+              />
+            </View>
+          </View>
+
           <View style={styles.adminActionsCard}>
             <Text style={styles.sectionTitle}>Admin Actions</Text>
             <Text style={styles.sectionHelper}>
@@ -1060,6 +1103,21 @@ const styles = StyleSheet.create({
   },
   statusOptionTextActive: {
     color: '#6D28D9',
+  },
+  availabilityRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  availabilityTextWrap: {
+    flex: 1,
+  },
+  availabilityTitle: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '900',
   },
   adminActionsCard: {
     backgroundColor: '#FFFFFF',

@@ -25,7 +25,11 @@ export async function getRecommendedActivitiesFromLibrary({
     .from('activity_library')
     .select('*')
     .eq('status', 'approved')
-    .limit(count * 3);
+    .order('title', { ascending: true });
+
+  if (count < 100) {
+    query = query.limit(count * 3);
+  }
 
   if (filter && filter !== 'surprise') {
     query = query.ilike('category', String(filter).toLowerCase());
@@ -42,13 +46,15 @@ export async function getRecommendedActivitiesFromLibrary({
 
   const filtered = (data || []).filter((activity: any) => {
     const title = String(activity.title || '').toLowerCase().trim();
-    return title && !excluded.includes(title);
+    return title && (count >= 100 || !excluded.includes(title));
   });
 
-  const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, count);
+  const selected = count >= 100
+    ? filtered
+    : filtered.sort(() => Math.random() - 0.5).slice(0, count);
 
   return normalizeActivities(
-    shuffled.map((activity: any) => ({
+    selected.map((activity: any) => ({
       id: activity.id,
       name: activity.title,
       title: activity.title,
@@ -63,6 +69,7 @@ export async function getRecommendedActivitiesFromLibrary({
       success_criteria: activity.why_it_helps || '',
       source: 'library',
       library_activity_id: activity.id,
+      pro_only: activity.pro_only !== false,
     }))
   );
 }

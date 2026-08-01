@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../lib/SelectedChildContext';
 import { useSubscription } from '../lib/SubscriptionContext';
+import { hasEntitlement } from '../lib/entitlements';
 import { supabase } from '../lib/supabase';
 
 type CardCategory =
@@ -401,7 +402,11 @@ const QUICK_TEMPLATES: PecsTemplate[] = [
 export default function PecsCreatorScreen() {
   const router = useRouter();
   const { selectedChild } = useChild();
-  const { isPro, loading: subscriptionLoading } = useSubscription();
+  const { isPro: subscriptionIsPro, loading: subscriptionLoading } = useSubscription();
+  const isPro = hasEntitlement(
+    { isPro: subscriptionIsPro },
+    'pecs_customize'
+  );
 
   const [label, setLabel] = useState('');
   const [helperText, setHelperText] = useState('');

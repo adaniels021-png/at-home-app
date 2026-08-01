@@ -75,6 +75,7 @@ function cleanActivity(item: ImportActivity) {
     why_it_helps: String(item.why_it_helps || '').trim(),
     status: item.status || 'approved',
     source: item.source || 'bulk_import',
+    pro_only: true,
     updated_at: new Date().toISOString(),
   };
 }

@@ -170,7 +170,30 @@ useEffect(() => {
         {item.category || 'General'}
       </Text>
 
-      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      <View style={styles.cardTopActions}>
+        <View
+          style={[
+            styles.accessBadge,
+            item.pro_only === false && styles.accessBadgeFree,
+          ]}
+        >
+          <Ionicons
+            name={item.pro_only === false ? 'checkmark-circle' : 'lock-closed'}
+            size={12}
+            color={item.pro_only === false ? '#047857' : '#7C3AED'}
+          />
+          <Text
+            style={[
+              styles.accessBadgeText,
+              item.pro_only === false && styles.accessBadgeTextFree,
+            ]}
+          >
+            {item.pro_only === false ? 'FREE' : 'PRO'}
+          </Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      </View>
     </View>
 
     <Text style={styles.lessonTitle}>{item.title}</Text>
@@ -276,6 +299,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
+  },
+
+  cardTopActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  accessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    backgroundColor: '#F3E8FF',
+  },
+
+  accessBadgeFree: {
+    backgroundColor: '#D1FAE5',
+  },
+
+  accessBadgeText: {
+    color: '#7C3AED',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  accessBadgeTextFree: {
+    color: '#047857',
   },
 
   category: {

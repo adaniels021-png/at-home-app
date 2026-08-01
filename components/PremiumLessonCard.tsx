@@ -31,7 +31,7 @@ export default function PremiumLessonCard({
             marginBottom: 8,
           }}
         >
-          Today's Lesson
+          Today&apos;s Lesson
         </Text>
 
         <Text
@@ -52,7 +52,7 @@ export default function PremiumLessonCard({
             fontSize: 16,
           }}
         >
-          Open today's personalized lesson and
+          Open today&apos;s personalized lesson and
           keep progress moving.
         </Text>
 

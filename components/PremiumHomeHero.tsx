@@ -17,11 +17,11 @@ export default function PremiumHomeHero({
         </Text>
 
         <Text style={styles.subtitle}>
-          You're doing an amazing job.
+          You&apos;re doing an amazing job.
         </Text>
 
         <Text style={styles.description}>
-          Today's lesson and support tools
+          Today&apos;s lesson and support tools
           are ready for {childName || 'your child'}.
         </Text>
       </View>

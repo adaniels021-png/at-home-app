@@ -276,7 +276,7 @@ const recommendedProblem = getRecommendedProblem();
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Potty Coach</Text>
           <Text style={styles.subtitle}>
-Personalized support based on your child's potty journey.
+Personalized support based on your child&apos;s potty journey.
         </Text>
           </View>
         </View>
@@ -304,7 +304,7 @@ Personalized support based on your child's potty journey.
     activeOpacity={0.9}
   >
     <Text style={styles.recommendationEyebrow}>
-      TODAY'S RECOMMENDATION
+      TODAY&apos;S RECOMMENDATION
     </Text>
 
     <Text style={styles.recommendationTitle}>

@@ -4,12 +4,16 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useSubscription } from '../lib/SubscriptionContext';
+import { hasEntitlement } from '../lib/entitlements';
 
 export default function ProGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isPro, adminMode, loading } = useSubscription();
+  const { isPro, loading } = useSubscription();
 
-  const hasProAccess = isPro || adminMode;
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'premium_tool'
+  );
 
   if (loading) {
     return (

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import EntitlementNavigationGuard from '../components/EntitlementNavigationGuard';
 import { ChildProvider } from '../lib/SelectedChildContext';
 import { SettingsProvider } from '../lib/SettingsContext';
 import { SubscriptionProvider } from '../lib/SubscriptionContext';
@@ -247,6 +248,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SettingsProvider>
         <SubscriptionProvider>
+          <EntitlementNavigationGuard />
           <ChildProvider>
             {/*
              * The Stack must stay mounted even while startup work

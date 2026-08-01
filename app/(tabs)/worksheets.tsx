@@ -27,6 +27,10 @@ import { WebView } from 'react-native-webview';
 
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import {
+  canAccessWorksheet as hasWorksheetAccess,
+  hasEntitlement,
+} from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 import {
   buildWorksheetHtml,
@@ -49,7 +53,7 @@ type WorksheetWithPrintOptions = WorksheetItem & {
   pdfUrl?: string;
   skillFocus?: string;
   isUploaded?: boolean;
-  isProWorksheet?: boolean;
+  is_pro?: boolean | null;
   isFeatured?: boolean;
   sortOrder?: number;
 };
@@ -128,7 +132,7 @@ function mapUploadedWorksheet(
       row.skill_focus || undefined,
 
     isUploaded: true,
-    isProWorksheet: row.is_pro !== false,
+    is_pro: row.is_pro,
     isFeatured: row.is_featured === true,
     sortOrder: row.sort_order || 0,
   };
@@ -149,7 +153,17 @@ function getWorksheetPreviewSource(
 export default function WorksheetsScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
-  const { isPro } = useSubscription();
+  const { isPro: subscriptionIsPro } = useSubscription();
+  const hasFullWorksheetAccess = hasEntitlement(
+    { isPro: subscriptionIsPro },
+    'worksheets'
+  );
+
+  const canAccessWorksheet = (worksheet: WorksheetItem) =>
+    hasWorksheetAccess(
+      subscriptionIsPro,
+      worksheet as WorksheetWithPrintOptions
+    );
 
   const scrollRef = useRef<ScrollView | null>(null);
 
@@ -314,8 +328,8 @@ const allWorksheets = useMemo<
     selectedChild?.name ||
     'Child';
 
-  const requireProForWorksheet = () => {
-    if (!isPro) {
+  const requireProForWorksheet = (worksheet: WorksheetItem) => {
+    if (!canAccessWorksheet(worksheet)) {
       router.push('/subscription');
       return true;
     }
@@ -454,7 +468,7 @@ const allWorksheets = useMemo<
 };
 
   const handleShareWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet()) return;
+    if (requireProForWorksheet(worksheet)) return;
 
     setExporting(true);
 
@@ -483,7 +497,7 @@ const allWorksheets = useMemo<
   };
 
   const handleEmailWorksheet = async (worksheet: WorksheetItem) => {
-    if (requireProForWorksheet()) return;
+    if (requireProForWorksheet(worksheet)) return;
 
     setExporting(true);
 
@@ -506,7 +520,7 @@ const allWorksheets = useMemo<
   const handlePrintWorksheet = async (
   worksheet: WorksheetItem
 ) => {
-  if (requireProForWorksheet()) return;
+  if (requireProForWorksheet(worksheet)) return;
 
   setExporting(true);
 
@@ -577,6 +591,15 @@ const allWorksheets = useMemo<
 };
 
   const nameWorksheet = WORKSHEETS.find((item) => item.id === 'paths-to-objects');
+  const nameWorksheetAccessible = nameWorksheet
+    ? canAccessWorksheet(nameWorksheet)
+    : false;
+  const selectedWorksheetAccessible = selectedWorksheet
+    ? canAccessWorksheet(selectedWorksheet)
+    : false;
+  const heroWorksheetAccessible = filteredWorksheets[0]
+    ? canAccessWorksheet(filteredWorksheets[0])
+    : false;
 
   const previewHtml = selectedWorksheet
     ? buildWorksheetHtml({
@@ -591,11 +614,6 @@ const allWorksheets = useMemo<
   }
 
   function handleHeroPdfPress() {
-    if (!isPro) {
-      router.push('/subscription');
-      return;
-    }
-
     const firstWorksheet = filteredWorksheets[0];
 
     if (firstWorksheet) {
@@ -671,11 +689,11 @@ const allWorksheets = useMemo<
                 activeOpacity={0.9}
               >
                 <Ionicons
-                  name={isPro ? 'download-outline' : 'lock-closed-outline'}
+                  name={heroWorksheetAccessible ? 'download-outline' : 'lock-closed-outline'}
                   size={14}
                   color="#3730A3"
                 />
-                <Text style={styles.heroPillText}>{isPro ? 'PDF unlocked' : 'Pro PDF'}</Text>
+                <Text style={styles.heroPillText}>{heroWorksheetAccessible ? 'PDF unlocked' : 'Pro PDF'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -699,7 +717,7 @@ const allWorksheets = useMemo<
           </View>
         </View>
 
-        {!isPro ? (
+        {!hasFullWorksheetAccess ? (
           <View style={styles.lockedBanner}>
             <View style={styles.lockedIconWrap}>
               <Ionicons name="lock-closed" size={18} color="#7C2D12" />
@@ -708,7 +726,7 @@ const allWorksheets = useMemo<
             <View style={{ flex: 1 }}>
               <Text style={styles.lockedTitle}>Pro Feature Preview</Text>
               <Text style={styles.lockedText}>
-                You can preview worksheet options here. Printing, PDF sharing, email export, and personalized worksheets are unlocked with Pro.
+                Free samples are ready to use. Every other worksheet remains visible and unlocks with Pro.
               </Text>
             </View>
 
@@ -762,7 +780,7 @@ const allWorksheets = useMemo<
               />
 
               <TouchableOpacity
-                style={[styles.generateBtn, !isPro && styles.disabledBtn]}
+                style={[styles.generateBtn, !nameWorksheetAccessible && styles.disabledBtn]}
                 onPress={() => {
                   if (nameWorksheet) {
                     void handleShareWorksheet(nameWorksheet);
@@ -776,13 +794,13 @@ const allWorksheets = useMemo<
                 ) : (
                   <>
                     <Ionicons
-                      name={isPro ? 'document-text-outline' : 'lock-closed-outline'}
+                      name={nameWorksheetAccessible ? 'document-text-outline' : 'lock-closed-outline'}
                       size={18}
                       color="#FFFFFF"
                     />
 
                     <Text style={styles.generateBtnText}>
-                      {isPro
+                      {nameWorksheetAccessible
                         ? 'Create Personalized Tracing PDF'
                         : 'Pro Required for PDF'}
                     </Text>
@@ -829,11 +847,21 @@ const allWorksheets = useMemo<
         </View>
 
         <View style={styles.cardList}>
-          {filteredWorksheets.map((item) => (
-            <TouchableOpacity
+          {filteredWorksheets.map((item) => {
+            const worksheetAccessible = canAccessWorksheet(item);
+
+            return (
+              <TouchableOpacity
               key={item.id}
               style={styles.card}
-              onPress={() => setSelectedWorksheet(item)}
+              onPress={() => {
+                if (!worksheetAccessible) {
+                  router.push('/subscription');
+                  return;
+                }
+
+                setSelectedWorksheet(item);
+              }}
               activeOpacity={0.9}
             >
              {getWorksheetPreviewSource(
@@ -857,14 +885,14 @@ const allWorksheets = useMemo<
                   <Text style={styles.categoryPillText}>{getCategoryLabel(item.category)}</Text>
                 </View>
 
-                <View style={[styles.proPill, isPro && styles.proPillUnlocked]}>
+                <View style={[styles.proPill, worksheetAccessible && styles.proPillUnlocked]}>
                   <Ionicons
-                    name={isPro ? 'checkmark-circle' : 'lock-closed'}
+                    name={worksheetAccessible ? 'checkmark-circle' : 'lock-closed'}
                     size={12}
-                    color={isPro ? '#047857' : '#7C3AED'}
+                    color={worksheetAccessible ? '#047857' : '#7C3AED'}
                   />
-                  <Text style={[styles.proPillText, isPro && styles.proPillTextUnlocked]}>
-                    {isPro ? 'PDF Ready' : 'Pro PDF'}
+                  <Text style={[styles.proPillText, worksheetAccessible && styles.proPillTextUnlocked]}>
+                    {worksheetAccessible ? 'PDF Ready' : 'Pro PDF'}
                   </Text>
                 </View>
               </View>
@@ -883,6 +911,11 @@ const allWorksheets = useMemo<
                     style={styles.previewMiniBtn}
                     onPress={(event: GestureResponderEvent) => {
                       event.stopPropagation();
+                      if (!worksheetAccessible) {
+                        router.push('/subscription');
+                        return;
+                      }
+
                       setSelectedWorksheet(item);
                     }}
                     activeOpacity={0.85}
@@ -892,7 +925,7 @@ const allWorksheets = useMemo<
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.pdfMiniBtn, !isPro && styles.pdfMiniBtnLocked]}
+                    style={[styles.pdfMiniBtn, !worksheetAccessible && styles.pdfMiniBtnLocked]}
                     onPress={(event: GestureResponderEvent) => {
                       event.stopPropagation();
                       void handleShareWorksheet(item);
@@ -901,7 +934,7 @@ const allWorksheets = useMemo<
                     activeOpacity={0.88}
                   >
                     <Ionicons
-                      name={isPro ? 'download-outline' : 'lock-closed-outline'}
+                      name={worksheetAccessible ? 'download-outline' : 'lock-closed-outline'}
                       size={15}
                       color="#FFFFFF"
                     />
@@ -909,8 +942,9 @@ const allWorksheets = useMemo<
                   </TouchableOpacity>
                 </View>
               </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.proCard}>
@@ -986,7 +1020,7 @@ getWorksheetPreviewSource(
 
                 <View style={styles.detailSectionHalf}>
                   <Text style={styles.detailTitle}>Access</Text>
-                  <Text style={styles.detailText}>{isPro ? 'PDF unlocked' : 'Preview only'}</Text>
+                  <Text style={styles.detailText}>{selectedWorksheetAccessible ? 'PDF unlocked' : 'Pro required'}</Text>
                 </View>
               </View>
 
@@ -1006,7 +1040,7 @@ getWorksheetPreviewSource(
 
               <View style={styles.actionRow}>
                 <TouchableOpacity
-                  style={[styles.secondaryBtn, !isPro && styles.disabledLightBtn]}
+                  style={[styles.secondaryBtn, !selectedWorksheetAccessible && styles.disabledLightBtn]}
                   onPress={() =>
                     selectedWorksheet && void handlePrintWorksheet(selectedWorksheet)
                   }
@@ -1018,7 +1052,7 @@ getWorksheetPreviewSource(
                   ) : (
                     <>
                       <Ionicons
-                        name={isPro ? 'print-outline' : 'lock-closed-outline'}
+                        name={selectedWorksheetAccessible ? 'print-outline' : 'lock-closed-outline'}
                         size={18}
                         color="#475569"
                       />
@@ -1028,7 +1062,7 @@ getWorksheetPreviewSource(
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.primaryBtn, !isPro && styles.disabledBtn]}
+                  style={[styles.primaryBtn, !selectedWorksheetAccessible && styles.disabledBtn]}
                   onPress={() =>
                     selectedWorksheet && void handleShareWorksheet(selectedWorksheet)
                   }
@@ -1040,7 +1074,7 @@ getWorksheetPreviewSource(
                   ) : (
                     <>
                       <Ionicons
-                        name={isPro ? 'download-outline' : 'lock-closed-outline'}
+                        name={selectedWorksheetAccessible ? 'download-outline' : 'lock-closed-outline'}
                         size={18}
                         color="#FFFFFF"
                       />
@@ -1051,7 +1085,7 @@ getWorksheetPreviewSource(
               </View>
 
               <TouchableOpacity
-                style={[styles.emailBtn, !isPro && styles.disabledLightBtn]}
+                style={[styles.emailBtn, !selectedWorksheetAccessible && styles.disabledLightBtn]}
                 onPress={() =>
                   selectedWorksheet && void handleEmailWorksheet(selectedWorksheet)
                 }
@@ -1063,7 +1097,7 @@ getWorksheetPreviewSource(
                 ) : (
                   <>
                     <Ionicons
-                      name={isPro ? 'mail-outline' : 'lock-closed-outline'}
+                      name={selectedWorksheetAccessible ? 'mail-outline' : 'lock-closed-outline'}
                       size={18}
                       color="#4F46E5"
                     />
@@ -1072,7 +1106,7 @@ getWorksheetPreviewSource(
                 )}
               </TouchableOpacity>
 
-              {!isPro ? (
+              {!selectedWorksheetAccessible ? (
                 <TouchableOpacity
                   style={styles.upgradeModalBtn}
                   onPress={() => router.push('/subscription')}

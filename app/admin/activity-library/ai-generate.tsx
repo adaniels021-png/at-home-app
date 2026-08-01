@@ -211,6 +211,7 @@ export default function AIGenerateActivitiesScreen() {
 
       const cleaned = normalized
         .map((activity: any) => cleanGeneratedActivity(activity, category))
+        .map((activity: any) => ({ ...activity, pro_only: true }))
         .filter((activity: any) => activity.title && activity.description);
 
       if (cleaned.length === 0) {

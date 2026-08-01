@@ -25,6 +25,7 @@ import { deleteChildProfile } from '../../lib/deleteChildProfile';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { canAccessRoute, hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 type SettingItemProps = {
@@ -49,13 +50,16 @@ export default function SettingsScreen() {
   const childContext = useChild() as any;
   const { selectedChild, refreshChildren } = childContext;
 
-  const { isPro, adminMode } = useSubscription();
+  const { isPro } = useSubscription();
 
   const [deletingChild, setDeletingChild] = useState(false);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
   
 
-  const hasProAccess = isPro || adminMode;
+  const hasProAccess = hasEntitlement(
+    { isPro },
+    'premium_tool'
+  );
 
   useEffect(() => {
   async function checkAdmin() {
@@ -143,7 +147,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
   };
 
   const openPremiumRoute = (path: string) => {
-    if (!hasProAccess) {
+    if (!canAccessRoute({ isPro }, path)) {
       router.push('/subscription');
       return;
     }
@@ -325,16 +329,37 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
           <Section title="Subscription">
             <SettingItem
   icon="card-outline"
-  label={isPro ? 'Manage Subscription' : 'View Subscription Options'}
+  label={hasProAccess ? 'Manage Subscription' : 'View Subscription Options'}
   sub={!allowManageSubscription ? 'Owner only' : undefined}
   helper={
-    isPro
+    hasProAccess
       ? 'Change plans or cancel through Apple'
       : 'Choose monthly or yearly Pro access'
   }
   disabled={!allowManageSubscription}
   onPress={() => router.push('/subscription')}
 />
+          </Section>
+
+          <Section title="Help">
+            <SettingItem
+              icon="play-circle-outline"
+              label="Replay Getting Started Guide"
+              helper="Review the warm introduction to ABA at Home"
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/daily-lessons',
+                  params: { replay: '1' },
+                } as any)
+              }
+            />
+
+            <SettingItem
+              icon="help-circle-outline"
+              label="Help & Support"
+              helper="Get help, report an issue, or contact support"
+              onPress={() => openRoute('/settings/support')}
+            />
           </Section>
 
           <Section title="Legal">
