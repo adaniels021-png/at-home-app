@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   useFocusEffect,
   useLocalSearchParams,
@@ -28,7 +29,11 @@ import { useSubscription } from '../../lib/SubscriptionContext';
 import { canAccessLesson } from '../../lib/entitlements';
 import { getLearningPath } from '../../lib/learningPath';
 import { completeLesson } from '../../lib/lessonEngine';
-import { getLessonById, getRecommendedLesson } from '../../lib/lessonLibrary';
+import {
+  getLessonById,
+  getLessonLibraryItems,
+  getRecommendedLesson,
+} from '../../lib/lessonLibrary';
 import { getRecommendedStageForSkill } from '../../lib/lessonProgression';
 import { ensureLessonQueue, getNextQueuedLesson } from '../../lib/lessonQueue';
 import {
@@ -194,6 +199,8 @@ const retryCountRef = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isStartingLesson, setIsStartingLesson] = useState(false);
+  const [completedFreeLesson, setCompletedFreeLesson] =
+    useState<Lesson | null>(null);
 
   const [preparingLesson, setPreparingLesson] = useState(false);
 
@@ -531,6 +538,40 @@ const { data: insertedLesson, error } = await supabase
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
+  if (!isPro && status === 'success') {
+    let nextAccessibleLesson = null;
+
+    try {
+      const categoryLessons = await getLessonLibraryItems();
+
+      nextAccessibleLesson = categoryLessons.find(
+        (lesson) =>
+          lesson.category === selectedCategory &&
+          lesson.id !== lessonData.library_lesson_id &&
+          canAccessLesson(isPro, lesson)
+      ) ?? null;
+    } catch (lookupError) {
+      console.error('Next free lesson lookup failed:', lookupError);
+    }
+
+    setStarted(false);
+
+    if (nextAccessibleLesson) {
+      setLessonData(mapLibraryLessonToDailyLesson(nextAccessibleLesson));
+      setLessonNumber(nextAccessibleLesson.stage_number || 1);
+
+      Alert.alert(
+        'Lesson Completed 🎉',
+        'A new lesson is ready.'
+      );
+    } else {
+      setLessonNumber((prev) => prev + 1);
+      setCompletedFreeLesson(lessonData);
+    }
+
+    return;
+  }
+
   Alert.alert(
     status === 'success' ? 'Lesson Completed 🎉' : 'Lesson Saved',
     'A new lesson is ready.'
@@ -714,6 +755,19 @@ useEffect(() => {
     return <LoadingScreen />;
   }
 
+  if (completedFreeLesson) {
+    return (
+      <FreeLessonCompletionScreen
+        onStartTrial={() => router.push('/subscription')}
+        onPracticeAgain={() => {
+          setLessonData(completedFreeLesson);
+          setCompletedFreeLesson(null);
+          setStarted(true);
+        }}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View
@@ -832,6 +886,100 @@ useEffect(() => {
   onUpgrade={() => router.push('/subscription')}
 />
         )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function FreeLessonCompletionScreen({
+  onStartTrial,
+  onPracticeAgain,
+}: {
+  onStartTrial: () => void;
+  onPracticeAgain: () => void;
+}) {
+  return (
+    <SafeAreaView style={styles.freeCompletionContainer}>
+      <View pointerEvents="none" style={styles.freeCompletionGlowTop} />
+      <View pointerEvents="none" style={styles.freeCompletionGlowBottom} />
+
+      <ScrollView
+        contentContainerStyle={styles.freeCompletionContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.freeCompletionCard}>
+          <View style={styles.freeCompletionIconWrap}>
+            <Text style={styles.freeCompletionEmoji}>🎉</Text>
+          </View>
+
+          <Text style={styles.freeCompletionTitle}>Great Job!</Text>
+          <Text style={styles.freeCompletionBody}>
+            You&apos;ve completed today&apos;s free lesson in this skill area.
+          </Text>
+          <Text style={styles.freeCompletionParagraph}>
+            Start your <Text style={styles.freeCompletionBodyEmphasis}>14-day free trial</Text> to
+            unlock unlimited lessons, printable worksheets, Daily Adventures,
+            personalized learning, and much more.
+          </Text>
+          <Text style={styles.freeCompletionParagraph}>
+            Or continue practicing today&apos;s lesson as many times as you&apos;d like.
+          </Text>
+
+          <View style={styles.freeCompletionValueBox}>
+            <Text style={styles.freeCompletionValueTitle}>
+              ✨ Your Free Trial Includes
+            </Text>
+
+            {[
+              'Unlimited Lessons',
+              'Printable Worksheets',
+              'Daily Adventures',
+              'Personalized Learning',
+            ].map((feature) => (
+              <View key={feature} style={styles.freeCompletionFeatureRow}>
+                <View style={styles.freeCompletionFeatureCheck}>
+                  <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                </View>
+                <Text style={styles.freeCompletionFeatureText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+
+          <AnimatedPressable
+            style={styles.freeCompletionPrimaryButton}
+            onPress={onStartTrial}
+          >
+            <LinearGradient
+              colors={['#8B5CF6', '#6D28D9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.freeCompletionPrimaryGradient}
+            >
+              <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+              <Text style={styles.freeCompletionPrimaryText}>
+                Start Free Trial
+              </Text>
+            </LinearGradient>
+          </AnimatedPressable>
+
+          <AnimatedPressable
+            style={styles.freeCompletionSecondaryButton}
+            onPress={onPracticeAgain}
+          >
+            <Ionicons name="refresh-outline" size={18} color="#6D28D9" />
+            <Text style={styles.freeCompletionSecondaryText}>
+              Practice This Lesson Again
+            </Text>
+          </AnimatedPressable>
+
+          <Text style={styles.freeCompletionNoteTitle}>
+            Practice builds confidence.
+          </Text>
+          <Text style={styles.freeCompletionFootnote}>
+            Repeat today&apos;s lesson as many times as you&apos;d like, or start your
+            free trial to unlock hundreds of new learning activities.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -2137,6 +2285,216 @@ function LockedPreviewSection({ title, lockedPreviewLessons, onUpgrade }: any) {
 }
 
 const styles = StyleSheet.create({
+  freeCompletionContainer: {
+    flex: 1,
+    backgroundColor: '#FFF7ED',
+    overflow: 'hidden',
+  },
+
+  freeCompletionGlowTop: {
+    position: 'absolute',
+    top: -90,
+    right: -70,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: 'rgba(196,181,253,0.28)',
+  },
+
+  freeCompletionGlowBottom: {
+    position: 'absolute',
+    bottom: -100,
+    left: -75,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(253,186,116,0.20)',
+  },
+
+  freeCompletionContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 28,
+  },
+
+  freeCompletionCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    alignItems: 'center',
+    borderRadius: 32,
+    paddingHorizontal: 28,
+    paddingVertical: 34,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+    shadowColor: '#6D28D9',
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 5,
+  },
+
+  freeCompletionIconWrap: {
+    width: 82,
+    height: 82,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+
+  freeCompletionEmoji: {
+    fontSize: 42,
+  },
+
+  freeCompletionTitle: {
+    marginTop: 22,
+    marginBottom: 4,
+    color: '#2E1065',
+    fontSize: 30,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  freeCompletionBody: {
+    marginTop: 14,
+    color: '#4C3D5E',
+    fontSize: 16,
+    lineHeight: 25,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+
+  freeCompletionParagraph: {
+    marginTop: 14,
+    color: '#6B6478',
+    fontSize: 14,
+    lineHeight: 23,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  freeCompletionBodyEmphasis: {
+    color: '#5B21B6',
+    fontWeight: '900',
+  },
+
+  freeCompletionValueBox: {
+    width: '100%',
+    marginTop: 24,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+
+  freeCompletionValueTitle: {
+    color: '#92400E',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+
+  freeCompletionFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 9,
+  },
+
+  freeCompletionFeatureCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D6A34A',
+    marginRight: 11,
+  },
+
+  freeCompletionFeatureText: {
+    flex: 1,
+    color: '#78350F',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  freeCompletionPrimaryButton: {
+    width: '100%',
+    alignSelf: 'stretch',
+    height: 64,
+    marginTop: 8,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#7C3AED',
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 4,
+  },
+
+  freeCompletionPrimaryGradient: {
+    flex: 1,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 11,
+  },
+
+  freeCompletionPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  freeCompletionSecondaryButton: {
+    width: '100%',
+    minHeight: 56,
+    marginTop: 14,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    backgroundColor: '#F5F3FF',
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  freeCompletionSecondaryText: {
+    marginLeft: 10,
+    flexShrink: 1,
+    color: '#6D28D9',
+    fontSize: 14,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  freeCompletionNoteTitle: {
+    marginTop: 22,
+    color: '#6B6478',
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  freeCompletionFootnote: {
+    marginTop: 6,
+    color: '#8B8198',
+    fontSize: 12,
+    lineHeight: 19,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
   premiumStartCard: {
   position: 'relative',
   overflow: 'hidden',
