@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -308,6 +309,43 @@ useEffect(() => {
   </View>
 </FadeInView>
 
+        <FadeInView delay={90}>
+          <AnimatedPressable
+            style={styles.helpNowCard}
+            onPress={() => router.push('/calm-down')}
+          >
+            <LinearGradient
+              colors={['#FFF1ED', '#FFD9CF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.helpNowGradient}
+            >
+              <View pointerEvents="none" style={styles.helpNowGlow} />
+
+              <View style={styles.helpNowLogoBadge}>
+                <View pointerEvents="none" style={styles.helpNowLogoHighlight} />
+                <Image
+                  source={require('../../assets/icon.png')}
+                  style={styles.helpNowLogo}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={styles.helpNowTextWrap}>
+                <Text style={styles.helpNowTitle}>Get Help Now</Text>
+                <Text style={styles.helpNowSubtitle}>
+                  Immediate guidance for tough moments.
+                </Text>
+                <Text style={styles.helpNowSupport}>You&apos;re not alone.</Text>
+              </View>
+
+              <View style={styles.helpNowArrowButton}>
+                <Ionicons name="arrow-forward" size={20} color="#B3473F" />
+              </View>
+            </LinearGradient>
+          </AnimatedPressable>
+        </FadeInView>
+
         <FadeInView delay={130}>
           <AnimatedPressable
             style={styles.lessonCard}
@@ -405,16 +443,6 @@ useEffect(() => {
       bg="#F5F3FF"
       border="#DDD6FE"
       onPress={() => router.push('/parent-support')}
-    />
-
-    <ToolCard
-      image={require('../../assets/images/calm-tool.png')}
-      title="Calm Down Toolkit"
-      subtitle="Quick regulation supports for stressful moments."
-      color="#0F766E"
-      bg="#ECFDF5"
-      border="#A7F3D0"
-      onPress={() => router.push('/calm-down')}
     />
 
     <ToolCard
@@ -669,6 +697,118 @@ const styles = StyleSheet.create({
   shadowOffset: { width: 0, height: 8 },
   shadowOpacity: 0.16,
   shadowRadius: 14,
+  elevation: 3,
+},
+
+helpNowCard: {
+  width: '100%',
+  borderRadius: 24,
+  marginBottom: 14,
+  shadowColor: '#D86B5F',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.13,
+  shadowRadius: 16,
+  elevation: 3,
+},
+
+helpNowGradient: {
+  minHeight: 118,
+  overflow: 'hidden',
+  borderRadius: 24,
+  borderWidth: 1,
+  borderColor: '#F7C5BB',
+  paddingHorizontal: 16,
+  paddingVertical: 18,
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+helpNowGlow: {
+  position: 'absolute',
+  width: 170,
+  height: 170,
+  borderRadius: 85,
+  right: -62,
+  top: -82,
+  backgroundColor: 'rgba(255,255,255,0.34)',
+},
+
+helpNowLogoBadge: {
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 13,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.96)',
+  shadowColor: '#9F3F38',
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.13,
+  shadowRadius: 9,
+  elevation: 3,
+},
+
+helpNowLogoHighlight: {
+  position: 'absolute',
+  top: 2,
+  left: 8,
+  right: 8,
+  height: 18,
+  borderRadius: 10,
+  backgroundColor: 'rgba(255,255,255,0.72)',
+  zIndex: 1,
+},
+
+helpNowLogo: {
+  width: 52,
+  height: 52,
+  borderRadius: 26,
+},
+
+helpNowTextWrap: {
+  flex: 1,
+  paddingRight: 10,
+},
+
+helpNowTitle: {
+  color: '#7E302B',
+  fontSize: 20,
+  lineHeight: 24,
+  fontWeight: '900',
+  letterSpacing: -0.35,
+},
+
+helpNowSubtitle: {
+  marginTop: 4,
+  color: '#934B44',
+  fontSize: 12.5,
+  lineHeight: 17,
+  fontWeight: '800',
+},
+
+helpNowSupport: {
+  marginTop: 5,
+  color: '#AD5C53',
+  fontSize: 11.5,
+  lineHeight: 15,
+  fontWeight: '700',
+},
+
+helpNowArrowButton: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.94)',
+  shadowColor: '#9F3F38',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.13,
+  shadowRadius: 8,
   elevation: 3,
 },
 
@@ -1241,7 +1381,7 @@ toiletTrainingMiniCard: {
   padding: 12,
   borderWidth: 1,
   borderColor: '#BFDBFE',
-  marginBottom: 14,
+  marginBottom: 19,
   flexDirection: 'row',
   alignItems: 'center',
   shadowColor: '#2563EB',
