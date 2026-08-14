@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "sourceOfTruth": "public.recommendation_activation_control singleton",
+  "failClosed": "LEGACY",
+  "modes": {
+    "LEGACY": "current parent path",
+    "SHADOW_V2": "parent gets legacy; V2 comparison Admin/invisible only",
+    "CONTROLLED_V2": "reserved for owner-authorized Phase 4O cohort",
+    "V2": "reserved for later broad activation",
+    "EMERGENCY_LEGACY": "server kill switch forces legacy"
+  },
+  "phase4NFinalMode": "LEGACY",
+  "cohortPercentage": 0,
+  "algorithm": "phase4m-shadow-v2",
+  "activePrimaryRequired": false
+}

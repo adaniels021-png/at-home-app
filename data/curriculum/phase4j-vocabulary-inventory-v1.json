@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "contractVersion": "assessment-canonical-v1",
+  "summary": {
+    "rawAssessmentCodes": 48,
+    "legacyAliases": 0,
+    "canonicalDomains": 21,
+    "canonicalSkills": 54,
+    "canonicalMappingEntries": 39,
+    "broadDomainSignals": 9,
+    "multiSkillSignals": 6,
+    "nonCurriculumSignals": 5,
+    "unmapped": 4,
+    "deprecated": 0,
+    "invalid": 0
+  },
+  "vocabularies": [
+    {
+      "name": "assessment options",
+      "classification": "DISPLAY_ONLY",
+      "source": "app/onboarding/assessment.tsx"
+    },
+    {
+      "name": "legacy normalized codes",
+      "classification": "LEGACY_ALIAS",
+      "source": "lib/personalization/codes.ts"
+    },
+    {
+      "name": "Phase 4G caregiver priorities",
+      "classification": "LEGACY_ALIAS",
+      "source": "data/curriculum/phase4g-caregiver-priority-skill-crosswalk-v1.json"
+    },
+    {
+      "name": "Phase 4B domain keys",
+      "classification": "CANONICAL",
+      "values": [
+        "functional_communication",
+        "understanding_conversation",
+        "communication_practice",
+        "routine_preparation",
+        "meals_eating_routines",
+        "personal_care",
+        "home_participation",
+        "sleep_bedtime",
+        "emotional_understanding",
+        "regulation_coping",
+        "behavior_flexibility",
+        "safety_self_management",
+        "engagement_attention",
+        "planning_executive",
+        "matching_sorting",
+        "memory_sequencing",
+        "gross_motor",
+        "fine_motor",
+        "motor_planning_body_awareness",
+        "play_skills",
+        "social_interaction"
+      ]
+    },
+    {
+      "name": "Phase 4B specialized skill keys",
+      "classification": "CANONICAL",
+      "values": [
+        "communication.requesting",
+        "communication.self_advocacy",
+        "communication.non_speaking_social",
+        "communication.following_directions",
+        "communication.answering_questions",
+        "communication.pragmatics_conversation",
+        "communication.communication_practice",
+        "routines.morning_preparation",
+        "routines.bedtime_preparation",
+        "routines.feeding_participation",
+        "routines.mealtime_skills",
+        "routines.dressing",
+        "routines.hygiene",
+        "routines.hair_care",
+        "routines.toileting",
+        "routines.household_tasks",
+        "routines.sleep",
+        "emotions.emotion_identification",
+        "emotions.emotional_regulation",
+        "emotions.calming_supports",
+        "emotions.frustration_tolerance",
+        "emotions.impulse_control",
+        "emotions.transitions_flexibility",
+        "emotions.repairing_social_problems",
+        "emotions.safety_awareness",
+        "learning.curiosity_engagement",
+        "learning.sustained_attention",
+        "learning.visual_tracking_focus",
+        "learning.executive_functioning",
+        "learning.task_initiation",
+        "learning.problem_solving",
+        "learning.matching",
+        "learning.sorting_categorization",
+        "learning.memory",
+        "learning.working_memory",
+        "learning.sequencing",
+        "movement.gross_motor_skills",
+        "movement.balance_coordination",
+        "movement.fine_motor_hand_strength",
+        "movement.bilateral_coordination",
+        "movement.writing_readiness",
+        "movement.motor_planning",
+        "movement.spatial_body_awareness",
+        "play.functional",
+        "play.cause_effect",
+        "play.imitation",
+        "play.pretend_imaginative",
+        "play.independent",
+        "play.cooperative",
+        "social.joint_attention",
+        "social.sharing_turn_taking",
+        "social.peer_perspective",
+        "social.friendship",
+        "social.conflict_resolution"
+      ]
+    },
+    {
+      "name": "communication modes",
+      "classification": "CANONICAL",
+      "values": [
+        "spoken_sentences",
+        "spoken_phrases",
+        "spoken_words",
+        "aac",
+        "pictures_pecs",
+        "signs",
+        "gestures_pointing",
+        "behavior_body_leading",
+        "other"
+      ]
+    },
+    {
+      "name": "interest keys",
+      "classification": "CANONICAL",
+      "source": "favorite_interests exact normalized keys"
+    },
+    {
+      "name": "restriction tags",
+      "classification": "CANONICAL",
+      "source": "RESTRICTION_PATTERNS"
+    }
+  ]
+}

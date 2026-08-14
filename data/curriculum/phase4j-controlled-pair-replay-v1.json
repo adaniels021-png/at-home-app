@@ -1,0 +1,528 @@
+{
+  "version": 1,
+  "definitions": [
+    {
+      "id": "communication_speech_aac",
+      "baseId": "p4i-01-pro",
+      "changes": {
+        "communication_level": "AAC device",
+        "requests_needs": "Uses AAC"
+      }
+    },
+    {
+      "id": "communication_aac_pictures",
+      "baseId": "p4i-01-pro",
+      "changes": {
+        "communication_level": "PECS / picture cards",
+        "requests_needs": "Uses pictures / PECS"
+      }
+    },
+    {
+      "id": "support_balanced_more",
+      "baseId": "p4i-04-pro",
+      "changes": {
+        "independence_level": "Lots of reminders"
+      }
+    },
+    {
+      "id": "entitlement_free_pro",
+      "baseId": "p4i-12-free",
+      "changes": {
+        "entitlement": "pro"
+      }
+    },
+    {
+      "id": "priority_request_transition",
+      "baseId": "p4i-01-pro",
+      "changes": {
+        "primary_goal": "Behavior support",
+        "communication_targets": [
+          "Requesting a break"
+        ],
+        "behavior_concerns": [
+          "Difficulty transitioning"
+        ]
+      }
+    },
+    {
+      "id": "target_matching_sequencing",
+      "baseId": "p4i-08-pro",
+      "changes": {
+        "primary_goal": "School readiness"
+      }
+    },
+    {
+      "id": "restriction_none_loud",
+      "baseId": "p4i-24-pro",
+      "changes": {
+        "avoid_in_lessons": "loud sounds"
+      }
+    },
+    {
+      "id": "routine_none_morning",
+      "baseId": "p4i-17-pro",
+      "changes": {
+        "routinePreference": "morning"
+      }
+    },
+    {
+      "id": "time_morning_evening",
+      "baseId": "p4i-17-pro",
+      "changes": {
+        "localHour": 19
+      }
+    },
+    {
+      "id": "interest_none_bubbles",
+      "baseId": "p4i-01-pro",
+      "changes": {
+        "favorite_interests": [
+          "Bubbles"
+        ]
+      }
+    },
+    {
+      "id": "recency_none_recent",
+      "baseId": "p4i-12-pro",
+      "changes": {
+        "recentTop": true
+      }
+    },
+    {
+      "id": "directions_self_advocacy",
+      "baseId": "p4i-23-pro",
+      "changes": {
+        "communication_targets": [
+          "Following directions",
+          "Requesting a break"
+        ]
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "communication_speech_aac",
+      "baseProfileId": "p4i-01-pro",
+      "baseTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "variantTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "variantScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "classification": "UNCHANGED_EXPECTED"
+    },
+    {
+      "id": "communication_aac_pictures",
+      "baseProfileId": "p4i-01-pro",
+      "baseTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "variantTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": true,
+      "baseScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "variantScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "classification": "UNCHANGED_EXPECTED"
+    },
+    {
+      "id": "support_balanced_more",
+      "baseProfileId": "p4i-04-pro",
+      "baseTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "03717f42-43f1-4a8b-8770-8c5de40107ee"
+      ],
+      "variantTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "03717f42-43f1-4a8b-8770-8c5de40107ee"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        64,
+        44,
+        30,
+        22
+      ],
+      "variantScores": [
+        76,
+        64,
+        44,
+        30,
+        22
+      ],
+      "classification": "PARTIALLY_FIXED"
+    },
+    {
+      "id": "entitlement_free_pro",
+      "baseProfileId": "p4i-12-free",
+      "baseTop": [
+        "df1059ee-c34b-4ff2-90c4-14c5e609a847"
+      ],
+      "variantTop": [
+        "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+        "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+        "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+        "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "setChanged": true,
+      "rankChanged": true,
+      "eligibleChanged": true,
+      "baseScores": [
+        64
+      ],
+      "variantScores": [
+        64,
+        64,
+        52,
+        52,
+        22
+      ],
+      "classification": "UNCHANGED_EXPECTED"
+    },
+    {
+      "id": "priority_request_transition",
+      "baseProfileId": "p4i-01-pro",
+      "baseTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "variantTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "3be4d074-2d85-4c87-8999-0560cf3bee86",
+        "c61ac69f-8e43-49d9-bedc-f63a105df038",
+        "c8479dd8-8e66-4531-8b52-d574a2c09ff3",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "setChanged": true,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "variantScores": [
+        76,
+        64,
+        64,
+        54,
+        52
+      ],
+      "classification": "FIXED"
+    },
+    {
+      "id": "target_matching_sequencing",
+      "baseProfileId": "p4i-08-pro",
+      "baseTop": [
+        "264988f4-abb4-4552-ba9f-bda74a37da02",
+        "3fbcdcca-de8a-48f2-aa7c-f32eac77565e",
+        "de3e0a85-5a75-4370-a86d-16540b05404d",
+        "179e8fb9-5844-47e7-8a4f-56f2951c5a3e",
+        "419546f8-2744-4644-8c78-ec4ed433d960"
+      ],
+      "variantTop": [
+        "264988f4-abb4-4552-ba9f-bda74a37da02",
+        "3fbcdcca-de8a-48f2-aa7c-f32eac77565e",
+        "de3e0a85-5a75-4370-a86d-16540b05404d",
+        "179e8fb9-5844-47e7-8a4f-56f2951c5a3e",
+        "419546f8-2744-4644-8c78-ec4ed433d960"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        76,
+        76,
+        64,
+        64
+      ],
+      "variantScores": [
+        76,
+        76,
+        76,
+        64,
+        64
+      ],
+      "classification": "PARTIALLY_FIXED"
+    },
+    {
+      "id": "restriction_none_loud",
+      "baseProfileId": "p4i-24-pro",
+      "baseTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "8193ccdf-e475-409a-b923-d0e7c7707ad2",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "c7ca85ae-2252-4cd8-af05-9e7c0ea42b51"
+      ],
+      "variantTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "8193ccdf-e475-409a-b923-d0e7c7707ad2",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "c7ca85ae-2252-4cd8-af05-9e7c0ea42b51"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        66,
+        64,
+        64,
+        64,
+        64
+      ],
+      "variantScores": [
+        66,
+        64,
+        64,
+        64,
+        64
+      ],
+      "classification": "PARTIALLY_FIXED"
+    },
+    {
+      "id": "routine_none_morning",
+      "baseProfileId": "p4i-17-pro",
+      "baseTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "variantTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        42,
+        40,
+        40,
+        30,
+        22
+      ],
+      "variantScores": [
+        42,
+        40,
+        40,
+        30,
+        22
+      ],
+      "classification": "BLOCKED_BY_READY_POOL"
+    },
+    {
+      "id": "time_morning_evening",
+      "baseProfileId": "p4i-17-pro",
+      "baseTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "variantTop": [
+        "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "866d8042-1c91-4387-a4db-67c86086b77f",
+        "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        42,
+        40,
+        40,
+        30,
+        22
+      ],
+      "variantScores": [
+        42,
+        40,
+        40,
+        30,
+        22
+      ],
+      "classification": "BLOCKED_BY_READY_POOL"
+    },
+    {
+      "id": "interest_none_bubbles",
+      "baseProfileId": "p4i-01-pro",
+      "baseTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "variantTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "variantScores": [
+        76,
+        76,
+        76,
+        66,
+        52
+      ],
+      "classification": "PARTIALLY_FIXED"
+    },
+    {
+      "id": "recency_none_recent",
+      "baseProfileId": "p4i-12-pro",
+      "baseTop": [
+        "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+        "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+        "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+        "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "variantTop": [
+        "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+        "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+        "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+        "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+        "08239883-6084-4a2b-b82b-932b0cacec6b"
+      ],
+      "setChanged": true,
+      "rankChanged": true,
+      "eligibleChanged": false,
+      "baseScores": [
+        64,
+        64,
+        52,
+        52,
+        22
+      ],
+      "variantScores": [
+        64,
+        52,
+        52,
+        39,
+        22
+      ],
+      "classification": "UNCHANGED_EXPECTED"
+    },
+    {
+      "id": "directions_self_advocacy",
+      "baseProfileId": "p4i-23-pro",
+      "baseTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+        "30326f3e-5236-4c82-9f16-c9716d3baff4",
+        "454ba8b7-f1d8-45f4-9184-dcadc70bec13",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840"
+      ],
+      "variantTop": [
+        "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+        "30326f3e-5236-4c82-9f16-c9716d3baff4",
+        "454ba8b7-f1d8-45f4-9184-dcadc70bec13",
+        "48c84e91-0b1f-4536-9fff-1e1124a7a840"
+      ],
+      "setChanged": false,
+      "rankChanged": false,
+      "eligibleChanged": false,
+      "baseScores": [
+        76,
+        52,
+        52,
+        52,
+        52
+      ],
+      "variantScores": [
+        76,
+        52,
+        52,
+        52,
+        52
+      ],
+      "classification": "PARTIALLY_FIXED"
+    }
+  ]
+}

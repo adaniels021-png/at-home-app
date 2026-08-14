@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "project": {
+    "name": "ABA at Home",
+    "ref": "ewxjlaerwijuoymkmdtz"
+  },
+  "migrationHistory": {
+    "cleanBeforePhase4N": true,
+    "lastMatched": "20260812121500"
+  },
+  "baseline": {
+    "lessons": 299,
+    "approved": 211,
+    "strictReady": 198,
+    "readyFree": 2,
+    "readyPro": 196,
+    "domains": 21,
+    "skills": 54,
+    "stages": 264,
+    "mappings": 299,
+    "activePrimary": 0,
+    "readySkills": 42
+  },
+  "hashes": {
+    "phase4e": "be6fe07f503c74c05c5be0557ee249ca8da42bab392f40638d7fe1f12caf5284",
+    "phase4m": "1ed53877da293374f0e026799791cb7a55ae4a3dc5a2da8b0d72190dc6657a0c",
+    "phase4jCrosswalk": "d5f5046e2fd1951bd4c7cbc2da9999c8f19b82502dc48f53ef44cf20681cd2be"
+  },
+  "parentConsumer": "LEGACY",
+  "productionSnapshotSource": "live table statistics plus privacy-scoped lesson/curriculum snapshot"
+}

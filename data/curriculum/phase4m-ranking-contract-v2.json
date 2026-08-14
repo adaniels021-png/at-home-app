@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "algorithmVersion": "phase4m-shadow-v2",
+  "precedence": [
+    "exact_specialized_skill",
+    "explicit_multi_skill_target",
+    "exact_domain",
+    "broad_domain",
+    "generic_compatibility"
+  ],
+  "weights": {
+    "exactCanonicalSkill": 36,
+    "explicitMultiSkill": 28,
+    "exactDomain": 18,
+    "broadDomain": 12,
+    "requestedSkill": 22,
+    "readinessExact": 14,
+    "readinessNearby": 7,
+    "communication": 12,
+    "supportExact": 8,
+    "supportAdjacent": 3,
+    "time": 6,
+    "interest": 4,
+    "recent": -25,
+    "completed": -12
+  },
+  "eligibility": "unchanged phase4e hard filters",
+  "tieBreak": "score desc, lesson UUID asc final fallback",
+  "stageLocking": false,
+  "timeEligibility": false,
+  "parentConsumer": false
+}

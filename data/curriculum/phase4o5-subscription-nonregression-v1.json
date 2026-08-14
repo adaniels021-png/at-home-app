@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "result": "PASS",
+  "diffAudit": {
+    "revenuecatClient": false,
+    "subscriptionContext": false,
+    "entitlementDefinitions": false,
+    "subscriptionScreen": false,
+    "paywalls": false,
+    "purchaseOrRestore": false,
+    "authenticationStartup": false,
+    "onboarding": false,
+    "assessmentScreens": false
+  },
+  "unchanged": [
+    "RevenueCat products, offerings, packages and entitlement identifier",
+    "14-day store trial and eligibility rules",
+    "Apple and Google subscription configuration",
+    "client purchase, restore, paywall, and permanent Free lesson behavior"
+  ],
+  "authority": "Server-authoritative entitlement is used only for recommendation routing; existing client commerce remains unchanged."
+}

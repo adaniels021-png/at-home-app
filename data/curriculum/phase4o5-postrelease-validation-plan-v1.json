@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "prerequisite": "Owner-authorized native build, separate store submission authorization, and store availability",
+  "steps": [
+    "Reconfirm server mode LEGACY and cohort 0%.",
+    "Install the released App Store or Google Play build on a production device.",
+    "Authenticate normally and open Daily Lessons.",
+    "Confirm existing Daily Lesson behavior and no crash or blank state.",
+    "Verify aggregate durable telemetry includes LEGACY / LEGACY_MODE / LEGACY_SELECTION.",
+    "Confirm no parent V2 exposure and subscription/trial/purchase/restore behavior remains normal.",
+    "Only then reconsider, but do not automatically execute, Phase 4O.3."
+  ],
+  "rollback": {
+    "server": "Set EMERGENCY_LEGACY using the separately controlled Admin authorization path.",
+    "client": "Stop/phased-release halt where supported, remove affected release from sale if needed, prepare a corrected incremented binary, expedite review; native installed binaries cannot be instantly recalled."
+  }
+}

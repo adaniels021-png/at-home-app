@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+const x=read('data/curriculum/phase4j-assessment-canonical-crosswalk-v1.json');
+const taxonomy=read('data/curriculum/phase4b-taxonomy-v1.json');
+const inventory=read('data/curriculum/phase4j-vocabulary-inventory-v1.json');
+const replay=read('data/curriculum/phase4j-repair-result-v1.json');
+const pairs=read('data/curriculum/phase4j-controlled-pair-replay-v1.json');
+const profiles=read('data/curriculum/phase4j-profile-replay-v1.json');
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+const skills=new Set(taxonomy.skills.map(v=>v.key)),domains=new Set(taxonomy.domains.map(v=>v.key));
+assert(x.contractVersion==='assessment-canonical-v1','contract version');
+assert(x.matching==='exact_controlled_values_only','matching must be exact');
+for(const e of x.entries){assert(e.skills.every(k=>skills.has(k)),`invalid skill ${e.field}:${e.value}`);assert(e.domains.every(k=>domains.has(k)),`invalid domain ${e.field}:${e.value}`)}
+const find=(f,v)=>x.entries.find(e=>e.field===f&&e.value===v);
+assert(find('communication_targets','Requesting help').skills.includes('communication.requesting'),'requesting');
+assert(find('behavior_concerns','Difficulty transitioning').skills.includes('emotions.transitions_flexibility'),'transition');
+assert(find('routine_challenges','Getting dressed').skills.includes('routines.dressing'),'dressing');
+assert(find('routine_challenges','Morning routine').skills.includes('routines.morning_preparation'),'morning');
+assert(find('routine_challenges','Bedtime').skills.includes('routines.bedtime_preparation'),'bedtime');
+assert(find('routine_challenges','Meals').skills.length===0,'meals must stay broad');
+assert(find('communication_targets','Using PECS').type==='NON_CURRICULUM_SIGNAL','AAC/pictures are method');
+assert(find('communication_targets','Using more words').type==='UNMAPPED','speech quantity must remain unmapped');
+assert(find('behavior_concerns','Refusing tasks').type==='UNMAPPED','refusal must not become obedience');
+assert(inventory.summary.canonicalSkills===54&&inventory.summary.canonicalDomains===21,'architecture inventory');
+assert(pairs.results.length===12&&profiles.profiles.length===50,'replays incomplete');
+assert(replay.weightsChanged===false&&replay.hardEligibilityChanged===false,'frozen contract changed');
+assert(replay.classification==='COMPLETE_CANONICAL_MAPPING_REPAIRED','classification');
+console.log(JSON.stringify({valid:true,entries:x.entries.length,profiles:50,pairs:12,classification:replay.classification}));

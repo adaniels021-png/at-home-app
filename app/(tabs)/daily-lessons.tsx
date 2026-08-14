@@ -35,13 +35,20 @@ import {
   getRecommendedLesson,
 } from '../../lib/lessonLibrary';
 import { getRecommendedStageForSkill } from '../../lib/lessonProgression';
-import { ensureLessonQueue, getNextQueuedLesson } from '../../lib/lessonQueue';
+import { ensureLessonQueue, getNextQueuedLesson, getOpenDailyLessonInstance } from '../../lib/lessonQueue';
 import {
   getMasteredSkills
 } from '../../lib/lessonRecommendations';
 import { SKILL_PROGRESSION_PATHS } from '../../lib/lessonTypes';
 import { getSmartRecommendedSkill } from '../../lib/smartLessonRecommendations';
 import { supabase } from '../../lib/supabase';
+import {
+  getPhase4mRecommendation,
+  isParentV2Route,
+  recommendationAttribution,
+  recordRecommendationAttribution,
+  resolveServerRecommendationRoute,
+} from '../../lib/personalization/recommendation';
 
 import ParentCoachSheet from '../../components/ParentCoachSheet';
 import {
@@ -245,6 +252,19 @@ const retryCountRef = useRef(0);
 
     const libraryCategory = mapAppCategoryToLibraryCategory(requestCategory);
 
+    const existingInstance = await getOpenDailyLessonInstance({
+      childId: selectedChild.id,
+      category: requestCategory,
+    });
+    if (existingInstance?.lesson_payload) {
+      setLessonData(existingInstance.lesson_payload);
+      setLessonNumber(existingInstance.lesson_number || 1);
+      setPreparingLesson(false);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
 
 if (USE_LIBRARY_LESSONS) {
   const skillAreaFilter = SKILL_PROGRESSION_PATHS[requestCategory];
@@ -282,14 +302,52 @@ if (USE_LIBRARY_LESSONS) {
 
   const masteredSkills = await getMasteredSkills(selectedChild.id);
 
-  const libraryLesson = await getRecommendedLesson({
-    category: libraryCategory,
-    skillArea: stageSkillArea,
-    stageNumber: stageFilter,
-    childId: selectedChild.id,
-    excludeSkills: masteredSkills,
-    isPro,
-  });
+  const routeDecision = await resolveServerRecommendationRoute();
+  let libraryLesson: Awaited<ReturnType<typeof getRecommendedLesson>> = null;
+
+  if (isParentV2Route(routeDecision)) {
+    try {
+      const v2 = await getPhase4mRecommendation(selectedChild.id, {
+        category: libraryCategory,
+        skillArea: stageSkillArea,
+        stageNumber: stageFilter,
+        isPro: true,
+      });
+      libraryLesson = v2.algorithmVersion === 'phase4m-shadow-v2'
+        ? v2.recommendation?.lesson ?? null
+        : null;
+      void recordRecommendationAttribution(recommendationAttribution(
+        routeDecision,
+        libraryLesson ? 'V2_SUCCESS' : 'V2_EMPTY_RESULT'
+      ));
+    } catch {
+      libraryLesson = null;
+      void recordRecommendationAttribution(recommendationAttribution(routeDecision, 'V2_ERROR'));
+    }
+  } else if (routeDecision.route === 'SHADOW_V2') {
+    void getPhase4mRecommendation(selectedChild.id, {
+      category: libraryCategory,
+      skillArea: stageSkillArea,
+      stageNumber: stageFilter,
+      isPro: true,
+    }).then((result) => recordRecommendationAttribution(recommendationAttribution(
+      routeDecision,
+      result.recommendation ? 'SHADOW_SUCCESS' : 'SHADOW_EMPTY_RESULT'
+    ))).catch(() => recordRecommendationAttribution(recommendationAttribution(routeDecision, 'SHADOW_ERROR')));
+  } else {
+    void recordRecommendationAttribution(recommendationAttribution(routeDecision, 'LEGACY_SELECTION'));
+  }
+
+  if (!libraryLesson) {
+    libraryLesson = await getRecommendedLesson({
+      category: libraryCategory,
+      skillArea: stageSkillArea,
+      stageNumber: stageFilter,
+      childId: selectedChild.id,
+      excludeSkills: masteredSkills,
+      isPro,
+    });
+  }
 
   if (libraryLesson) {
     const mappedLesson = mapLibraryLessonToDailyLesson(libraryLesson);

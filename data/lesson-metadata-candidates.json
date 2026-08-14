@@ -1,0 +1,2075 @@
+{
+  "metadata_status": "candidate_unreviewed",
+  "candidate_count": 39,
+  "candidates": [
+    {
+      "lesson_id": "adec5a2e-5540-460b-ac5c-79e8ddd4906f",
+      "title": "Answer With Me",
+      "current_category": "Communication",
+      "current_skill_area": "Answering Questions",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.answering_questions.identification",
+        "mastery_group": "communication.answering_questions",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.answering_questions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "5902b36d-9c86-4c62-9545-329b05505a62",
+      "title": "Answer What Is It",
+      "current_category": "Communication",
+      "current_skill_area": "Answering Questions",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.answering_questions.identification",
+        "mastery_group": "communication.answering_questions",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.answering_questions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "ALTERNATE_RESPONSE_ADAPTATION_CANDIDATE",
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "a19c85cd-46fc-4141-bce6-bac285c65232",
+      "title": "Where Did It Go",
+      "current_category": "Communication",
+      "current_skill_area": "Answering Questions",
+      "current_stage": {
+        "number": 3,
+        "name": "Developing",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.answering_questions.where",
+        "mastery_group": "communication.answering_questions",
+        "skill_stage_code": "developing",
+        "prerequisite_skill_codes": [
+          "communication.answering_questions.identification"
+        ],
+        "assessment_need_tags": [
+          "communication.answering_questions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "learning",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "9481f369-512e-412b-aad3-3d77df8cc084",
+      "title": "Who Has It",
+      "current_category": "Communication",
+      "current_skill_area": "Answering Questions",
+      "current_stage": {
+        "number": 3,
+        "name": "Developing",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.answering_questions.who",
+        "mastery_group": "communication.answering_questions",
+        "skill_stage_code": "developing",
+        "prerequisite_skill_codes": [
+          "communication.answering_questions.identification"
+        ],
+        "assessment_need_tags": [
+          "communication.answering_questions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "learning",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "71180f26-f7df-413b-a5a6-f3dd1f01e9a3",
+      "title": "Why Do We Wash Hands",
+      "current_category": "Communication",
+      "current_skill_area": "Answering Questions",
+      "current_stage": {
+        "number": 4,
+        "name": "Independent",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.answering_questions.why",
+        "mastery_group": "communication.answering_questions",
+        "skill_stage_code": "independent",
+        "prerequisite_skill_codes": [
+          "communication.answering_questions.identification"
+        ],
+        "assessment_need_tags": [
+          "communication.answering_questions",
+          "hygiene.handwashing"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "mostly_independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "4c421463-e77d-458c-afcb-c4d80e1bca53",
+      "title": "Requesting Bubbles",
+      "current_category": "Communication",
+      "current_skill_area": "Expressive Language & Requesting",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.requesting",
+        "mastery_group": "communication.requesting",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "c2181af0-654c-4305-9629-6828c263542b",
+      "title": "Requesting a Favorite Snack",
+      "current_category": "Communication",
+      "current_skill_area": "Expressive Language & Requesting",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.requesting",
+        "mastery_group": "communication.requesting",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+      "title": "Requesting Help",
+      "current_category": "Communication",
+      "current_skill_area": "Expressive Language & Requesting",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.help",
+        "mastery_group": "communication.help",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting",
+          "safety.ask_help"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+      "title": "Look and Show",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.intentional_nonverbal",
+        "mastery_group": "communication.intentional_communication",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "eb13bfef-edb4-44a8-be22-4d80e8af13d7",
+      "title": "Wave Goodbye",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "social.greetings",
+        "mastery_group": "social.greetings",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "social.greetings"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "activity.physical_contact",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "c977bdfc-8339-4a0a-b4b6-98d4e768675f",
+      "title": "Point to Show Me",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.intentional_nonverbal",
+        "mastery_group": "communication.intentional_communication",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.physical_contact",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "eb849967-a3ce-4db2-af19-046314106940",
+      "title": "Show Me With Your Face",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 3,
+        "name": "Developing",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "social.emotion_expression",
+        "mastery_group": "social.emotion_expression",
+        "skill_stage_code": "developing",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "social.feelings"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "learning",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.physical_contact"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "22ff1454-403f-4eac-98d1-ad95f128b3f2",
+      "title": "Use a Gesture to Tell Me",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 4,
+        "name": "Independent",
+        "difficulty": "intermediate"
+      },
+      "proposed": {
+        "target_skill_code": "communication.intentional_nonverbal",
+        "mastery_group": "communication.intentional_communication",
+        "skill_stage_code": "independent",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "mostly_independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "c87f1e47-27f5-4ddb-9482-9d7f4c12e33e",
+      "title": "Show Me Anywhere",
+      "current_category": "Communication",
+      "current_skill_area": "Non-Verbal & Social Communication",
+      "current_stage": {
+        "number": 5,
+        "name": "Generalized",
+        "difficulty": "advanced"
+      },
+      "proposed": {
+        "target_skill_code": "communication.intentional_nonverbal",
+        "mastery_group": "communication.intentional_communication",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.community",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "30326f3e-5236-4c82-9f16-c9716d3baff4",
+      "title": "Take a Communication Turn",
+      "current_category": "Communication",
+      "current_skill_area": "Pragmatics & Conversation",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.turn_taking",
+        "mastery_group": "communication.conversation",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.conversation",
+          "social.turn_taking"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.physical_contact",
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "454ba8b7-f1d8-45f4-9184-dcadc70bec13",
+      "title": "Back-and-Forth Sounds",
+      "current_category": "Communication",
+      "current_skill_area": "Pragmatics & Conversation",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.vocal_turn_taking",
+        "mastery_group": "communication.conversation",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.conversation",
+          "social.turn_taking"
+        ],
+        "supported_response_modes": [
+          "spoken_words"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.music",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SPEECH_REQUIRED_REVIEW",
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "c673e50c-e8bd-4d30-9c66-e2d6488f27e2",
+      "title": "Talk About a Favorite Toy",
+      "current_category": "Communication",
+      "current_skill_area": "Pragmatics & Conversation",
+      "current_stage": {
+        "number": 3,
+        "name": "Developing",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.conversation.commenting",
+        "mastery_group": "communication.conversation",
+        "skill_stage_code": "developing",
+        "prerequisite_skill_codes": [
+          "communication.turn_taking"
+        ],
+        "assessment_need_tags": [
+          "communication.conversation"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "learning",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "54fe4d68-db7d-492a-a64d-60a54cb3a904",
+      "title": "Ask Me One Question",
+      "current_category": "Communication",
+      "current_skill_area": "Pragmatics & Conversation",
+      "current_stage": {
+        "number": 3,
+        "name": "Developing",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.conversation.asking_questions",
+        "mastery_group": "communication.conversation",
+        "skill_stage_code": "developing",
+        "prerequisite_skill_codes": [
+          "communication.turn_taking"
+        ],
+        "assessment_need_tags": [
+          "communication.conversation"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "learning",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "a28e2b1b-d563-46b4-ac14-5fb2f597112e",
+      "title": "Keep the Conversation Going",
+      "current_category": "Communication",
+      "current_skill_area": "Pragmatics & Conversation",
+      "current_stage": {
+        "number": 4,
+        "name": "Independent",
+        "difficulty": "intermediate"
+      },
+      "proposed": {
+        "target_skill_code": "communication.conversation",
+        "mastery_group": "communication.conversation",
+        "skill_stage_code": "independent",
+        "prerequisite_skill_codes": [
+          "communication.turn_taking"
+        ],
+        "assessment_need_tags": [
+          "communication.conversation"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "mostly_independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "75c15624-6b9c-4439-9e7e-0d18c9872f6b",
+      "title": "Listen With Me",
+      "current_category": "Communication",
+      "current_skill_area": "Receptive Language & Following Directions",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.following_directions",
+        "mastery_group": "communication.following_directions",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.following_directions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "e98231ee-01bc-42e7-b5c0-78daa001db19",
+      "title": "Follow Directions Anywhere",
+      "current_category": "Communication",
+      "current_skill_area": "Receptive Language & Following Directions",
+      "current_stage": {
+        "number": 5,
+        "name": "Generalized",
+        "difficulty": "advanced"
+      },
+      "proposed": {
+        "target_skill_code": "communication.following_directions",
+        "mastery_group": "communication.following_directions",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [
+          "communication.following_directions"
+        ],
+        "assessment_need_tags": [
+          "communication.following_directions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "7a136a47-8f7b-4064-9f14-6cbfea69c61a",
+      "title": "Copy My Sound",
+      "current_category": "Communication",
+      "current_skill_area": "Speech Clarity",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "communication.vocal_imitation",
+        "mastery_group": "communication.vocal_imitation",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.speech_clarity"
+        ],
+        "supported_response_modes": [
+          "spoken_words"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SPEECH_REQUIRED_REVIEW",
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "932463a0-cd66-4e03-86d3-178d5ecf038a",
+      "title": "Help Pull It On",
+      "current_category": "Daily Routines",
+      "current_skill_area": "Dressing",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "self_help.dressing",
+        "mastery_group": "self_help.dressing",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "self_help.dressing"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "6fea5809-f1ec-476b-8dfe-f1083a1b520f",
+      "title": "Feeding Skills Anywhere",
+      "current_category": "Daily Routines",
+      "current_skill_area": "Feeding",
+      "current_stage": {
+        "number": 5,
+        "name": "Generalized",
+        "difficulty": "advanced"
+      },
+      "proposed": {
+        "target_skill_code": "self_help.feeding",
+        "mastery_group": "self_help.feeding",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "routine.meals",
+          "self_help.feeding"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW",
+          "MISSING_SAFETY_NOTES_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "58a4ba56-5409-4cfa-8ea5-797e2607d806",
+      "title": "Tell Me You Need to Go",
+      "current_category": "Daily Routines",
+      "current_skill_area": "Toileting",
+      "current_stage": {
+        "number": 5,
+        "name": "Generalized",
+        "difficulty": "advanced"
+      },
+      "proposed": {
+        "target_skill_code": "toileting.request",
+        "mastery_group": "toileting.basic",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [
+          "communication.intentional_communication"
+        ],
+        "assessment_need_tags": [
+          "toileting.basic"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW",
+          "MISSING_SAFETY_NOTES_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "f98a7423-22df-497a-bf8e-3ad17c68313b",
+      "title": "Recognizing the Feeling: Happy",
+      "current_category": "Emotions & Behavior",
+      "current_skill_area": "Emotion Identification",
+      "current_stage": {
+        "number": 1,
+        "name": "Recognizing Happy",
+        "difficulty": "Beginner"
+      },
+      "proposed": {
+        "target_skill_code": "regulation.identify_emotions",
+        "mastery_group": "regulation.emotion_identification",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "regulation.identify_emotions",
+          "social.feelings"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "c61ac69f-8e43-49d9-bedc-f63a105df038",
+      "title": "Calm Choices for Cleanup",
+      "current_category": "Emotions & Behavior",
+      "current_skill_area": "Using a calming strategy",
+      "current_stage": {
+        "number": 4,
+        "name": "Stage 4",
+        "difficulty": "balanced"
+      },
+      "proposed": {
+        "target_skill_code": "regulation.calming",
+        "mastery_group": "regulation.calming",
+        "skill_stage_code": "independent",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "regulation.calming",
+          "routine.cleaning_up",
+          "behavior.transitions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "mostly_independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "292726a2-fee9-44d2-ab2d-65dfb93d439d",
+      "title": "Calm Choices During Puzzle Time",
+      "current_category": "Emotions & Behavior",
+      "current_skill_area": "Using a calming strategy",
+      "current_stage": {
+        "number": 5,
+        "name": "Stage 5",
+        "difficulty": "balanced"
+      },
+      "proposed": {
+        "target_skill_code": "regulation.calming",
+        "mastery_group": "regulation.calming",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "regulation.calming",
+          "behavior.frustration"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "264988f4-abb4-4552-ba9f-bda74a37da02",
+      "title": "Look What I Found",
+      "current_category": "Learning & Attention",
+      "current_skill_area": "Curiosity & Engagement",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "learning.engagement",
+        "mastery_group": "learning.engagement",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "learning.engagement"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "de3e0a85-5a75-4370-a86d-16540b05404d",
+      "title": "Explore a Mystery Bag",
+      "current_category": "Learning & Attention",
+      "current_skill_area": "Curiosity & Engagement",
+      "current_stage": {
+        "number": 2,
+        "name": "Emerging",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "learning.engagement",
+        "mastery_group": "learning.engagement",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "learning.engagement"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "dcc4ee53-0261-4335-935a-07e929d0339c",
+      "title": "First Then Practice",
+      "current_category": "Learning & Attention",
+      "current_skill_area": "Executive Functioning",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "behavior.transitions",
+        "mastery_group": "behavior.transitions",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "behavior.transitions"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "6a174566-94a8-4684-b5dd-9e38fd1ea311",
+      "title": "Stand Like a Statue",
+      "current_category": "Movement & Coordination",
+      "current_skill_area": "Balance & Coordination",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "motor.balance",
+        "mastery_group": "motor.coordination",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "learning.attention"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "bbced1a2-f764-4192-94c2-3219c98b9530",
+      "title": "Open and Close Containers",
+      "current_category": "Movement & Coordination",
+      "current_skill_area": "Bilateral Coordination",
+      "current_stage": {
+        "number": 5,
+        "name": "Generalized",
+        "difficulty": "advanced"
+      },
+      "proposed": {
+        "target_skill_code": "motor.bilateral_coordination",
+        "mastery_group": "motor.coordination",
+        "skill_stage_code": "generalized",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "self_help.fine_motor"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.water",
+          "material.food",
+          "risk.allergy_relevant"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW",
+          "MISSING_SAFETY_NOTES_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "48748fa0-912b-4fd9-a292-34dba4faf798",
+      "title": "Child's First Requests: Asking for a Toy",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Communication",
+      "current_stage": {
+        "number": 1,
+        "name": "Functional Play",
+        "difficulty": "support"
+      },
+      "proposed": {
+        "target_skill_code": "communication.requesting",
+        "mastery_group": "communication.requesting",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_words"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.physical_contact",
+          "material.food",
+          "risk.allergy_relevant",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "LOW",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SPEECH_REQUIRED_REVIEW",
+          "ALTERNATE_RESPONSE_ADAPTATION_CANDIDATE",
+          "CONTENT_REVIEW_PHYSICAL_SPEECH_PROMPTING",
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "d709a7e3-cf44-42a3-ab21-1483613206ea",
+      "title": "Ask for My Favorite Things",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Communication",
+      "current_stage": {
+        "number": 2,
+        "name": "Imitation",
+        "difficulty": "balanced"
+      },
+      "proposed": {
+        "target_skill_code": "communication.requesting",
+        "mastery_group": "communication.requesting",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "communication.requesting"
+        ],
+        "supported_response_modes": [
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.physical_contact",
+          "material.food",
+          "risk.allergy_relevant",
+          "sensory.loud_sound"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SPEECH_REQUIRED_REVIEW",
+          "ALTERNATE_RESPONSE_ADAPTATION_CANDIDATE",
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+      "title": "Think About Their Turn",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Peer Interaction & Perspective Taking",
+      "current_stage": {
+        "number": 4,
+        "name": "Independent",
+        "difficulty": "intermediate"
+      },
+      "proposed": {
+        "target_skill_code": "social.perspective_taking",
+        "mastery_group": "social.perspective_taking",
+        "skill_stage_code": "independent",
+        "prerequisite_skill_codes": [
+          "social.turn_taking"
+        ],
+        "assessment_need_tags": [
+          "social.perspective_taking",
+          "social.turn_taking"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "single_unit",
+        "max_communication_complexity": "sentences",
+        "min_independence_level": "mostly_independent",
+        "max_independence_level": "independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    },
+    {
+      "lesson_id": "03717f42-43f1-4a8b-8770-8c5de40107ee",
+      "title": "Let's Build a Tower!",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Play Skills",
+      "current_stage": {
+        "number": 1,
+        "name": "Functional Play",
+        "difficulty": "support"
+      },
+      "proposed": {
+        "target_skill_code": "play.functional",
+        "mastery_group": "play.functional",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "social.shared_play"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "7ecd979e-b25b-480c-9880-5f7ef6b3688f",
+      "title": "Let's Roll the Ball!",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Play Skills",
+      "current_stage": {
+        "number": 2,
+        "name": "Functional Play",
+        "difficulty": "support"
+      },
+      "proposed": {
+        "target_skill_code": "play.functional",
+        "mastery_group": "play.functional",
+        "skill_stage_code": "emerging",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "social.shared_play",
+          "social.turn_taking"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "high_support",
+        "max_independence_level": "mostly_independent",
+        "contraindication_tags": [],
+        "material_activity_tags": [
+          "activity.movement",
+          "material.food",
+          "risk.allergy_relevant",
+          "risk.small_objects"
+        ],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "MEDIUM",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "supported_response_modes",
+          "mastery_group",
+          "skill_stage_code"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": [
+          "SAFETY_TAG_REVIEW"
+        ]
+      }
+    },
+    {
+      "lesson_id": "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+      "title": "My Turn, Your Turn",
+      "current_category": "Play & Social Skills",
+      "current_skill_area": "Sharing & Turn Taking",
+      "current_stage": {
+        "number": 1,
+        "name": "Beginning",
+        "difficulty": "beginner"
+      },
+      "proposed": {
+        "target_skill_code": "social.turn_taking",
+        "mastery_group": "social.turn_taking",
+        "skill_stage_code": "beginning",
+        "prerequisite_skill_codes": [],
+        "assessment_need_tags": [
+          "social.turn_taking"
+        ],
+        "supported_response_modes": [
+          "spoken_sentences",
+          "spoken_phrases",
+          "spoken_words",
+          "aac",
+          "pictures_pecs",
+          "signs",
+          "gestures_pointing",
+          "behavior_body_leading"
+        ],
+        "min_communication_complexity": "beginning_intentional",
+        "max_communication_complexity": "short_combinations",
+        "min_independence_level": "not_started",
+        "max_independence_level": "learning",
+        "contraindication_tags": [],
+        "material_activity_tags": [],
+        "universal_safe_fallback": false,
+        "personalization_metadata_version": 1
+      },
+      "review": {
+        "overall_confidence": "HIGH",
+        "fields_requiring_human_review": [
+          "contraindication_tags",
+          "mastery_group"
+        ],
+        "rationale": "Deterministic candidate based on the lesson's explicit title, goal, category, skill area, stage, and activity content.",
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "result": "PASS",
+  "path": ["Home", "Daily Lessons", "existing instance lookup", "server route", "selection/fallback", "best-effort telemetry"],
+  "expectedReleasedLegacyEvent": {
+    "route": "LEGACY",
+    "reasonCode": "LEGACY_MODE",
+    "outcome": "LEGACY_SELECTION"
+  },
+  "liveEventFabricated": false,
+  "parentDebugVisible": false,
+  "sensitiveTelemetry": false
+}

@@ -50,6 +50,34 @@ function hasFullLessonContent(lesson: any): boolean {
   );
 }
 
+export async function getOpenDailyLessonInstance({
+  childId,
+  category,
+}: {
+  childId: string;
+  category: string;
+}) {
+  const { data, error } = await supabase
+    .from('daily_lesson_instances')
+    .select('*')
+    .eq('child_id', childId)
+    .eq('lesson_date', todayString())
+    .eq('category', category)
+    .in('status', ['generated', 'started'])
+    .is('completed_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.lesson_payload || !hasFullLessonContent(data.lesson_payload)) return null;
+  return {
+    lesson_instance_id: data.id,
+    lesson_payload: data.lesson_payload,
+    lesson_number: data.lesson_number,
+    source: data.source || 'ai',
+  };
+}
+
 function buildBackupLesson(category: string, childName: string, lessonNumber: number) {
   const name = childName || 'your child';
 
@@ -290,29 +318,8 @@ export async function getNextQueuedLesson({
   const today = todayString();
   const now = new Date().toISOString();
 
-  const { data: openInstance, error: openError } = await supabase
-    .from('daily_lesson_instances')
-    .select('*')
-    .eq('child_id', childId)
-    .eq('child_id', childId)
-    .eq('lesson_date', today)
-    .eq('category', category)
-    .in('status', ['generated', 'started'])
-    .is('completed_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (openError) throw openError;
-
-  if (openInstance?.lesson_payload && hasFullLessonContent(openInstance.lesson_payload)) {
-    return {
-      lesson_instance_id: openInstance.id,
-      lesson_payload: openInstance.lesson_payload,
-      lesson_number: openInstance.lesson_number,
-      source: openInstance.source || 'ai',
-    };
-  }
+  const openInstance = await getOpenDailyLessonInstance({ childId, category });
+  if (openInstance) return openInstance;
 
   for (let attempt = 0; attempt < 8; attempt++) {
     const { data: queuedLesson, error: queueError } = await supabase
@@ -375,7 +382,7 @@ export async function getNextQueuedLesson({
     }
 
     if (!selectedLesson?.lesson_payload || !hasFullLessonContent(selectedLesson.lesson_payload)) {
-      console.error('QUEUE: invalid selectedLesson:', selectedLesson);
+      console.error('QUEUE: selected lesson payload was invalid.');
 
       if (selectedLesson?.id) {
         await supabase

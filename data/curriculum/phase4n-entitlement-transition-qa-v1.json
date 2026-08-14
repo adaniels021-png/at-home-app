@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "classification": "ENTITLEMENT_CONTROL_PASSED",
+  "transitions": [
+    {
+      "from": "FREE",
+      "to": "TRIAL",
+      "result": "broader pool; canonical unchanged",
+      "passed": true
+    },
+    {
+      "from": "TRIAL",
+      "to": "PRO",
+      "result": "broader access continues; canonical unchanged",
+      "passed": true
+    },
+    {
+      "from": "TRIAL",
+      "to": "FREE",
+      "result": "Free boundary restored; assessment retained",
+      "passed": true
+    },
+    {
+      "from": "PRO",
+      "to": "FREE",
+      "result": "Free boundary restored; assessment retained",
+      "passed": true
+    },
+    {
+      "from": "FREE",
+      "to": "PRO",
+      "result": "broader pool; no reassessment required",
+      "passed": true
+    }
+  ],
+  "proLeakage": false,
+  "canonicalTargetsPreserved": true,
+  "freeReady": 2,
+  "proReady": 196
+}

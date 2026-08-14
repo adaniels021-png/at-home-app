@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "classification": "BLOCKED_BUILD_CONFIGURATION",
+  "productionState": { "mode": "LEGACY", "cohortPercentage": 0, "parentV2Exposure": false },
+  "requiredForPhase4ORelease": [
+    "app/(tabs)/daily-lessons.tsx",
+    "lib/lessonQueue.ts",
+    "lib/personalization/buildChildProfile.ts",
+    "lib/personalization/canonicalAssessment.ts",
+    "lib/personalization/codes.ts",
+    "lib/personalization/normalizeLegacyProfile.ts",
+    "lib/personalization/profileVersion.ts",
+    "lib/personalization/types.ts",
+    "lib/personalization/recommendation/candidates.ts",
+    "lib/personalization/recommendation/context.ts",
+    "lib/personalization/recommendation/eligibility.ts",
+    "lib/personalization/recommendation/engineV2.ts",
+    "lib/personalization/recommendation/filters.ts",
+    "lib/personalization/recommendation/index.ts",
+    "lib/personalization/recommendation/router.ts",
+    "lib/personalization/recommendation/scoringV2.ts",
+    "lib/personalization/recommendation/types.ts",
+    "data/curriculum/phase4j-assessment-canonical-crosswalk-v1.json",
+    "data/lesson-metadata-candidates.json"
+  ],
+  "requiredDependenciesAndProtectedReplay": [
+    "lib/personalization/index.ts",
+    "lib/personalization/inspectProfile.ts",
+    "lib/personalization/recommendation/scoring.ts",
+    "lib/personalization/recommendation/shadowEngine.ts",
+    "lib/personalization/recommendation/activationControl.ts"
+  ],
+  "alreadyDeployedServerArtifacts": [
+    "supabase/migrations/20260812060000_create_phase4b_shadow_curriculum.sql",
+    "supabase/migrations/20260813120000_create_recommendation_activation_control.sql",
+    "supabase/migrations/20260813150000_create_authoritative_revenuecat_entitlements.sql",
+    "supabase/migrations/20260813170000_create_server_recommendation_route.sql",
+    "supabase/migrations/20260813200000_create_recommendation_routing_telemetry.sql",
+    "supabase/functions/revenuecat-webhook/index.ts",
+    "supabase/functions/revenuecat-webhook/normalize.ts"
+  ],
+  "validationAndReleaseArtifacts": [
+    "package.json",
+    "scripts/phase4i-ts-loader.mjs",
+    "scripts/test-phase4e-shadow.mjs",
+    "scripts/test-phase4n-activation-control.mjs",
+    "scripts/test-phase4o1-routing-integration.mjs",
+    "scripts/test-phase4o2-entitlement-state.mjs",
+    "scripts/validate-phase4b-curriculum.mjs",
+    "scripts/validate-phase4g-full-readiness.mjs",
+    "scripts/validate-phase4j-canonical-mapping.mjs",
+    "scripts/validate-phase4m-shadow-qa.mjs",
+    "scripts/validate-phase4n-readiness.mjs",
+    "scripts/validate-phase4o1-routing-integration.mjs",
+    "scripts/validate-phase4o2-entitlement-contract.mjs",
+    "scripts/validate-phase4o4-telemetry.mjs",
+    "scripts/validate-phase4o5-release.mjs"
+  ],
+  "excludeFromReleaseCommit": [
+    "app/(tabs)/index.tsx",
+    "app/(tabs)/settings.tsx",
+    "app/admin/**",
+    "app/help-now/**",
+    "app/safety/**",
+    "components/AdminRouteGate.tsx",
+    "lib/adminAccess.ts",
+    "lib/ai/**",
+    "lib/curriculumArchitecture.ts",
+    "lib/personalization/metadataReview.ts",
+    "lib/personalization/metadataValidation.ts",
+    "lib/personalization/metadataVocabulary.ts",
+    "supabase/functions/generate-daily-lessons/index.ts",
+    "all unrelated Phase 8/9 audit, review, and generated report artifacts"
+  ],
+  "mustNotShip": [".env", "credentials", "certificates", "signing secrets", "temporary simulator screenshots"],
+  "notes": [
+    "Use path-scoped staging from the required lists; never git add the dirty worktree wholesale.",
+    "The native release commit should record already-deployed migration/function source for reproducibility but must not reapply migrations."
+  ]
+}

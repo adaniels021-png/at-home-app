@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "algorithmVersion": "phase4e-shadow-v1",
+  "trialProProfiles": 25,
+  "top1": {
+    "strong": 7,
+    "acceptable": 17,
+    "questionable": 1,
+    "poor": 0
+  },
+  "directCanonicalTargetTop1": 23,
+  "directCanonicalTargetTop3": 23,
+  "uniqueTop1": 15,
+  "uniqueTop3": 39,
+  "uniqueTop10": 105,
+  "naturalReachability": 105
+}

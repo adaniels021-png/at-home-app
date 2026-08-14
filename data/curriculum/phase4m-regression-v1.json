@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "determinism": {
+    "passed": true,
+    "fingerprint": "2d2475d119dd36410a3eaf75c9b8c9ce125f4bf73f3727095d541a6b06d6b9f3"
+  },
+  "production": {
+    "preflightSource": "live aggregate CLI plus privacy-scoped Phase 4L lesson snapshot",
+    "databaseWrites": 0,
+    "parentConsumerChanged": false,
+    "phase4bMappingsActivated": false,
+    "activePrimaryMappings": 0
+  },
+  "safety": {
+    "communicationParity": true,
+    "feedingScopePreserved": true,
+    "autonomyPreserved": true,
+    "restrictionsHard": true,
+    "recencyPenaltyOnly": true,
+    "readinessEligibilityUnchanged": true,
+    "retiredConceptsExcluded": true
+  },
+  "freeEntitlementControl": "ENTITLEMENT_CONTROL_PASSED"
+}

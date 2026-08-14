@@ -1,0 +1,15 @@
+import assert from'node:assert/strict';import{normalizeRevenueCatEvent}from'../supabase/functions/revenuecat-webhook/normalize.ts';const now=2_000_000_000_000,user='11111111-1111-4111-8111-111111111111';const event=(type,extra={})=>({id:`e-${type}-${JSON.stringify(extra)}`,type,app_user_id:user,event_timestamp_ms:now-1000,expiration_at_ms:now+86400000,entitlement_ids:['pro'],period_type:'NORMAL',...extra});
+const tests=[];const test=(name,fn)=>{fn();tests.push(name)};
+test('trial starts',()=>{const x=normalizeRevenueCatEvent(event('INITIAL_PURCHASE',{period_type:'TRIAL'}),'pro',now);assert(x.accepted&&x.state==='TRIAL'&&x.active)});
+test('trial cancellation keeps access',()=>{const x=normalizeRevenueCatEvent(event('CANCELLATION',{period_type:'TRIAL'}),'pro',now);assert(x.accepted&&x.state==='TRIAL'&&x.active&&!x.autoRenewing)});
+test('trial expiration removes access',()=>{const x=normalizeRevenueCatEvent(event('EXPIRATION',{period_type:'TRIAL',expiration_at_ms:now-1}),'pro',now);assert(x.accepted&&x.state==='FREE'&&!x.active)});
+test('trial converts to pro',()=>{const x=normalizeRevenueCatEvent(event('RENEWAL',{period_type:'NORMAL'}),'pro',now);assert(x.accepted&&x.state==='PRO'&&x.active)});
+test('pro renewal',()=>assert.equal(normalizeRevenueCatEvent(event('RENEWAL'),'pro',now).state,'PRO'));
+test('pro cancellation keeps access',()=>{const x=normalizeRevenueCatEvent(event('CANCELLATION'),'pro',now);assert(x.accepted&&x.state==='PRO'&&x.active)});
+test('pro expiration',()=>assert.equal(normalizeRevenueCatEvent(event('EXPIRATION',{expiration_at_ms:now-1}),'pro',now).state,'FREE'));
+test('billing issue preserves unexpired access',()=>{const x=normalizeRevenueCatEvent(event('BILLING_ISSUE'),'pro',now);assert(x.accepted&&x.state==='PRO'&&x.active&&x.billingIssue)});
+test('uncancellation restores',()=>assert.equal(normalizeRevenueCatEvent(event('UNCANCELLATION'),'pro',now).state,'PRO'));
+test('malformed cannot grant',()=>assert.equal(normalizeRevenueCatEvent({},'pro',now).accepted,false));
+test('unrelated entitlement ignored',()=>assert.equal(normalizeRevenueCatEvent(event('RENEWAL',{entitlement_ids:['other']}),'pro',now).accepted,false));
+test('unknown event ignored',()=>assert.equal(normalizeRevenueCatEvent(event('PAYWALL_IMPRESSION'),'pro',now).accepted,false));
+console.log(JSON.stringify({valid:true,tests:tests.length,names:tests},null,2));

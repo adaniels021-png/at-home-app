@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const sql=fs.readFileSync('supabase/migrations/20260813170000_create_server_recommendation_route.sql','utf8');
+const screen=fs.readFileSync('app/(tabs)/daily-lessons.tsx','utf8');
+const engine=fs.readFileSync('lib/personalization/recommendation/engineV2.ts','utf8');
+const router=fs.readFileSync('lib/personalization/recommendation/router.ts','utf8');
+for(const state of ['FREE','TRIAL','PRO','UNKNOWN'])assert(sql.includes(`'${state}'`));
+for(const code of ['LEGACY_MODE','FREE_ENTITLEMENT','UNKNOWN_ENTITLEMENT','OUTSIDE_COHORT','CONTROLLED_V2_ELIGIBLE','EMERGENCY_LEGACY','CONFIG_INVALID','ENTITLEMENT_RESOLVER_FAILURE'])assert(sql.includes(`'${code}'`));
+assert(sql.includes('auth.uid()'));assert(sql.includes("digest(uid::text,'sha256')"));assert(sql.includes('resolve_my_server_entitlement()'));
+assert(!sql.includes('user_subscription_status'));assert(!sql.includes('isPro'));assert(!sql.includes('lesson_library'));
+assert(engine.includes("from './scoringV2'"));assert(engine.includes('scorePhase4mCandidate'));
+assert(screen.indexOf('getOpenDailyLessonInstance')<screen.indexOf('resolveServerRecommendationRoute'));
+assert(screen.includes('if (!libraryLesson)'));assert(screen.includes('getRecommendedLesson'));
+assert(router.includes("route === 'CONTROLLED_V2' && value.cohort_eligible !== true"));
+const hashes={phase4e:crypto.createHash('sha256').update(fs.readFileSync('lib/personalization/recommendation/scoring.ts')).digest('hex'),phase4m:crypto.createHash('sha256').update(fs.readFileSync('lib/personalization/recommendation/scoringV2.ts')).digest('hex'),phase4j:crypto.createHash('sha256').update(fs.readFileSync('data/curriculum/phase4j-assessment-canonical-crosswalk-v1.json')).digest('hex')};
+assert.equal(hashes.phase4e,'be6fe07f503c74c05c5be0557ee249ca8da42bab392f40638d7fe1f12caf5284');
+console.log(JSON.stringify({valid:true,serverAuthority:true,clientIsProAuthority:false,existingInstanceFirst:true,v2ImportsFrozenScorer:true,legacyFallback:true,privacySafeAttribution:true,hashes},null,2));

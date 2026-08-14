@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "classification": "READY_FOR_PHASE_4O_CONTROLLED_ACTIVATION",
+  "parentConsumer": "LEGACY",
+  "parentReceivedV2": false,
+  "activePrimary": 0,
+  "migrationCreated": "20260813120000_create_recommendation_activation_control.sql",
+  "migrationApplied": true,
+  "blockers": [],
+  "nonblocking": [
+    "Real controlled telemetry begins only after separately authorized Phase 4O activation."
+  ],
+  "nextPhase": "Verify production remains LEGACY, then owner-authorize a small Trial/Pro CONTROLLED_V2 cohort with EMERGENCY_LEGACY rollback."
+}

@@ -1,0 +1,3172 @@
+{
+  "architectureVersion": 1,
+  "domains": [
+    {
+      "key": "functional_communication",
+      "category": "communication",
+      "internalName": "Functional Communication",
+      "parentDisplayName": "Communicating Needs & Ideas",
+      "definition": "Groups communicating needs & ideas skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 1,
+      "architectureVersion": 1
+    },
+    {
+      "key": "understanding_conversation",
+      "category": "communication",
+      "internalName": "Understanding & Conversation",
+      "parentDisplayName": "Understanding & Connecting",
+      "definition": "Groups understanding & connecting skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 2,
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication_practice",
+      "category": "communication",
+      "internalName": "Communication Practice",
+      "parentDisplayName": "Communication Practice",
+      "definition": "Groups communication practice skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 3,
+      "architectureVersion": 1
+    },
+    {
+      "key": "routine_preparation",
+      "category": "daily_routines",
+      "internalName": "Routine Preparation",
+      "parentDisplayName": "Getting Ready",
+      "definition": "Groups getting ready skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 4,
+      "architectureVersion": 1
+    },
+    {
+      "key": "meals_eating_routines",
+      "category": "daily_routines",
+      "internalName": "Meals & Eating Routines",
+      "parentDisplayName": "Mealtime Routines",
+      "definition": "Groups mealtime routines skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 5,
+      "architectureVersion": 1
+    },
+    {
+      "key": "personal_care",
+      "category": "daily_routines",
+      "internalName": "Personal Care",
+      "parentDisplayName": "Personal Care",
+      "definition": "Groups personal care skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 6,
+      "architectureVersion": 1
+    },
+    {
+      "key": "home_participation",
+      "category": "daily_routines",
+      "internalName": "Home Participation",
+      "parentDisplayName": "Helping at Home",
+      "definition": "Groups helping at home skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 7,
+      "architectureVersion": 1
+    },
+    {
+      "key": "sleep_bedtime",
+      "category": "daily_routines",
+      "internalName": "Sleep & Bedtime",
+      "parentDisplayName": "Sleep Routines",
+      "definition": "Groups sleep routines skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 8,
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotional_understanding",
+      "category": "emotions_behavior",
+      "internalName": "Emotional Understanding",
+      "parentDisplayName": "Understanding Feelings",
+      "definition": "Groups understanding feelings skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 9,
+      "architectureVersion": 1
+    },
+    {
+      "key": "regulation_coping",
+      "category": "emotions_behavior",
+      "internalName": "Regulation & Coping",
+      "parentDisplayName": "Regulation & Support",
+      "definition": "Groups regulation & support skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 10,
+      "architectureVersion": 1
+    },
+    {
+      "key": "behavior_flexibility",
+      "category": "emotions_behavior",
+      "internalName": "Behavior & Flexibility",
+      "parentDisplayName": "Flexibility & Problem Solving",
+      "definition": "Groups flexibility & problem solving skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 11,
+      "architectureVersion": 1
+    },
+    {
+      "key": "safety_self_management",
+      "category": "emotions_behavior",
+      "internalName": "Safety & Self-Management",
+      "parentDisplayName": "Staying Safe",
+      "definition": "Groups staying safe skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 12,
+      "architectureVersion": 1
+    },
+    {
+      "key": "engagement_attention",
+      "category": "learning_attention",
+      "internalName": "Engagement & Attention",
+      "parentDisplayName": "Attention & Engagement",
+      "definition": "Groups attention & engagement skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 13,
+      "architectureVersion": 1
+    },
+    {
+      "key": "planning_executive",
+      "category": "learning_attention",
+      "internalName": "Planning & Executive Skills",
+      "parentDisplayName": "Planning & Problem Solving",
+      "definition": "Groups planning & problem solving skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 14,
+      "architectureVersion": 1
+    },
+    {
+      "key": "matching_sorting",
+      "category": "learning_attention",
+      "internalName": "Matching & Sorting",
+      "parentDisplayName": "Matching & Sorting",
+      "definition": "Groups matching & sorting skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 15,
+      "architectureVersion": 1
+    },
+    {
+      "key": "memory_sequencing",
+      "category": "learning_attention",
+      "internalName": "Memory & Sequencing",
+      "parentDisplayName": "Memory & Sequences",
+      "definition": "Groups memory & sequences skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 16,
+      "architectureVersion": 1
+    },
+    {
+      "key": "gross_motor",
+      "category": "movement_coordination",
+      "internalName": "Gross Motor",
+      "parentDisplayName": "Whole-Body Movement",
+      "definition": "Groups whole-body movement skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 17,
+      "architectureVersion": 1
+    },
+    {
+      "key": "fine_motor",
+      "category": "movement_coordination",
+      "internalName": "Fine Motor",
+      "parentDisplayName": "Hand Skills",
+      "definition": "Groups hand skills skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 18,
+      "architectureVersion": 1
+    },
+    {
+      "key": "motor_planning_body_awareness",
+      "category": "movement_coordination",
+      "internalName": "Motor Planning & Body Awareness",
+      "parentDisplayName": "Body Awareness & Planning",
+      "definition": "Groups body awareness & planning skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 19,
+      "architectureVersion": 1
+    },
+    {
+      "key": "play_skills",
+      "category": "play_social_skills",
+      "internalName": "Play Skills",
+      "parentDisplayName": "Play",
+      "definition": "Groups play skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 20,
+      "architectureVersion": 1
+    },
+    {
+      "key": "social_interaction",
+      "category": "play_social_skills",
+      "internalName": "Social Interaction",
+      "parentDisplayName": "Connecting With Others",
+      "definition": "Groups connecting with others skills for navigation, personalization, coverage, and reporting.",
+      "sortOrder": 21,
+      "architectureVersion": 1
+    }
+  ],
+  "skills": [
+    {
+      "key": "communication.requesting",
+      "domainKey": "functional_communication",
+      "internalName": "Requesting",
+      "parentDisplayName": "Requesting",
+      "definition": "Builds requesting through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing requesting learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_request_a_visible_item",
+          "displayName": "Request a Visible Item",
+          "definition": "Supports the request a visible item step of the Requesting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_request_varied_wants_and_needs",
+          "displayName": "Request Varied Wants & Needs",
+          "definition": "Supports the request varied wants & needs step of the Requesting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_choices_help_and_activities",
+          "displayName": "Choices, Help & Activities",
+          "definition": "Supports the choices, help & activities step of the Requesting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_initiate_a_request",
+          "displayName": "Initiate a Request",
+          "definition": "Supports the initiate a request step of the Requesting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_request_across_daily_life",
+          "displayName": "Request Across Daily Life",
+          "definition": "Supports the request across daily life step of the Requesting progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.self_advocacy",
+      "domainKey": "functional_communication",
+      "internalName": "Self-Advocacy",
+      "parentDisplayName": "Self-Advocacy",
+      "definition": "Builds self-advocacy through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing self-advocacy learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_show_a_need",
+          "displayName": "Show a Need",
+          "definition": "Supports the show a need step of the Self-Advocacy progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_request_help_or_a_break",
+          "displayName": "Request Help or a Break",
+          "definition": "Supports the request help or a break step of the Self-Advocacy progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_communicate_conditions_or_preferences",
+          "displayName": "Communicate Conditions or Preferences",
+          "definition": "Supports the communicate conditions or preferences step of the Self-Advocacy progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_state_a_boundary_independently",
+          "displayName": "State a Boundary Independently",
+          "definition": "Supports the state a boundary independently step of the Self-Advocacy progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_self_advocate_across_settings",
+          "displayName": "Self-Advocate Across Settings",
+          "definition": "Supports the self-advocate across settings step of the Self-Advocacy progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.non_speaking_social",
+      "domainKey": "functional_communication",
+      "internalName": "Non-Speaking & Social Communication",
+      "parentDisplayName": "Non-Speaking & Social Communication",
+      "definition": "Builds non-speaking & social communication through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing non-speaking & social communication learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_show_or_orient",
+          "displayName": "Show or Orient",
+          "definition": "Supports the show or orient step of the Non-Speaking & Social Communication progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_familiar_gestures",
+          "displayName": "Familiar Gestures",
+          "definition": "Supports the familiar gestures step of the Non-Speaking & Social Communication progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_express_with_face_or_body",
+          "displayName": "Express With Face or Body",
+          "definition": "Supports the express with face or body step of the Non-Speaking & Social Communication progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_a_communication_form",
+          "displayName": "Choose a Communication Form",
+          "definition": "Supports the choose a communication form step of the Non-Speaking & Social Communication progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_communicate_across_settings",
+          "displayName": "Communicate Across Settings",
+          "definition": "Supports the communicate across settings step of the Non-Speaking & Social Communication progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.following_directions",
+      "domainKey": "understanding_conversation",
+      "internalName": "Following Directions",
+      "parentDisplayName": "Following Directions",
+      "definition": "Builds following directions through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Teaches understanding and participation in functional directions, never generalized obedience; refusal, self-advocacy, breaks, and support remain available.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_one_familiar_direction",
+          "displayName": "One Familiar Direction",
+          "definition": "Supports the one familiar direction step of the Following Directions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_varied_one_step_directions",
+          "displayName": "Varied One-Step Directions",
+          "definition": "Supports the varied one-step directions step of the Following Directions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_connected_directions",
+          "displayName": "Connected Directions",
+          "definition": "Supports the connected directions step of the Following Directions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_more_independent_directions",
+          "displayName": "More Independent Directions",
+          "definition": "Supports the more independent directions step of the Following Directions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_directions_in_daily_life",
+          "displayName": "Directions in Daily Life",
+          "definition": "Supports the directions in daily life step of the Following Directions progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.answering_questions",
+      "domainKey": "understanding_conversation",
+      "internalName": "Answering Questions",
+      "parentDisplayName": "Answering Questions",
+      "definition": "Builds answering questions through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing answering questions learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_simple_answers",
+          "displayName": "Simple Answers",
+          "definition": "Supports the simple answers step of the Answering Questions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_concrete_questions",
+          "displayName": "Concrete Questions",
+          "definition": "Supports the concrete questions step of the Answering Questions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_people_places_and_recall",
+          "displayName": "People, Places & Recall",
+          "definition": "Supports the people, places & recall step of the Answering Questions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_connected_questions",
+          "displayName": "Connected Questions",
+          "definition": "Supports the connected questions step of the Answering Questions progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_questions_in_daily_life",
+          "displayName": "Questions in Daily Life",
+          "definition": "Supports the questions in daily life step of the Answering Questions progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.pragmatics_conversation",
+      "domainKey": "understanding_conversation",
+      "internalName": "Pragmatics & Conversation",
+      "parentDisplayName": "Pragmatics & Conversation",
+      "definition": "Builds pragmatics & conversation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing pragmatics & conversation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_one_communication_turn",
+          "displayName": "One Communication Turn",
+          "definition": "Supports the one communication turn step of the Pragmatics & Conversation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_back_and_forth_interaction",
+          "displayName": "Back-and-Forth Interaction",
+          "definition": "Supports the back-and-forth interaction step of the Pragmatics & Conversation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_share_a_topic",
+          "displayName": "Share a Topic",
+          "definition": "Supports the share a topic step of the Pragmatics & Conversation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_sustain_or_repair_interaction",
+          "displayName": "Sustain or Repair Interaction",
+          "definition": "Supports the sustain or repair interaction step of the Pragmatics & Conversation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_conversation_in_daily_life",
+          "displayName": "Conversation in Daily Life",
+          "definition": "Supports the conversation in daily life step of the Pragmatics & Conversation progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "communication.communication_practice",
+      "domainKey": "communication_practice",
+      "internalName": "Communication Practice",
+      "parentDisplayName": "Communication Practice",
+      "definition": "Builds communication practice through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "ABA at Home communication lessons may support functional communication, communication practice, imitation, and communication repair, but must not diagnose or treat articulation, phonological processes, fluency, voice, motor speech, or other speech-language disorders. Speech, AAC, sign, gesture, pictures, showing, pointing, and established combinations are valid; communication tools remain available and spoken responses are not universally required.",
+      "communicationSafeguard": "ABA at Home communication lessons may support functional communication, communication practice, imitation, and communication repair, but must not diagnose or treat articulation, phonological processes, fluency, voice, motor speech, or other speech-language disorders. Speech, AAC, sign, gesture, pictures, showing, pointing, and established combinations are valid; communication tools remain available and spoken responses are not universally required.",
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 3,
+      "hasOptionalStage5": false,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_explore_communication_imitation",
+          "displayName": "Explore Communication Imitation",
+          "definition": "Supports the explore communication imitation step of the Communication Practice progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_practice_functional_messages",
+          "displayName": "Practice Functional Messages",
+          "definition": "Supports the practice functional messages step of the Communication Practice progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_repair_a_misunderstood_message",
+          "displayName": "Repair a Misunderstood Message",
+          "definition": "Supports the repair a misunderstood message step of the Communication Practice progression.",
+          "isCore": true,
+          "isGeneralization": false
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.morning_preparation",
+      "domainKey": "routine_preparation",
+      "internalName": "Morning Preparation",
+      "parentDisplayName": "Morning Preparation",
+      "definition": "Builds morning preparation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing morning preparation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_the_morning_routine",
+          "displayName": "Join the Morning Routine",
+          "definition": "Supports the join the morning routine step of the Morning Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_one_morning_action",
+          "displayName": "Complete One Morning Action",
+          "definition": "Supports the complete one morning action step of the Morning Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_follow_connected_morning_steps",
+          "displayName": "Follow Connected Morning Steps",
+          "definition": "Supports the follow connected morning steps step of the Morning Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_morning_sequence",
+          "displayName": "Complete a Morning Sequence",
+          "definition": "Supports the complete a morning sequence step of the Morning Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_morning_routine_in_daily_life",
+          "displayName": "Morning Routine in Daily Life",
+          "definition": "Supports the morning routine in daily life step of the Morning Preparation progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.bedtime_preparation",
+      "domainKey": "routine_preparation",
+      "internalName": "Bedtime Preparation",
+      "parentDisplayName": "Bedtime Preparation",
+      "definition": "Builds bedtime preparation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing bedtime preparation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_the_bedtime_routine",
+          "displayName": "Join the Bedtime Routine",
+          "definition": "Supports the join the bedtime routine step of the Bedtime Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_one_bedtime_action",
+          "displayName": "Complete One Bedtime Action",
+          "definition": "Supports the complete one bedtime action step of the Bedtime Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_follow_connected_bedtime_steps",
+          "displayName": "Follow Connected Bedtime Steps",
+          "definition": "Supports the follow connected bedtime steps step of the Bedtime Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_bedtime_sequence",
+          "displayName": "Complete a Bedtime Sequence",
+          "definition": "Supports the complete a bedtime sequence step of the Bedtime Preparation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_bedtime_preparation_in_changed_circumstances",
+          "displayName": "Bedtime Preparation in Changed Circumstances",
+          "definition": "Supports the bedtime preparation in changed circumstances step of the Bedtime Preparation progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.feeding_participation",
+      "domainKey": "meals_eating_routines",
+      "internalName": "Feeding Participation",
+      "parentDisplayName": "Feeding Participation",
+      "definition": "Builds feeding participation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Feeding Participation never requires eating, tasting, swallowing, or tolerating a food for success and does not address swallowing, oral-motor function, nutrition, restriction, or feeding disorders. It supports pressure-free participation, communication, choice, predictability, accommodations, and established supports.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": "Feeding Participation never requires eating, tasting, swallowing, or tolerating a food for success and does not address swallowing, oral-motor function, nutrition, restriction, or feeding disorders. It supports pressure-free participation, communication, choice, predictability, accommodations, and established supports.",
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": false,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_comfortably",
+          "displayName": "Join Comfortably",
+          "definition": "Supports the join comfortably step of the Feeding Participation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_communicate_and_choose",
+          "displayName": "Communicate and Choose",
+          "definition": "Supports the communicate and choose step of the Feeding Participation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_participate_with_established_supports",
+          "displayName": "Participate With Established Supports",
+          "definition": "Supports the participate with established supports step of the Feeding Participation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_participate_across_familiar_routines",
+          "displayName": "Participate Across Familiar Routines",
+          "definition": "Supports the participate across familiar routines step of the Feeding Participation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.mealtime_skills",
+      "domainKey": "meals_eating_routines",
+      "internalName": "Mealtime Skills",
+      "parentDisplayName": "Mealtime Skills",
+      "definition": "Builds mealtime skills through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing mealtime skills learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_use_one_established_tool",
+          "displayName": "Use One Established Tool",
+          "definition": "Supports the use one established tool step of the Mealtime Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_one_meal_skill_action",
+          "displayName": "Complete One Meal-Skill Action",
+          "definition": "Supports the complete one meal-skill action step of the Mealtime Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_combine_familiar_meal_skills",
+          "displayName": "Combine Familiar Meal Skills",
+          "definition": "Supports the combine familiar meal skills step of the Mealtime Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_meal_skill_sequence",
+          "displayName": "Complete a Meal-Skill Sequence",
+          "definition": "Supports the complete a meal-skill sequence step of the Mealtime Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_meal_skills_across_settings",
+          "displayName": "Use Meal Skills Across Settings",
+          "definition": "Supports the use meal skills across settings step of the Mealtime Skills progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.dressing",
+      "domainKey": "personal_care",
+      "internalName": "Dressing",
+      "parentDisplayName": "Dressing",
+      "definition": "Builds dressing through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing dressing learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_one_dressing_action",
+          "displayName": "Join One Dressing Action",
+          "definition": "Supports the join one dressing action step of the Dressing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_an_early_clothing_step",
+          "displayName": "Complete an Early Clothing Step",
+          "definition": "Supports the complete an early clothing step step of the Dressing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_put_on_familiar_clothing",
+          "displayName": "Put On Familiar Clothing",
+          "definition": "Supports the put on familiar clothing step of the Dressing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_dressing_sequence",
+          "displayName": "Complete a Dressing Sequence",
+          "definition": "Supports the complete a dressing sequence step of the Dressing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_dress_across_daily_life",
+          "displayName": "Dress Across Daily Life",
+          "definition": "Supports the dress across daily life step of the Dressing progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.hygiene",
+      "domainKey": "personal_care",
+      "internalName": "Hygiene",
+      "parentDisplayName": "Hygiene",
+      "definition": "Builds hygiene through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing hygiene learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_a_hygiene_routine",
+          "displayName": "Join a Hygiene Routine",
+          "definition": "Supports the join a hygiene routine step of the Hygiene progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_one_hygiene_action",
+          "displayName": "Complete One Hygiene Action",
+          "definition": "Supports the complete one hygiene action step of the Hygiene progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_follow_connected_hygiene_steps",
+          "displayName": "Follow Connected Hygiene Steps",
+          "definition": "Supports the follow connected hygiene steps step of the Hygiene progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_an_established_routine",
+          "displayName": "Complete an Established Routine",
+          "definition": "Supports the complete an established routine step of the Hygiene progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_hygiene_skills_across_settings",
+          "displayName": "Use Hygiene Skills Across Settings",
+          "definition": "Supports the use hygiene skills across settings step of the Hygiene progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.hair_care",
+      "domainKey": "personal_care",
+      "internalName": "Hair Care",
+      "parentDisplayName": "Hair Care",
+      "definition": "Builds hair care through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing hair care learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 3,
+      "hasOptionalStage5": false,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_build_predictability_and_choice",
+          "displayName": "Build Predictability and Choice",
+          "definition": "Supports the build predictability and choice step of the Hair Care progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_participate_in_a_comfortable_step",
+          "displayName": "Participate in a Comfortable Step",
+          "definition": "Supports the participate in a comfortable step step of the Hair Care progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_communicate_and_use_supports",
+          "displayName": "Communicate and Use Supports",
+          "definition": "Supports the communicate and use supports step of the Hair Care progression.",
+          "isCore": true,
+          "isGeneralization": false
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.toileting",
+      "domainKey": "personal_care",
+      "internalName": "Toileting",
+      "parentDisplayName": "Toileting",
+      "definition": "Builds toileting through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing toileting learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_bathroom_awareness_and_comfort",
+          "displayName": "Bathroom Awareness and Comfort",
+          "definition": "Supports the bathroom awareness and comfort step of the Toileting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_planned_toileting_participation",
+          "displayName": "Planned Toileting Participation",
+          "definition": "Supports the planned toileting participation step of the Toileting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_follow_bathroom_steps",
+          "displayName": "Follow Bathroom Steps",
+          "definition": "Supports the follow bathroom steps step of the Toileting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_more_independent_toileting",
+          "displayName": "More Independent Toileting",
+          "definition": "Supports the more independent toileting step of the Toileting progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_communicate_and_generalize",
+          "displayName": "Communicate and Generalize",
+          "definition": "Supports the communicate and generalize step of the Toileting progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.household_tasks",
+      "domainKey": "home_participation",
+      "internalName": "Household Tasks",
+      "parentDisplayName": "Household Tasks",
+      "definition": "Builds household tasks through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing household tasks learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_put_away_one_item",
+          "displayName": "Put Away One Item",
+          "definition": "Supports the put away one item step of the Household Tasks progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_complete_a_familiar_cleanup",
+          "displayName": "Complete a Familiar Cleanup",
+          "definition": "Supports the complete a familiar cleanup step of the Household Tasks progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_complete_a_defined_responsibility",
+          "displayName": "Complete a Defined Responsibility",
+          "definition": "Supports the complete a defined responsibility step of the Household Tasks progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_small_chore_sequence",
+          "displayName": "Complete a Small Chore Sequence",
+          "definition": "Supports the complete a small chore sequence step of the Household Tasks progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_help_across_home_routines",
+          "displayName": "Help Across Home Routines",
+          "definition": "Supports the help across home routines step of the Household Tasks progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "routines.sleep",
+      "domainKey": "sleep_bedtime",
+      "internalName": "Sleep",
+      "parentDisplayName": "Sleep",
+      "definition": "Builds sleep through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing sleep learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_begin_a_calming_sleep_routine",
+          "displayName": "Begin a Calming Sleep Routine",
+          "definition": "Supports the begin a calming sleep routine step of the Sleep progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_use_established_wind_down_supports",
+          "displayName": "Use Established Wind-Down Supports",
+          "definition": "Supports the use established wind-down supports step of the Sleep progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_remain_in_a_comfortable_sleep_space",
+          "displayName": "Remain in a Comfortable Sleep Space",
+          "definition": "Supports the remain in a comfortable sleep space step of the Sleep progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_follow_the_sleep_routine",
+          "displayName": "Follow the Sleep Routine",
+          "definition": "Supports the follow the sleep routine step of the Sleep progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_sleep_routine_in_changed_circumstances",
+          "displayName": "Sleep Routine in Changed Circumstances",
+          "definition": "Supports the sleep routine in changed circumstances step of the Sleep progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.emotion_identification",
+      "domainKey": "emotional_understanding",
+      "internalName": "Emotion Identification",
+      "parentDisplayName": "Emotion Identification",
+      "definition": "Builds emotion identification through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing emotion identification learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_notice_familiar_feelings",
+          "displayName": "Notice Familiar Feelings",
+          "definition": "Supports the notice familiar feelings step of the Emotion Identification progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_identify_from_choices",
+          "displayName": "Identify From Choices",
+          "definition": "Supports the identify from choices step of the Emotion Identification progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_match_feelings_across_examples",
+          "displayName": "Match Feelings Across Examples",
+          "definition": "Supports the match feelings across examples step of the Emotion Identification progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_discuss_feelings_in_context",
+          "displayName": "Discuss Feelings in Context",
+          "definition": "Supports the discuss feelings in context step of the Emotion Identification progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_recognize_feelings_in_daily_life",
+          "displayName": "Recognize Feelings in Daily Life",
+          "definition": "Supports the recognize feelings in daily life step of the Emotion Identification progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.emotional_regulation",
+      "domainKey": "regulation_coping",
+      "internalName": "Emotional Regulation",
+      "parentDisplayName": "Emotional Regulation",
+      "definition": "Builds emotional regulation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing emotional regulation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_co_regulate_and_notice",
+          "displayName": "Co-Regulate and Notice",
+          "definition": "Supports the co-regulate and notice step of the Emotional Regulation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_communicate_the_feeling",
+          "displayName": "Communicate the Feeling",
+          "definition": "Supports the communicate the feeling step of the Emotional Regulation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_try_a_chosen_strategy",
+          "displayName": "Try a Chosen Strategy",
+          "definition": "Supports the try a chosen strategy step of the Emotional Regulation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_an_established_strategy",
+          "displayName": "Choose an Established Strategy",
+          "definition": "Supports the choose an established strategy step of the Emotional Regulation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_a_personal_regulation_plan",
+          "displayName": "Use a Personal Regulation Plan",
+          "definition": "Supports the use a personal regulation plan step of the Emotional Regulation progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.calming_supports",
+      "domainKey": "regulation_coping",
+      "internalName": "Calming Supports",
+      "parentDisplayName": "Calming Supports",
+      "definition": "Builds calming supports through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing calming supports learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_co_regulate_with_a_caregiver",
+          "displayName": "Co-Regulate With a Caregiver",
+          "definition": "Supports the co-regulate with a caregiver step of the Calming Supports progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_explore_a_preferred_calm_support",
+          "displayName": "Explore a Preferred Calm Support",
+          "definition": "Supports the explore a preferred calm support step of the Calming Supports progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_use_a_chosen_calm_space",
+          "displayName": "Use a Chosen Calm Space",
+          "definition": "Supports the use a chosen calm space step of the Calming Supports progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_an_established_support",
+          "displayName": "Choose an Established Support",
+          "definition": "Supports the choose an established support step of the Calming Supports progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_access_supports_across_settings",
+          "displayName": "Access Supports Across Settings",
+          "definition": "Supports the access supports across settings step of the Calming Supports progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.frustration_tolerance",
+      "domainKey": "regulation_coping",
+      "internalName": "Frustration Tolerance",
+      "parentDisplayName": "Frustration Tolerance",
+      "definition": "Builds frustration tolerance through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing frustration tolerance learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_co_regulate_through_a_small_challenge",
+          "displayName": "Co-Regulate Through a Small Challenge",
+          "definition": "Supports the co-regulate through a small challenge step of the Frustration Tolerance progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_try_again_when_willing",
+          "displayName": "Try Again When Willing",
+          "definition": "Supports the try again when willing step of the Frustration Tolerance progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_handle_a_predictable_delay_or_ending",
+          "displayName": "Handle a Predictable Delay or Ending",
+          "definition": "Supports the handle a predictable delay or ending step of the Frustration Tolerance progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_a_response_to_a_problem",
+          "displayName": "Choose a Response to a Problem",
+          "definition": "Supports the choose a response to a problem step of the Frustration Tolerance progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_coping_across_daily_life",
+          "displayName": "Use Coping Across Daily Life",
+          "definition": "Supports the use coping across daily life step of the Frustration Tolerance progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.impulse_control",
+      "domainKey": "behavior_flexibility",
+      "internalName": "Impulse Control",
+      "parentDisplayName": "Impulse Control",
+      "definition": "Builds impulse control through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing impulse control learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_pause_with_support",
+          "displayName": "Pause With Support",
+          "definition": "Supports the pause with support step of the Impulse Control progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_wait_briefly",
+          "displayName": "Wait Briefly",
+          "definition": "Supports the wait briefly step of the Impulse Control progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_wait_for_a_turn",
+          "displayName": "Wait for a Turn",
+          "definition": "Supports the wait for a turn step of the Impulse Control progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_use_pause_and_go_rules",
+          "displayName": "Use Pause-and-Go Rules",
+          "definition": "Supports the use pause-and-go rules step of the Impulse Control progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_pause_across_daily_life",
+          "displayName": "Pause Across Daily Life",
+          "definition": "Supports the pause across daily life step of the Impulse Control progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.transitions_flexibility",
+      "domainKey": "behavior_flexibility",
+      "internalName": "Transitions & Flexibility",
+      "parentDisplayName": "Transitions & Flexibility",
+      "definition": "Builds transitions & flexibility through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing transitions & flexibility learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_a_supported_change",
+          "displayName": "Join a Supported Change",
+          "definition": "Supports the join a supported change step of the Transitions & Flexibility progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_use_a_transition_support",
+          "displayName": "Use a Transition Support",
+          "definition": "Supports the use a transition support step of the Transitions & Flexibility progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_practice_a_small_planned_change",
+          "displayName": "Practice a Small Planned Change",
+          "definition": "Supports the practice a small planned change step of the Transitions & Flexibility progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_an_alternative",
+          "displayName": "Choose an Alternative",
+          "definition": "Supports the choose an alternative step of the Transitions & Flexibility progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_flexibility_across_daily_life",
+          "displayName": "Use Flexibility Across Daily Life",
+          "definition": "Supports the use flexibility across daily life step of the Transitions & Flexibility progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.repairing_social_problems",
+      "domainKey": "behavior_flexibility",
+      "internalName": "Repairing Social Problems",
+      "parentDisplayName": "Repairing Social Problems",
+      "definition": "Builds repairing social problems through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing repairing social problems learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_notice_a_small_mistake",
+          "displayName": "Notice a Small Mistake",
+          "definition": "Supports the notice a small mistake step of the Repairing Social Problems progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_repair_together",
+          "displayName": "Repair Together",
+          "definition": "Supports the repair together step of the Repairing Social Problems progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_communicate_care_or_acknowledgment",
+          "displayName": "Communicate Care or Acknowledgment",
+          "definition": "Supports the communicate care or acknowledgment step of the Repairing Social Problems progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_a_repair_action",
+          "displayName": "Choose a Repair Action",
+          "definition": "Supports the choose a repair action step of the Repairing Social Problems progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_repair_across_relationships",
+          "displayName": "Repair Across Relationships",
+          "definition": "Supports the repair across relationships step of the Repairing Social Problems progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "emotions.safety_awareness",
+      "domainKey": "safety_self_management",
+      "internalName": "Safety Awareness",
+      "parentDisplayName": "Safety Awareness",
+      "definition": "Builds safety awareness through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing safety awareness learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_practice_a_safety_stop",
+          "displayName": "Practice a Safety Stop",
+          "definition": "Supports the practice a safety stop step of the Safety Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_stop_at_a_boundary",
+          "displayName": "Stop at a Boundary",
+          "definition": "Supports the stop at a boundary step of the Safety Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_use_an_agreed_safety_support",
+          "displayName": "Use an Agreed Safety Support",
+          "definition": "Supports the use an agreed safety support step of the Safety Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_wait_before_entering_risk",
+          "displayName": "Wait Before Entering Risk",
+          "definition": "Supports the wait before entering risk step of the Safety Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_safety_skills_across_settings",
+          "displayName": "Use Safety Skills Across Settings",
+          "definition": "Supports the use safety skills across settings step of the Safety Awareness progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.curiosity_engagement",
+      "domainKey": "engagement_attention",
+      "internalName": "Curiosity & Engagement",
+      "parentDisplayName": "Curiosity & Engagement",
+      "definition": "Builds curiosity & engagement through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing curiosity & engagement learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_notice_something_interesting",
+          "displayName": "Notice Something Interesting",
+          "definition": "Supports the notice something interesting step of the Curiosity & Engagement progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_explore_with_support",
+          "displayName": "Explore With Support",
+          "definition": "Supports the explore with support step of the Curiosity & Engagement progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_test_what_happens",
+          "displayName": "Test What Happens",
+          "definition": "Supports the test what happens step of the Curiosity & Engagement progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_and_sustain_exploration",
+          "displayName": "Choose and Sustain Exploration",
+          "definition": "Supports the choose and sustain exploration step of the Curiosity & Engagement progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_explore_across_settings",
+          "displayName": "Explore Across Settings",
+          "definition": "Supports the explore across settings step of the Curiosity & Engagement progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.sustained_attention",
+      "domainKey": "engagement_attention",
+      "internalName": "Sustained Attention",
+      "parentDisplayName": "Sustained Attention",
+      "definition": "Builds sustained attention through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing sustained attention learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_engage_briefly",
+          "displayName": "Engage Briefly",
+          "definition": "Supports the engage briefly step of the Sustained Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_stay_with_a_short_activity",
+          "displayName": "Stay With a Short Activity",
+          "definition": "Supports the stay with a short activity step of the Sustained Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_complete_a_defined_short_task",
+          "displayName": "Complete a Defined Short Task",
+          "definition": "Supports the complete a defined short task step of the Sustained Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_work_to_a_visible_stopping_point",
+          "displayName": "Work to a Visible Stopping Point",
+          "definition": "Supports the work to a visible stopping point step of the Sustained Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_attention_supports_across_routines",
+          "displayName": "Use Attention Supports Across Routines",
+          "definition": "Supports the use attention supports across routines step of the Sustained Attention progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.visual_tracking_focus",
+      "domainKey": "engagement_attention",
+      "internalName": "Visual Tracking & Focus",
+      "parentDisplayName": "Visual Tracking & Focus",
+      "definition": "Builds visual tracking & focus through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing visual tracking & focus learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_notice_or_follow_a_target",
+          "displayName": "Notice or Follow a Target",
+          "definition": "Supports the notice or follow a target step of the Visual Tracking & Focus progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_track_a_moving_target",
+          "displayName": "Track a Moving Target",
+          "definition": "Supports the track a moving target step of the Visual Tracking & Focus progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_find_a_target",
+          "displayName": "Find a Target",
+          "definition": "Supports the find a target step of the Visual Tracking & Focus progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_track_and_find_with_more_complexity",
+          "displayName": "Track and Find With More Complexity",
+          "definition": "Supports the track and find with more complexity step of the Visual Tracking & Focus progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_visual_search_across_activities",
+          "displayName": "Use Visual Search Across Activities",
+          "definition": "Supports the use visual search across activities step of the Visual Tracking & Focus progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.executive_functioning",
+      "domainKey": "planning_executive",
+      "internalName": "Executive Functioning",
+      "parentDisplayName": "Executive Functioning",
+      "definition": "Builds executive functioning through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing executive functioning learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_use_first_then",
+          "displayName": "Use First-Then",
+          "definition": "Supports the use first-then step of the Executive Functioning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_follow_a_simple_checklist",
+          "displayName": "Follow a Simple Checklist",
+          "definition": "Supports the follow a simple checklist step of the Executive Functioning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_plan_then_act",
+          "displayName": "Plan Then Act",
+          "definition": "Supports the plan then act step of the Executive Functioning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_follow_a_short_plan_independently",
+          "displayName": "Follow a Short Plan Independently",
+          "definition": "Supports the follow a short plan independently step of the Executive Functioning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_plans_across_routines",
+          "displayName": "Use Plans Across Routines",
+          "definition": "Supports the use plans across routines step of the Executive Functioning progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.task_initiation",
+      "domainKey": "planning_executive",
+      "internalName": "Task Initiation",
+      "parentDisplayName": "Task Initiation",
+      "definition": "Builds task initiation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing task initiation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_begin_alongside_a_caregiver",
+          "displayName": "Begin Alongside a Caregiver",
+          "definition": "Supports the begin alongside a caregiver step of the Task Initiation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_start_after_a_clear_cue",
+          "displayName": "Start After a Clear Cue",
+          "definition": "Supports the start after a clear cue step of the Task Initiation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_start_after_one_reminder",
+          "displayName": "Start After One Reminder",
+          "definition": "Supports the start after one reminder step of the Task Initiation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_start_using_an_established_support",
+          "displayName": "Start Using an Established Support",
+          "definition": "Supports the start using an established support step of the Task Initiation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_start_tasks_across_routines",
+          "displayName": "Start Tasks Across Routines",
+          "definition": "Supports the start tasks across routines step of the Task Initiation progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.problem_solving",
+      "domainKey": "planning_executive",
+      "internalName": "Problem Solving",
+      "parentDisplayName": "Problem Solving",
+      "definition": "Builds problem solving through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing problem solving learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_notice_a_problem_and_seek_support",
+          "displayName": "Notice a Problem and Seek Support",
+          "definition": "Supports the notice a problem and seek support step of the Problem Solving progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_try_an_alternative",
+          "displayName": "Try an Alternative",
+          "definition": "Supports the try an alternative step of the Problem Solving progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_solve_a_concrete_problem",
+          "displayName": "Solve a Concrete Problem",
+          "definition": "Supports the solve a concrete problem step of the Problem Solving progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_among_solutions",
+          "displayName": "Choose Among Solutions",
+          "definition": "Supports the choose among solutions step of the Problem Solving progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_solve_problems_across_daily_life",
+          "displayName": "Solve Problems Across Daily Life",
+          "definition": "Supports the solve problems across daily life step of the Problem Solving progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.matching",
+      "domainKey": "matching_sorting",
+      "internalName": "Matching",
+      "parentDisplayName": "Matching",
+      "definition": "Builds matching through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing matching learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_match_identical_objects",
+          "displayName": "Match Identical Objects",
+          "definition": "Supports the match identical objects step of the Matching progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_match_identical_pictures",
+          "displayName": "Match Identical Pictures",
+          "definition": "Supports the match identical pictures step of the Matching progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_match_object_to_representation",
+          "displayName": "Match Object to Representation",
+          "definition": "Supports the match object to representation step of the Matching progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_match_by_an_attribute",
+          "displayName": "Match by an Attribute",
+          "definition": "Supports the match by an attribute step of the Matching progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_matching_in_daily_life",
+          "displayName": "Use Matching in Daily Life",
+          "definition": "Supports the use matching in daily life step of the Matching progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.sorting_categorization",
+      "domainKey": "matching_sorting",
+      "internalName": "Sorting & Categorization",
+      "parentDisplayName": "Sorting & Categorization",
+      "definition": "Builds sorting & categorization through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing sorting & categorization learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_group_by_one_clear_feature",
+          "displayName": "Group by One Clear Feature",
+          "definition": "Supports the group by one clear feature step of the Sorting & Categorization progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_sort_by_a_visible_feature",
+          "displayName": "Sort by a Visible Feature",
+          "definition": "Supports the sort by a visible feature step of the Sorting & Categorization progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_sort_familiar_concrete_groups",
+          "displayName": "Sort Familiar Concrete Groups",
+          "definition": "Supports the sort familiar concrete groups step of the Sorting & Categorization progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_sort_by_function_or_category",
+          "displayName": "Sort by Function or Category",
+          "definition": "Supports the sort by function or category step of the Sorting & Categorization progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_categorize_in_daily_life",
+          "displayName": "Categorize in Daily Life",
+          "definition": "Supports the categorize in daily life step of the Sorting & Categorization progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.memory",
+      "domainKey": "memory_sequencing",
+      "internalName": "Memory",
+      "parentDisplayName": "Memory",
+      "definition": "Builds memory through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing memory learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_recall_one_recent_item",
+          "displayName": "Recall One Recent Item",
+          "definition": "Supports the recall one recent item step of the Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_recall_after_a_short_delay",
+          "displayName": "Recall After a Short Delay",
+          "definition": "Supports the recall after a short delay step of the Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_recall_a_recent_event",
+          "displayName": "Recall a Recent Event",
+          "definition": "Supports the recall a recent event step of the Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_recall_two_related_details",
+          "displayName": "Recall Two Related Details",
+          "definition": "Supports the recall two related details step of the Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_recall_in_daily_life",
+          "displayName": "Use Recall in Daily Life",
+          "definition": "Supports the use recall in daily life step of the Memory progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.working_memory",
+      "domainKey": "memory_sequencing",
+      "internalName": "Working Memory",
+      "parentDisplayName": "Working Memory",
+      "definition": "Builds working memory through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing working memory learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_hold_one_direction",
+          "displayName": "Hold One Direction",
+          "definition": "Supports the hold one direction step of the Working Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_retain_one_item_while_acting",
+          "displayName": "Retain One Item While Acting",
+          "definition": "Supports the retain one item while acting step of the Working Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_retain_two_connected_steps",
+          "displayName": "Retain Two Connected Steps",
+          "definition": "Supports the retain two connected steps step of the Working Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_remember_then_do_after_a_delay",
+          "displayName": "Remember Then Do After a Delay",
+          "definition": "Supports the remember then do after a delay step of the Working Memory progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_working_memory_across_routines",
+          "displayName": "Use Working Memory Across Routines",
+          "definition": "Supports the use working memory across routines step of the Working Memory progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "learning.sequencing",
+      "domainKey": "memory_sequencing",
+      "internalName": "Sequencing",
+      "parentDisplayName": "Sequencing",
+      "definition": "Builds sequencing through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing sequencing learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_identify_what_comes_first",
+          "displayName": "Identify What Comes First",
+          "definition": "Supports the identify what comes first step of the Sequencing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_order_two_steps",
+          "displayName": "Order Two Steps",
+          "definition": "Supports the order two steps step of the Sequencing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_order_three_routine_steps",
+          "displayName": "Order Three Routine Steps",
+          "definition": "Supports the order three routine steps step of the Sequencing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_describe_or_arrange_a_sequence",
+          "displayName": "Describe or Arrange a Sequence",
+          "definition": "Supports the describe or arrange a sequence step of the Sequencing progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_sequence_daily_activities",
+          "displayName": "Sequence Daily Activities",
+          "definition": "Supports the sequence daily activities step of the Sequencing progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.gross_motor_skills",
+      "domainKey": "gross_motor",
+      "internalName": "Gross Motor Skills",
+      "parentDisplayName": "Gross Motor Skills",
+      "definition": "Builds gross motor skills through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing gross motor skills learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_perform_one_large_movement",
+          "displayName": "Perform One Large Movement",
+          "definition": "Supports the perform one large movement step of the Gross Motor Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_move_toward_or_between_targets",
+          "displayName": "Move Toward or Between Targets",
+          "definition": "Supports the move toward or between targets step of the Gross Motor Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_jump_or_combine_movements",
+          "displayName": "Jump or Combine Movements",
+          "definition": "Supports the jump or combine movements step of the Gross Motor Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_complete_a_movement_sequence",
+          "displayName": "Complete a Movement Sequence",
+          "definition": "Supports the complete a movement sequence step of the Gross Motor Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_movement_skills_across_settings",
+          "displayName": "Use Movement Skills Across Settings",
+          "definition": "Supports the use movement skills across settings step of the Gross Motor Skills progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.balance_coordination",
+      "domainKey": "gross_motor",
+      "internalName": "Balance & Coordination",
+      "parentDisplayName": "Balance & Coordination",
+      "definition": "Builds balance & coordination through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing balance & coordination learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_hold_a_stable_position",
+          "displayName": "Hold a Stable Position",
+          "definition": "Supports the hold a stable position step of the Balance & Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_step_across_a_low_boundary",
+          "displayName": "Step Across a Low Boundary",
+          "definition": "Supports the step across a low boundary step of the Balance & Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_walk_a_simple_path",
+          "displayName": "Walk a Simple Path",
+          "definition": "Supports the walk a simple path step of the Balance & Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_balance_through_changes",
+          "displayName": "Balance Through Changes",
+          "definition": "Supports the balance through changes step of the Balance & Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_balance_in_daily_life",
+          "displayName": "Use Balance in Daily Life",
+          "definition": "Supports the use balance in daily life step of the Balance & Coordination progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.fine_motor_hand_strength",
+      "domainKey": "fine_motor",
+      "internalName": "Fine Motor & Hand Strength",
+      "parentDisplayName": "Fine Motor & Hand Strength",
+      "definition": "Builds fine motor & hand strength through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing fine motor & hand strength learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_squeeze_hold_and_release",
+          "displayName": "Squeeze, Hold and Release",
+          "definition": "Supports the squeeze, hold and release step of the Fine Motor & Hand Strength progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_pick_up_and_place",
+          "displayName": "Pick Up and Place",
+          "definition": "Supports the pick up and place step of the Fine Motor & Hand Strength progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_use_controlled_pinch_and_strength",
+          "displayName": "Use Controlled Pinch and Strength",
+          "definition": "Supports the use controlled pinch and strength step of the Fine Motor & Hand Strength progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_manipulate_materials_independently",
+          "displayName": "Manipulate Materials Independently",
+          "definition": "Supports the manipulate materials independently step of the Fine Motor & Hand Strength progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_hand_skills_in_daily_life",
+          "displayName": "Use Hand Skills in Daily Life",
+          "definition": "Supports the use hand skills in daily life step of the Fine Motor & Hand Strength progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.bilateral_coordination",
+      "domainKey": "fine_motor",
+      "internalName": "Bilateral Coordination",
+      "parentDisplayName": "Bilateral Coordination",
+      "definition": "Builds bilateral coordination through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing bilateral coordination learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_move_both_hands_together",
+          "displayName": "Move Both Hands Together",
+          "definition": "Supports the move both hands together step of the Bilateral Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_stabilize_and_act",
+          "displayName": "Stabilize and Act",
+          "definition": "Supports the stabilize and act step of the Bilateral Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_coordinate_hands_in_a_task",
+          "displayName": "Coordinate Hands in a Task",
+          "definition": "Supports the coordinate hands in a task step of the Bilateral Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_coordinate_hands_with_a_tool",
+          "displayName": "Coordinate Hands With a Tool",
+          "definition": "Supports the coordinate hands with a tool step of the Bilateral Coordination progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_both_hands_in_daily_life",
+          "displayName": "Use Both Hands in Daily Life",
+          "definition": "Supports the use both hands in daily life step of the Bilateral Coordination progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.writing_readiness",
+      "domainKey": "fine_motor",
+      "internalName": "Writing Readiness",
+      "parentDisplayName": "Writing Readiness",
+      "definition": "Builds writing readiness through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing writing readiness learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_explore_a_writing_tool",
+          "displayName": "Explore a Writing Tool",
+          "definition": "Supports the explore a writing tool step of the Writing Readiness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_make_a_purposeful_line",
+          "displayName": "Make a Purposeful Line",
+          "definition": "Supports the make a purposeful line step of the Writing Readiness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_trace_a_basic_shape",
+          "displayName": "Trace a Basic Shape",
+          "definition": "Supports the trace a basic shape step of the Writing Readiness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_create_a_simple_drawing",
+          "displayName": "Create a Simple Drawing",
+          "definition": "Supports the create a simple drawing step of the Writing Readiness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_pre_writing_in_a_meaningful_form",
+          "displayName": "Use Pre-Writing in a Meaningful Form",
+          "definition": "Supports the use pre-writing in a meaningful form step of the Writing Readiness progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.motor_planning",
+      "domainKey": "motor_planning_body_awareness",
+      "internalName": "Motor Planning",
+      "parentDisplayName": "Motor Planning",
+      "definition": "Builds motor planning through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing motor planning learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_copy_one_movement",
+          "displayName": "Copy One Movement",
+          "definition": "Supports the copy one movement step of the Motor Planning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_follow_a_short_movement_model",
+          "displayName": "Follow a Short Movement Model",
+          "definition": "Supports the follow a short movement model step of the Motor Planning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_complete_a_multi_action_sequence",
+          "displayName": "Complete a Multi-Action Sequence",
+          "definition": "Supports the complete a multi-action sequence step of the Motor Planning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_plan_and_execute_movement",
+          "displayName": "Plan and Execute Movement",
+          "definition": "Supports the plan and execute movement step of the Motor Planning progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_motor_planning_in_daily_life",
+          "displayName": "Use Motor Planning in Daily Life",
+          "definition": "Supports the use motor planning in daily life step of the Motor Planning progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "movement.spatial_body_awareness",
+      "domainKey": "motor_planning_body_awareness",
+      "internalName": "Spatial & Body Awareness",
+      "parentDisplayName": "Spatial & Body Awareness",
+      "definition": "Builds spatial & body awareness through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing spatial & body awareness learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "high_scrutiny",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_explore_push_pull_and_force",
+          "displayName": "Explore Push, Pull and Force",
+          "definition": "Supports the explore push, pull and force step of the Spatial & Body Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_notice_body_position",
+          "displayName": "Notice Body Position",
+          "definition": "Supports the notice body position step of the Spatial & Body Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_move_through_a_bounded_space",
+          "displayName": "Move Through a Bounded Space",
+          "definition": "Supports the move through a bounded space step of the Spatial & Body Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_navigate_a_planned_path",
+          "displayName": "Navigate a Planned Path",
+          "definition": "Supports the navigate a planned path step of the Spatial & Body Awareness progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_body_awareness_across_settings",
+          "displayName": "Use Body Awareness Across Settings",
+          "definition": "Supports the use body awareness across settings step of the Spatial & Body Awareness progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.functional",
+      "domainKey": "play_skills",
+      "internalName": "Functional Play",
+      "parentDisplayName": "Functional Play",
+      "definition": "Builds functional play through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing functional play learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_use_one_familiar_toy_meaningfully",
+          "displayName": "Use One Familiar Toy Meaningfully",
+          "definition": "Supports the use one familiar toy meaningfully step of the Functional Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_use_a_simple_toy_action",
+          "displayName": "Use a Simple Toy Action",
+          "definition": "Supports the use a simple toy action step of the Functional Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_combine_or_vary_play_actions",
+          "displayName": "Combine or Vary Play Actions",
+          "definition": "Supports the combine or vary play actions step of the Functional Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_functional_play_independently",
+          "displayName": "Choose Functional Play Independently",
+          "definition": "Supports the choose functional play independently step of the Functional Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_functional_play_across_toys_and_settings",
+          "displayName": "Use Functional Play Across Toys and Settings",
+          "definition": "Supports the use functional play across toys and settings step of the Functional Play progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.cause_effect",
+      "domainKey": "play_skills",
+      "internalName": "Cause & Effect Play",
+      "parentDisplayName": "Cause & Effect Play",
+      "definition": "Builds cause & effect play through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing cause & effect play learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_create_one_immediate_effect",
+          "displayName": "Create One Immediate Effect",
+          "definition": "Supports the create one immediate effect step of the Cause & Effect Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_repeat_a_responsive_action",
+          "displayName": "Repeat a Responsive Action",
+          "definition": "Supports the repeat a responsive action step of the Cause & Effect Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_recreate_an_effect_intentionally",
+          "displayName": "Recreate an Effect Intentionally",
+          "definition": "Supports the recreate an effect intentionally step of the Cause & Effect Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_an_action_for_an_effect",
+          "displayName": "Choose an Action for an Effect",
+          "definition": "Supports the choose an action for an effect step of the Cause & Effect Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_find_cause_and_effect_across_play",
+          "displayName": "Find Cause and Effect Across Play",
+          "definition": "Supports the find cause and effect across play step of the Cause & Effect Play progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.imitation",
+      "domainKey": "play_skills",
+      "internalName": "Imitation",
+      "parentDisplayName": "Imitation",
+      "definition": "Builds imitation through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing imitation learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": false,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_copy_one_familiar_action",
+          "displayName": "Copy One Familiar Action",
+          "definition": "Supports the copy one familiar action step of the Imitation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_copy_actions_with_objects_or_sounds",
+          "displayName": "Copy Actions With Objects or Sounds",
+          "definition": "Supports the copy actions with objects or sounds step of the Imitation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_copy_a_short_action_sequence",
+          "displayName": "Copy a Short Action Sequence",
+          "definition": "Supports the copy a short action sequence step of the Imitation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_use_imitation_in_shared_play",
+          "displayName": "Use Imitation in Shared Play",
+          "definition": "Supports the use imitation in shared play step of the Imitation progression.",
+          "isCore": true,
+          "isGeneralization": false
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.pretend_imaginative",
+      "domainKey": "play_skills",
+      "internalName": "Pretend & Imaginative Play",
+      "parentDisplayName": "Pretend & Imaginative Play",
+      "definition": "Builds pretend & imaginative play through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing pretend & imaginative play learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_copy_one_pretend_action",
+          "displayName": "Copy One Pretend Action",
+          "definition": "Supports the copy one pretend action step of the Pretend & Imaginative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_perform_a_familiar_pretend_action",
+          "displayName": "Perform a Familiar Pretend Action",
+          "definition": "Supports the perform a familiar pretend action step of the Pretend & Imaginative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_add_sound_or_action_variation",
+          "displayName": "Add Sound or Action Variation",
+          "definition": "Supports the add sound or action variation step of the Pretend & Imaginative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_join_a_short_pretend_scenario",
+          "displayName": "Join a Short Pretend Scenario",
+          "definition": "Supports the join a short pretend scenario step of the Pretend & Imaginative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_pretend_play_across_materials",
+          "displayName": "Use Pretend Play Across Materials",
+          "definition": "Supports the use pretend play across materials step of the Pretend & Imaginative Play progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.independent",
+      "domainKey": "play_skills",
+      "internalName": "Independent Play",
+      "parentDisplayName": "Independent Play",
+      "definition": "Builds independent play through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing independent play learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_engage_with_support_nearby",
+          "displayName": "Engage With Support Nearby",
+          "definition": "Supports the engage with support nearby step of the Independent Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_explore_a_simple_activity",
+          "displayName": "Explore a Simple Activity",
+          "definition": "Supports the explore a simple activity step of the Independent Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_sustain_familiar_independent_play",
+          "displayName": "Sustain Familiar Independent Play",
+          "definition": "Supports the sustain familiar independent play step of the Independent Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_continue_while_caregiver_steps_away",
+          "displayName": "Continue While Caregiver Steps Away",
+          "definition": "Supports the continue while caregiver steps away step of the Independent Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_play_independently_across_settings",
+          "displayName": "Play Independently Across Settings",
+          "definition": "Supports the play independently across settings step of the Independent Play progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "play.cooperative",
+      "domainKey": "play_skills",
+      "internalName": "Cooperative Play",
+      "parentDisplayName": "Cooperative Play",
+      "definition": "Builds cooperative play through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing cooperative play learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_one_shared_play_action",
+          "displayName": "Join One Shared Play Action",
+          "definition": "Supports the join one shared play action step of the Cooperative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_follow_another_person_s_play_action",
+          "displayName": "Follow Another Person’s Play Action",
+          "definition": "Supports the follow another person’s play action step of the Cooperative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_join_a_simple_shared_game",
+          "displayName": "Join a Simple Shared Game",
+          "definition": "Supports the join a simple shared game step of the Cooperative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_create_or_build_together",
+          "displayName": "Create or Build Together",
+          "definition": "Supports the create or build together step of the Cooperative Play progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_cooperate_across_partners_and_settings",
+          "displayName": "Cooperate Across Partners and Settings",
+          "definition": "Supports the cooperate across partners and settings step of the Cooperative Play progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "social.joint_attention",
+      "domainKey": "social_interaction",
+      "internalName": "Joint Attention",
+      "parentDisplayName": "Joint Attention",
+      "definition": "Builds joint attention through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing joint attention learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_share_attention_around_an_item",
+          "displayName": "Share Attention Around an Item",
+          "definition": "Supports the share attention around an item step of the Joint Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_follow_or_share_looking",
+          "displayName": "Follow or Share Looking",
+          "definition": "Supports the follow or share looking step of the Joint Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_direct_another_person_s_attention",
+          "displayName": "Direct Another Person’s Attention",
+          "definition": "Supports the direct another person’s attention step of the Joint Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_shift_between_partner_and_item",
+          "displayName": "Shift Between Partner and Item",
+          "definition": "Supports the shift between partner and item step of the Joint Attention progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_share_attention_across_settings",
+          "displayName": "Share Attention Across Settings",
+          "definition": "Supports the share attention across settings step of the Joint Attention progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "social.sharing_turn_taking",
+      "domainKey": "social_interaction",
+      "internalName": "Sharing & Turn Taking",
+      "parentDisplayName": "Sharing & Turn Taking",
+      "definition": "Builds sharing & turn taking through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing sharing & turn taking learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_one_reciprocal_turn",
+          "displayName": "Join One Reciprocal Turn",
+          "definition": "Supports the join one reciprocal turn step of the Sharing & Turn Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_exchange_an_item_back_and_forth",
+          "displayName": "Exchange an Item Back and Forth",
+          "definition": "Supports the exchange an item back and forth step of the Sharing & Turn Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_alternate_access_to_a_toy",
+          "displayName": "Alternate Access to a Toy",
+          "definition": "Supports the alternate access to a toy step of the Sharing & Turn Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_share_voluntarily_with_preparation",
+          "displayName": "Share Voluntarily With Preparation",
+          "definition": "Supports the share voluntarily with preparation step of the Sharing & Turn Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_take_turns_across_people_and_settings",
+          "displayName": "Take Turns Across People and Settings",
+          "definition": "Supports the take turns across people and settings step of the Sharing & Turn Taking progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "social.peer_perspective",
+      "domainKey": "social_interaction",
+      "internalName": "Peer Interaction & Perspective Taking",
+      "parentDisplayName": "Peer Interaction & Perspective Taking",
+      "definition": "Builds peer interaction & perspective taking through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing peer interaction & perspective taking learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_join_an_early_social_routine",
+          "displayName": "Join an Early Social Routine",
+          "definition": "Supports the join an early social routine step of the Peer Interaction & Perspective Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_use_familiar_interaction_gestures",
+          "displayName": "Use Familiar Interaction Gestures",
+          "definition": "Supports the use familiar interaction gestures step of the Peer Interaction & Perspective Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_notice_another_person_s_interest",
+          "displayName": "Notice Another Person’s Interest",
+          "definition": "Supports the notice another person’s interest step of the Peer Interaction & Perspective Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_consider_another_person_s_perspective",
+          "displayName": "Consider Another Person’s Perspective",
+          "definition": "Supports the consider another person’s perspective step of the Peer Interaction & Perspective Taking progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_respond_to_others_across_settings",
+          "displayName": "Respond to Others Across Settings",
+          "definition": "Supports the respond to others across settings step of the Peer Interaction & Perspective Taking progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "social.friendship",
+      "domainKey": "social_interaction",
+      "internalName": "Friendship Skills",
+      "parentDisplayName": "Friendship Skills",
+      "definition": "Builds friendship skills through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing friendship skills learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_use_a_comfortable_greeting",
+          "displayName": "Use a Comfortable Greeting",
+          "definition": "Supports the use a comfortable greeting step of the Friendship Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_choose_a_shared_activity",
+          "displayName": "Choose a Shared Activity",
+          "definition": "Supports the choose a shared activity step of the Friendship Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_join_a_familiar_social_opening",
+          "displayName": "Join a Familiar Social Opening",
+          "definition": "Supports the join a familiar social opening step of the Friendship Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_invite_someone_to_play",
+          "displayName": "Invite Someone to Play",
+          "definition": "Supports the invite someone to play step of the Friendship Skills progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_use_friendship_skills_in_new_settings",
+          "displayName": "Use Friendship Skills in New Settings",
+          "definition": "Supports the use friendship skills in new settings step of the Friendship Skills progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    },
+    {
+      "key": "social.conflict_resolution",
+      "domainKey": "social_interaction",
+      "internalName": "Conflict Resolution",
+      "parentDisplayName": "Conflict Resolution",
+      "definition": "Builds conflict resolution through meaningful, caregiver-supported home activities.",
+      "scopeBoundary": "Limited to functional, caregiver-facing conflict resolution learning within ABA at Home product scope.",
+      "communicationSafeguard": null,
+      "feedingSafeguard": null,
+      "sensitivity": "standard",
+      "coreStageCount": 4,
+      "hasOptionalStage5": true,
+      "stages": [
+        {
+          "number": 1,
+          "key": "s1_seek_support_during_a_problem",
+          "displayName": "Seek Support During a Problem",
+          "definition": "Supports the seek support during a problem step of the Conflict Resolution progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 2,
+          "key": "s2_communicate_a_concern",
+          "displayName": "Communicate a Concern",
+          "definition": "Supports the communicate a concern step of the Conflict Resolution progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 3,
+          "key": "s3_solve_a_problem_with_another_person",
+          "displayName": "Solve a Problem With Another Person",
+          "definition": "Supports the solve a problem with another person step of the Conflict Resolution progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 4,
+          "key": "s4_choose_a_workable_solution",
+          "displayName": "Choose a Workable Solution",
+          "definition": "Supports the choose a workable solution step of the Conflict Resolution progression.",
+          "isCore": true,
+          "isGeneralization": false
+        },
+        {
+          "number": 5,
+          "key": "s5_resolve_problems_across_settings",
+          "displayName": "Resolve Problems Across Settings",
+          "definition": "Supports the resolve problems across settings step of the Conflict Resolution progression.",
+          "isCore": false,
+          "isGeneralization": true
+        }
+      ],
+      "architectureVersion": 1
+    }
+  ]
+}

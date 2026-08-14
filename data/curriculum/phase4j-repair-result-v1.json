@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "classification": "COMPLETE_CANONICAL_MAPPING_REPAIRED",
+  "contractVersion": "assessment-canonical-v1",
+  "scoringAlgorithm": "phase4e-shadow-v1",
+  "weightsChanged": false,
+  "hardEligibilityChanged": false,
+  "productionDatabaseChanged": false,
+  "beforeAfter": {
+    "caregiverPriorityCanonicalMatchRate": {
+      "before": 0.28,
+      "after": 1
+    },
+    "specializedSkillTargetMatchRate": {
+      "before": 0.24,
+      "after": 0.92
+    },
+    "controlledPairsRespondingCorrectly": {
+      "before": 3,
+      "after": 7
+    },
+    "deadAssessmentSignals": {
+      "before": 10,
+      "after": 7
+    },
+    "deadInterestSignals": {
+      "before": 1,
+      "after": 0
+    },
+    "naturalReachability": {
+      "before": 24,
+      "after": 36,
+      "total": 46
+    },
+    "uniqueTop1": {
+      "before": 6,
+      "after": 13
+    },
+    "showMeWhatYouNeedTop1": {
+      "before": 14,
+      "after": 5
+    },
+    "questionableTop1": {
+      "before": 36,
+      "after": 16
+    },
+    "strongAcceptableTop1": {
+      "before": 14,
+      "after": 34
+    }
+  },
+  "phase4GDisposition": "INCORPORATED_AND_SUPERSEDED_FOR_RUNTIME",
+  "remainingDeadSignals": [
+    "behavior_triggers",
+    "calming_supports",
+    "sensory_needs",
+    "learning_style",
+    "attention_span",
+    "instruction_following_level",
+    "imitation_level"
+  ],
+  "phase4KRecommended": true
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "tests": {
+    "authenticatedReadMinimum": true,
+    "anonymousReadDenied": true,
+    "anonymousWriteDenied": true,
+    "authenticatedNonAdminWriteDenied": true,
+    "adminRPCRequired": true,
+    "auditTrail": true,
+    "malformedFailClosed": true,
+    "killSwitchServerOwned": true
+  },
+  "passed": true
+}

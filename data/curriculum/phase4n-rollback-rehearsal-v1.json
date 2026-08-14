@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "rehearsal": [
+    "LEGACY",
+    "SHADOW_V2",
+    "EMERGENCY_LEGACY",
+    "LEGACY"
+  ],
+  "parentVisibleThroughout": "LEGACY",
+  "passed": true,
+  "dataMutations": false,
+  "activePrimaryAfter": 0,
+  "finalMode": "LEGACY"
+}
