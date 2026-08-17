@@ -1,7 +1,11 @@
 {
   "version": 1,
-  "classification": "BLOCKED_BUILD_CONFIGURATION",
-  "productionState": { "mode": "LEGACY", "cohortPercentage": 0, "parentV2Exposure": false },
+  "classification": "READY",
+  "productionState": {
+    "mode": "LEGACY",
+    "cohortPercentage": 0,
+    "parentV2Exposure": false
+  },
   "requiredForPhase4ORelease": [
     "app/(tabs)/daily-lessons.tsx",
     "lib/lessonQueue.ts",
@@ -72,7 +76,13 @@
     "supabase/functions/generate-daily-lessons/index.ts",
     "all unrelated Phase 8/9 audit, review, and generated report artifacts"
   ],
-  "mustNotShip": [".env", "credentials", "certificates", "signing secrets", "temporary simulator screenshots"],
+  "mustNotShip": [
+    ".env",
+    "credentials",
+    "certificates",
+    "signing secrets",
+    "temporary simulator screenshots"
+  ],
   "notes": [
     "Use path-scoped staging from the required lists; never git add the dirty worktree wholesale.",
     "The native release commit should record already-deployed migration/function source for reproducibility but must not reapply migrations."

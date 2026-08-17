@@ -1,14 +1,42 @@
 {
   "version": 1,
-  "classification": "BLOCKED_BUILD_CONFIGURATION",
-  "expo": { "sdk": "54.0.0", "version": "1.0.7", "runtimeVersion": null, "otaEstablished": false },
-  "ios": { "bundleIdentifier": "com.adaniels021.abaathome", "configuredBuild": "45", "productionProfile": true, "export": "PASS", "proposedBuild": "46" },
-  "android": { "applicationId": "com.adaniels021.abaathome", "configuredVersionCode": 22, "productionProfile": true, "export": "PASS", "proposedVersionCode": 23 },
-  "eas": { "projectId": "c4a657a7-ca99-4f5d-900f-7e7b19d7c3c8", "appVersionSource": "remote", "autoIncrement": true, "distribution": "store" },
+  "classification": "READY",
+  "expo": {
+    "sdk": "54.0.0",
+    "version": "1.0.8",
+    "runtimeVersion": null,
+    "otaEstablished": false
+  },
+  "ios": {
+    "bundleIdentifier": "com.adaniels021.abaathome",
+    "configuredBuild": "45",
+    "productionProfile": true,
+    "export": "PASS",
+    "proposedBuild": "46"
+  },
+  "android": {
+    "applicationId": "com.adaniels021.abaathome",
+    "configuredVersionCode": 22,
+    "productionProfile": true,
+    "export": "PASS",
+    "proposedVersionCode": 23
+  },
+  "eas": {
+    "projectId": "c4a657a7-ca99-4f5d-900f-7e7b19d7c3c8",
+    "appVersionSource": "remote",
+    "autoIncrement": true,
+    "distribution": "store"
+  },
   "environmentNames": {
-    "presentInEasProduction": ["EXPO_PUBLIC_RC_APPLE_API_KEY", "EXPO_PUBLIC_RC_ENTITLEMENT_ID", "EXPO_PUBLIC_RC_GOOGLE_API_KEY"],
-    "requiredButMissingInEasProduction": ["EXPO_PUBLIC_SUPABASE_URL", "EXPO_PUBLIC_SUPABASE_ANON_KEY"]
+    "presentInEasProduction": [
+      "EXPO_PUBLIC_RC_APPLE_API_KEY",
+      "EXPO_PUBLIC_RC_ENTITLEMENT_ID",
+      "EXPO_PUBLIC_RC_GOOGLE_API_KEY",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+      "EXPO_PUBLIC_SUPABASE_URL"
+    ],
+    "requiredButMissingInEasProduction": []
   },
   "localEnvIgnored": true,
-  "blocker": "Remote EAS production builds cannot be approved until required Supabase public configuration names are securely provisioned in the EAS production environment and config inspection confirms non-empty values."
+  "blocker": null
 }

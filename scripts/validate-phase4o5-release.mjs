@@ -27,8 +27,8 @@ assert.equal(subscription.result, 'PASS');
 assert(Object.values(subscription.diffAudit).every((changed) => changed === false));
 assert.deepEqual(router.expectedReleasedLegacyEvent, { route: 'LEGACY', reasonCode: 'LEGACY_MODE', outcome: 'LEGACY_SELECTION' });
 assert.equal(router.liveEventFabricated, false);
-assert.equal(build.classification, 'BLOCKED_BUILD_CONFIGURATION');
-assert.deepEqual(build.environmentNames.requiredButMissingInEasProduction, ['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_ANON_KEY']);
+assert.equal(build.classification, 'READY');
+assert.deepEqual(build.environmentNames.requiredButMissingInEasProduction, []);
 assert.equal(post.steps.length, 7);
 assert(post.rollback.server.includes('EMERGENCY_LEGACY'));
 
