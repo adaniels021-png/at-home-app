@@ -4,7 +4,7 @@ export default {
   expo: {
     name: 'ABA at Home',
     slug: 'at-home-app',
-    version: "1.0.8",
+    version: "1.0.9",
     orientation: 'portrait',
     scheme: 'abaathome',
     userInterfaceStyle: 'light',
