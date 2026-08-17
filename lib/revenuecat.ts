@@ -17,6 +17,8 @@ let configured = false;
 let configuringPromise: Promise<void> | null = null;
 let revenueCatAvailable = true;
 let currentRevenueCatAppUserId: string | null = null;
+let lastAuthoritativeReconciliationAt = 0;
+let authoritativeReconciliationPromise: Promise<boolean> | null = null;
 
 function isExpoGo(): boolean {
   return Constants.appOwnership === 'expo';
@@ -160,6 +162,42 @@ export async function logInRevenueCat(appUserID: string): Promise<boolean> {
   }
 }
 
+export async function reconcileAuthoritativeEntitlement(force = false): Promise<boolean> {
+  const now = Date.now();
+  if (!force && now - lastAuthoritativeReconciliationAt < 15 * 60 * 1000) {
+    return true;
+  }
+  if (authoritativeReconciliationPromise) {
+    return authoritativeReconciliationPromise;
+  }
+
+  authoritativeReconciliationPromise = (async () => {
+    try {
+      const { error } = await supabase.functions.invoke(
+        'reconcile-revenuecat-entitlement',
+        { body: {} }
+      );
+
+      if (error) {
+        console.error('Authoritative entitlement reconciliation failed:', error);
+        return false;
+      }
+
+      lastAuthoritativeReconciliationAt = now;
+      return true;
+    } catch (error) {
+      console.error('Authoritative entitlement reconciliation failed:', error);
+      return false;
+    }
+  })();
+
+  try {
+    return await authoritativeReconciliationPromise;
+  } finally {
+    authoritativeReconciliationPromise = null;
+  }
+}
+
 export async function logOutRevenueCat(): Promise<void> {
   await configureRevenueCat();
 
@@ -247,6 +285,8 @@ export async function purchasePackage(
   try {
     const result = await Purchases.purchasePackage(pkg);
 
+    void reconcileAuthoritativeEntitlement(true);
+
     return result.customerInfo;
   } catch (error) {
     if (isCancelledPurchaseError(error)) {
@@ -266,6 +306,8 @@ export async function restorePurchases(): Promise<CustomerInfo | null> {
 
   try {
     const info = await Purchases.restorePurchases();
+
+    void reconcileAuthoritativeEntitlement(true);
 
     return info;
   } catch (error) {

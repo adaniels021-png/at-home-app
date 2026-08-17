@@ -12,6 +12,7 @@ import {
   hasRevenueCatProEntitlement,
   logInRevenueCat,
   logOutRevenueCat,
+  reconcileAuthoritativeEntitlement,
 } from './revenuecat';
 import { supabase } from './supabase';
 
@@ -67,6 +68,7 @@ export function SubscriptionProvider({
         proActive = hasRevenueCatProEntitlement(customerInfo);
 
         setRevenueCatIsPro(proActive);
+        void reconcileAuthoritativeEntitlement();
       } catch (revenueCatError) {
         console.error('RevenueCat subscription check error:', revenueCatError);
         setRevenueCatIsPro(false);

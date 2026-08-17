@@ -71,6 +71,12 @@ export default function RootLayout() {
           await revenuecat.getCustomerInfo();
         }
 
+        if (
+          typeof revenuecat.reconcileAuthoritativeEntitlement === 'function'
+        ) {
+          void revenuecat.reconcileAuthoritativeEntitlement();
+        }
+
         return;
       }
 
