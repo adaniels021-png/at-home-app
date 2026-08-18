@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,16 +13,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
+import { useAdminAccess } from '../../lib/adminAccess';
 
 import { supabase } from '../../lib/supabase';
-
-const ADMIN_EMAIL = 'adaniels021@gmail.com';
 
 export default function CreateLessonScreen() {
   const router = useRouter();
 
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { loading: checkingAdmin, isAdmin } = useAdminAccess();
   const [saving, setSaving] = useState(false);
 
   const [category, setCategory] = useState('Communication');
@@ -50,20 +48,6 @@ export default function CreateLessonScreen() {
   const [difficulty, setDifficulty] = useState('balanced');
   const [estimatedMinutes, setEstimatedMinutes] = useState('5');
   const [adminNotes, setAdminNotes] = useState('');
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const allowed = user?.email === ADMIN_EMAIL;
-      setIsAdmin(allowed);
-      setCheckingAdmin(false);
-    }
-
-    void checkAdmin();
-  }, []);
 
   function toArray(value: string) {
     return value

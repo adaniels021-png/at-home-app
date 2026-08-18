@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -21,6 +21,7 @@ import {
   canManageSubscription,
   canRunAssessments,
 } from '../../lib/caregiverPermissions';
+import { useAdminAccess } from '../../lib/adminAccess';
 import { deleteChildProfile } from '../../lib/deleteChildProfile';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
@@ -53,25 +54,13 @@ export default function SettingsScreen() {
   const { isPro } = useSubscription();
 
   const [deletingChild, setDeletingChild] = useState(false);
-  const [isAppAdmin, setIsAppAdmin] = useState(false);
+  const { isAdmin: isAppAdmin } = useAdminAccess();
   
 
   const hasProAccess = hasEntitlement(
     { isPro },
     'premium_tool'
   );
-
-  useEffect(() => {
-  async function checkAdmin() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    setIsAppAdmin(user?.email === 'adaniels021@gmail.com');
-  }
-
-  void checkAdmin();
-}, []);
 
   const role = selectedChild?.caregiver_access_role;
 

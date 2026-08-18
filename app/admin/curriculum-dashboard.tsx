@@ -17,6 +17,7 @@ import {
   StageCoverage,
   getCurriculumCoverage,
 } from '../../lib/curriculumCoverage';
+import { getMetadataReviewRows, type LessonMetadataReviewRow } from '../../lib/personalization/metadataReview';
 
 export default function CurriculumDashboardScreen() {
   const router = useRouter();
@@ -24,11 +25,13 @@ export default function CurriculumDashboardScreen() {
   const [coverage, setCoverage] = useState<CurriculumCoverage | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [metadataRows, setMetadataRows] = useState<LessonMetadataReviewRow[]>([]);
 
   async function loadCoverage() {
     try {
       const data = await getCurriculumCoverage();
       setCoverage(data);
+      setMetadataRows(await getMetadataReviewRows());
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -150,6 +153,44 @@ export default function CurriculumDashboardScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Categories</Text>
+
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="options-outline" size={22} color="#7C3AED" />
+            <Text style={styles.sectionHeaderTitle}>Personalization Readiness</Text>
+          </View>
+          {[
+            ['Metadata candidates', metadataRows.length],
+            ['Needs review', metadataRows.filter((row) => ['candidate', 'needs_review'].includes(row.review_status)).length],
+            ['Approved metadata', metadataRows.filter((row) => row.review_status === 'approved').length],
+            ['Needs changes', metadataRows.filter((row) => row.review_status === 'needs_changes').length],
+            ['Rejected', metadataRows.filter((row) => row.review_status === 'rejected').length],
+            ['Quick Review', metadataRows.filter((row) => row.review_tier === 'quick_confirmation').length],
+            ['Focused Review', metadataRows.filter((row) => row.review_tier === 'focused_review').length],
+            ['Detailed Review', metadataRows.filter((row) => row.review_tier === 'detailed_review').length],
+            ['Content-dependent', metadataRows.filter((row) => row.review_tier === 'content_dependent').length],
+            ['Communication remaining', metadataRows.filter((row) => row.candidate_warnings.includes('COMMUNICATION_REVIEW_REQUIRED') && !row.communication_reviewed).length],
+            ['Safety remaining', metadataRows.filter((row) => row.candidate_warnings.includes('SAFETY_REVIEW_REQUIRED') && !row.safety_reviewed).length],
+            ['Duplicate/progression remaining', metadataRows.filter((row) => row.candidate_warnings.includes('DUPLICATE_REVIEW') && !row.duplicate_reviewed).length],
+            ['Prerequisites remaining', metadataRows.filter((row) => !['no_prerequisite_deterministic', 'confirmed', 'rejected'].includes(row.prerequisite_review_state)).length],
+            ['Validation failures', metadataRows.filter((row) => row.validation_errors.length > 0).length],
+            ['Approved content + metadata', metadataRows.filter((row) => row.review_status === 'approved' && row.lesson.quality_status === 'approved').length],
+            ['Free ready', metadataRows.filter((row) => row.review_status === 'approved' && row.lesson.quality_status === 'approved' && !row.lesson.pro_only).length],
+            ['Pro ready', metadataRows.filter((row) => row.review_status === 'approved' && row.lesson.quality_status === 'approved' && row.lesson.pro_only).length],
+            ['Production lessons remaining', metadataRows.filter((row) => row.lesson.quality_status === 'approved' && row.review_status !== 'approved').length],
+            ['Pending content + metadata ready', metadataRows.filter((row) => row.lesson.quality_status !== 'approved' && row.review_status === 'approved').length],
+          ].map(([label, value]) => (
+            <View key={String(label)} style={styles.stageRow}>
+              <Text style={styles.stageTitle}>{label}</Text>
+              <Text style={styles.categoryPercent}>{value}</Text>
+            </View>
+          ))}
+          <Text style={styles.emptyText}>Informational gaps: bathroom wiping/privacy and Free-tier breadth. No lessons are created automatically.</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/admin/personalization-review' as any)}>
+            <Ionicons name="clipboard-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>Open Metadata Review</Text>
+          </TouchableOpacity>
+        </View>
 
         {coverage?.categories.map((category) => (
           <TouchableOpacity

@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   Image,
   RefreshControl,
   ScrollView,
@@ -35,6 +38,40 @@ const [showChildSelector, setShowChildSelector] = useState(false);
   const [quickAccessOpen, setQuickAccessOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [showWeeklyProgress, setShowWeeklyProgress] = useState(false);
+  const [enteringHelpNow, setEnteringHelpNow] = useState(false);
+  const helpNowTransitionOpacity = useRef(new Animated.Value(0)).current;
+  const helpNowTransitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (helpNowTransitionTimer.current) {
+        clearTimeout(helpNowTransitionTimer.current);
+      }
+    };
+  }, []);
+
+  const openHelpNow = () => {
+    if (enteringHelpNow) return;
+
+    setEnteringHelpNow(true);
+    Animated.timing(helpNowTransitionOpacity, {
+      toValue: 0.78,
+      duration: 400,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished) {
+        setEnteringHelpNow(false);
+        return;
+      }
+
+      router.push('/help-now');
+      helpNowTransitionTimer.current = setTimeout(() => {
+        helpNowTransitionOpacity.setValue(0);
+        setEnteringHelpNow(false);
+      }, 550);
+    });
+  };
 
   const childName = useMemo(() => {
     return (
@@ -308,6 +345,75 @@ useEffect(() => {
   </View>
 </FadeInView>
 
+        <FadeInView delay={90}>
+          <AnimatedPressable
+            style={styles.helpNowCard}
+            onPress={openHelpNow}
+          >
+            <LinearGradient
+  colors={['#FFD1C7', '#E34A37']}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+  style={styles.helpNowGradient}
+>
+
+  <View
+    pointerEvents="none"
+    style={styles.helpNowGlow}
+  />
+
+  <View
+    pointerEvents="none"
+    style={styles.helpNowGlowBottom}
+  />
+
+  <View style={styles.helpNowContent}>
+
+  <View style={styles.helpNowLeft}>
+
+    <View style={styles.helpNowLogoBadge}>
+      <View
+        pointerEvents="none"
+        style={styles.helpNowLogoHighlight}
+      />
+
+      <Image
+        source={require('../../assets/icon.png')}
+        style={styles.helpNowLogo}
+        resizeMode="contain"
+      />
+    </View>
+
+    <View style={styles.helpNowTextWrap}>
+
+      <Text style={styles.helpNowTitle}>
+        Get Help Now
+      </Text>
+
+      <Text style={styles.helpNowSubtitle}>
+        Immediate guidance for tough moments.
+      </Text>
+
+      <Text style={styles.helpNowSupport}>
+        You&apos;re not alone.
+      </Text>
+
+    </View>
+
+  </View>
+
+  <View style={styles.helpNowArrowButton}>
+    <Ionicons
+      name="arrow-forward"
+      size={20}
+      color="#5B3FF4"
+    />
+  </View>
+</View>
+            </LinearGradient>
+          </AnimatedPressable>
+        </FadeInView>
+
         <FadeInView delay={130}>
           <AnimatedPressable
             style={styles.lessonCard}
@@ -408,16 +514,6 @@ useEffect(() => {
     />
 
     <ToolCard
-      image={require('../../assets/images/calm-tool.png')}
-      title="Calm Down Toolkit"
-      subtitle="Quick regulation supports for stressful moments."
-      color="#0F766E"
-      bg="#ECFDF5"
-      border="#A7F3D0"
-      onPress={() => router.push('/calm-down')}
-    />
-
-    <ToolCard
       image={require('../../assets/images/activities-tool.png')}
       title="Activities"
       subtitle="Fun at-home learning ideas for daily practice."
@@ -479,6 +575,12 @@ useEffect(() => {
       label="Parent Wins"
       onPress={() => router.push('/parent-support/parent-wins')}
     />
+
+    <DropdownItem
+      icon="shield-checkmark-outline"
+      label="Safety"
+      onPress={() => router.push('/safety')}
+    />
   </DropdownSection>
 </FadeInView>
 
@@ -524,6 +626,14 @@ useEffect(() => {
           </FadeInView>
         ) : null}
             </ScrollView>
+
+      <Animated.View
+        pointerEvents={enteringHelpNow ? 'auto' : 'none'}
+        style={[
+          styles.helpNowTransitionOverlay,
+          { opacity: helpNowTransitionOpacity },
+        ]}
+      />
     </SafeAreaView>
   );
 }
@@ -625,6 +735,13 @@ const styles = StyleSheet.create({
   backgroundColor: '#F7F8FC',
 },
 
+helpNowTransitionOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  zIndex: 100,
+  elevation: 100,
+  backgroundColor: '#17181C',
+},
+
   scrollContent: {
   paddingHorizontal: 18,
   paddingBottom: 170,
@@ -670,6 +787,147 @@ const styles = StyleSheet.create({
   shadowOpacity: 0.16,
   shadowRadius: 14,
   elevation: 3,
+},
+
+helpNowCard: {
+  width: '100%',
+  borderRadius: 24,
+  marginBottom: 14,
+  shadowColor: '#D86B5F',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.13,
+  shadowRadius: 16,
+  elevation: 3,
+},
+
+helpNowGradient: {
+  minHeight:136,
+  overflow:'hidden',
+  borderRadius:24,
+  borderWidth:1,
+  borderColor:'#F7C5BB',
+
+  paddingHorizontal:20,
+  paddingVertical:20,
+},
+
+helpNowGlow: {
+  position: 'absolute',
+  width: 170,
+  height: 170,
+  borderRadius: 85,
+  right: -62,
+  top: -82,
+  backgroundColor: 'rgba(255,255,255,0.34)',
+},
+
+helpNowLogoBadge: {
+    width:72,
+    height:72,
+    borderRadius:36,
+   backgroundColor:'#FFF4F1',
+    justifyContent:'center',
+    alignItems:'center',
+    marginRight:18,
+    shadowColor:'#6F2D29',
+    shadowOpacity:.16,
+    shadowRadius:14,
+    shadowOffset:{
+        width:0,
+        height:8,
+    },
+
+    elevation:6,
+    borderWidth:2,
+    borderColor:'#FFFFFF',
+},
+
+helpNowLogoHighlight: {
+  position: 'absolute',
+  top: 5,
+  left: 10,
+  right: 10,
+  height: 10,
+  borderRadius: 8,
+  backgroundColor: 'rgba(255,255,255,0.82)',
+  zIndex: 1,
+},
+
+helpNowLogo: {
+  width: 64,
+  height: 64,
+  borderRadius: 24.5,
+
+  shadowColor: '#000',
+  shadowOpacity: 0.08,
+  shadowRadius: 3,
+  shadowOffset: {
+    width: 0,
+    height: 2,
+  },
+},
+
+helpNowTextWrap: {
+  flex: 1,
+  paddingRight: 4,
+  marginTop: -3,
+},
+
+helpNowTitle:{
+    color: '#FFFDFD',
+    fontSize:22,
+    lineHeight:26,
+    fontWeight:'900',
+    letterSpacing:-0.45,
+},
+
+helpNowSubtitle:{
+    marginTop:6,
+    color: 'rgba(255,255,255,0.94)',
+    fontSize:13,
+    lineHeight:18,
+    fontWeight:'800',
+},
+
+helpNowSupport:{
+    marginTop:8,
+    color: 'rgba(255,255,255,0.80)',
+    fontSize:12,
+    lineHeight:16,
+    fontWeight:'700',
+},
+
+helpNowArrowButton: {
+    width:52,
+    height:52,
+    borderRadius:26,
+
+    backgroundColor:'#FFFFFF',
+
+    justifyContent:'center',
+    alignItems:'center',
+
+    marginLeft:18,
+
+    shadowColor:'#94463D',
+    shadowOpacity:.18,
+    shadowRadius:12,
+    shadowOffset:{
+        width:0,
+        height:6,
+    },
+
+    elevation:6,
+},
+
+helpNowGlowBottom: {
+  position: 'absolute',
+  width: 140,
+  height: 140,
+  borderRadius: 70,
+  backgroundColor: 'rgba(255,255,255,0.10)',
+  left: -40,
+  bottom: -40,
 },
 
 lessonTopRow: {
@@ -1241,7 +1499,7 @@ toiletTrainingMiniCard: {
   padding: 12,
   borderWidth: 1,
   borderColor: '#BFDBFE',
-  marginBottom: 14,
+  marginBottom: 19,
   flexDirection: 'row',
   alignItems: 'center',
   shadowColor: '#2563EB',
@@ -1292,5 +1550,18 @@ toiletCharacterImage: {
   width: 58,
   height: 58,
   marginLeft: 2,
+},
+
+helpNowContent: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+helpNowLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
 },
 });

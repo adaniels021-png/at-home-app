@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../../lib/supabase';
+import { useAdminAccess } from '../../lib/adminAccess';
 
 type ActivityStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 
@@ -33,8 +34,6 @@ type ActivityQueueItem = {
   updated_at?: string | null;
   pro_only: boolean;
 };
-
-const ADMIN_EMAILS = ['adaniels021@gmail.com'];
 
 const STATUS_FILTERS: {
   id: 'all' | ActivityStatus;
@@ -66,8 +65,7 @@ function normalizeTryThis(value: any): string[] {
 export default function AdminActivityListScreen() {
   const router = useRouter();
 
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const { loading: checkingAdmin, isAdmin, refresh: checkAdmin } = useAdminAccess();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -116,22 +114,6 @@ function toggleSelected(id: string) {
     return activities.filter((activity) => activity.status === 'pending')
       .length;
   }, [activities]);
-
-  const checkAdmin = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.auth.getUser();
-
-      if (error) throw error;
-
-      const email = data?.user?.email || '';
-      setIsAdmin(ADMIN_EMAILS.includes(email));
-    } catch (error) {
-      console.log('Admin check error:', error);
-      setIsAdmin(false);
-    } finally {
-      setCheckingAdmin(false);
-    }
-  }, []);
 
   const loadActivities = useCallback(async () => {
     try {

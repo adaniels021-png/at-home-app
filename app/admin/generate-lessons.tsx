@@ -14,10 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { generatePremiumLesson } from '../../lib/aiService';
+import { useAdminAccess } from '../../lib/adminAccess';
 import { CURRICULUM, CURRICULUM_CATEGORIES } from '../../lib/curriculum';
 import { supabase } from '../../lib/supabase';
-
-const ADMIN_EMAIL = 'adaniels021@gmail.com';
 
 const DIFFICULTY_OPTIONS = ['support', 'balanced', 'challenge'];
 
@@ -40,8 +39,7 @@ export default function GenerateLessonsScreen() {
   stageNumber?: string;
 }>();
 
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { loading: checkingAdmin, isAdmin } = useAdminAccess();
 
   const [category, setCategory] = useState('Communication');
   const [skillArea, setSkillArea] = useState('');
@@ -86,19 +84,6 @@ useEffect(() => {
     if (Number.isNaN(parsed)) return 1;
     return Math.max(parsed, 1);
   }, [stageStartText]);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setIsAdmin(user?.email === ADMIN_EMAIL);
-      setCheckingAdmin(false);
-    }
-
-    void checkAdmin();
-  }, []);
 
   useEffect(() => {
   if (params.category) {

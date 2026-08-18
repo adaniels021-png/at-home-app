@@ -1,0 +1,2042 @@
+{
+  "architectureVersion": 1,
+  "algorithmVersion": "phase4e-shadow-v1",
+  "crosswalkVersion": 1,
+  "correctedBaseline": {
+    "approvedActive": 59,
+    "currentApprovedMetadata": 48,
+    "fiveDecisionComplete": 48,
+    "reviewedSupportLevels": 20,
+    "fullyRecommendationReady": 20,
+    "supportReviewGaps": 28,
+    "metadataApprovalGaps": 11,
+    "totalNonReady": 39
+  },
+  "gapDispositions": {
+    "METADATA_REVIEW_REQUIRED": 9,
+    "SUPPORT_REVIEW_REQUIRED": 28,
+    "CONTENT_REVIEW_REQUIRED": 2
+  },
+  "supportProposalSummary": {
+    "balanced_support": 25,
+    "less_support": 1,
+    "more_support": 2
+  },
+  "actual": {
+    "readyCount": 20,
+    "fixtureRepresented": 20,
+    "fixtureCoverage": 1,
+    "controlledProfiles": 87,
+    "evaluationRuns": 174,
+    "coverage": 1,
+    "freeCoverage": 0,
+    "proCoverage": 1,
+    "averageFreePool": 0,
+    "averageProPool": 20,
+    "zeroResultProfiles": 87,
+    "lowCandidateProfiles": 87,
+    "reachability": [
+      {
+        "lessonId": "866d8042-1c91-4387-a4db-67c86086b77f",
+        "title": "Clean Up Toys",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-866d8042-1c91-4387-a4db-67c86086b77f"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s2_complete_a_familiar_cleanup",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c23a24e6-a9a1-4413-a4bc-bfebe03f2600",
+        "title": "Find the Feeling",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-c23a24e6-a9a1-4413-a4bc-bfebe03f2600"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s2_identify_from_choices",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c8479dd8-8e66-4531-8b52-d574a2c09ff3",
+        "title": "First Then Transition",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-c8479dd8-8e66-4531-8b52-d574a2c09ff3"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "behavior_flexibility",
+        "skill": "emotions.transitions_flexibility",
+        "stage": "emotions.transitions_flexibility.s2_use_a_transition_support",
+        "supportLevel": "more_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "01d17677-2fe7-4dea-b51d-7ed15b0d5973",
+        "title": "Make a Line",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-01d17677-2fe7-4dea-b51d-7ed15b0d5973"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "fine_motor",
+        "skill": "movement.writing_readiness",
+        "stage": "movement.writing_readiness.s2_make_a_purposeful_line",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "title": "Making a Choice",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-48c84e91-0b1f-4536-9fff-1e1124a7a840"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s3_choices_help_and_activities",
+        "supportLevel": "less_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "64d48cbc-624a-4bce-855a-7f1b4e78ae99",
+        "title": "Match Object to Picture",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-64d48cbc-624a-4bce-855a-7f1b4e78ae99"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s3_match_object_to_representation",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "38c7e3bf-2c01-428d-a1f3-8b3e170c42af",
+        "title": "Match the Emotion",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-38c7e3bf-2c01-428d-a1f3-8b3e170c42af"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s3_match_feelings_across_examples",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "179e8fb9-5844-47e7-8a4f-56f2951c5a3e",
+        "title": "Match Two Pictures",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-179e8fb9-5844-47e7-8a4f-56f2951c5a3e"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s2_match_identical_pictures",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "title": "Put Clothes in Hamper",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-f09cacdd-5bac-4fbb-8701-ee824c0f4322"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s3_complete_a_defined_responsibility",
+        "supportLevel": "less_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "title": "Put On Socks",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-80ed81e3-2813-4577-acf4-fb6f98266621"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "personal_care",
+        "skill": "routines.dressing",
+        "stage": "routines.dressing.s2_complete_an_early_clothing_step",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "title": "Requesting More",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-e6a9ea8d-5f59-4120-af4d-2ff71234ceaa"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+        "title": "Roll the Ball Back and Forth",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-c18307fa-754b-4b2a-bad1-6a1c60ac77cb"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "social_interaction",
+        "skill": "social.sharing_turn_taking",
+        "stage": "social.sharing_turn_taking.s2_exchange_an_item_back_and_forth",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+        "title": "Shared Book Look",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-f18ab3c5-4d98-439c-9ad6-0ba21613d89a"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "social_interaction",
+        "skill": "social.joint_attention",
+        "stage": "social.joint_attention.s2_follow_or_share_looking",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "title": "Show Me What You Need",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-08239883-6084-4a2b-b82b-932b0cacec6b"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.self_advocacy",
+        "stage": "communication.self_advocacy.s1_show_a_need",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c7ca85ae-2252-4cd8-af05-9e7c0ea42b51",
+        "title": "Simple Checklist Practice",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-c7ca85ae-2252-4cd8-af05-9e7c0ea42b51"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "planning_executive",
+        "skill": "learning.executive_functioning",
+        "stage": "learning.executive_functioning.s2_follow_a_simple_checklist",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "419546f8-2744-4644-8c78-ec4ed433d960",
+        "title": "Sort by Color",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-419546f8-2744-4644-8c78-ec4ed433d960"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.sorting_categorization",
+        "stage": "learning.sorting_categorization.s2_sort_by_a_visible_feature",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "0ee669e2-128e-4dce-a439-4ae928423270",
+        "title": "Squeeze the Sponge",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-0ee669e2-128e-4dce-a439-4ae928423270"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "fine_motor",
+        "skill": "movement.fine_motor_hand_strength",
+        "stage": "movement.fine_motor_hand_strength.s1_squeeze_hold_and_release",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "3be4d074-2d85-4c87-8999-0560cf3bee86",
+        "title": "Take a Calm Breath",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-3be4d074-2d85-4c87-8999-0560cf3bee86"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s3_try_a_chosen_strategy",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "8193ccdf-e475-409a-b923-d0e7c7707ad2",
+        "title": "Try Another Way",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-8193ccdf-e475-409a-b923-d0e7c7707ad2"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "planning_executive",
+        "skill": "learning.problem_solving",
+        "stage": "learning.problem_solving.s2_try_an_alternative",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "3fbcdcca-de8a-48f2-aa7c-f32eac77565e",
+        "title": "What Comes First",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-actual-3fbcdcca-de8a-48f2-aa7c-f32eac77565e"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 20,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "memory_sequencing",
+        "skill": "learning.sequencing",
+        "stage": "learning.sequencing.s1_identify_what_comes_first",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      }
+    ],
+    "unreachableLessonIds": [],
+    "determinism": true
+  },
+  "proposedSimulation": {
+    "nonProduction": true,
+    "readyCount": 57,
+    "fixtureRepresented": 57,
+    "fixtureCoverage": 1,
+    "controlledProfiles": 87,
+    "evaluationRuns": 174,
+    "coverage": 1,
+    "freeCoverage": 1,
+    "proCoverage": 1,
+    "averageFreePool": 3,
+    "averageProPool": 57,
+    "zeroResultProfiles": 0,
+    "lowCandidateProfiles": 0,
+    "reachability": [
+      {
+        "lessonId": "5902b36d-9c86-4c62-9545-329b05505a62",
+        "title": "Answer What Is It",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-5902b36d-9c86-4c62-9545-329b05505a62"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s2_concrete_questions",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "adec5a2e-5540-460b-ac5c-79e8ddd4906f",
+        "title": "Answer With Me",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-adec5a2e-5540-460b-ac5c-79e8ddd4906f"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s1_simple_answers",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "54fe4d68-db7d-492a-a64d-60a54cb3a904",
+        "title": "Ask Me One Question",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-54fe4d68-db7d-492a-a64d-60a54cb3a904"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s3_share_a_topic",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "454ba8b7-f1d8-45f4-9184-dcadc70bec13",
+        "title": "Back-and-Forth Sounds",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-454ba8b7-f1d8-45f4-9184-dcadc70bec13"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s2_back_and_forth_interaction",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "292726a2-fee9-44d2-ab2d-65dfb93d439d",
+        "title": "Calm Choices During Puzzle Time",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-292726a2-fee9-44d2-ab2d-65dfb93d439d"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s5_use_a_personal_regulation_plan",
+        "supportLevel": "less_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c61ac69f-8e43-49d9-bedc-f63a105df038",
+        "title": "Calm Choices for Cleanup",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c61ac69f-8e43-49d9-bedc-f63a105df038"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s4_choose_an_established_strategy",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "866d8042-1c91-4387-a4db-67c86086b77f",
+        "title": "Clean Up Toys",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-866d8042-1c91-4387-a4db-67c86086b77f"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s2_complete_a_familiar_cleanup",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "7a136a47-8f7b-4064-9f14-6cbfea69c61a",
+        "title": "Copy My Sound",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-7a136a47-8f7b-4064-9f14-6cbfea69c61a"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "communication_practice",
+        "skill": "communication.communication_practice",
+        "stage": "communication.communication_practice.s1_explore_communication_imitation",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "de3e0a85-5a75-4370-a86d-16540b05404d",
+        "title": "Explore a Mystery Bag",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-de3e0a85-5a75-4370-a86d-16540b05404d"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "engagement_attention",
+        "skill": "learning.curiosity_engagement",
+        "stage": "learning.curiosity_engagement.s2_explore_with_support",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "6fea5809-f1ec-476b-8dfe-f1083a1b520f",
+        "title": "Feeding Skills Anywhere",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-6fea5809-f1ec-476b-8dfe-f1083a1b520f"
+        ],
+        "bestRank": 1,
+        "bestScore": 106,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "meals_eating_routines",
+        "skill": "routines.mealtime_skills",
+        "stage": "routines.mealtime_skills.s5_use_meal_skills_across_settings",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c23a24e6-a9a1-4413-a4bc-bfebe03f2600",
+        "title": "Find the Feeling",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c23a24e6-a9a1-4413-a4bc-bfebe03f2600"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s2_identify_from_choices",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "dcc4ee53-0261-4335-935a-07e929d0339c",
+        "title": "First Then Practice",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-dcc4ee53-0261-4335-935a-07e929d0339c"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "planning_executive",
+        "skill": "learning.executive_functioning",
+        "stage": "learning.executive_functioning.s1_use_first_then",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c8479dd8-8e66-4531-8b52-d574a2c09ff3",
+        "title": "First Then Transition",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c8479dd8-8e66-4531-8b52-d574a2c09ff3"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "behavior_flexibility",
+        "skill": "emotions.transitions_flexibility",
+        "stage": "emotions.transitions_flexibility.s2_use_a_transition_support",
+        "supportLevel": "more_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "e98231ee-01bc-42e7-b5c0-78daa001db19",
+        "title": "Follow Directions Anywhere",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-e98231ee-01bc-42e7-b5c0-78daa001db19"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.following_directions",
+        "stage": "communication.following_directions.s5_directions_in_daily_life",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "932463a0-cd66-4e03-86d3-178d5ecf038a",
+        "title": "Help Pull It On",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-932463a0-cd66-4e03-86d3-178d5ecf038a"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 57,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "free",
+        "domain": "personal_care",
+        "skill": "routines.dressing",
+        "stage": "routines.dressing.s1_join_one_dressing_action",
+        "supportLevel": "more_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "a28e2b1b-d563-46b4-ac14-5fb2f597112e",
+        "title": "Keep the Conversation Going",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-a28e2b1b-d563-46b4-ac14-5fb2f597112e"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s4_sustain_or_repair_interaction",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "03717f42-43f1-4a8b-8770-8c5de40107ee",
+        "title": "Let's Build a Tower!",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-03717f42-43f1-4a8b-8770-8c5de40107ee"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "play_skills",
+        "skill": "play.functional",
+        "stage": "play.functional.s1_use_one_familiar_toy_meaningfully",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "7ecd979e-b25b-480c-9880-5f7ef6b3688f",
+        "title": "Let's Roll the Ball!",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-7ecd979e-b25b-480c-9880-5f7ef6b3688f"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "play_skills",
+        "skill": "play.functional",
+        "stage": "play.functional.s2_use_a_simple_toy_action",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "75c15624-6b9c-4439-9e7e-0d18c9872f6b",
+        "title": "Listen With Me",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-75c15624-6b9c-4439-9e7e-0d18c9872f6b"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.following_directions",
+        "stage": "communication.following_directions.s1_one_familiar_direction",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+        "title": "Look and Show",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-203dd6f8-d6f0-49b7-9e8a-969c93f83bf0"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s1_show_or_orient",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "264988f4-abb4-4552-ba9f-bda74a37da02",
+        "title": "Look What I Found",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-264988f4-abb4-4552-ba9f-bda74a37da02"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "engagement_attention",
+        "skill": "learning.curiosity_engagement",
+        "stage": "learning.curiosity_engagement.s1_notice_something_interesting",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "01d17677-2fe7-4dea-b51d-7ed15b0d5973",
+        "title": "Make a Line",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-01d17677-2fe7-4dea-b51d-7ed15b0d5973"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "fine_motor",
+        "skill": "movement.writing_readiness",
+        "stage": "movement.writing_readiness.s2_make_a_purposeful_line",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+        "title": "Making a Choice",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-48c84e91-0b1f-4536-9fff-1e1124a7a840"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s3_choices_help_and_activities",
+        "supportLevel": "less_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "64d48cbc-624a-4bce-855a-7f1b4e78ae99",
+        "title": "Match Object to Picture",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-64d48cbc-624a-4bce-855a-7f1b4e78ae99"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s3_match_object_to_representation",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "38c7e3bf-2c01-428d-a1f3-8b3e170c42af",
+        "title": "Match the Emotion",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-38c7e3bf-2c01-428d-a1f3-8b3e170c42af"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s3_match_feelings_across_examples",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "179e8fb9-5844-47e7-8a4f-56f2951c5a3e",
+        "title": "Match Two Pictures",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-179e8fb9-5844-47e7-8a4f-56f2951c5a3e"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s2_match_identical_pictures",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+        "title": "My Turn, Your Turn",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-df1059ee-c34b-4ff2-90c4-14c5e609a847"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 57,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "free",
+        "domain": "social_interaction",
+        "skill": "social.sharing_turn_taking",
+        "stage": "social.sharing_turn_taking.s1_join_one_reciprocal_turn",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "bbced1a2-f764-4192-94c2-3219c98b9530",
+        "title": "Open and Close Containers",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-bbced1a2-f764-4192-94c2-3219c98b9530"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "fine_motor",
+        "skill": "movement.bilateral_coordination",
+        "stage": "movement.bilateral_coordination.s5_use_both_hands_in_daily_life",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c977bdfc-8339-4a0a-b4b6-98d4e768675f",
+        "title": "Point to Show Me",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c977bdfc-8339-4a0a-b4b6-98d4e768675f"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s2_familiar_gestures",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+        "title": "Put Clothes in Hamper",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-f09cacdd-5bac-4fbb-8701-ee824c0f4322"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s3_complete_a_defined_responsibility",
+        "supportLevel": "less_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "80ed81e3-2813-4577-acf4-fb6f98266621",
+        "title": "Put On Socks",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-80ed81e3-2813-4577-acf4-fb6f98266621"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "personal_care",
+        "skill": "routines.dressing",
+        "stage": "routines.dressing.s2_complete_an_early_clothing_step",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "f98a7423-22df-497a-bf8e-3ad17c68313b",
+        "title": "Recognizing the Feeling: Happy",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-f98a7423-22df-497a-bf8e-3ad17c68313b"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s1_notice_familiar_feelings",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c2181af0-654c-4305-9629-6828c263542b",
+        "title": "Requesting a Favorite Snack",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c2181af0-654c-4305-9629-6828c263542b"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "4c421463-e77d-458c-afcb-c4d80e1bca53",
+        "title": "Requesting Bubbles",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-4c421463-e77d-458c-afcb-c4d80e1bca53"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 57,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "free",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s1_request_a_visible_item",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+        "title": "Requesting Help",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-593b6e2b-db4e-4db5-b6ff-8f09b0ab4723"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+        "title": "Requesting More",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-e6a9ea8d-5f59-4120-af4d-2ff71234ceaa"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+        "title": "Roll the Ball Back and Forth",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c18307fa-754b-4b2a-bad1-6a1c60ac77cb"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "social_interaction",
+        "skill": "social.sharing_turn_taking",
+        "stage": "social.sharing_turn_taking.s2_exchange_an_item_back_and_forth",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+        "title": "Shared Book Look",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-f18ab3c5-4d98-439c-9ad6-0ba21613d89a"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "social_interaction",
+        "skill": "social.joint_attention",
+        "stage": "social.joint_attention.s2_follow_or_share_looking",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "c87f1e47-27f5-4ddb-9482-9d7f4c12e33e",
+        "title": "Show Me Anywhere",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c87f1e47-27f5-4ddb-9482-9d7f4c12e33e"
+        ],
+        "bestRank": 1,
+        "bestScore": 90,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s5_communicate_across_settings",
+        "supportLevel": "more_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "08239883-6084-4a2b-b82b-932b0cacec6b",
+        "title": "Show Me What You Need",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-08239883-6084-4a2b-b82b-932b0cacec6b"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.self_advocacy",
+        "stage": "communication.self_advocacy.s1_show_a_need",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "eb849967-a3ce-4db2-af19-046314106940",
+        "title": "Show Me With Your Face",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-eb849967-a3ce-4db2-af19-046314106940"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s3_express_with_face_or_body",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c7ca85ae-2252-4cd8-af05-9e7c0ea42b51",
+        "title": "Simple Checklist Practice",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c7ca85ae-2252-4cd8-af05-9e7c0ea42b51"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "planning_executive",
+        "skill": "learning.executive_functioning",
+        "stage": "learning.executive_functioning.s2_follow_a_simple_checklist",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "419546f8-2744-4644-8c78-ec4ed433d960",
+        "title": "Sort by Color",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-419546f8-2744-4644-8c78-ec4ed433d960"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "matching_sorting",
+        "skill": "learning.sorting_categorization",
+        "stage": "learning.sorting_categorization.s2_sort_by_a_visible_feature",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "0ee669e2-128e-4dce-a439-4ae928423270",
+        "title": "Squeeze the Sponge",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-0ee669e2-128e-4dce-a439-4ae928423270"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "fine_motor",
+        "skill": "movement.fine_motor_hand_strength",
+        "stage": "movement.fine_motor_hand_strength.s1_squeeze_hold_and_release",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "6a174566-94a8-4684-b5dd-9e38fd1ea311",
+        "title": "Stand Like a Statue",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-6a174566-94a8-4684-b5dd-9e38fd1ea311"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "gross_motor",
+        "skill": "movement.balance_coordination",
+        "stage": "movement.balance_coordination.s1_hold_a_stable_position",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "3be4d074-2d85-4c87-8999-0560cf3bee86",
+        "title": "Take a Calm Breath",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-3be4d074-2d85-4c87-8999-0560cf3bee86"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s3_try_a_chosen_strategy",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "30326f3e-5236-4c82-9f16-c9716d3baff4",
+        "title": "Take a Communication Turn",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-30326f3e-5236-4c82-9f16-c9716d3baff4"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s1_one_communication_turn",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "c673e50c-e8bd-4d30-9c66-e2d6488f27e2",
+        "title": "Talk About a Favorite Toy",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-c673e50c-e8bd-4d30-9c66-e2d6488f27e2"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s3_share_a_topic",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "58a4ba56-5409-4cfa-8ea5-797e2607d806",
+        "title": "Tell Me You Need to Go",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-58a4ba56-5409-4cfa-8ea5-797e2607d806"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "personal_care",
+        "skill": "routines.toileting",
+        "stage": "routines.toileting.s5_communicate_and_generalize",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+        "title": "Think About Their Turn",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-34e4ce81-fb2c-490a-9497-1af0283edf7d"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "social_interaction",
+        "skill": "social.peer_perspective",
+        "stage": "social.peer_perspective.s4_consider_another_person_s_perspective",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "8193ccdf-e475-409a-b923-d0e7c7707ad2",
+        "title": "Try Another Way",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-8193ccdf-e475-409a-b923-d0e7c7707ad2"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "planning_executive",
+        "skill": "learning.problem_solving",
+        "stage": "learning.problem_solving.s2_try_an_alternative",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "22ff1454-403f-4eac-98d1-ad95f128b3f2",
+        "title": "Use a Gesture to Tell Me",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-22ff1454-403f-4eac-98d1-ad95f128b3f2"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s4_choose_a_communication_form",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "eb13bfef-edb4-44a8-be22-4d80e8af13d7",
+        "title": "Wave Goodbye",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-eb13bfef-edb4-44a8-be22-4d80e8af13d7"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s2_familiar_gestures",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "3fbcdcca-de8a-48f2-aa7c-f32eac77565e",
+        "title": "What Comes First",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-3fbcdcca-de8a-48f2-aa7c-f32eac77565e"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "memory_sequencing",
+        "skill": "learning.sequencing",
+        "stage": "learning.sequencing.s1_identify_what_comes_first",
+        "supportLevel": "balanced_support",
+        "supportSource": "approved_live"
+      },
+      {
+        "lessonId": "a19c85cd-46fc-4141-bce6-bac285c65232",
+        "title": "Where Did It Go",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-a19c85cd-46fc-4141-bce6-bac285c65232"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s3_people_places_and_recall",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "9481f369-512e-412b-aad3-3d77df8cc084",
+        "title": "Who Has It",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-9481f369-512e-412b-aad3-3d77df8cc084"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s3_people_places_and_recall",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      },
+      {
+        "lessonId": "71180f26-f7df-413b-a5a6-f3dd1f01e9a3",
+        "title": "Why Do We Wash Hands",
+        "reachable": true,
+        "controlledProfileIds": [
+          "phase4g-simulated-71180f26-f7df-413b-a5a6-f3dd1f01e9a3"
+        ],
+        "bestRank": 1,
+        "bestScore": 100,
+        "eligiblePoolSize": 54,
+        "positiveSignals": [
+          "caregiver_goal_match",
+          "assessed_need_match",
+          "specialized_skill_match",
+          "exact_readiness",
+          "support_fit"
+        ],
+        "penalties": [],
+        "entitlement": "pro",
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s4_connected_questions",
+        "supportLevel": "balanced_support",
+        "supportSource": "proposed_simulation"
+      }
+    ],
+    "unreachableLessonIds": [],
+    "determinism": true
+  },
+  "freeBreadth": {
+    "actualLessons": [],
+    "simulatedLessons": [
+      "Help Pull It On",
+      "My Turn, Your Turn",
+      "Requesting Bubbles"
+    ],
+    "classification": [
+      "curriculum_breadth_issue",
+      "entitlement_product_model_issue"
+    ],
+    "repeatRisk": "high"
+  },
+  "safeguards": {
+    "communication": true,
+    "retiredSpeechExcluded": true,
+    "feeding": true,
+    "tryOneNewBiteExcluded": true,
+    "highScrutiny": true,
+    "prerequisites": true,
+    "entitlements": true,
+    "crosswalkCannotOverrideEligibility": true,
+    "timeRankingOnly": true
+  },
+  "phase4fCorrection": {
+    "reportedReady": 48,
+    "strictReady": 20,
+    "reason": "28 approved metadata records lacked individually reviewed support levels."
+  },
+  "phase4fComparison": {
+    "reported": {
+      "fixtureLessons": 23,
+      "profiles": 30,
+      "runs": 60,
+      "overallCoverage": 1,
+      "freeCoverage": 1,
+      "proCoverage": 1,
+      "avgFreePool": 2.87,
+      "avgProPool": 21.83
+    },
+    "actual": {
+      "fixtureLessons": 20,
+      "profiles": 87,
+      "runs": 174,
+      "overallCoverage": 1,
+      "freeCoverage": 0,
+      "proCoverage": 1,
+      "avgFreePool": 0,
+      "avgProPool": 20
+    },
+    "simulated": {
+      "fixtureLessons": 57,
+      "profiles": 87,
+      "runs": 174,
+      "overallCoverage": 1,
+      "freeCoverage": 1,
+      "proCoverage": 1,
+      "avgFreePool": 3,
+      "avgProPool": 57
+    }
+  },
+  "activationReadiness": "READY_FOR_MORE_SHADOW_TESTING",
+  "phase4HRecommendation": "Owner review/approval of 28 support proposals and 9 metadata proposals; separate content review for 2 blocked requesting lessons, followed by expanded internal shadow replay.",
+  "inputFingerprint": "55c65e0a4c3d1a7a43a01c3535e5f3fa501a05cdedf78206e24da8b86e540f21"
+}

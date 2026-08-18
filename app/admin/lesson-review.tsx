@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,9 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CURRICULUM_CATEGORIES } from '../../lib/curriculum';
+import { useAdminAccess } from '../../lib/adminAccess';
 import { supabase } from '../../lib/supabase';
-
-const ADMIN_EMAIL = 'adaniels021@gmail.com';
 
 type ReviewTab = 'all' | 'draft' | 'needs_revision' | 'reviewed' | 'approved';
 
@@ -44,8 +43,7 @@ const REVIEW_TABS: { label: string; value: ReviewTab }[] = [
 export default function LessonReviewQueueScreen() {
   const router = useRouter();
 
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { loading: checkingAdmin, isAdmin } = useAdminAccess();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -53,19 +51,6 @@ export default function LessonReviewQueueScreen() {
   const [selectedTab, setSelectedTab] = useState<ReviewTab>('all');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    async function checkAdmin() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setIsAdmin(user?.email === ADMIN_EMAIL);
-      setCheckingAdmin(false);
-    }
-
-    void checkAdmin();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {

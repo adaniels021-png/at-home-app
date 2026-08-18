@@ -169,6 +169,22 @@ onPress={() => router.push('/admin/ai-asset-library' as any)}
   onPress={() => router.push('/admin/lesson-library' as any)}
 />
 
+<StudioCard
+  icon="options-outline"
+  title="Personalization Metadata"
+  description="Use Quick, Focused, Detailed, and content-dependent queues to review targeting separately from lesson approval."
+  badge="Exception-first"
+  onPress={() => router.push('/admin/personalization-review' as any)}
+/>
+
+<StudioCard
+  icon="git-branch-outline"
+  title="Recommendation Activation"
+  description="View authoritative routing state, activate the 25% controlled cohort, or return production to Legacy."
+  badge="Restricted"
+  onPress={() => router.push('/admin/recommendation-activation' as any)}
+/>
+
         <StudioCard
           icon="clipboard-outline"
           title="Lesson Review Queue"

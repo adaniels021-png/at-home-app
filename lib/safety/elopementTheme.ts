@@ -1,0 +1,17 @@
+export const ELOPEMENT_COLORS = {
+  background: '#122334',
+  backgroundDeep: '#0D1B29',
+  surface: '#1A3042',
+  surfaceRaised: '#223B50',
+  border: 'rgba(218,229,238,0.14)',
+  text: '#F8FAFC',
+  textMuted: '#C5D0D9',
+  textSubtle: '#9EADB9',
+  coral: '#E3947D',
+  coralSoft: 'rgba(227,148,125,0.16)',
+  coralBorder: 'rgba(227,148,125,0.38)',
+  lavender: '#C3B3E3',
+  lavenderSoft: 'rgba(195,179,227,0.15)',
+  lightSurface: '#F7F8FA',
+  lightText: '#1B2935',
+} as const;

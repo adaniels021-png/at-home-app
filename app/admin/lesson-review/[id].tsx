@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../../../lib/supabase';
+import { clientValidation, getMetadataForLesson, saveMetadataReview, type LessonMetadataReviewRow } from '../../../lib/personalization/metadataReview';
 
 type LessonQualityStatus = 'draft' | 'reviewed' | 'approved' | 'needs_revision';
 
@@ -64,6 +65,7 @@ export default function LessonReviewScreen() {
   const [lesson, setLesson] = useState<LessonLibraryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [metadata, setMetadata] = useState<LessonMetadataReviewRow | null>(null);
 
   const [title, setTitle] = useState('');
 const [description, setDescription] = useState('');
@@ -97,6 +99,8 @@ const [estimatedMinutes, setEstimatedMinutes] = useState('');
 
   useEffect(() => {
     if (id) void loadLesson();
+    // loadLesson intentionally refreshes when the route identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function loadLesson() {
@@ -118,12 +122,17 @@ const [estimatedMinutes, setEstimatedMinutes] = useState('');
       }
 
       syncLessonState(data as LessonLibraryItem);
+      await loadMetadata(data.id);
     } catch (error: any) {
       console.error('Load lesson review error:', error);
       Alert.alert('Error', error?.message || 'Could not load lesson.');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadMetadata(lessonId: string) {
+    setMetadata(await getMetadataForLesson(lessonId));
   }
 
   function syncLessonState(item: LessonLibraryItem) {
@@ -218,6 +227,7 @@ estimated_minutes: estimatedMinutes.trim()
     };
 
     syncLessonState(updatedLesson);
+    await loadMetadata(lesson.id);
 
     Alert.alert(
       'Saved',
@@ -231,6 +241,32 @@ estimated_minutes: estimatedMinutes.trim()
   } finally {
     setSaving(false);
   }
+}
+
+async function confirmQuickMetadata() {
+  if (!metadata || metadata.review_tier !== 'quick_confirmation') return;
+  Alert.alert(
+    'Confirm Personalization Metadata?',
+    'This is a separate approval from lesson content. The targeting metadata will be approved against the current lesson fingerprint.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm Metadata',
+        onPress: async () => {
+          try {
+            setSaving(true);
+            await saveMetadataReview(metadata.id, { review_status: 'approved' }, 'combined_content_review_metadata_confirmation');
+            await loadMetadata(metadata.lesson_id);
+            Alert.alert('Metadata confirmed', 'Lesson content status was not changed.');
+          } catch (error: any) {
+            Alert.alert('Metadata not approved', error?.message || 'Server validation rejected this metadata.');
+          } finally {
+            setSaving(false);
+          }
+        },
+      },
+    ]
+  );
 }
 
   function confirmArchive() {
@@ -527,6 +563,31 @@ function textToArray(text: string) {
 />
 
         <View style={styles.reviewCard}>
+          <Text style={styles.reviewTitle}>Personalization — Separate Decision</Text>
+          {metadata ? (
+            <>
+              <Text style={styles.inputLabel}>Review tier</Text>
+              <Text style={styles.metadataValue}>{metadata.review_tier.replaceAll('_', ' ')}</Text>
+              <Text style={styles.inputLabel}>Target / mastery</Text>
+              <Text style={styles.metadataValue}>{metadata.target_skill_code} · {metadata.mastery_group}</Text>
+              <Text style={styles.inputLabel}>Needs attention</Text>
+              <Text style={styles.metadataValue}>{metadata.review_tier_reasons.join(' · ') || 'No sensitive exceptions'}</Text>
+              <Text style={styles.inputLabel}>Validation</Text>
+              <Text style={styles.metadataValue}>{clientValidation(metadata).length ? `${clientValidation(metadata).length} blocker(s)` : 'Valid for explicit confirmation'}</Text>
+              {metadata.metadata_stale && <Text style={styles.metadataWarning}>Lesson content changed after metadata approval. Review again.</Text>}
+              {metadata.review_tier === 'quick_confirmation' && metadata.review_status !== 'approved' && (
+                <TouchableOpacity style={styles.metadataConfirmButton} onPress={() => void confirmQuickMetadata()}>
+                  <Text style={styles.metadataConfirmText}>Confirm Personalization Metadata</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.metadataOpenButton} onPress={() => router.push({ pathname: '/admin/personalization-review/[id]', params: { id: metadata.id } } as any)}>
+                <Text style={styles.metadataOpenText}>{metadata.review_tier === 'quick_confirmation' ? 'Open full metadata evidence' : `Review ${metadata.review_tier_reasons.length || 1} issue(s)`}</Text>
+              </TouchableOpacity>
+            </>
+          ) : <Text style={styles.metadataWarning}>No version-1 metadata record found.</Text>}
+        </View>
+
+        <View style={styles.reviewCard}>
           <Text style={styles.reviewTitle}>Admin Review</Text>
 
           <Text style={styles.inputLabel}>Quality Status</Text>
@@ -789,6 +850,13 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: 8,
   },
+
+  metadataValue: { color: '#334155', fontWeight: '700', marginBottom: 12 },
+  metadataWarning: { color: '#B45309', fontWeight: '800', marginBottom: 12 },
+  metadataConfirmButton: { backgroundColor: '#7C3AED', borderRadius: 14, padding: 13, alignItems: 'center', marginTop: 6 },
+  metadataConfirmText: { color: '#FFFFFF', fontWeight: '900' },
+  metadataOpenButton: { borderWidth: 1, borderColor: '#7C3AED', borderRadius: 14, padding: 13, alignItems: 'center', marginTop: 8 },
+  metadataOpenText: { color: '#6D28D9', fontWeight: '900' },
 
   statusRow: {
     flexDirection: 'row',

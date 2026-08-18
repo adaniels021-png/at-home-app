@@ -20,6 +20,52 @@ let currentRevenueCatAppUserId: string | null = null;
 let lastAuthoritativeReconciliationAt = 0;
 let authoritativeReconciliationPromise: Promise<boolean> | null = null;
 
+const RECONCILIATION_FUNCTION = 'reconcile-revenuecat-entitlement';
+
+type SafeFunctionError = {
+  functionName: string;
+  status: number | null;
+  error: string | null;
+  message: string | null;
+  code: string | null;
+  authenticatedSession: boolean;
+};
+
+async function getSafeFunctionError(
+  error: unknown,
+  authenticatedSession: boolean
+): Promise<SafeFunctionError> {
+  const context =
+    error && typeof error === 'object' && 'context' in error
+      ? (error as { context?: unknown }).context
+      : null;
+  const response = context instanceof Response ? context : null;
+  let payload: Record<string, unknown> = {};
+
+  if (response) {
+    try {
+      const parsed = await response.clone().json();
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        payload = parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Do not log an arbitrary response body. Only structured safe fields are used.
+    }
+  }
+
+  const safeText = (value: unknown) =>
+    typeof value === 'string' ? value.slice(0, 160) : null;
+
+  return {
+    functionName: RECONCILIATION_FUNCTION,
+    status: response?.status ?? null,
+    error: safeText(payload.error),
+    message: safeText(payload.message),
+    code: safeText(payload.code),
+    authenticatedSession,
+  };
+}
+
 function isExpoGo(): boolean {
   return Constants.appOwnership === 'expo';
 }
@@ -172,21 +218,46 @@ export async function reconcileAuthoritativeEntitlement(force = false): Promise<
   }
 
   authoritativeReconciliationPromise = (async () => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.access_token) {
+      if (__DEV__) {
+        console.warn('Authoritative entitlement reconciliation skipped:', {
+          functionName: RECONCILIATION_FUNCTION,
+          reason: 'NO_AUTHENTICATED_SESSION',
+          authenticatedSession: false,
+        });
+      }
+      return false;
+    }
+
     try {
       const { error } = await supabase.functions.invoke(
-        'reconcile-revenuecat-entitlement',
-        { body: {} }
+        RECONCILIATION_FUNCTION,
+        {
+          body: {},
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
       );
 
       if (error) {
-        console.error('Authoritative entitlement reconciliation failed:', error);
+        console.error(
+          'Authoritative entitlement reconciliation failed:',
+          await getSafeFunctionError(error, true)
+        );
         return false;
       }
 
       lastAuthoritativeReconciliationAt = now;
       return true;
     } catch (error) {
-      console.error('Authoritative entitlement reconciliation failed:', error);
+      console.error(
+        'Authoritative entitlement reconciliation failed:',
+        await getSafeFunctionError(error, true)
+      );
       return false;
     }
   })();
