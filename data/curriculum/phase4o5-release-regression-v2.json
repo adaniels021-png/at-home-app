@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "result": "PASS",
+  "routing": {
+    "existingInstancePreserved": true,
+    "controlledV2EntitlementBound": true,
+    "controlledV2CohortBound": true,
+    "emergencyLegacy": true,
+    "missingOrMalformedConfigFailsLegacy": true,
+    "unknownAndFreeFailLegacy": true,
+    "resolverFailureFailsLegacy": true,
+    "v2FailureOrEmptyFallsBack": true,
+    "telemetryFailureNonBlocking": true,
+    "telemetryInfluencesRouting": false
+  },
+  "admin": {
+    "serverAuthoritativeGate": true,
+    "nonAdminNavigationHidden": true,
+    "nestedRoutesGated": true
+  },
+  "approvedFeatureScope": {
+    "home": true,
+    "helpNow": true,
+    "safetyHub": true,
+    "adminInfrastructure": true,
+    "bunBunWorldRuntime": false
+  },
+  "exports": {
+    "ios": "PASS",
+    "android": "PASS"
+  },
+  "protectedHashes": {
+    "phase4eShadowV1": "be6fe07f503c74c05c5be0557ee249ca8da42bab392f40638d7fe1f12caf5284",
+    "phase4mShadowV2": "1ed53877da293374f0e026799791cb7a55ae4a3dc5a2da8b0d72190dc6657a0c",
+    "phase4jCrosswalk": "d5f5046e2fd1951bd4c7cbc2da9999c8f19b82502dc48f53ef44cf20681cd2be"
+  }
+}

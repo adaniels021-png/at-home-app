@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "result": "PASS",
+  "approvedInfrastructureChanges": {
+    "authoritativeReconciliationClient": true,
+    "authenticatedStartupReconciliation": true,
+    "serverReconciliationFunction": true,
+    "atomicEntitlementHardening": true
+  },
+  "commerceDiffAudit": {
+    "revenuecatProductIdentifiers": false,
+    "revenuecatOfferingIdentifiers": false,
+    "revenuecatPackageIdentifiers": false,
+    "revenuecatEntitlementIdentifier": false,
+    "subscriptionScreenCommerce": false,
+    "paywalls": false,
+    "purchaseFlow": false,
+    "restoreFlow": false,
+    "trialConfiguration": false
+  },
+  "unchanged": [
+    "RevenueCat products, offerings, packages, and entitlement identifier",
+    "14-day store trial and eligibility rules",
+    "Apple and Google subscription configuration",
+    "client purchase, restore, paywall, and permanent Free lesson behavior"
+  ],
+  "failureContract": "Reconciliation failure never grants Pro and recommendation routing fails closed to Legacy."
+}

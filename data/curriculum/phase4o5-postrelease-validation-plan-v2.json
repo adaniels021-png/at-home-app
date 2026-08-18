@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "prerequisite": "Separate owner authorization for native build and store submission",
+  "steps": [
+    "Reconfirm the owner-authorized server state remains CONTROLLED_V2 with a 25% cohort.",
+    "Install the released App Store or Google Play build on a production device.",
+    "Authenticate normally and verify Home, Daily Lessons, Help Now, Safety Hub, and applicable Toilet Training navigation.",
+    "Confirm Free and Unknown users remain on Legacy and cannot receive Pro-only lessons.",
+    "Confirm eligible Production Trial/Pro users inside and outside the deterministic cohort follow the authoritative route.",
+    "Verify routing telemetry remains observational, privacy-safe, and non-blocking.",
+    "Confirm subscription, 14-day trial, purchase, and restore behavior remains normal."
+  ],
+  "rollback": {
+    "server": "Use the separately authorized Admin control to set EMERGENCY_LEGACY and a 0% cohort.",
+    "client": "Stop a phased release where supported and prepare a corrected incremented binary; do not publish an unreviewed OTA."
+  },
+  "automaticActivationMutation": false
+}

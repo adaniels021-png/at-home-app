@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "result": "PASS",
+  "productionStateSource": "CURRENT_OWNER_CONFIRMED",
+  "productionState": {
+    "mode": "CONTROLLED_V2",
+    "cohortPercentage": 25,
+    "algorithmVersion": "phase4m-shadow-v2"
+  },
+  "expectedOutcomes": {
+    "free": "LEGACY",
+    "unknown": "LEGACY",
+    "sandbox": "LEGACY",
+    "trialOrProOutsideCohort": "LEGACY",
+    "trialOrProInsideCohort": "CONTROLLED_V2",
+    "resolverFailure": "LEGACY",
+    "emergencyFallback": "LEGACY"
+  },
+  "telemetryInfluencesSelection": false,
+  "liveEventFabricated": false,
+  "parentDebugVisible": false,
+  "sensitiveTelemetry": false
+}

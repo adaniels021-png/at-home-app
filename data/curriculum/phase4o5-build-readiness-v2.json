@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "authority": "CURRENT_1_0_9_BUILD_READINESS",
+  "classification": "READY_PENDING_FINAL_BUILD_GATE",
+  "expo": {
+    "sdk": "54.0.0",
+    "version": "1.0.9",
+    "runtimeVersion": null,
+    "otaEstablished": false
+  },
+  "ios": {
+    "bundleIdentifier": "com.adaniels021.abaathome",
+    "versionSource": "remote",
+    "currentRemoteBuild": "48",
+    "expectedNextBuild": "49",
+    "export": "PASS"
+  },
+  "android": {
+    "applicationId": "com.adaniels021.abaathome",
+    "versionSource": "remote",
+    "currentRemoteVersionCode": 25,
+    "expectedNextVersionCode": 26,
+    "export": "PASS"
+  },
+  "eas": {
+    "projectId": "c4a657a7-ca99-4f5d-900f-7e7b19d7c3c8",
+    "appVersionSource": "remote",
+    "autoIncrement": true,
+    "distribution": "store"
+  },
+  "environmentNames": {
+    "presentInEasProduction": [
+      "EXPO_PUBLIC_RC_APPLE_API_KEY",
+      "EXPO_PUBLIC_RC_ENTITLEMENT_ID",
+      "EXPO_PUBLIC_RC_GOOGLE_API_KEY",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+      "EXPO_PUBLIC_SUPABASE_URL"
+    ],
+    "requiredButMissingInEasProduction": []
+  },
+  "localEnvIgnored": true,
+  "remoteCountersMutatedByReconciliation": false,
+  "blocker": null
+}

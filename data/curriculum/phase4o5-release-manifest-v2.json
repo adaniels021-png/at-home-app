@@ -1,0 +1,103 @@
+{
+  "version": 2,
+  "release": "1.0.9",
+  "authority": "CURRENT_1_0_9_RELEASE_CONTRACT",
+  "baseline": {
+    "version": "1.0.8",
+    "commit": "79dd974141663763f77ffd8a0c422ce45efd93ff"
+  },
+  "candidate": {
+    "branch": "release/1.0.9-rc",
+    "startingCommit": "2eb91e39f5fd93234db82cbc1816a786de48bddd"
+  },
+  "productionState": {
+    "source": "CURRENT_OWNER_CONFIRMED",
+    "mode": "CONTROLLED_V2",
+    "cohortPercentage": 25,
+    "algorithmVersion": "phase4m-shadow-v2",
+    "mutationPerformedByReleaseReconciliation": false,
+    "historicalPhase4O5V1State": {
+      "mode": "LEGACY",
+      "cohortPercentage": 0
+    }
+  },
+  "includedScope": [
+    "app/(tabs)/index.tsx",
+    "app/(tabs)/settings.tsx",
+    "app/help-now/**",
+    "app/safety/**",
+    "app/admin/**",
+    "components/AdminRouteGate.tsx",
+    "lib/adminAccess.ts",
+    "lib/safety/**",
+    "lib/curriculumArchitecture.ts",
+    "lib/personalization/**",
+    "lib/revenuecat.ts",
+    "lib/SubscriptionContext.tsx",
+    "supabase/functions/reconcile-revenuecat-entitlement/**",
+    "supabase/functions/_shared/revenuecat-subscriber.ts",
+    "supabase/migrations/20260809*.sql",
+    "supabase/migrations/20260811*.sql",
+    "supabase/migrations/20260812*.sql",
+    "supabase/migrations/20260813*.sql",
+    "supabase/migrations/20260816180000_harden_revenuecat_entitlement_pipeline.sql",
+    "data/curriculum/phase4f-*.json",
+    "data/curriculum/phase4g-*.json"
+  ],
+  "requiredExactFiles": [
+    "app/(tabs)/index.tsx",
+    "app/(tabs)/settings.tsx",
+    "app/help-now/index.tsx",
+    "app/safety/index.tsx",
+    "app/admin/_layout.tsx",
+    "components/AdminRouteGate.tsx",
+    "lib/adminAccess.ts",
+    "lib/personalization/recommendation/activationControl.ts",
+    "lib/personalization/recommendation/router.ts",
+    "lib/personalization/recommendation/scoring.ts",
+    "lib/personalization/recommendation/scoringV2.ts",
+    "lib/revenuecat.ts",
+    "lib/SubscriptionContext.tsx",
+    "supabase/functions/reconcile-revenuecat-entitlement/index.ts",
+    "supabase/functions/_shared/revenuecat-subscriber.ts",
+    "supabase/migrations/20260816180000_harden_revenuecat_entitlement_pipeline.sql"
+  ],
+  "reconciledRemoteMigrationVersions": [
+    "20260811010000",
+    "20260811143542",
+    "20260811190000",
+    "20260811193000",
+    "20260811194500",
+    "20260811210000",
+    "20260811230000",
+    "20260811231500",
+    "20260811233000",
+    "20260812120000",
+    "20260812121500",
+    "20260816180000"
+  ],
+  "excludedScope": [
+    "Bun Bun World runtime/game functionality",
+    "experimental or unapproved features",
+    "credentials and .env files",
+    "unrelated dirty-primary-worktree changes",
+    "temporary test routes",
+    "local audit output not required for release"
+  ],
+  "historicalArtifacts": [
+    "phase4o5-release-manifest-v1.json",
+    "phase4o5-build-readiness-v1.json",
+    "phase4o5-router-release-validation-v1.json",
+    "phase4o5-postrelease-validation-plan-v1.json",
+    "phase4o5-release-regression-v1.json",
+    "phase4o5-subscription-nonregression-v1.json"
+  ],
+  "mustNotShip": [
+    ".env",
+    ".bash_history",
+    "credentials",
+    "certificates",
+    "signing secrets",
+    "temporary simulator screenshots"
+  ]
+}
