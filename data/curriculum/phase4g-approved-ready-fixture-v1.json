@@ -1,0 +1,708 @@
+{
+  "version": 1,
+  "privacy": "No child/caregiver data; approved lesson IDs and controlled metadata only.",
+  "count": 20,
+  "lessons": [
+    {
+      "lessonId": "866d8042-1c91-4387-a4db-67c86086b77f",
+      "title": "Clean Up Toys",
+      "proOnly": true,
+      "category": "Daily Routines",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s2_complete_a_familiar_cleanup",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "routine.household",
+        "masteryGroup": "routine.household",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "routine.household"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "c23a24e6-a9a1-4413-a4bc-bfebe03f2600",
+      "title": "Find the Feeling",
+      "proOnly": true,
+      "category": "Emotions & Behavior",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s2_identify_from_choices",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "regulation.identify_emotions",
+        "masteryGroup": "regulation.identify_emotions",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "regulation.identify_emotions"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "c8479dd8-8e66-4531-8b52-d574a2c09ff3",
+      "title": "First Then Transition",
+      "proOnly": true,
+      "category": "Emotions & Behavior",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "behavior_flexibility",
+        "skill": "emotions.transitions_flexibility",
+        "stage": "emotions.transitions_flexibility.s2_use_a_transition_support",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "behavior.transitions_flexibility",
+        "masteryGroup": "behavior.transitions_flexibility",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "behavior.transitions_flexibility"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "more_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "01d17677-2fe7-4dea-b51d-7ed15b0d5973",
+      "title": "Make a Line",
+      "proOnly": true,
+      "category": "Movement & Coordination",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "fine_motor",
+        "skill": "movement.writing_readiness",
+        "stage": "movement.writing_readiness.s2_make_a_purposeful_line",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "motor.writing_readiness",
+        "masteryGroup": "motor.writing_readiness",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "motor.writing_readiness"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "48c84e91-0b1f-4536-9fff-1e1124a7a840",
+      "title": "Making a Choice",
+      "proOnly": true,
+      "category": "Communication",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s3_choices_help_and_activities",
+        "stageNumber": 3,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_content_remap_taxonomy"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "skillStageCode": "developing",
+        "assessmentNeedTags": [
+          "communication.requesting"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "less_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "64d48cbc-624a-4bce-855a-7f1b4e78ae99",
+      "title": "Match Object to Picture",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s3_match_object_to_representation",
+        "stageNumber": 3,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.matching",
+        "masteryGroup": "learning.matching",
+        "skillStageCode": "developing",
+        "assessmentNeedTags": [
+          "learning.matching"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "38c7e3bf-2c01-428d-a1f3-8b3e170c42af",
+      "title": "Match the Emotion",
+      "proOnly": true,
+      "category": "Emotions & Behavior",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s3_match_feelings_across_examples",
+        "stageNumber": 3,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "regulation.identify_emotions",
+        "masteryGroup": "regulation.identify_emotions",
+        "skillStageCode": "developing",
+        "assessmentNeedTags": [
+          "regulation.identify_emotions"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "179e8fb9-5844-47e7-8a4f-56f2951c5a3e",
+      "title": "Match Two Pictures",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "matching_sorting",
+        "skill": "learning.matching",
+        "stage": "learning.matching.s2_match_identical_pictures",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.matching",
+        "masteryGroup": "learning.matching",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "learning.matching"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "f09cacdd-5bac-4fbb-8701-ee824c0f4322",
+      "title": "Put Clothes in Hamper",
+      "proOnly": true,
+      "category": "Daily Routines",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "home_participation",
+        "skill": "routines.household_tasks",
+        "stage": "routines.household_tasks.s3_complete_a_defined_responsibility",
+        "stageNumber": 3,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "routine.household",
+        "masteryGroup": "routine.household",
+        "skillStageCode": "developing",
+        "assessmentNeedTags": [
+          "routine.household"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "less_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "80ed81e3-2813-4577-acf4-fb6f98266621",
+      "title": "Put On Socks",
+      "proOnly": true,
+      "category": "Daily Routines",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "personal_care",
+        "skill": "routines.dressing",
+        "stage": "routines.dressing.s2_complete_an_early_clothing_step",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "self_help.dressing",
+        "masteryGroup": "self_help.dressing",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "self_help.dressing"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "e6a9ea8d-5f59-4120-af4d-2ff71234ceaa",
+      "title": "Requesting More",
+      "proOnly": true,
+      "category": "Communication",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_content_remap_taxonomy"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "communication.requesting"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [
+          "activity.music"
+        ],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "c18307fa-754b-4b2a-bad1-6a1c60ac77cb",
+      "title": "Roll the Ball Back and Forth",
+      "proOnly": true,
+      "category": "Play & Social Skills",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "social_interaction",
+        "skill": "social.sharing_turn_taking",
+        "stage": "social.sharing_turn_taking.s2_exchange_an_item_back_and_forth",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "social.turn_taking",
+        "masteryGroup": "social.turn_taking",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "social.turn_taking"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "f18ab3c5-4d98-439c-9ad6-0ba21613d89a",
+      "title": "Shared Book Look",
+      "proOnly": true,
+      "category": "Play & Social Skills",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "social_interaction",
+        "skill": "social.joint_attention",
+        "stage": "social.joint_attention.s2_follow_or_share_looking",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "social.joint_attention",
+        "masteryGroup": "social.joint_attention",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "social.joint_attention"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "08239883-6084-4a2b-b82b-932b0cacec6b",
+      "title": "Show Me What You Need",
+      "proOnly": true,
+      "category": "Communication",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.self_advocacy",
+        "stage": "communication.self_advocacy.s1_show_a_need",
+        "stageNumber": 1,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_content_remap_taxonomy"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "communication.self_advocacy",
+        "masteryGroup": "communication.self_advocacy",
+        "skillStageCode": "beginning",
+        "assessmentNeedTags": [
+          "communication.self_advocacy"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "c7ca85ae-2252-4cd8-af05-9e7c0ea42b51",
+      "title": "Simple Checklist Practice",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "planning_executive",
+        "skill": "learning.executive_functioning",
+        "stage": "learning.executive_functioning.s2_follow_a_simple_checklist",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.executive_function",
+        "masteryGroup": "learning.executive_function",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "learning.executive_function"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "419546f8-2744-4644-8c78-ec4ed433d960",
+      "title": "Sort by Color",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "matching_sorting",
+        "skill": "learning.sorting_categorization",
+        "stage": "learning.sorting_categorization.s2_sort_by_a_visible_feature",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.sorting",
+        "masteryGroup": "learning.sorting",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "learning.sorting"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "0ee669e2-128e-4dce-a439-4ae928423270",
+      "title": "Squeeze the Sponge",
+      "proOnly": true,
+      "category": "Movement & Coordination",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "fine_motor",
+        "skill": "movement.fine_motor_hand_strength",
+        "stage": "movement.fine_motor_hand_strength.s1_squeeze_hold_and_release",
+        "stageNumber": 1,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_content_remap_taxonomy"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "motor.fine",
+        "masteryGroup": "motor.fine",
+        "skillStageCode": "beginning",
+        "assessmentNeedTags": [
+          "motor.fine"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [
+          "activity.water"
+        ],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "3be4d074-2d85-4c87-8999-0560cf3bee86",
+      "title": "Take a Calm Breath",
+      "proOnly": true,
+      "category": "Emotions & Behavior",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s3_try_a_chosen_strategy",
+        "stageNumber": 3,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "regulation.emotional",
+        "masteryGroup": "regulation.emotional",
+        "skillStageCode": "developing",
+        "assessmentNeedTags": [
+          "regulation.emotional"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "8193ccdf-e475-409a-b923-d0e7c7707ad2",
+      "title": "Try Another Way",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "planning_executive",
+        "skill": "learning.problem_solving",
+        "stage": "learning.problem_solving.s2_try_an_alternative",
+        "stageNumber": 2,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.problem_solving",
+        "masteryGroup": "learning.problem_solving",
+        "skillStageCode": "emerging",
+        "assessmentNeedTags": [
+          "learning.problem_solving"
+        ],
+        "supportedResponseModes": [],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    },
+    {
+      "lessonId": "3fbcdcca-de8a-48f2-aa7c-f32eac77565e",
+      "title": "What Comes First",
+      "proOnly": true,
+      "category": "Learning & Attention",
+      "difficulty": "beginner",
+      "curriculum": {
+        "domain": "memory_sequencing",
+        "skill": "learning.sequencing",
+        "stage": "learning.sequencing.s1_identify_what_comes_first",
+        "stageNumber": 1,
+        "sensitivity": "standard",
+        "timeRelevance": "time_neutral",
+        "recommendationEligibility": "shadow_candidate",
+        "disposition": "keep_as_is_structurally"
+      },
+      "metadata": {
+        "source": "approved_live",
+        "targetSkillCode": "learning.sequencing",
+        "masteryGroup": "learning.sequencing",
+        "skillStageCode": "beginning",
+        "assessmentNeedTags": [
+          "learning.sequencing"
+        ],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "prerequisiteSkillCodes": [],
+        "contraindicationTags": [],
+        "materialActivityTags": [],
+        "supportLevel": "balanced_support",
+        "fiveDecisionsComplete": true,
+        "currentFingerprint": true
+      }
+    }
+  ]
+}

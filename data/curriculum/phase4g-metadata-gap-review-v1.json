@@ -1,0 +1,4328 @@
+{
+  "version": 1,
+  "generatedFrom": "read_only_live_export",
+  "count": 39,
+  "records": [
+    {
+      "lessonId": "5902b36d-9c86-4c62-9545-329b05505a62",
+      "title": "Answer What Is It",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s2_concrete_questions"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.answering_questions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "adec5a2e-5540-460b-ac5c-79e8ddd4906f",
+      "title": "Answer With Me",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s1_simple_answers"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.answering_questions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "d709a7e3-cf44-42a3-ab21-1483613206ea",
+      "title": "Ask for My Favorite Things",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "needs_review",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "NEEDS_CONTENT_REVIEW",
+      "proposedMetadata": null,
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "outcome": "needs_content_review"
+          },
+          "provenance": "content_dependent",
+          "reviewState": "content_dependent",
+          "classification": "communication_content_conflict"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.requesting"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "food_use": "required",
+            "outcome": "needs_content_review"
+          },
+          "provenance": "content_dependent",
+          "reviewState": "content_dependent",
+          "classification": "lesson_content_conflict"
+        }
+      ]
+    },
+    {
+      "lessonId": "54fe4d68-db7d-492a-a64d-60a54cb3a904",
+      "title": "Ask Me One Question",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s3_share_a_topic"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.conversation",
+        "masteryGroup": "communication.conversation",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.pragmatics_conversation",
+        "masteryGroup": "communication.pragmatics_conversation",
+        "skillStageCode": "developing",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.conversation"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "454ba8b7-f1d8-45f4-9184-dcadc70bec13",
+      "title": "Back-and-Forth Sounds",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s2_back_and_forth_interaction"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.conversation",
+        "masteryGroup": "communication.conversation",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.pragmatics_conversation",
+        "masteryGroup": "communication.pragmatics_conversation",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.conversation"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": true,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "controllable_or_explicitly_kept_comfortable"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "292726a2-fee9-44d2-ab2d-65dfb93d439d",
+      "title": "Calm Choices During Puzzle Time",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s5_use_a_personal_regulation_plan"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "regulation.calming",
+        "masteryGroup": "regulation.calming",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "emotions.emotional_regulation",
+        "masteryGroup": "emotions.emotional_regulation",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "gestures_pointing",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "regulation.calming"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "c61ac69f-8e43-49d9-bedc-f63a105df038",
+      "title": "Calm Choices for Cleanup",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "regulation_coping",
+        "skill": "emotions.emotional_regulation",
+        "stage": "emotions.emotional_regulation.s4_choose_an_established_strategy"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "regulation.calming",
+        "masteryGroup": "regulation.calming",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "emotions.emotional_regulation",
+        "masteryGroup": "emotions.emotional_regulation",
+        "skillStageCode": "independent",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "regulation.calming"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "48748fa0-912b-4fd9-a292-34dba4faf798",
+      "title": "Child's First Requests: Asking for a Toy",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s1_request_a_visible_item"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "needs_review",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "NEEDS_CONTENT_REVIEW",
+      "proposedMetadata": null,
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "outcome": "needs_content_review"
+          },
+          "provenance": "content_dependent",
+          "reviewState": "content_dependent",
+          "classification": "communication_content_conflict"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.requesting"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "food_use": "mentioned_not_used",
+            "outcome": "needs_content_review"
+          },
+          "provenance": "content_dependent",
+          "reviewState": "content_dependent",
+          "classification": "lesson_content_conflict"
+        }
+      ]
+    },
+    {
+      "lessonId": "7a136a47-8f7b-4064-9f14-6cbfea69c61a",
+      "title": "Copy My Sound",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "communication_practice",
+        "skill": "communication.communication_practice",
+        "stage": "communication.communication_practice.s1_explore_communication_imitation"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "high_scrutiny_review",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "speech_production_review",
+      "highScrutiny": true,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.speech_clarity",
+        "masteryGroup": "communication.speech_clarity",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.communication_practice",
+        "masteryGroup": "communication.communication_practice",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "speech_or_vocal_sound"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "speech_production_required"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.speech_clarity"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "de3e0a85-5a75-4370-a86d-16540b05404d",
+      "title": "Explore a Mystery Bag",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "engagement_attention",
+        "skill": "learning.curiosity_engagement",
+        "stage": "learning.curiosity_engagement.s2_explore_with_support"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "learning.engagement",
+        "masteryGroup": "learning.engagement",
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "learning.curiosity_engagement",
+        "masteryGroup": "learning.curiosity_engagement",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "learning.engagement"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "6fea5809-f1ec-476b-8dfe-f1083a1b520f",
+      "title": "Feeding Skills Anywhere",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "meals_eating_routines",
+        "skill": "routines.mealtime_skills",
+        "stage": "routines.mealtime_skills.s5_use_meal_skills_across_settings"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "high_scrutiny_review",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": true,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "self_help.feeding",
+        "masteryGroup": "self_help.feeding",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "routines.mealtime_skills",
+        "masteryGroup": "routines.mealtime_skills",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "self_help.feeding"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "required",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "required_material_restriction_match"
+        }
+      ]
+    },
+    {
+      "lessonId": "dcc4ee53-0261-4335-935a-07e929d0339c",
+      "title": "First Then Practice",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "planning_executive",
+        "skill": "learning.executive_functioning",
+        "stage": "learning.executive_functioning.s1_use_first_then"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "learning.executive_function",
+        "masteryGroup": "learning.executive_function",
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "learning.executive_functioning",
+        "masteryGroup": "learning.executive_functioning",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "learning.executive_function"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "e98231ee-01bc-42e7-b5c0-78daa001db19",
+      "title": "Follow Directions Anywhere",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.following_directions",
+        "stage": "communication.following_directions.s5_directions_in_daily_life"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.following_directions",
+        "masteryGroup": "communication.following_directions",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.following_directions",
+        "masteryGroup": "communication.following_directions",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.following_directions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "outcome": "helpful"
+          },
+          "provenance": "human_confirmed",
+          "reviewState": "human_confirmed",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "932463a0-cd66-4e03-86d3-178d5ecf038a",
+      "title": "Help Pull It On",
+      "status": "approved",
+      "entitlement": "free",
+      "curriculum": {
+        "domain": "personal_care",
+        "skill": "routines.dressing",
+        "stage": "routines.dressing.s1_join_one_dressing_action"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "self_help.dressing",
+        "masteryGroup": "self_help.dressing",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "routines.dressing",
+        "masteryGroup": "routines.dressing",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "self_help.dressing"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "a28e2b1b-d563-46b4-ac14-5fb2f597112e",
+      "title": "Keep the Conversation Going",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s4_sustain_or_repair_interaction"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.conversation",
+        "masteryGroup": "communication.conversation",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_sentences",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.pragmatics_conversation",
+        "masteryGroup": "communication.pragmatics_conversation",
+        "skillStageCode": "independent",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_sentences",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "spoken_sentences",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.conversation"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "03717f42-43f1-4a8b-8770-8c5de40107ee",
+      "title": "Let's Build a Tower!",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "play_skills",
+        "skill": "play.functional",
+        "stage": "play.functional.s1_use_one_familiar_toy_meaningfully"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "play.functional",
+        "masteryGroup": "play.functional",
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "play.functional",
+        "masteryGroup": "play.functional",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "play.functional"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "7ecd979e-b25b-480c-9880-5f7ef6b3688f",
+      "title": "Let's Roll the Ball!",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "play_skills",
+        "skill": "play.functional",
+        "stage": "play.functional.s2_use_a_simple_toy_action"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "play.functional",
+        "masteryGroup": "play.functional",
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "play.functional",
+        "masteryGroup": "play.functional",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "play.functional"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "75c15624-6b9c-4439-9e7e-0d18c9872f6b",
+      "title": "Listen With Me",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.following_directions",
+        "stage": "communication.following_directions.s1_one_familiar_direction"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.following_directions",
+        "masteryGroup": "communication.following_directions",
+        "supportedResponseModes": [
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.following_directions",
+        "masteryGroup": "communication.following_directions",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.following_directions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+      "title": "Look and Show",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s1_show_or_orient"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "264988f4-abb4-4552-ba9f-bda74a37da02",
+      "title": "Look What I Found",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "engagement_attention",
+        "skill": "learning.curiosity_engagement",
+        "stage": "learning.curiosity_engagement.s1_notice_something_interesting"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "learning.engagement",
+        "masteryGroup": "learning.engagement",
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "learning.curiosity_engagement",
+        "masteryGroup": "learning.curiosity_engagement",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "learning.engagement"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+      "title": "My Turn, Your Turn",
+      "status": "approved",
+      "entitlement": "free",
+      "curriculum": {
+        "domain": "social_interaction",
+        "skill": "social.sharing_turn_taking",
+        "stage": "social.sharing_turn_taking.s1_join_one_reciprocal_turn"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "social.turn_taking",
+        "masteryGroup": "social.turn_taking",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "social.sharing_turn_taking",
+        "masteryGroup": "social.sharing_turn_taking",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "social.turn_taking"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "bbced1a2-f764-4192-94c2-3219c98b9530",
+      "title": "Open and Close Containers",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "fine_motor",
+        "skill": "movement.bilateral_coordination",
+        "stage": "movement.bilateral_coordination.s5_use_both_hands_in_daily_life"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "motor.bilateral",
+        "masteryGroup": "motor.bilateral",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "movement.bilateral_coordination",
+        "masteryGroup": "movement.bilateral_coordination",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "motor.bilateral"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "c977bdfc-8339-4a0a-b4b6-98d4e768675f",
+      "title": "Point to Show Me",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s2_familiar_gestures"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "optional_prompt_can_be_disabled",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "f98a7423-22df-497a-bf8e-3ad17c68313b",
+      "title": "Recognizing the Feeling: Happy",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "emotional_understanding",
+        "skill": "emotions.emotion_identification",
+        "stage": "emotions.emotion_identification.s1_notice_familiar_feelings"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "regulation.identify_emotions",
+        "masteryGroup": "regulation.identify_emotions",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "emotions.emotion_identification",
+        "masteryGroup": "emotions.emotion_identification",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "regulation.identify_emotions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "c2181af0-654c-4305-9629-6828c263542b",
+      "title": "Requesting a Favorite Snack",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.requesting"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "required",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "required_material_restriction_match"
+        }
+      ]
+    },
+    {
+      "lessonId": "4c421463-e77d-458c-afcb-c4d80e1bca53",
+      "title": "Requesting Bubbles",
+      "status": "approved",
+      "entitlement": "free",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s1_request_a_visible_item"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.requesting"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+      "title": "Requesting Help",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.requesting",
+        "stage": "communication.requesting.s2_request_varied_wants_and_needs"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.requesting",
+        "masteryGroup": "communication.requesting",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.requesting"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "c87f1e47-27f5-4ddb-9482-9d7f4c12e33e",
+      "title": "Show Me Anywhere",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s5_communicate_across_settings"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "gestures_pointing",
+              "pictures_pecs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_material",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "eb849967-a3ce-4db2-af19-046314106940",
+      "title": "Show Me With Your Face",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s3_express_with_face_or_body"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "developing",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {},
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "communication_evidence_incomplete"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "optional_prompt_can_be_disabled",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "6a174566-94a8-4684-b5dd-9e38fd1ea311",
+      "title": "Stand Like a Statue",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "gross_motor",
+        "skill": "movement.balance_coordination",
+        "stage": "movement.balance_coordination.s1_hold_a_stable_position"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "high_scrutiny_review",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": true,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "motor.balance",
+        "masteryGroup": "motor.balance",
+        "supportedResponseModes": []
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "movement.balance_coordination",
+        "masteryGroup": "movement.balance_coordination",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "motor.balance"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "optional_prompt_can_be_disabled",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "30326f3e-5236-4c82-9f16-c9716d3baff4",
+      "title": "Take a Communication Turn",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s1_one_communication_turn"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "no_prerequisite_deterministic",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.conversation",
+        "masteryGroup": "communication.conversation",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.pragmatics_conversation",
+        "masteryGroup": "communication.pragmatics_conversation",
+        "skillStageCode": "beginning",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.conversation"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "relationship": "none"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_prerequisite_deterministic"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": true
+            },
+            "food_use": "optional_material",
+            "physical_contact": "optional_prompt_can_be_disabled",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "controllable_or_explicitly_kept_comfortable"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "c673e50c-e8bd-4d30-9c66-e2d6488f27e2",
+      "title": "Talk About a Favorite Toy",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.pragmatics_conversation",
+        "stage": "communication.pragmatics_conversation.s3_share_a_topic"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.conversation",
+        "masteryGroup": "communication.conversation",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.pragmatics_conversation",
+        "masteryGroup": "communication.pragmatics_conversation",
+        "skillStageCode": "developing",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.conversation"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "58a4ba56-5409-4cfa-8ea5-797e2607d806",
+      "title": "Tell Me You Need to Go",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "personal_care",
+        "skill": "routines.toileting",
+        "stage": "routines.toileting.s5_communicate_and_generalize"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "high_scrutiny_review",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": true,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "toileting.basic",
+        "masteryGroup": "toileting.basic",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "routines.toileting",
+        "masteryGroup": "routines.toileting",
+        "skillStageCode": "generalized",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "toileting.basic"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "outcome": "helpful"
+          },
+          "provenance": "human_confirmed",
+          "reviewState": "human_confirmed",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "34e4ce81-fb2c-490a-9497-1af0283edf7d",
+      "title": "Think About Their Turn",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "social_interaction",
+        "skill": "social.peer_perspective",
+        "stage": "social.peer_perspective.s4_consider_another_person_s_perspective"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "social.perspective_taking",
+        "masteryGroup": "social.perspective_taking",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "social.peer_perspective",
+        "masteryGroup": "social.peer_perspective",
+        "skillStageCode": "independent",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "response_requirement": "receptive_or_action"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "communication_mode_irrelevant"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "social.perspective_taking"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "social.turn_taking"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "no_safety_decision"
+        }
+      ]
+    },
+    {
+      "lessonId": "22ff1454-403f-4eac-98d1-ad95f128b3f2",
+      "title": "Use a Gesture to Tell Me",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s4_choose_a_communication_form"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "independent",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "pictures_pecs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "gestures_pointing",
+              "pictures_pecs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": true,
+              "music": false,
+              "water": false
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "eb13bfef-edb4-44a8-be22-4d80e8af13d7",
+      "title": "Wave Goodbye",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "functional_communication",
+        "skill": "communication.non_speaking_social",
+        "stage": "communication.non_speaking_social.s2_familiar_gestures"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "medium"
+      },
+      "disposition": "keep_content_remap_taxonomy",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "communication_method_inclusive",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.intentional_communication",
+        "masteryGroup": "communication.intentional_communication",
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.non_speaking_social",
+        "masteryGroup": "communication.non_speaking_social",
+        "skillStageCode": "emerging",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "gestures_pointing",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "gestures_pointing",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.intentional_communication"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "hard_prerequisite": false,
+            "relationship": "progression_only"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "progression_only_no_hard_prerequisite"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "not_present",
+            "physical_contact": "optional_prompt_can_be_disabled",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "a19c85cd-46fc-4141-bce6-bac285c65232",
+      "title": "Where Did It Go",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s3_people_places_and_recall"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "approved",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "rejected",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "skillStageCode": "developing",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {
+            "outcome": "intentional_progression"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "intentional_stage_progression"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.answering_questions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "outcome": "helpful"
+          },
+          "provenance": "human_confirmed",
+          "reviewState": "human_confirmed",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "outcome": "human_confirmed"
+          },
+          "provenance": "human_confirmed",
+          "reviewState": "human_confirmed",
+          "classification": "small_object_size_ambiguous"
+        }
+      ]
+    },
+    {
+      "lessonId": "9481f369-512e-412b-aad3-3d77df8cc084",
+      "title": "Who Has It",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s3_people_places_and_recall"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "skillStageCode": "developing",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "pictures_pecs",
+          "signs",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "pictures_pecs",
+              "signs",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.answering_questions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": false
+            },
+            "food_use": "optional_reinforcement",
+            "physical_contact": "not_required",
+            "small_object_use": "explicitly_avoided_or_optional",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    },
+    {
+      "lessonId": "71180f26-f7df-413b-a5a6-f3dd1f01e9a3",
+      "title": "Why Do We Wash Hands",
+      "status": "approved",
+      "entitlement": "pro",
+      "curriculum": {
+        "domain": "understanding_conversation",
+        "skill": "communication.answering_questions",
+        "stage": "communication.answering_questions.s4_connected_questions"
+      },
+      "placement": {
+        "mappingStatus": "mapped",
+        "confidence": "high"
+      },
+      "disposition": "keep_as_is_structurally",
+      "ownerDecisionRequired": false,
+      "metadataState": "candidate",
+      "missingRequirements": [
+        "communication",
+        "duplicate_progression",
+        "mastery",
+        "prerequisite",
+        "safety_material"
+      ],
+      "communicationRelevance": "none",
+      "highScrutiny": false,
+      "prerequisiteState": "ambiguous",
+      "candidateEvidence": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ]
+      },
+      "excludedReason": "Approved-live recommendation readiness incomplete.",
+      "classification": "READY_FOR_METADATA_APPROVAL",
+      "proposedMetadata": {
+        "targetSkillCode": "communication.answering_questions",
+        "masteryGroup": "communication.answering_questions",
+        "skillStageCode": "independent",
+        "prerequisiteSkillCodes": [],
+        "supportedResponseModes": [
+          "aac",
+          "gestures_pointing",
+          "signs",
+          "spoken_phrases",
+          "spoken_words"
+        ],
+        "reviewState": "pending_human_approval",
+        "provenance": [
+          "approved_lesson_content",
+          "phase4b_mapping",
+          "existing_candidate_evidence"
+        ]
+      },
+      "fiveDecisions": [
+        {
+          "category": "communication",
+          "currentValue": {
+            "supported_response_modes": [
+              "aac",
+              "gestures_pointing",
+              "signs",
+              "spoken_phrases",
+              "spoken_words"
+            ]
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "explicitly_multimodal"
+        },
+        {
+          "category": "duplicate_progression",
+          "currentValue": {},
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "none"
+        },
+        {
+          "category": "mastery",
+          "currentValue": {
+            "mastery_group": "communication.answering_questions"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "specific_group_deterministic"
+        },
+        {
+          "category": "prerequisite",
+          "currentValue": {
+            "suggested_skill_code": "communication.intentional_communication"
+          },
+          "provenance": "generated_candidate",
+          "reviewState": "unresolved",
+          "classification": "capability_candidate_needs_judgment"
+        },
+        {
+          "category": "safety_material",
+          "currentValue": {
+            "descriptors": {
+              "movement": false,
+              "music": false,
+              "water": true
+            },
+            "food_use": "mentioned_not_used",
+            "physical_contact": "not_required",
+            "small_object_use": "not_required",
+            "sound": "not_loud"
+          },
+          "provenance": "deterministic_evidence",
+          "reviewState": "resolved_deterministic",
+          "classification": "factual_material_and_optional_support"
+        }
+      ]
+    }
+  ]
+}

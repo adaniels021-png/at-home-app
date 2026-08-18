@@ -1,0 +1,791 @@
+{
+  "version": 1,
+  "reviewState": "PROPOSED_FOR_REVIEW",
+  "count": 28,
+  "summary": {
+    "balanced_support": 25,
+    "less_support": 1,
+    "more_support": 2
+  },
+  "records": [
+    {
+      "lessonId": "adec5a2e-5540-460b-ac5c-79e8ddd4906f",
+      "title": "Answer With Me",
+      "domain": "understanding_conversation",
+      "skill": "communication.answering_questions",
+      "stage": "communication.answering_questions.s1_simple_answers",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will respond to a simple question using words, gestures, pointing, or aac. hold up a preferred item. ask a simple question such as \"what is it?\" immediately help your child respond. repeat several times with encouragement. celebrate any attempt to answer. accept all communi",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "292726a2-fee9-44d2-ab2d-65dfb93d439d",
+      "title": "Calm Choices During Puzzle Time",
+      "domain": "regulation_coping",
+      "skill": "emotions.emotional_regulation",
+      "stage": "emotions.emotional_regulation.s5_use_a_personal_regulation_plan",
+      "currentDifficulty": "balanced",
+      "proposedSupportLevel": "less_support",
+      "evidence": [
+        "Task/caregiver evidence: your child will independently use a calming strategy when faced with a challenging puzzle, with minimal prompting. parent: \"let's work on this puzzle together, your child! some of these pieces can be tricky.\" parent and your child start the puzzle. parent can intentionally make f",
+        "Lesson expects limited scaffolding after setup."
+      ],
+      "comparableReviewedLessons": [
+        "Making a Choice",
+        "Put Clothes in Hamper"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "c61ac69f-8e43-49d9-bedc-f63a105df038",
+      "title": "Calm Choices for Cleanup",
+      "domain": "regulation_coping",
+      "skill": "emotions.emotional_regulation",
+      "stage": "emotions.emotional_regulation.s4_choose_an_established_strategy",
+      "currentDifficulty": "balanced",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: your child will choose and use a calming strategy (deep breath or sensory item) when asked to clean up toys, with moderate prompting. parent says, 'your child, it's time to clean up these toys.' (wait 3-5 seconds for response). if 'your child' shows frustration or doesn't respond",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "7a136a47-8f7b-4064-9f14-6cbfea69c61a",
+      "title": "Copy My Sound",
+      "domain": "communication_practice",
+      "skill": "communication.communication_practice",
+      "stage": "communication.communication_practice.s1_explore_communication_imitation",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will attempt to copy one simple sound. sit face-to-face. gain your child’s attention. model one simple sound. pause and wait 3–5 seconds. praise any attempt. repeat during short play activities. keep sessions brief and fun. accept all sound approximations. avoid asking repe",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "de3e0a85-5a75-4370-a86d-16540b05404d",
+      "title": "Explore a Mystery Bag",
+      "domain": "engagement_attention",
+      "skill": "learning.curiosity_engagement",
+      "stage": "learning.curiosity_engagement.s2_explore_with_support",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will reach into the bag and explore at least one hidden item. place one object inside the bag. say, \"let's see what's inside!\" encourage your child to reach in. let them explore the object. praise their curiosity. keep the activity playful. allow extra time to explore. cele",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "6fea5809-f1ec-476b-8dfe-f1083a1b520f",
+      "title": "Feeding Skills Anywhere",
+      "domain": "meals_eating_routines",
+      "skill": "routines.mealtime_skills",
+      "stage": "routines.mealtime_skills.s5_use_meal_skills_across_settings",
+      "currentDifficulty": "advanced",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will use feeding skills across daily eating routines. choose a normal meal or snack routine. let your child use familiar feeding skills. offer help only when needed. practice with different foods, cups, or containers. praise independence and participation. keep expectations",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "dcc4ee53-0261-4335-935a-07e929d0339c",
+      "title": "First Then Practice",
+      "domain": "planning_executive",
+      "skill": "learning.executive_functioning",
+      "stage": "learning.executive_functioning.s1_use_first_then",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will complete one simple first-then routine with support. choose one simple task. say, \"first clean up, then bubbles.\" help your child finish the first step. immediately offer the second activity. celebrate success. keep the first task short. use favorite rewards. follow th",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "e98231ee-01bc-42e7-b5c0-78daa001db19",
+      "title": "Follow Directions Anywhere",
+      "domain": "understanding_conversation",
+      "skill": "communication.following_directions",
+      "stage": "communication.following_directions.s5_directions_in_daily_life",
+      "currentDifficulty": "advanced",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will follow familiar directions across different settings and routines. choose a normal daily routine. give a familiar direction naturally. wait for your child to respond. offer support only if needed. practice with another person or routine later. generalization grows thro",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "932463a0-cd66-4e03-86d3-178d5ecf038a",
+      "title": "Help Pull It On",
+      "domain": "personal_care",
+      "skill": "routines.dressing",
+      "stage": "routines.dressing.s1_join_one_dressing_action",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "more_support",
+      "evidence": [
+        "Task/caregiver evidence: the child will complete part of one dressing step during three practice opportunities with caregiver support. choose one easy clothing item. start the dressing step for your child. pause and say, “help pull.” guide your child to pull, push, or lift. praise any participation. use ",
+        "Ongoing setup/modeling/guidance is central."
+      ],
+      "comparableReviewedLessons": [
+        "First Then Transition"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "03717f42-43f1-4a8b-8770-8c5de40107ee",
+      "title": "Let's Build a Tower!",
+      "domain": "play_skills",
+      "skill": "play.functional",
+      "stage": "play.functional.s1_use_one_familiar_toy_meaningfully",
+      "currentDifficulty": "support",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: the child will stack at least two items during three out of five opportunities with caregiver support. show your child two blocks. say, “watch me build.” stack one block on top of another. give your child a block and say, “your turn. put it on.” wait 3–5 seconds. celebrate any at",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "7ecd979e-b25b-480c-9880-5f7ef6b3688f",
+      "title": "Let's Roll the Ball!",
+      "domain": "play_skills",
+      "skill": "play.functional",
+      "stage": "play.functional.s2_use_a_simple_toy_action",
+      "currentDifficulty": "support",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: the child will roll a ball toward or into a container during three practice turns with caregiver support. show your child the ball and basket. say, “watch me,” and roll the ball into the basket. give your child the ball and say, “your turn. roll it in.” wait 3–5 seconds. celebrat",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "75c15624-6b9c-4439-9e7e-0d18c9872f6b",
+      "title": "Listen With Me",
+      "domain": "understanding_conversation",
+      "skill": "communication.following_directions",
+      "stage": "communication.following_directions.s1_one_familiar_direction",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will respond to one familiar direction with support. choose one familiar direction. say the direction clearly, such as “give me” or “come here.” show or model what to do. help your child complete the direction. praise listening and responding. use short directions with fami",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "203dd6f8-d6f0-49b7-9e8a-969c93f83bf0",
+      "title": "Look and Show",
+      "domain": "functional_communication",
+      "skill": "communication.non_speaking_social",
+      "stage": "communication.non_speaking_social.s1_show_or_orient",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will use a non-verbal signal to show interest or request attention. hold up a preferred item. pause and wait for your child to look, reach, point, or move toward it. say, “you’re showing me.” give the item right away. praise the communication attempt. accept any safe commun",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "264988f4-abb4-4552-ba9f-bda74a37da02",
+      "title": "Look What I Found",
+      "domain": "engagement_attention",
+      "skill": "learning.curiosity_engagement",
+      "stage": "learning.curiosity_engagement.s1_notice_something_interesting",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will look at, touch, or explore one new item during three practice opportunities. place one interesting item in front of your child. say, “look what i found.” model touching or exploring the item. wait for your child to look, reach, touch, or respond. praise any curiosity o",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "df1059ee-c34b-4ff2-90c4-14c5e609a847",
+      "title": "My Turn, Your Turn",
+      "domain": "social_interaction",
+      "skill": "social.sharing_turn_taking",
+      "stage": "social.sharing_turn_taking.s1_join_one_reciprocal_turn",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will participate in one simple turn-taking exchange with support. choose one simple toy. take one short turn. say, “your turn.” help your child take a turn. praise taking turns. keep turns very short at first. use a toy your child enjoys so the exchange feels motivating.",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "bbced1a2-f764-4192-94c2-3219c98b9530",
+      "title": "Open and Close Containers",
+      "domain": "fine_motor",
+      "skill": "movement.bilateral_coordination",
+      "stage": "movement.bilateral_coordination.s5_use_both_hands_in_daily_life",
+      "currentDifficulty": "advanced",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will use one hand to stabilize and the other hand to open, close, pull, twist, or remove a lid across everyday containers. choose a container your child uses often, such as a snack cup or lunch box. show how one hand holds the container steady while the other hand opens it.",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "c977bdfc-8339-4a0a-b4b6-98d4e768675f",
+      "title": "Point to Show Me",
+      "domain": "functional_communication",
+      "skill": "communication.non_speaking_social",
+      "stage": "communication.non_speaking_social.s2_familiar_gestures",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: build intentional non-verbal communication. place two motivating items in front of your child. ask, \"can you show me which one you want?\" pause for 3–5 seconds. model pointing if needed. accept pointing, reaching, or another intentional gesture. immediately provide the selected i",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "f98a7423-22df-497a-bf8e-3ad17c68313b",
+      "title": "Recognizing the Feeling: Happy",
+      "domain": "emotional_understanding",
+      "skill": "emotions.emotion_identification",
+      "stage": "emotions.emotion_identification.s1_notice_familiar_feelings",
+      "currentDifficulty": "Beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: the child will correctly identify the emotion “happy” in pictures, real people, and themselves with minimal prompting. 1. show a picture of a smiling face. 2. point to the smile. 3. say: “this person is happy.” 4. ask: “can you point to happy?” 5. if correct, immediately praise. ",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "c2181af0-654c-4305-9629-6828c263542b",
+      "title": "Requesting a Favorite Snack",
+      "domain": "functional_communication",
+      "skill": "communication.requesting",
+      "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: support requesting during a daily routine. show your child the preferred snack. give a small portion. pause before offering more. keep the remaining snack visible but out of reach. wait 3–5 seconds for a request. accept any clear intentional communication attempt. prompt the requ",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "4c421463-e77d-458c-afcb-c4d80e1bca53",
+      "title": "Requesting Bubbles",
+      "domain": "functional_communication",
+      "skill": "communication.requesting",
+      "stage": "communication.requesting.s1_request_a_visible_item",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: increase intentional requesting. show your child the bubbles. blow a few bubbles to build interest. close the container and pause. hold the bubbles where your child can see them. wait 3–5 seconds for a request. accept any clear intentional communication attempt. prompt the reques",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "593b6e2b-db4e-4db5-b6ff-8f09b0ab4723",
+      "title": "Requesting Help",
+      "domain": "functional_communication",
+      "skill": "communication.requesting",
+      "stage": "communication.requesting.s2_request_varied_wants_and_needs",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: increase independent functional help-seeking communication during daily routines and play. give your child a task that may need help. pause and wait. model “help” using words, sign, gesture, or picture. prompt gently if needed. help right away after any request attempt. do not wa",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "c87f1e47-27f5-4ddb-9482-9d7f4c12e33e",
+      "title": "Show Me Anywhere",
+      "domain": "functional_communication",
+      "skill": "communication.non_speaking_social",
+      "stage": "communication.non_speaking_social.s5_communicate_across_settings",
+      "currentDifficulty": "advanced",
+      "proposedSupportLevel": "more_support",
+      "evidence": [
+        "Task/caregiver evidence: child will use non-verbal communication across different daily situations. offer motivating choices throughout the day. pause and wait for communication. accept pointing, reaching, eye gaze, or other gestures. respond immediately to successful communication. practice with differe",
+        "Ongoing setup/modeling/guidance is central."
+      ],
+      "comparableReviewedLessons": [
+        "First Then Transition"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "6a174566-94a8-4684-b5dd-9e38fd1ea311",
+      "title": "Stand Like a Statue",
+      "domain": "gross_motor",
+      "skill": "movement.balance_coordination",
+      "stage": "movement.balance_coordination.s1_hold_a_stable_position",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will stand in one spot for 3–5 seconds with support. stand next to your child in a clear space with a wall or chair nearby for safety. say: “stand like a statue.” show your child how to place both feet on the floor. gently support their hands, shoulders, or waist if needed.",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "30326f3e-5236-4c82-9f16-c9716d3baff4",
+      "title": "Take a Communication Turn",
+      "domain": "understanding_conversation",
+      "skill": "communication.pragmatics_conversation",
+      "stage": "communication.pragmatics_conversation.s1_one_communication_turn",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will participate in one back-and-forth communication exchange with support. 1. join your child in an activity they already enjoy. 2. begin one communication turn. you might roll a ball, activate a toy, offer one piece of a snack, make a playful sound, or comment on what you",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "58a4ba56-5409-4cfa-8ea5-797e2607d806",
+      "title": "Tell Me You Need to Go",
+      "domain": "personal_care",
+      "skill": "routines.toileting",
+      "stage": "routines.toileting.s5_communicate_and_generalize",
+      "currentDifficulty": "advanced",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will communicate the need to use the bathroom using words, gestures, signs, aac, or a bathroom card across familiar routines. choose a time when your child is likely to need the bathroom, such as after waking, after meals, or before leaving the house. show the bathroom card",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "22ff1454-403f-4eac-98d1-ad95f128b3f2",
+      "title": "Use a Gesture to Tell Me",
+      "domain": "functional_communication",
+      "skill": "communication.non_speaking_social",
+      "stage": "communication.non_speaking_social.s4_choose_a_communication_form",
+      "currentDifficulty": "intermediate",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will use a non-verbal communication signal with reduced prompting. present two motivating choices. pause and wait for your child to respond. watch for pointing, reaching, eye gaze, nodding, or another gesture. immediately label the child’s communication. honor the choice wh",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "eb13bfef-edb4-44a8-be22-4d80e8af13d7",
+      "title": "Wave Goodbye",
+      "domain": "functional_communication",
+      "skill": "communication.non_speaking_social",
+      "stage": "communication.non_speaking_social.s2_familiar_gestures",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: build independent non-verbal social communication by waving goodbye during daily routines. stand facing your child. wave and say “bye.” pause for a response. prompt a small wave if needed. celebrate any attempt. practice with familiar people first.",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    },
+    {
+      "lessonId": "a19c85cd-46fc-4141-bce6-bac285c65232",
+      "title": "Where Did It Go",
+      "domain": "understanding_conversation",
+      "skill": "communication.answering_questions",
+      "stage": "communication.answering_questions.s3_people_places_and_recall",
+      "currentDifficulty": "beginner",
+      "proposedSupportLevel": "balanced_support",
+      "evidence": [
+        "Task/caregiver evidence: child will answer simple “where did it go?” questions by locating or identifying the location of familiar objects using words, pointing, gestures, signs, or aac with increasing independence. show your child a favorite object. allow your child to hold or explore it briefly. hide t",
+        "Caregiver support and child action are both substantial."
+      ],
+      "comparableReviewedLessons": [
+        "Requesting More",
+        "Clean Up Toys",
+        "What Comes First"
+      ],
+      "confidence": "MEDIUM",
+      "unresolvedIssue": null,
+      "reviewStatus": "PROPOSED_FOR_REVIEW",
+      "provenance": [
+        "approved_live_lesson_content",
+        "phase4b_authoritative_mapping",
+        "phase4d_reviewed_support_patterns"
+      ],
+      "mechanicalStageInference": false,
+      "mechanicalDifficultyInference": false
+    }
+  ]
+}
