@@ -140,9 +140,7 @@ export default function PaywallScreen() {
     }
   };
 
-  const displayPrice =
-    packageToBuy?.product?.priceString ||
-    '$9.99/month';
+  const displayPrice = packageToBuy?.product.priceString ?? null;
 
   const purchaseDisabled =
     loadingOffering ||
@@ -156,7 +154,9 @@ export default function PaywallScreen() {
       </Text>
 
       <Text style={styles.trialText}>
-  Eligible subscribers may receive 2 weeks free, then {displayPrice} unless canceled.
+  {displayPrice
+    ? `Eligible subscribers may receive 2 weeks free, then ${displayPrice} unless canceled.`
+    : 'Subscription pricing is temporarily unavailable.'}
 </Text>
 
       <Text style={styles.benefit}>

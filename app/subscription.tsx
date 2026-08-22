@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 
 import { useSubscription } from '../lib/SubscriptionContext';
@@ -28,9 +29,9 @@ type CurrentPlan = 'free' | 'monthly' | 'yearly';
 
 type RevenueCatPlan = {
   title: string;
-  priceString: string;
+  priceString: string | null;
   subtext: string;
-  packageObject: any | null;
+  packageObject: PurchasesPackage | null;
 };
 
 const TERMS_URL =
@@ -96,15 +97,15 @@ export default function SubscriptionScreen() {
 
   const [monthlyPlan, setMonthlyPlan] = useState<RevenueCatPlan>({
     title: 'Monthly',
-    priceString: '$9.99/month',
+    priceString: null,
     subtext: 'Perfect if you prefer paying month-to-month.',
     packageObject: null,
   });
 
   const [yearlyPlan, setYearlyPlan] = useState<RevenueCatPlan>({
     title: 'Yearly',
-    priceString: '$59.99/year',
-    subtext:'Save nearly $60 per year compared with monthly.',
+    priceString: null,
+    subtext: 'Save with the yearly plan compared with monthly.',
     packageObject: null,
   });
 
@@ -158,7 +159,7 @@ useEffect(() => {
       const offering = await getCurrentOffering();
 
       if (!offering) {
-        console.log('No current offering found. Using fallback plan text.');
+        console.log('No current offering found. Store pricing is unavailable.');
         return;
       }
 
@@ -187,7 +188,7 @@ useEffect(() => {
       if (monthlyPkg) {
         setMonthlyPlan({
           title: 'Monthly',
-          priceString: monthlyPkg.product?.priceString || '$9.99/mo',
+          priceString: monthlyPkg.product.priceString,
           subtext: 'Perfect if you prefer paying month-to-month.',
           packageObject: monthlyPkg,
         });
@@ -195,11 +196,11 @@ useEffect(() => {
 
       if (yearlyPkg) {
         setYearlyPlan({
-  title: 'Yearly',
-  priceString: yearlyPkg.product?.priceString || '$59.99/yr',
-  subtext: 'Save nearly $60 per year compared with monthly.',
-  packageObject: yearlyPkg,
-});
+          title: 'Yearly',
+          priceString: yearlyPkg.product.priceString,
+          subtext: 'Save with the yearly plan compared with monthly.',
+          packageObject: yearlyPkg,
+        });
       }
 
       if (!monthlyPkg && yearlyPkg) {
@@ -248,7 +249,7 @@ const selectedPlanDetails = useMemo(() => {
         const availablePackages = offering.availablePackages || [];
 
         selectedPackage =
-          selectedPlan === 'yearly'
+          (selectedPlan === 'yearly'
             ? availablePackages.find(
                 (pkg: any) =>
                   pkg.packageType === 'ANNUAL' ||
@@ -261,7 +262,7 @@ const selectedPlanDetails = useMemo(() => {
                   pkg.packageType === 'MONTHLY' ||
                   pkg.product?.identifier?.toLowerCase().includes('month') ||
                   pkg.product?.identifier?.toLowerCase().includes('aba_monthly')
-              );
+              )) ?? null;
 
         if (!selectedPackage && availablePackages.length > 0) {
           selectedPackage = availablePackages[0];
@@ -450,7 +451,7 @@ Start Your FREE 2-Week Trial
             <View style={styles.loadingPlansCard}>
               <ActivityIndicator color="#4F46E5" />
               <Text style={styles.loadingPlansText}>
-                Loading live App Store pricing...
+                Loading live store pricing...
               </Text>
             </View>
           ) : null}
@@ -475,7 +476,9 @@ Start Your FREE 2-Week Trial
 </Text>
 
 <Text style={styles.planPrice}>
-  Then {monthlyPlan.priceString}
+  {monthlyPlan.priceString
+    ? `Then ${monthlyPlan.priceString}`
+    : 'Price temporarily unavailable'}
 </Text>
 
 <Text style={styles.planSubtext}>
@@ -519,7 +522,9 @@ Start Your FREE 2-Week Trial
 </Text>
 
 <Text style={styles.planPrice}>
-  Then {yearlyPlan.priceString}
+  {yearlyPlan.priceString
+    ? `Then ${yearlyPlan.priceString}`
+    : 'Price temporarily unavailable'}
 </Text>
 
 <Text style={styles.savings}>
@@ -551,7 +556,12 @@ Start Your FREE 2-Week Trial
           <TouchableOpacity
             style={[styles.ctaButton, loading && styles.ctaButtonDisabled]}
             onPress={handlePurchase}
-            disabled={loading || plansLoading || checkingPlan}
+            disabled={
+              loading ||
+              plansLoading ||
+              checkingPlan ||
+              !selectedPlanDetails.packageObject
+            }
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -565,9 +575,11 @@ Start Your FREE 2-Week Trial
         ) : null}
 
 <Text style={styles.trialPricing}>
-  {selectedPlan === 'monthly'
+  {selectedPlan === 'monthly' && monthlyPlan.priceString
     ? `Eligible subscribers may receive 2 weeks free, then ${monthlyPlan.priceString} unless canceled.`
-    : `Eligible subscribers may receive 2 weeks free, then ${yearlyPlan.priceString} unless canceled.`}
+    : selectedPlan === 'yearly' && yearlyPlan.priceString
+      ? `Eligible subscribers may receive 2 weeks free, then ${yearlyPlan.priceString} unless canceled.`
+      : 'Subscription pricing is temporarily unavailable.'}
 </Text>
 
         {showPurchaseButton ? (
