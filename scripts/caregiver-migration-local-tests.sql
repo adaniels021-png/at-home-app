@@ -182,4 +182,37 @@ select public.test_assert(not public.has_child_permission('10000000-0000-0000-00
 select public.test_assert((select count(*) = 0 from public.child_safety_profiles), 'removal revokes safety access immediately');
 reset role;
 
+-- Catalog-level ACL contract. The fixture reproduces Supabase's direct anon
+-- default grant, and the follow-up migration must remove it for all 10 RPCs.
+do $$
+declare
+  signature text;
+  function_oid oid;
+begin
+  foreach signature in array array[
+    'public.child_access_role(uuid)',
+    'public.has_child_access(uuid)',
+    'public.has_child_permission(uuid,text)',
+    'public.can_access_child_safety(uuid)',
+    'public.can_edit_child_safety(uuid)',
+    'public.can_use_child_safety_mode(uuid)',
+    'public.can_participate_child_safety_incident(uuid)',
+    'public.get_child_emergency_response_profile(uuid)',
+    'public.create_caregiver_invite(uuid,text,text)',
+    'public.accept_caregiver_invite(text)'
+  ]
+  loop
+    function_oid := to_regprocedure(signature);
+    perform public.test_assert(function_oid is not null, signature || ' exists');
+    perform public.test_assert(not has_function_privilege('anon', function_oid, 'execute'), signature || ' denies anon');
+    perform public.test_assert(not exists (
+      select 1
+      from pg_proc p
+      cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+      where p.oid = function_oid and acl.grantee = 0 and acl.privilege_type = 'EXECUTE'
+    ), signature || ' denies PUBLIC');
+    perform public.test_assert(has_function_privilege('authenticated', function_oid, 'execute'), signature || ' permits authenticated');
+  end loop;
+end $$;
+
 select 'LOCAL CAREGIVER MIGRATION TESTS PASSED' as result;

@@ -12,6 +12,11 @@ create schema if not exists auth;
 create schema if not exists storage;
 do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;
 do $$ begin create role anon nologin; exception when duplicate_object then null; end $$;
+-- Match Supabase production's direct function ACL defaults. This ensures the
+-- follow-up migration must revoke anon explicitly rather than relying on a
+-- PUBLIC revocation that does not remove a direct role grant.
+alter default privileges for role postgres in schema public
+grant execute on functions to anon, authenticated;
 
 create table auth.users (id uuid primary key, email text unique not null);
 create function auth.uid() returns uuid language sql stable as $$

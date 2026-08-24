@@ -4,6 +4,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const migrationName = '20260823090000_enforce_child_scoped_caregiver_permissions.sql';
 const migration = read(`supabase/migrations/${migrationName}`);
+const aclMigrationName = '20260824010000_harden_caregiver_function_execute_grants.sql';
+const aclMigration = read(`supabase/migrations/${aclMigrationName}`);
 const invite = read('app/settings/invite-caregiver.tsx');
 const accept = read('app/settings/accept-caregiver-invite.tsx');
 const access = read('app/settings/caregiver-access/[id].tsx');
@@ -22,6 +24,18 @@ const functions = [
   'create_caregiver_invite',
   'accept_caregiver_invite',
 ];
+const signatures = [
+  'child_access_role\\(uuid\\)',
+  'has_child_access\\(uuid\\)',
+  'has_child_permission\\(uuid, text\\)',
+  'can_access_child_safety\\(uuid\\)',
+  'can_edit_child_safety\\(uuid\\)',
+  'can_use_child_safety_mode\\(uuid\\)',
+  'can_participate_child_safety_incident\\(uuid\\)',
+  'get_child_emergency_response_profile\\(uuid\\)',
+  'create_caregiver_invite\\(uuid, text, text\\)',
+  'accept_caregiver_invite\\(text\\)',
+];
 for (const name of functions) {
   assert.match(
     migration,
@@ -30,6 +44,18 @@ for (const name of functions) {
   );
   assert.match(migration, new RegExp(`revoke all on function public\\.${name}\\(`), `${name} must revoke PUBLIC execution`);
   assert.match(migration, new RegExp(`grant execute on function public\\.${name}\\(`), `${name} must grant authenticated execution`);
+}
+for (const signature of signatures) {
+  assert.match(
+    aclMigration,
+    new RegExp(`revoke execute on function public\\.${signature} from public, anon;`, 'i'),
+    `${signature} must explicitly revoke both PUBLIC and direct anon execution`,
+  );
+  assert.match(
+    aclMigration,
+    new RegExp(`grant execute on function public\\.${signature} to authenticated;`, 'i'),
+    `${signature} must preserve authenticated execution`,
+  );
 }
 
 for (const policy of [
