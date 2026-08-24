@@ -15,6 +15,8 @@ create table if not exists public.child_caregiver_permission_overrides (
   updated_at timestamptz not null default now(),
   primary key (child_id, caregiver_user_id, permission)
 );
+revoke all on table public.child_caregiver_permission_overrides from public, anon;
+grant select, insert, update, delete on table public.child_caregiver_permission_overrides to authenticated;
 
 create or replace function public.child_access_role(target_child_id uuid)
 returns text language sql stable security definer set search_path = '' as $$
@@ -74,6 +76,18 @@ grant execute on function public.has_child_permission(uuid, text) to authenticat
 create unique index if not exists child_caregivers_child_user_unique
 on public.child_caregivers(child_id, caregiver_user_id);
 
+alter table public.caregiver_invites
+  add column if not exists expires_at timestamptz,
+  add column if not exists accepted_at timestamptz;
+update public.caregiver_invites
+set expires_at = coalesce(created_at, now()) + interval '7 days'
+where expires_at is null;
+alter table public.caregiver_invites
+  alter column expires_at set default (now() + interval '7 days'),
+  alter column expires_at set not null;
+create unique index if not exists caregiver_invites_pending_code_unique
+on public.caregiver_invites(invite_code) where status = 'pending';
+
 alter table public.child_caregiver_permission_overrides enable row level security;
 drop policy if exists "Owners manage child caregiver permission overrides" on public.child_caregiver_permission_overrides;
 create policy "Owners manage child caregiver permission overrides"
@@ -97,7 +111,9 @@ for select to authenticated using (public.has_child_access(id));
 create policy "Owners create their children" on public.children
 for insert to authenticated with check (parent_id = auth.uid());
 create policy "Owners update their children" on public.children
-for update to authenticated using (parent_id = auth.uid()) with check (parent_id = auth.uid());
+for update to authenticated
+using (public.has_child_permission(id, 'edit_child_profile'))
+with check (public.has_child_permission(id, 'edit_child_profile'));
 create policy "Owners delete their children" on public.children
 for delete to authenticated using (parent_id = auth.uid());
 
@@ -148,6 +164,14 @@ create or replace function public.can_participate_child_safety_incident(target_c
 returns boolean language sql stable security definer set search_path = '' as $$
   select public.has_child_permission(target_child_id, 'use_elopement_response');
 $$;
+revoke all on function public.can_access_child_safety(uuid) from public;
+revoke all on function public.can_edit_child_safety(uuid) from public;
+revoke all on function public.can_use_child_safety_mode(uuid) from public;
+revoke all on function public.can_participate_child_safety_incident(uuid) from public;
+grant execute on function public.can_access_child_safety(uuid) to authenticated;
+grant execute on function public.can_edit_child_safety(uuid) to authenticated;
+grant execute on function public.can_use_child_safety_mode(uuid) to authenticated;
+grant execute on function public.can_participate_child_safety_incident(uuid) to authenticated;
 
 -- Emergency response exposes a deliberately limited projection, not the full
 -- editable/private Safety Profile row.
@@ -194,18 +218,21 @@ create or replace function public.create_caregiver_invite(
 ) returns text language plpgsql security definer set search_path = '' as $$
 declare generated_code text;
 begin
-  if public.child_access_role(target_child_id) <> 'owner' then
+  if public.child_access_role(target_child_id) is distinct from 'owner' then
     raise exception 'only the child owner can invite caregivers';
   end if;
   if target_role not in ('parent', 'caregiver', 'therapist') then raise exception 'invalid caregiver role'; end if;
   if lower(trim(target_email)) = lower(coalesce(auth.jwt() ->> 'email', '')) then raise exception 'cannot invite yourself'; end if;
   loop
-    generated_code := upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 10));
-    exit when not exists (select 1 from public.caregiver_invites where invite_code = generated_code and status = 'pending');
+    generated_code := upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 10));
+    begin
+      insert into public.caregiver_invites (child_id, invited_email, role, invite_code, status, created_by)
+      values (target_child_id, lower(trim(target_email)), target_role, generated_code, 'pending', auth.uid());
+      return generated_code;
+    exception when unique_violation then
+      -- Generate a new code if another transaction claimed this one first.
+    end;
   end loop;
-  insert into public.caregiver_invites (child_id, invited_email, role, invite_code, status, created_by)
-  values (target_child_id, lower(trim(target_email)), target_role, generated_code, 'pending', auth.uid());
-  return generated_code;
 end;
 $$;
 revoke all on function public.create_caregiver_invite(uuid, text, text) from public;
@@ -221,6 +248,7 @@ begin
   caller_email := lower(coalesce(auth.jwt() ->> 'email', ''));
   select * into invite from public.caregiver_invites
     where invite_code = upper(trim(p_invite_code)) and status = 'pending'
+      and expires_at > now()
     for update;
   if not found then raise exception 'invalid or already-used invite'; end if;
   if lower(invite.invited_email) <> caller_email then raise exception 'invite email does not match signed-in user'; end if;
@@ -230,7 +258,7 @@ begin
   values (invite.child_id, auth.uid(), invite.created_by, invite.role, 'accepted')
   on conflict (child_id, caregiver_user_id) do update
     set role = excluded.role, status = 'accepted', owner_user_id = excluded.owner_user_id;
-  update public.caregiver_invites set status = 'accepted'
+  update public.caregiver_invites set status = 'accepted', accepted_at = now()
     where id = invite.id and status = 'pending';
   return invite.child_id;
 end;
