@@ -66,6 +66,7 @@ assert.match(migration, /expires_at > now\(\)/);
 assert.match(migration, /lower\(invite\.invited_email\) <> caller_email/);
 assert.match(migration, /status = 'pending'[\s\S]*?for update/);
 assert.match(migration, /is distinct from 'owner'/, 'owner authorization must be NULL-safe');
+assert.match(migration, /drop function if exists public\.accept_caregiver_invite\(text\)/, 'legacy table-returning invite RPC must be dropped before scalar replacement');
 assert.doesNotMatch(invite, /Math\.random/);
 
 assert.match(migration, /get_child_emergency_response_profile[\s\S]*?jsonb_build_object/);

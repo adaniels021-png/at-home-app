@@ -240,6 +240,10 @@ grant execute on function public.create_caregiver_invite(uuid, text, text) to au
 
 -- Invite acceptance is atomic, email-bound, single-use, role-constrained, and
 -- inserts membership only for the invited child.
+-- Production previously exposed this RPC as RETURNS TABLE(child_id, role).
+-- PostgreSQL requires a drop before replacing it with the scalar UUID contract
+-- used by the current client.
+drop function if exists public.accept_caregiver_invite(text);
 create or replace function public.accept_caregiver_invite(p_invite_code text)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare invite public.caregiver_invites%rowtype; caller_email text;

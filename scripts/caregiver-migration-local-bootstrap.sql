@@ -36,6 +36,11 @@ create table public.caregiver_invites (
   status text not null, created_by uuid not null references auth.users(id), created_at timestamptz default now()
 );
 create unique index caregiver_invites_pending_code_unique on public.caregiver_invites(invite_code) where status = 'pending';
+-- Reproduce the legacy production RPC return type so the target migration
+-- proves that its intentional scalar-return replacement is executable.
+create function public.accept_caregiver_invite(p_invite_code text)
+returns table(child_id uuid, role text) language sql security definer
+set search_path = public as $$ select null::uuid, null::text where false $$;
 create table public.child_safety_profiles (
   id uuid primary key default extensions.gen_random_uuid(), child_id uuid unique not null references public.children(id) on delete cascade,
   preferred_name text, photo_path text, height text, weight text, hair_color text, eye_color text,
