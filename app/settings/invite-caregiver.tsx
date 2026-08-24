@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
 import { canManageCaregivers, getRoleAccessSummary } from '../../lib/caregiverPermissions';
 import { AccessSummary, RoleBadge } from '../../components/caregivers/CaregiverAccessUI';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 

@@ -25,7 +25,7 @@ import {
   hasCompletedGettingStarted,
 } from '../../lib/gettingStarted';
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import { canAccessLesson } from '../../lib/entitlements';
 import { getLearningPath } from '../../lib/learningPath';
 import { completeLesson } from '../../lib/lessonEngine';

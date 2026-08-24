@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
-import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription } from '../lib/ChildSubscriptionContext';
 import {
   getRouteEntitlement,
   hasEntitlement,
@@ -10,7 +10,7 @@ import {
 export default function EntitlementNavigationGuard() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isPro, loading } = useSubscription();
+  const { isPro, loading } = useChildSubscription();
 
   useEffect(() => {
     if (loading) return;

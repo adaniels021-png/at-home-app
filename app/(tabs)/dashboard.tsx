@@ -19,7 +19,7 @@ import { ensureLessonQueue } from '../../lib/lessonQueue';
 import { isReassessmentDue } from '../../lib/reassessment';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import { canAccessRoute, hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 

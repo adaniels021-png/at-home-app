@@ -3,12 +3,12 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription } from '../lib/ChildSubscriptionContext';
 import { hasEntitlement } from '../lib/entitlements';
 
 export default function ProGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isPro, loading } = useSubscription();
+  const { isPro, loading } = useChildSubscription();
   const hasProAccess = hasEntitlement(
     { isPro },
     'premium_tool'

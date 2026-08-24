@@ -104,7 +104,6 @@ const PREMIUM_ROUTE_ENTITLEMENTS: readonly {
   { route: '/routines/customize', entitlement: 'routines_customize' },
   { route: '/manage-pecs', entitlement: 'pecs_customize' },
   { route: '/pecs-creator', entitlement: 'pecs_customize' },
-  { route: '/settings/manage-caregivers', entitlement: 'manage_caregivers' },
   { route: '/settings/invite-caregiver', entitlement: 'manage_caregivers' },
   { route: '/parent-support/emotional-reset', entitlement: 'parent_support' },
   { route: '/parent-support/journal', entitlement: 'parent_support' },

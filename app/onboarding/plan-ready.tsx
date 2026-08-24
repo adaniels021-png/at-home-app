@@ -1,6 +1,6 @@
 import { ensureLessonQueue } from '@/lib/lessonQueue';
 import { useChild } from '@/lib/SelectedChildContext';
-import { useSubscription } from '@/lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '@/lib/ChildSubscriptionContext';
 import { hasEntitlement } from '@/lib/entitlements';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';

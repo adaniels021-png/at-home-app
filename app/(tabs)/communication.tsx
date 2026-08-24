@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { PrintGridSize, printPecsCards } from '../../lib/communicationPrint';
 import {

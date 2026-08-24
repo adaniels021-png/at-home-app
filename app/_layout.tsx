@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import EntitlementNavigationGuard from '../components/EntitlementNavigationGuard';
 import { ChildProvider } from '../lib/SelectedChildContext';
+import { ChildSubscriptionProvider } from '../lib/ChildSubscriptionContext';
 import { SettingsProvider } from '../lib/SettingsContext';
 import { SubscriptionProvider } from '../lib/SubscriptionContext';
 import {
@@ -254,8 +255,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SettingsProvider>
         <SubscriptionProvider>
-          <EntitlementNavigationGuard />
           <ChildProvider>
+            <ChildSubscriptionProvider>
+              <EntitlementNavigationGuard />
             {/*
              * The Stack must stay mounted even while startup work
              * is running. The loading screen is an overlay instead
@@ -279,6 +281,7 @@ export default function RootLayout() {
                 </Text>
               </View>
             ) : null}
+            </ChildSubscriptionProvider>
           </ChildProvider>
         </SubscriptionProvider>
       </SettingsProvider>

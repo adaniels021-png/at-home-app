@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getRecommendedActivitiesFromLibrary } from '../../lib/activityLibrary';
 
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import {
   canAccessActivity as hasActivityAccess,
   hasEntitlement,

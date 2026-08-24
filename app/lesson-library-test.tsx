@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import AnimatedPressable from '../components/AnimatedPressable';
 import { canAccessLesson } from '../lib/entitlements';
 import { getLessonLibraryItems, LessonLibraryItem } from '../lib/lessonLibrary';
-import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../lib/ChildSubscriptionContext';
 
 export default function LessonLibraryTestScreen() {
   const router = useRouter();

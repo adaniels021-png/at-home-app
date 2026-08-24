@@ -506,7 +506,7 @@ useEffect(() => {
   <Text style={styles.sectionTitle}>Parent & Learning Tools</Text>
 
   <View style={styles.toolList}>
-    <ToolCard
+    {hasGeneralHelpNow ? <ToolCard
       image={require('../../assets/images/parent-support-tool.png')}
       title="Parent Support"
       subtitle="Caregiver tools, Parent Wins, journaling, and encouragement."
@@ -514,7 +514,7 @@ useEffect(() => {
       bg="#F5F3FF"
       border="#DDD6FE"
       onPress={() => router.push('/parent-support')}
-    />
+    /> : null}
 
     <ToolCard
       image={require('../../assets/images/activities-tool.png')}
@@ -555,11 +555,11 @@ useEffect(() => {
     open={quickAccessOpen}
     onPress={() => setQuickAccessOpen((current) => !current)}
   >
-    <DropdownItem
+    {hasGeneralHelpNow ? <DropdownItem
       icon="book-outline"
       label="Daily Lessons"
       onPress={() => router.push('/daily-lessons')}
-    />
+    /> : null}
 
     <DropdownItem
       icon="calendar-outline"

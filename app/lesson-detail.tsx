@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getLessonById, LessonLibraryItem } from '../lib/lessonLibrary';
-import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../lib/ChildSubscriptionContext';
 
 export default function LessonDetail() {
   const router = useRouter();

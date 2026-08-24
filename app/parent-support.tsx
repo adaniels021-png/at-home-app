@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../lib/ChildSubscriptionContext';
+import { useChild } from '../lib/SelectedChildContext';
+import { canUseHelpNowGeneral } from '../lib/caregiverPermissions';
 import { hasEntitlement } from '../lib/entitlements';
 
 type SupportSection = {
@@ -94,6 +96,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
 
 export default function ParentSupportScreen() {
   const router = useRouter();
+  const { selectedChild, loading: childLoading } = useChild();
   const { isPro, loading } = useSubscription();
 
   const hasProAccess = hasEntitlement(
@@ -128,7 +131,7 @@ export default function ParentSupportScreen() {
     router.push(section.route);
   }
 
-  if (loading) {
+  if (childLoading || loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
@@ -137,6 +140,10 @@ export default function ParentSupportScreen() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (!canUseHelpNowGeneral(selectedChild?.caregiver_access_role)) {
+    return <Redirect href="/(tabs)" />;
   }
 
   return (

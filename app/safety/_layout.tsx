@@ -2,14 +2,17 @@ import { Redirect, Stack, useSegments } from 'expo-router';
 
 import { canUseElopementResponse, canViewSafetyProfile } from '../../lib/caregiverPermissions';
 import { useChild } from '../../lib/SelectedChildContext';
+import { useChildSubscription } from '../../lib/ChildSubscriptionContext';
 
 export default function SafetyLayout() {
   const segments = useSegments();
   const { loading, selectedChild } = useChild();
+  const { isPro, loading: subscriptionLoading } = useChildSubscription();
   const role = selectedChild?.caregiver_access_role;
   const isEmergencyRoute = segments.includes('emergency');
 
-  if (loading) return null;
+  if (loading || subscriptionLoading) return null;
+  if (!isPro) return <Redirect href="/(tabs)" />;
   if (isEmergencyRoute && !canUseElopementResponse(role)) {
     return <Redirect href="/(tabs)" />;
   }

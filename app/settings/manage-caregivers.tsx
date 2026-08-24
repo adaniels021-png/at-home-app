@@ -20,7 +20,7 @@ import {
   type PermissionOverrides,
 } from "../../lib/caregiverPermissions";
 import { useChild } from "../../lib/SelectedChildContext";
-import { useSubscription } from "../../lib/SubscriptionContext";
+import { useChildSubscription as useSubscription } from "../../lib/ChildSubscriptionContext";
 import { hasEntitlement } from "../../lib/entitlements";
 import { supabase } from "../../lib/supabase";
 import {
@@ -145,12 +145,12 @@ export default function ManageCaregiversScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!hasProAccess) {
+      if (canInvite && !hasProAccess) {
         router.replace("/subscription");
         return;
       }
       void loadCaregivers();
-    }, [hasProAccess, loadCaregivers, router]),
+    }, [canInvite, hasProAccess, loadCaregivers, router]),
   );
 
   const cancelInvite = (inviteId: string) => {

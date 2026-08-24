@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AnimatedPressable from '../../components/AnimatedPressable';
 import { getLessonById, LessonLibraryItem } from '../../lib/lessonLibrary';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 
 export default function LessonLibraryDetailScreen() {
   const router = useRouter();

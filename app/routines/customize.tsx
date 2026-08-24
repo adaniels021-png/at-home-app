@@ -20,7 +20,7 @@ import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
-import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { canCustomizeRoutines } from '../../lib/caregiverPermissions';
 import { withTimeout } from '../../lib/performance';

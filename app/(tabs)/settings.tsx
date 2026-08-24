@@ -26,6 +26,7 @@ import { deleteChildProfile } from '../../lib/deleteChildProfile';
 import { useResponsiveLayout } from '../../lib/responsive';
 import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription } from '../../lib/ChildSubscriptionContext';
 import { canAccessRoute, hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
@@ -51,7 +52,8 @@ export default function SettingsScreen() {
   const childContext = useChild() as any;
   const { selectedChild, refreshChildren } = childContext;
 
-  const { isPro } = useSubscription();
+  const { isPro: personalIsPro } = useSubscription();
+  const { isPro } = useChildSubscription();
 
   const [deletingChild, setDeletingChild] = useState(false);
   const { isAdmin: isAppAdmin } = useAdminAccess();
@@ -59,6 +61,10 @@ export default function SettingsScreen() {
 
   const hasProAccess = hasEntitlement(
     { isPro },
+    'premium_tool'
+  );
+  const personalHasProAccess = hasEntitlement(
+    { isPro: personalIsPro },
     'premium_tool'
   );
 
@@ -193,7 +199,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
   </Section>
 ) : null}
 
-          {!hasProAccess ? (
+          {!hasProAccess && allowManageSubscription ? (
             <TouchableOpacity
               style={styles.proCard}
               onPress={() => router.push('/subscription')}
@@ -317,10 +323,10 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
           <Section title="Subscription">
             <SettingItem
   icon="card-outline"
-  label={hasProAccess ? 'Manage Subscription' : 'View Subscription Options'}
+  label={personalHasProAccess ? 'Manage Subscription' : 'View Subscription Options'}
   sub={!allowManageSubscription ? 'Owner only' : undefined}
   helper={
-    hasProAccess
+    personalHasProAccess
       ? 'Change plans or cancel through Apple'
       : 'Choose monthly or yearly Pro access'
   }
