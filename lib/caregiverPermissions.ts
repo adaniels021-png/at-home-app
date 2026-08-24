@@ -60,21 +60,21 @@ export const CAREGIVER_ROLE_LABELS: Record<CaregiverRole, string> = {
 
 export type RoleAccessSummary = { available: string[]; restricted: string[] };
 
-export function getRoleAccessSummary(role?: string | null): RoleAccessSummary {
+export function getRoleAccessSummary(role?: string | null, overrides?: PermissionOverrides | null): RoleAccessSummary {
   const available: string[] = [];
   const restricted: string[] = [];
-  if (canViewLearningContent(role)) available.push('Lessons and daily support');
-  if (canUseCommunicationTools(role)) available.push('Communication tools');
-  if (canViewProgress(role)) available.push('Progress tools');
-  if (canUseElopementResponse(role)) available.push('Emergency and elopement response');
-  if (canEditChildProfile(role)) available.push('Child profile editing');
+  if (canViewLearningContent(role, overrides)) available.push('Lessons and daily support');
+  if (canUseCommunicationTools(role, overrides)) available.push('Communication tools');
+  if (canViewProgress(role, overrides)) available.push('Progress tools');
+  if (canUseElopementResponse(role, overrides)) available.push('Emergency and elopement response');
+  if (canEditChildProfile(role, overrides)) available.push('Child profile editing');
   else restricted.push('Child profile editing');
-  if (canViewSafetyProfile(role)) available.push('Full Safety Profile');
+  if (canViewSafetyProfile(role, overrides)) available.push('Full Safety Profile');
   else restricted.push('Full Safety Profile');
-  if (canUseHelpNowGeneral(role)) available.push('General Help Now');
+  if (canUseHelpNowGeneral(role, overrides)) available.push('General Help Now');
   else restricted.push('General Help Now');
-  if (canManageCaregivers(role)) available.push('Caregiver management');
+  if (canManageCaregivers(role, overrides)) available.push('Caregiver management');
   else restricted.push('Caregiver management');
-  if (!canManageChildSettings(role)) restricted.push('Child settings');
+  if (!canManageChildSettings(role, overrides)) restricted.push('Child settings');
   return { available, restricted };
 }
