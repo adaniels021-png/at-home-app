@@ -4,6 +4,8 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
+  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +19,7 @@ import { useChild } from '../../lib/SelectedChildContext';
 import { useSubscription } from '../../lib/SubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
+import { PersonAvatar, RoleBadge, roleFriendlyName } from '../../components/caregivers/CaregiverAccessUI';
 
 type Caregiver = {
   id: string;
@@ -24,6 +27,7 @@ type Caregiver = {
   role: string;
   status: string;
   created_at: string;
+  display_name?: string;
 };
 
 export default function ManageCaregiversScreen() {
@@ -74,7 +78,15 @@ setPendingInvites(invites || []);
 
       if (error) throw error;
 
-      setCaregivers(data || []);
+      const members = (data || []) as Caregiver[];
+      const userIds = members.map((item) => item.caregiver_user_id).filter(Boolean);
+      const { data: profiles } = userIds.length
+        ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
+        : { data: [] };
+      setCaregivers(members.map((item) => ({
+        ...item,
+        display_name: profiles?.find((profile: any) => profile.id === item.caregiver_user_id)?.full_name || roleFriendlyName(item.role),
+      })));
     } catch (error: any) {
       console.error(error);
 
@@ -135,42 +147,6 @@ setPendingInvites(invites || []);
   );
 };
 
-  const removeCaregiver = (caregiver: Caregiver) => {
-    Alert.alert(
-      'Remove Caregiver',
-      'Are you sure you want to remove this caregiver?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('child_caregivers')
-                .delete()
-                .eq('id', caregiver.id);
-
-              if (error) throw error;
-
-              setCaregivers((current) =>
-                current.filter((item) => item.id !== caregiver.id)
-              );
-            } catch (error: any) {
-              Alert.alert(
-                'Remove Failed',
-                error?.message || 'Could not remove caregiver.'
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const childName =
     selectedChild?.child_name ||
     selectedChild?.name ||
@@ -224,14 +200,18 @@ setPendingInvites(invites || []);
           />
 
           <Text style={styles.heroTitle}>
-            Manage Caregivers
+            Family Access
           </Text>
 
           <Text style={styles.heroText}>
-            View caregivers who currently have access to
-            {` ${childName}'s `}
-            profile.
+            Manage who can support {childName} and what they can access.
           </Text>
+        </View>
+
+        <View style={styles.ownerCard}>
+          <PersonAvatar name="You" />
+          <View style={styles.ownerText}><Text style={styles.ownerTitle}>Your Access</Text><Text style={styles.ownerSubtitle}>Full access to {childName}&apos;s profile and family tools.</Text></View>
+          <RoleBadge role="owner" />
         </View>
 
         <TouchableOpacity
@@ -310,50 +290,34 @@ setPendingInvites(invites || []);
             />
 
             <Text style={styles.emptyTitle}>
-              Build Your Support Team
+              Your Support Team Starts Here
             </Text>
 
             <Text style={styles.emptyText}>
-              Invite caregivers, therapists, and family members to collaborate on lessons, routines, communication tools, and progress tracking.
+              Invite a trusted parent, caregiver, family member, or provider to support {childName}.
             </Text>
           </View>
         ) : (
   caregivers.map((caregiver) => (
-    <View
+    <Pressable
       key={caregiver.id}
       style={styles.caregiverCard}
+      accessibilityRole="button"
+      accessibilityLabel={`Manage ${caregiver.display_name}'s access`}
+      onPress={() => router.push({ pathname: '/settings/caregiver-access/[id]', params: { id: caregiver.id } })}
     >
-      <View style={styles.avatar}>
-        <Ionicons
-          name="person"
-          size={20}
-          color="#4F46E5"
-        />
-      </View>
+      <PersonAvatar name={caregiver.display_name} />
 
       <View style={styles.caregiverInfo}>
-        <Text style={styles.roleText}>
-           {caregiver.role.charAt(0).toUpperCase() + caregiver.role.slice(1)}
-        </Text>
+        <Text style={styles.roleText}>{caregiver.display_name}</Text>
 
         <Text style={styles.statusText}>
-          Status: {caregiver.status}
+          {roleFriendlyName(caregiver.role)} • {caregiver.status === 'accepted' ? 'Active' : caregiver.status}
         </Text>
+        <Text style={styles.accessPreview}>{caregiver.role === 'caregiver' ? 'Lessons • Communication • Emergency Response' : caregiver.role === 'therapist' ? 'Learning • Communication • Progress' : 'Parent-facing family tools'}</Text>
       </View>
-
-      {role === 'owner' && caregiver.role !== 'owner' && (
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => removeCaregiver(caregiver)}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={18}
-            color="#DC2626"
-          />
-        </TouchableOpacity>
-      )}
-    </View>
+      <View style={styles.cardRight}><RoleBadge role={caregiver.role} /><Ionicons name="chevron-forward" size={19} color="#938797" /></View>
+    </Pressable>
   ))
 )}
 
@@ -390,16 +354,7 @@ setPendingInvites(invites || []);
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => cancelInvite(invite.id)}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={18}
-            color="#DC2626"
-          />
-        </TouchableOpacity>
+        <View style={styles.pendingActions}><TouchableOpacity style={styles.shareButton} onPress={() => void Share.share({ message: `Use invite code ${invite.invite_code} to join ${childName}'s support team in ABA at Home.` })}><Text style={styles.shareText}>Share Code</Text></TouchableOpacity><TouchableOpacity style={styles.cancelButton} onPress={() => cancelInvite(invite.id)}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity></View>
       </View>
     ))}
   </>
@@ -412,7 +367,7 @@ setPendingInvites(invites || []);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F1E9',
   },
 
   content: {
@@ -433,7 +388,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4E315A',
     borderRadius: 28,
     padding: 22,
     marginBottom: 20,
@@ -525,6 +480,11 @@ infoText: {
     marginBottom: 12,
   },
 
+  ownerCard: { backgroundColor: '#FFFDF9', borderRadius: 22, padding: 16, borderWidth: 1, borderColor: '#E8DED5', flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  ownerText: { flex: 1, marginHorizontal: 12 },
+  ownerTitle: { color: '#473C49', fontSize: 15, fontWeight: '900' },
+  ownerSubtitle: { color: '#776D78', marginTop: 3, fontSize: 12, lineHeight: 17, fontWeight: '600' },
+
   avatar: {
     width: 48,
     height: 48,
@@ -551,6 +511,8 @@ infoText: {
     fontSize: 12,
     fontWeight: '700',
   },
+  accessPreview: { color: '#786B79', marginTop: 5, fontSize: 11, lineHeight: 15, fontWeight: '600' },
+  cardRight: { alignItems: 'flex-end', gap: 10 },
 
   removeButton: {
     width: 40,
@@ -593,9 +555,15 @@ pendingInviteCard: {
   borderWidth: 1,
   borderColor: '#E2E8F0',
   flexDirection: 'row',
-  alignItems: 'center',
+  alignItems: 'flex-start',
   marginBottom: 12,
 },
+
+pendingActions: { alignItems: 'flex-end', gap: 8, marginLeft: 8 },
+shareButton: { minHeight: 36, borderRadius: 12, backgroundColor: '#EEE4F2', paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center' },
+shareText: { color: '#654276', fontSize: 11, fontWeight: '900' },
+cancelButton: { minHeight: 34, paddingHorizontal: 9, alignItems: 'center', justifyContent: 'center' },
+cancelText: { color: '#A4433B', fontSize: 11, fontWeight: '900' },
 
 pendingEmail: {
   fontSize: 15,

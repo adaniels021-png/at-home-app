@@ -6,6 +6,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,7 +17,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
-import { canManageCaregivers } from '../../lib/caregiverPermissions';
+import { canManageCaregivers, getRoleAccessSummary } from '../../lib/caregiverPermissions';
+import { AccessSummary, RoleBadge } from '../../components/caregivers/CaregiverAccessUI';
 import { useSubscription } from '../../lib/SubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
@@ -74,10 +76,12 @@ export default function InviteCaregiverScreen() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<CaregiverRole>('caregiver');
   const [saving, setSaving] = useState(false);
+  const [readyCode, setReadyCode] = useState<string | null>(null);
 
   const childName = useMemo(() => {
     return selectedChild?.child_name || selectedChild?.name || 'your child';
   }, [selectedChild]);
+  const roleSummary = useMemo(() => getRoleAccessSummary(role), [role]);
 
   const handleInvite = async () => {
     if (!canManageSelectedChild) {
@@ -133,16 +137,7 @@ export default function InviteCaregiverScreen() {
 
       if (error) throw error;
 
-      Alert.alert(
-        'Invite Created',
-        `Invite code: ${String(inviteCode)}\n\nShare this code with ${cleanEmail}.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      setReadyCode(String(inviteCode));
     } catch (error: any) {
       console.error('Invite caregiver error:', error);
 
@@ -169,6 +164,10 @@ export default function InviteCaregiverScreen() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (readyCode) {
+    return <SafeAreaView style={styles.container}><ScrollView contentContainerStyle={styles.successContent}><View style={styles.successIcon}><Ionicons name="checkmark" size={32} color="#FFFFFF" /></View><Text style={styles.successTitle}>Invite Ready</Text><Text style={styles.successText}>{email.trim()} has been invited to support {childName}.</Text><RoleBadge role={role} /><View style={styles.codeCard}><Text style={styles.codeLabel}>INVITE CODE</Text><Text selectable style={styles.codeValue}>{readyCode}</Text></View><TouchableOpacity style={styles.inviteButton} onPress={() => void Share.share({ message: `Join ${childName}'s support team in ABA at Home with invite code ${readyCode}.` })}><Ionicons name="share-outline" size={19} color="#FFF" /><Text style={styles.inviteButtonText}>Share Invite</Text></TouchableOpacity><TouchableOpacity style={styles.doneButton} onPress={() => router.back()}><Text style={styles.doneText}>Done</Text></TouchableOpacity></ScrollView></SafeAreaView>;
   }
 
   return (
@@ -288,6 +287,9 @@ export default function InviteCaregiverScreen() {
             </Text>
           </View>
 
+          <Text style={styles.previewHeading}>What they&apos;ll be able to do</Text>
+          <AccessSummary available={roleSummary.available} restricted={roleSummary.restricted} />
+
           <TouchableOpacity
             style={[styles.inviteButton, saving && styles.inviteButtonDisabled]}
             onPress={handleInvite}
@@ -310,9 +312,19 @@ export default function InviteCaregiverScreen() {
 }
 
 const styles = StyleSheet.create({
+  successContent: { flexGrow: 1, padding: 28, alignItems: 'center', justifyContent: 'center' },
+  successIcon: { width: 68, height: 68, borderRadius: 24, backgroundColor: '#5A7C69', alignItems: 'center', justifyContent: 'center' },
+  successTitle: { marginTop: 20, color: '#443848', fontSize: 28, fontWeight: '900' },
+  successText: { marginVertical: 12, color: '#776D78', fontSize: 15, lineHeight: 22, fontWeight: '600', textAlign: 'center' },
+  codeCard: { width: '100%', marginVertical: 22, backgroundColor: '#FFFDF9', borderRadius: 24, padding: 22, alignItems: 'center', borderWidth: 1, borderColor: '#E8DED5' },
+  codeLabel: { color: '#857888', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  codeValue: { marginTop: 8, color: '#4E315A', fontSize: 30, fontWeight: '900', letterSpacing: 3 },
+  doneButton: { minHeight: 50, width: '100%', marginTop: 10, alignItems: 'center', justifyContent: 'center' },
+  doneText: { color: '#654276', fontWeight: '900' },
+  previewHeading: { marginTop: 6, marginBottom: 10, color: '#443848', fontSize: 16, fontWeight: '900' },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F1E9',
   },
 
   content: {
@@ -333,7 +345,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4E315A',
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,

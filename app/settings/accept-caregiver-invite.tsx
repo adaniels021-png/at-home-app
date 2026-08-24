@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../../lib/supabase';
 import { useChild } from '../../lib/SelectedChildContext';
+import { AccessSummary, RoleBadge } from '../../components/caregivers/CaregiverAccessUI';
+import { getRoleAccessSummary } from '../../lib/caregiverPermissions';
 
 export default function AcceptCaregiverInviteScreen() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function AcceptCaregiverInviteScreen() {
 
   const [inviteCode, setInviteCode] = useState('');
   const [saving, setSaving] = useState(false);
+  const [accepted, setAccepted] = useState<{ childName: string; role: string } | null>(null);
 
   const handleAcceptInvite = async () => {
     const cleanCode = inviteCode.trim().toUpperCase();
@@ -49,7 +52,7 @@ export default function AcceptCaregiverInviteScreen() {
         return;
       }
 
-      const { error: acceptError } = await supabase.rpc(
+      const { data: childId, error: acceptError } = await supabase.rpc(
         'accept_caregiver_invite',
         {
           p_invite_code: cleanCode,
@@ -57,18 +60,12 @@ export default function AcceptCaregiverInviteScreen() {
       );
 
       if (acceptError) throw acceptError;
+      const [{ data: membership }, { data: child }] = await Promise.all([
+        supabase.from('child_caregivers').select('role').eq('child_id', childId).eq('caregiver_user_id', user.id).maybeSingle(),
+        supabase.from('children').select('child_name, name').eq('id', childId).maybeSingle(),
+      ]);
       await refreshChildren();
-
-      Alert.alert(
-        'Invite Accepted',
-        'You now have access to this child profile.',
-        [
-          {
-            text: 'Continue',
-            onPress: () => router.replace('/(tabs)' as any),
-          },
-        ]
-      );
+      setAccepted({ childName: child?.child_name || child?.name || 'this child', role: membership?.role || 'caregiver' });
     } catch (error: any) {
       console.error('Accept invite error:', error);
 
@@ -80,6 +77,11 @@ export default function AcceptCaregiverInviteScreen() {
       setSaving(false);
     }
   };
+
+  if (accepted) {
+    const summary = getRoleAccessSummary(accepted.role);
+    return <SafeAreaView style={styles.container}><ScrollView contentContainerStyle={styles.successContent}><View style={styles.successIcon}><Ionicons name="checkmark" size={32} color="#FFF" /></View><Text style={styles.successTitle}>Access Connected</Text><Text style={styles.successText}>You&apos;re now part of {accepted.childName}&apos;s support team.</Text><RoleBadge role={accepted.role} /><View style={styles.summaryWrap}><AccessSummary available={summary.available} restricted={summary.restricted} /></View><TouchableOpacity style={styles.acceptButton} onPress={() => router.replace('/(tabs)' as any)}><Text style={styles.acceptButtonText}>Continue</Text></TouchableOpacity></ScrollView></SafeAreaView>;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -169,9 +171,14 @@ export default function AcceptCaregiverInviteScreen() {
 }
 
 const styles = StyleSheet.create({
+  successContent: { flexGrow: 1, padding: 26, alignItems: 'center', justifyContent: 'center' },
+  successIcon: { width: 68, height: 68, borderRadius: 24, backgroundColor: '#5A7C69', alignItems: 'center', justifyContent: 'center' },
+  successTitle: { marginTop: 20, color: '#443848', fontSize: 28, fontWeight: '900' },
+  successText: { marginVertical: 12, color: '#776D78', fontSize: 15, lineHeight: 22, fontWeight: '600', textAlign: 'center' },
+  summaryWrap: { alignSelf: 'stretch', marginTop: 22 },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F1E9',
   },
 
   content: {
@@ -192,7 +199,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4E315A',
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,

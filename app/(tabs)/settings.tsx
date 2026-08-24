@@ -285,7 +285,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
     onPress={() => openRoute('/(tabs)/progress')}
   />
 
-  <SettingItem
+  {allowManageCaregivers ? <SettingItem
     icon="people-outline"
     label="Manage Caregivers"
     sub={
@@ -296,9 +296,8 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
         : 'Pro'
     }
     helper="Invite another caregiver to access this child’s profile"
-    disabled={!allowManageCaregivers}
     onPress={() => openPremiumRoute('/settings/manage-caregivers')}
-  />
+  /> : <SettingItem icon="person-circle-outline" label={`My Access to ${childName}`} helper="View your role and child-specific permissions" onPress={() => openRoute('/settings/caregiver-profile')} />}
 
   <SettingItem
     icon="trash-outline"

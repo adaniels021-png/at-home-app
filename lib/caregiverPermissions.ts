@@ -50,3 +50,31 @@ export function selectAuthorizedChild<T extends { id: string }>(authorizedChildr
   if (!authorizedChildren.length) return null;
   return authorizedChildren.find((child) => child.id === requestedChildId) ?? authorizedChildren[0];
 }
+
+export const CAREGIVER_ROLE_LABELS: Record<CaregiverRole, string> = {
+  owner: 'Account Owner',
+  parent: 'Parent',
+  caregiver: 'Caregiver',
+  therapist: 'Therapist',
+};
+
+export type RoleAccessSummary = { available: string[]; restricted: string[] };
+
+export function getRoleAccessSummary(role?: string | null): RoleAccessSummary {
+  const available: string[] = [];
+  const restricted: string[] = [];
+  if (canViewLearningContent(role)) available.push('Lessons and daily support');
+  if (canUseCommunicationTools(role)) available.push('Communication tools');
+  if (canViewProgress(role)) available.push('Progress tools');
+  if (canUseElopementResponse(role)) available.push('Emergency and elopement response');
+  if (canEditChildProfile(role)) available.push('Child profile editing');
+  else restricted.push('Child profile editing');
+  if (canViewSafetyProfile(role)) available.push('Full Safety Profile');
+  else restricted.push('Full Safety Profile');
+  if (canUseHelpNowGeneral(role)) available.push('General Help Now');
+  else restricted.push('General Help Now');
+  if (canManageCaregivers(role)) available.push('Caregiver management');
+  else restricted.push('Caregiver management');
+  if (!canManageChildSettings(role)) restricted.push('Child settings');
+  return { available, restricted };
+}

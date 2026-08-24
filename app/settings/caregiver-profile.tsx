@@ -14,7 +14,8 @@ import {
   View,
 } from 'react-native';
 
-import { canEditChildProfile } from '../../lib/caregiverPermissions';
+import { canManageChildSettings, getRoleAccessSummary } from '../../lib/caregiverPermissions';
+import { AccessSummary, PersonAvatar, RoleBadge, roleFriendlyName } from '../../components/caregivers/CaregiverAccessUI';
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
 
@@ -35,7 +36,9 @@ export default function CaregiverProfileScreen() {
   const router = useRouter();
   const { selectedChild, refreshChildren } = useChild() as any;
   const role = selectedChild?.caregiver_access_role;
-  const canEditChild = canEditChildProfile(role);
+  const canEditChildSettings = canManageChildSettings(role);
+  const accessSummary = getRoleAccessSummary(role);
+  const childName = selectedChild?.child_name || selectedChild?.name || 'your child';
   
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState('');
@@ -100,7 +103,7 @@ export default function CaregiverProfileScreen() {
 
   const toggleToiletTraining = async (value: boolean) => {
 
-    if (!canEditChild) {
+    if (!canEditChildSettings) {
   Alert.alert(
     'Parent Access Only',
     'Only a parent or account owner can change child settings.'
@@ -241,13 +244,14 @@ export default function CaregiverProfileScreen() {
         </TouchableOpacity>
 
         <View style={styles.hero}>
-          <Ionicons name="person-circle-outline" size={48} color="#FFFFFF" />
-          <Text style={styles.heroTitle}>Caregiver Profile</Text>
-          <Text style={styles.heroText}>
-            Update your name and relationship so the app can personalize your
-            family experience.
-          </Text>
+          <PersonAvatar name={name} size={64} />
+          <Text style={styles.heroTitle}>{name || 'Your Profile'}</Text>
+          <Text style={styles.heroText}>{roleFriendlyName(role)} • Supporting {childName}</Text>
+          <View style={styles.roleBadge}><RoleBadge role={role} /></View>
         </View>
+
+        <Text style={styles.sectionTitle}>Your Access</Text>
+        <AccessSummary available={accessSummary.available} restricted={accessSummary.restricted} />
 
         <View style={styles.card}>
           <Label text="Caregiver Name" />
@@ -283,7 +287,7 @@ export default function CaregiverProfileScreen() {
             This may appear on Parent Wins as “Mom of 5-year-old” or similar.
           </Text>
 
-          <View style={styles.settingCard}>
+          {canEditChildSettings ? <View style={styles.settingCard}>
   <View style={{ flex: 1 }}>
     <Text style={styles.settingTitle}>Toilet Training Tools</Text>
 
@@ -295,11 +299,11 @@ export default function CaregiverProfileScreen() {
   <Switch
   value={showToiletTraining}
   onValueChange={toggleToiletTraining}
-  disabled={!canEditChild}
+  disabled={!canEditChildSettings}
   trackColor={{ false: '#CBD5E1', true: '#BFDBFE' }}
   thumbColor={showToiletTraining ? '#2563EB' : '#F8FAFC'}
 />
-</View>
+</View> : null}
 
           <TouchableOpacity
             style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
@@ -333,7 +337,7 @@ function Label({ text }: { text: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F1E9',
   },
 
   content: {
@@ -367,7 +371,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4E315A',
     borderRadius: 28,
     padding: 22,
     marginBottom: 20,
@@ -386,6 +390,8 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     fontWeight: '600',
   },
+  roleBadge: { marginTop: 12 },
+  sectionTitle: { marginTop: 4, marginBottom: 10, color: '#443848', fontSize: 16, fontWeight: '900' },
 
   card: {
     backgroundColor: '#FFFFFF',

@@ -20,6 +20,7 @@ import AnimatedPressable from '../../components/AnimatedPressable';
 import FadeInView from '../../components/FadeInView';
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
+import { canAddChild, canUseHelpNowGeneral, canViewSafetyProfile } from '../../lib/caregiverPermissions';
 
 
 
@@ -29,6 +30,8 @@ export default function HomeScreen() {
   const childContext = useChild() as any;
   const selectedChild = childContext?.selectedChild;
   const children = childContext?.children || [];
+  const role = selectedChild?.caregiver_access_role;
+  const hasGeneralHelpNow = canUseHelpNowGeneral(role);
 
 const [showChildSelector, setShowChildSelector] = useState(false);
 
@@ -65,7 +68,7 @@ const [showChildSelector, setShowChildSelector] = useState(false);
         return;
       }
 
-      router.push('/help-now');
+      router.push(hasGeneralHelpNow ? '/help-now' : '/safety/emergency/elopement');
       helpNowTransitionTimer.current = setTimeout(() => {
         helpNowTransitionOpacity.setValue(0);
         setEnteringHelpNow(false);
@@ -312,7 +315,7 @@ useEffect(() => {
       </AnimatedPressable>
     ))}
 
-    <AnimatedPressable
+    {canAddChild(role) ? <AnimatedPressable
       style={styles.addChildButton}
       onPress={() => router.push('/onboarding/add-child')}
     >
@@ -325,7 +328,7 @@ useEffect(() => {
       <Text style={styles.addChildText}>
         Add Child
       </Text>
-    </AnimatedPressable>
+    </AnimatedPressable> : null}
   </View>
 )}
 
@@ -387,15 +390,15 @@ useEffect(() => {
     <View style={styles.helpNowTextWrap}>
 
       <Text style={styles.helpNowTitle}>
-        Get Help Now
+        {hasGeneralHelpNow ? 'Get Help Now' : 'Emergency Help'}
       </Text>
 
       <Text style={styles.helpNowSubtitle}>
-        Immediate guidance for tough moments.
+        {hasGeneralHelpNow ? 'Immediate guidance for tough moments.' : `Open ${childName}'s elopement response tools.`}
       </Text>
 
       <Text style={styles.helpNowSupport}>
-        You&apos;re not alone.
+        {hasGeneralHelpNow ? "You're not alone." : 'Emergency information, when it matters.'}
       </Text>
 
     </View>
@@ -578,8 +581,8 @@ useEffect(() => {
 
     <DropdownItem
       icon="shield-checkmark-outline"
-      label="Safety"
-      onPress={() => router.push('/safety')}
+      label={canViewSafetyProfile(role) ? 'Safety' : 'Emergency Response'}
+      onPress={() => router.push(canViewSafetyProfile(role) ? '/safety' : '/safety/emergency/elopement')}
     />
   </DropdownSection>
 </FadeInView>

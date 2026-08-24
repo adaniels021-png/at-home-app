@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 
 import { supabase } from '../../lib/supabase';
+import { canManageCaregivers, canUseElopementResponse, canUseHelpNowGeneral, canViewSafetyProfile } from '../../lib/caregiverPermissions';
+import { useChild } from '../../lib/SelectedChildContext';
+import { RoleBadge, roleFriendlyName } from '../../components/caregivers/CaregiverAccessUI';
 
 type ProfileItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -24,6 +27,9 @@ type ProfileItemProps = {
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
+  const { children, selectedChild } = useChild();
+  const role = selectedChild?.caregiver_access_role;
+  const childName = selectedChild?.child_name || selectedChild?.name || 'your child';
 
   const handleLogout = async () => {
     try {
@@ -64,20 +70,21 @@ export default function ProfileSettingsScreen() {
             <Ionicons name="person" size={34} color="#FFFFFF" />
           </View>
 
-          <Text style={styles.heroTitle}>Profile Settings</Text>
+          <Text style={styles.heroTitle}>Your Account</Text>
 
           <Text style={styles.heroSubtitle}>
-            Manage caregiver details, login, privacy, support, and account security.
+            Personal details, family access, privacy, and security.
           </Text>
+          <View style={styles.heroBadge}><RoleBadge role={role} /></View>
         </View>
 
 
 
-        <Section title="Account">
+        <Section title="My Account">
           <ProfileItem
             icon="person-circle-outline"
-            title="Caregiver Profile"
-            subtitle="Edit your name, relationship to your child, and caregiver role."
+            title="Personal Profile"
+            subtitle="Edit your display name and relationship."
             onPress={() => router.push('/settings/caregiver-profile' as any)}
           />
         
@@ -94,6 +101,15 @@ export default function ProfileSettingsScreen() {
             subtitle="Send password reset email or update your password."
             onPress={() => router.push('/settings/password-security' as any)}
           />
+        </Section>
+
+        <Section title="Family & Child Access">
+          <ProfileItem icon="people-circle-outline" title={`My Access to ${childName}`} subtitle={`${roleFriendlyName(role)} • View your child-specific access and settings.`} badge={role?.toUpperCase()} onPress={() => router.push('/settings/caregiver-profile' as any)} />
+          {children.map((child) => child.id === selectedChild?.id ? null : <ProfileItem key={child.id} icon="person-outline" title={child.child_name || child.name || 'Child'} subtitle={`${roleFriendlyName(child.caregiver_access_role)} access`} badge={child.caregiver_access_role?.toUpperCase()} onPress={() => router.push('/settings/caregiver-profile' as any)} />)}
+          {canManageCaregivers(role) ? <ProfileItem icon="people-outline" title="Manage Caregivers" subtitle={`Manage who can support ${childName}.`} onPress={() => router.push('/settings/manage-caregivers' as any)} /> : null}
+          <ProfileItem icon="key-outline" title={canManageCaregivers(role) ? 'Accept an Invite' : 'Accept Another Invite'} subtitle="Connect to another child profile with an invite code." onPress={() => router.push('/settings/accept-caregiver-invite' as any)} />
+          {!canUseHelpNowGeneral(role) && canUseElopementResponse(role) ? <ProfileItem icon="navigate-outline" title="Emergency Response" subtitle={`Open ${childName}'s elopement response tools.`} onPress={() => router.push('/safety/emergency/elopement' as any)} /> : null}
+          {canViewSafetyProfile(role) ? <ProfileItem icon="shield-checkmark-outline" title="Safety Hub" subtitle={`Manage ${childName}'s safety and preparedness information.`} onPress={() => router.push('/safety' as any)} /> : null}
         </Section>
 
         <Section title="Privacy, Legal & Support">
@@ -187,7 +203,7 @@ function ProfileItem({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#F7F1E9' },
   content: { padding: 20, paddingBottom: 40 },
 
   backBtn: {
@@ -203,7 +219,7 @@ const styles = StyleSheet.create({
   },
 
   heroCard: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#4E315A',
     borderRadius: 28,
     padding: 22,
     marginBottom: 24,
@@ -231,6 +247,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     fontWeight: '600',
   },
+  heroBadge: { marginTop: 14 },
 
   section: { marginBottom: 22 },
 
