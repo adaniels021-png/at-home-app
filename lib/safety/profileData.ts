@@ -110,6 +110,30 @@ export async function loadSafetyProfile(childId: string) {
   return data ? mapSafetyProfile(data as SafetyProfileRow) : null;
 }
 
+export async function loadEmergencySafetyProfile(childId: string) {
+  const { data, error } = await supabase.rpc(
+    'get_child_emergency_response_profile',
+    { target_child_id: childId }
+  );
+  if (error) throw error;
+  if (!data || typeof data !== 'object') return null;
+
+  const row = data as Partial<SafetyProfileRow>;
+  return mapSafetyProfile({
+    id: '', child_id: childId, preferred_name: null, photo_path: null,
+    height: null, weight: null, hair_color: null, eye_color: null,
+    identifying_features: null, communication_methods: [], communication_other: null,
+    responds_to_name: null, can_share_name: null, communication_supports: [],
+    communication_supports_other: null, helpful_phrases: null, approach_guidance: [],
+    approach_guidance_other: null, approach_notes: null, wandering_history: null,
+    wandering_patterns: [], wandering_patterns_other: null, wandering_destinations: [],
+    wandering_destinations_other: null, safety_concerns: [], safety_concerns_other: null,
+    sensory_challenges: [], sensory_challenges_other: null, regulation_supports: [],
+    regulation_supports_other: null, important_health_safety_notes: null,
+    additional_notes: null, created_at: '', updated_at: '', ...row,
+  });
+}
+
 export async function saveSafetyProfileSection(
   childId: string,
   values: Record<string, unknown>

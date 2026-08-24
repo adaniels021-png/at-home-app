@@ -6,7 +6,9 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 import { supabase } from './supabase';
+import { canViewChild, selectAuthorizedChild } from './caregiverPermissions';
 
 type Child = {
   id: string;
@@ -35,7 +37,7 @@ const ChildContext = createContext<ChildContextType>({
 
 export function ChildProvider({ children }: { children: React.ReactNode }) {
   const [childProfiles, setChildProfiles] = useState<Child[]>([]);
-  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [selectedChild, setSelectedChildState] = useState<Child | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshChildren = useCallback(async () => {
@@ -49,7 +51,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
 
       if (sessionError || !session?.user?.id) {
         setChildProfiles([]);
-        setSelectedChild(null);
+        setSelectedChildState(null);
         return;
       }
 
@@ -115,27 +117,19 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         mergedMap.set(child.id, child);
       });
 
-      const nextChildren = Array.from(mergedMap.values());
+      const nextChildren = Array.from(mergedMap.values()).filter((child) =>
+        canViewChild(child.caregiver_access_role)
+      );
 
       setChildProfiles(nextChildren);
 
-      setSelectedChild((prev) => {
-        if (!nextChildren.length) return null;
-
-        if (prev?.id) {
-          const stillExists = nextChildren.find(
-            (child) => child.id === prev.id
-          );
-
-          if (stillExists) return stillExists;
-        }
-
-        return nextChildren[0];
-      });
+      setSelectedChildState((prev) =>
+        selectAuthorizedChild(nextChildren, prev?.id)
+      );
     } catch (error) {
       console.error('Error fetching children for context:', error);
       setChildProfiles([]);
-      setSelectedChild(null);
+      setSelectedChildState(null);
     } finally {
       setLoading(false);
     }
@@ -151,7 +145,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user?.id) {
         setChildProfiles([]);
-        setSelectedChild(null);
+        setSelectedChildState(null);
         setLoading(false);
         return;
       }
@@ -166,6 +160,21 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refreshChildren]);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshChildren();
+    });
+    return () => subscription.remove();
+  }, [refreshChildren]);
+
+  const setSelectedChild = useCallback((requested: Child | null) => {
+    setSelectedChildState(
+      requested
+        ? childProfiles.find((child) => child.id === requested.id) ?? null
+        : null
+    );
+  }, [childProfiles]);
+
   const value = useMemo(
     () => ({
       children: childProfiles,
@@ -174,7 +183,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       loading,
       refreshChildren,
     }),
-    [childProfiles, selectedChild, loading, refreshChildren]
+    [childProfiles, selectedChild, setSelectedChild, loading, refreshChildren]
   );
 
   return (

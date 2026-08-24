@@ -16,18 +16,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChild } from '../../lib/SelectedChildContext';
+import { canManageCaregivers } from '../../lib/caregiverPermissions';
 import { useSubscription } from '../../lib/SubscriptionContext';
 import { hasEntitlement } from '../../lib/entitlements';
 import { supabase } from '../../lib/supabase';
 
 type CaregiverRole = 'parent' | 'caregiver' | 'therapist';
 
-const ROLE_OPTIONS: Array<{
+const ROLE_OPTIONS: {
   label: string;
   value: CaregiverRole;
   icon: keyof typeof Ionicons.glyphMap;
   description: string;
-}> = [
+}[] = [
   {
     label: 'Parent',
     value: 'parent',
@@ -48,10 +49,6 @@ const ROLE_OPTIONS: Array<{
   },
 ];
 
-function createInviteCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
 export default function InviteCaregiverScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
@@ -60,12 +57,19 @@ export default function InviteCaregiverScreen() {
     { isPro },
     'manage_caregivers'
   );
+  const canManageSelectedChild = canManageCaregivers(
+    selectedChild?.caregiver_access_role
+  );
 
   useEffect(() => {
+    if (selectedChild && !canManageSelectedChild) {
+      router.replace('/settings/manage-caregivers');
+      return;
+    }
     if (!subscriptionLoading && !canInviteCaregiver) {
       router.replace('/subscription');
     }
-  }, [canInviteCaregiver, router, subscriptionLoading]);
+  }, [canInviteCaregiver, canManageSelectedChild, router, selectedChild, subscriptionLoading]);
 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<CaregiverRole>('caregiver');
@@ -76,6 +80,10 @@ export default function InviteCaregiverScreen() {
   }, [selectedChild]);
 
   const handleInvite = async () => {
+    if (!canManageSelectedChild) {
+      Alert.alert('Owner Only', 'Only the child profile owner can invite caregivers.');
+      return;
+    }
     if (!canInviteCaregiver) {
       router.replace('/subscription');
       return;
@@ -114,24 +122,20 @@ export default function InviteCaregiverScreen() {
         return;
       }
 
-      const inviteCode = createInviteCode();
-
-      const { error } = await supabase.from('caregiver_invites').insert([
+      const { data: inviteCode, error } = await supabase.rpc(
+        'create_caregiver_invite',
         {
-          child_id: selectedChild.id,
-          invited_email: cleanEmail,
-          role,
-          invite_code: inviteCode,
-          status: 'pending',
-          created_by: user.id,
-        },
-      ]);
+          target_child_id: selectedChild.id,
+          target_email: cleanEmail,
+          target_role: role,
+        }
+      );
 
       if (error) throw error;
 
       Alert.alert(
         'Invite Created',
-        `Invite code: ${inviteCode}\n\nShare this code with ${cleanEmail}.`,
+        `Invite code: ${String(inviteCode)}\n\nShare this code with ${cleanEmail}.`,
         [
           {
             text: 'OK',

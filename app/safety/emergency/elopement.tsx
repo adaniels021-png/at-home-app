@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, Alert, BackHandler, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChild } from '../../../lib/SelectedChildContext';
-import { createSafetyPhotoSignedUrl, loadSafetyProfile } from '../../../lib/safety/profileData';
+import { createSafetyPhotoSignedUrl, loadEmergencySafetyProfile, loadSafetyProfile } from '../../../lib/safety/profileData';
 import { getSafetyAccess } from '../../../lib/safety/safetyAccess';
 import { loadActiveElopementIncident, loadSafetyIncident, loadSightings, parseApproximateLocalTime, resolveSafetyIncident, startOrJoinElopementIncident, subscribeToIncident, updateSafetyIncident, type SafetyIncident, type SafetySighting } from '../../../lib/safety/incidentData';
 import type { SafetyProfile } from '../../../lib/safety/types';
@@ -64,10 +64,14 @@ export default function ElopementSearchScreen() {
       try {
         const access = await getSafetyAccess(child.id);
         const [savedProfile, current] = await Promise.all([
-          access.canViewSafetyProfile ? loadSafetyProfile(child.id) : Promise.resolve(null),
+          access.canViewSafetyProfile
+            ? loadSafetyProfile(child.id)
+            : access.canViewEmergencyResponseData
+              ? loadEmergencySafetyProfile(child.id)
+              : Promise.resolve(null),
           access.canParticipateInSafetyIncident ? loadActiveElopementIncident(child.id) : Promise.resolve(null),
         ]);
-        const signed = access.canViewSafetyProfile
+        const signed = access.canViewSafetyProfile || access.canViewEmergencyResponseData
           ? await createSafetyPhotoSignedUrl(savedProfile?.photoPath)
           : null;
         if (!active) return;

@@ -16,9 +16,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../../lib/supabase';
+import { useChild } from '../../lib/SelectedChildContext';
 
 export default function AcceptCaregiverInviteScreen() {
   const router = useRouter();
+  const { refreshChildren } = useChild();
 
   const [inviteCode, setInviteCode] = useState('');
   const [saving, setSaving] = useState(false);
@@ -55,6 +57,7 @@ export default function AcceptCaregiverInviteScreen() {
       );
 
       if (acceptError) throw acceptError;
+      await refreshChildren();
 
       Alert.alert(
         'Invite Accepted',

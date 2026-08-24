@@ -141,6 +141,7 @@ export type SafetyPermissions = {
 
 export type SafetyAccess = {
   canViewSafetyProfile: boolean;
+  canViewEmergencyResponseData: boolean;
   canEditSafetyProfile: boolean;
   canUseSafetyMode: boolean;
   canParticipateInSafetyIncident: boolean;
