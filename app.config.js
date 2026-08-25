@@ -4,7 +4,7 @@ export default {
   expo: {
     name: 'ABA at Home',
     slug: 'at-home-app',
-    version: "1.0.9",
+    version: "1.1.0",
     orientation: 'portrait',
     scheme: 'abaathome',
     userInterfaceStyle: 'light',
@@ -20,7 +20,7 @@ export default {
     ios: {
       supportsTablet: false,
       bundleIdentifier: 'com.adaniels021.abaathome',
-      buildNumber: '48',
+      buildNumber: '51',
 
       infoPlist: {
         NSCameraUsageDescription:
@@ -38,7 +38,7 @@ export default {
 
     android: {
       package: 'com.adaniels021.abaathome',
-      versionCode: 25,
+      versionCode: 28,
 
       adaptiveIcon: {
         foregroundImage: './assets/icon.png',
