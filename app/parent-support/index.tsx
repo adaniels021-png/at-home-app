@@ -14,10 +14,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useChildSubscription as useSubscription } from '../lib/ChildSubscriptionContext';
-import { useChild } from '../lib/SelectedChildContext';
-import { canUseHelpNowGeneral } from '../lib/caregiverPermissions';
-import { hasEntitlement } from '../lib/entitlements';
+import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
+import { useChild } from '../../lib/SelectedChildContext';
+import { canUseHelpNowGeneral } from '../../lib/caregiverPermissions';
+import { hasEntitlement } from '../../lib/entitlements';
 
 type SupportSection = {
   id: string;
@@ -43,7 +43,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
   title: 'Parent Wins',
   subtitle: 'Positive wins from caregivers navigating autism support at home.',
   icon: 'people-outline',
-  image: require('../assets/images/parent-support-parent-wins.png'),
+  image: require('../../assets/images/parent-support-parent-wins.png'),
   color: '#7C3AED',
   bg: '#F5F3FF',
   iconBg: '#FFFFFF',
@@ -56,7 +56,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     subtitle:
       'A quick parent reset that helps you calm your body and know what to do next.',
     icon: 'leaf-outline',
-    image: require('../assets/images/parent-support-emotional-reset.png'),
+    image: require('../../assets/images/parent-support-emotional-reset.png'),
     color: '#EA580C',
     bg: '#FFF7ED',
     iconBg: '#FFEDD5',
@@ -70,7 +70,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     subtitle:
       'Quick check-ins with options to type, reflect, or use voice-to-text.',
     icon: 'journal-outline',
-    image: require('../assets/images/parent-support-journal.png'),
+    image: require('../../assets/images/parent-support-journal.png'),
     color: '#0F766E',
     bg: '#ECFDF5',
     iconBg: '#D1FAE5',
@@ -84,7 +84,7 @@ const SUPPORT_SECTIONS: SupportSection[] = [
     subtitle:
       'Encouragement, hard-day support, burnout reminders, and parent sensory overload tips.',
     icon: 'sparkles-outline',
-    image: require('../assets/images/parent-support-daily-permission.png'),
+    image: require('../../assets/images/parent-support-daily-permission.png'),
     color: '#BE123C',
     bg: '#FFF1F2',
     iconBg: '#FFE4E6',
@@ -164,7 +164,7 @@ export default function ParentSupportScreen() {
 
         <View style={styles.heroImageContainer}>
   <Image
-    source={require('../assets/images/parent-support-hero.png')}
+    source={require('../../assets/images/parent-support-hero.png')}
     style={styles.parentSupportHeroImage}
     resizeMode="cover"
   />
