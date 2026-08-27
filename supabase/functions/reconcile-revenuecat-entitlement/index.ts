@@ -4,6 +4,7 @@ import {
   fetchRevenueCatSnapshot,
   RevenueCatLookupError,
 } from '../_shared/revenuecat-subscriber.ts';
+import { shouldUseCachedEntitlement } from '../_shared/entitlement-reconciliation.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -66,6 +67,14 @@ if (import.meta.main)
       return json({ error: 'UNAUTHENTICATED' }, 401);
     }
 
+    let force = false;
+    try {
+      const body = await req.json();
+      force = body?.force === true;
+    } catch {
+      // Bodyless callers retain the normal cached reconciliation behavior.
+    }
+
     const db = createClient(url, service, { auth: { persistSession: false } });
 
     try {
@@ -77,10 +86,7 @@ if (import.meta.main)
 
       if (currentError) throw currentError;
 
-      if (
-        current?.last_synced_at &&
-        Date.now() - Date.parse(current.last_synced_at) < 15 * 60 * 1000
-      ) {
+      if (shouldUseCachedEntitlement(current?.last_synced_at, force)) {
         evidence('FRESH');
         return json({ reconciled: true, result: 'FRESH' });
       }
@@ -100,7 +106,7 @@ if (import.meta.main)
         throw error ?? new Error('Unexpected reconciliation result');
       }
 
-      evidence(String(result));
+      evidence(String(result), force ? 'FORCED' : undefined);
       return json({ reconciled: true, result });
     } catch (error) {
       if (error instanceof RevenueCatLookupError) {

@@ -21,7 +21,7 @@ type ChildSubscriptionContextType = {
   personalIsPro: boolean;
   state: ChildEntitlementState;
   source: 'family' | 'none';
-  refreshChildSubscription: () => Promise<void>;
+  refreshChildSubscription: () => Promise<boolean | null>;
 };
 
 const ChildSubscriptionContext = createContext<ChildSubscriptionContextType>({
@@ -30,7 +30,7 @@ const ChildSubscriptionContext = createContext<ChildSubscriptionContextType>({
   personalIsPro: false,
   state: 'UNKNOWN',
   source: 'none',
-  refreshChildSubscription: async () => {},
+  refreshChildSubscription: async () => null,
 });
 
 export function ChildSubscriptionProvider({
@@ -55,7 +55,7 @@ export function ChildSubscriptionProvider({
       setIsPro(false);
       setResolvedChildId(null);
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
@@ -65,19 +65,23 @@ export function ChildSubscriptionProvider({
         { target_child_id: childId },
       );
       if (error) throw error;
-      if (requestId !== requestIdRef.current) return;
+      if (requestId !== requestIdRef.current) return null;
 
       const result = Array.isArray(data) ? data[0] : data;
       const nextState = String(result?.state || 'UNKNOWN') as ChildEntitlementState;
+      const effectivePro =
+        result?.authoritative === true && result?.is_pro === true;
       setState(nextState);
-      setIsPro(result?.authoritative === true && result?.is_pro === true);
+      setIsPro(effectivePro);
       setResolvedChildId(childId);
+      return effectivePro;
     } catch (error) {
-      if (requestId !== requestIdRef.current) return;
+      if (requestId !== requestIdRef.current) return null;
       console.error('Child subscription resolution failed:', error);
       setState('UNKNOWN');
       setIsPro(false);
       setResolvedChildId(childId);
+      return false;
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }

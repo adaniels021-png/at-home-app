@@ -31,6 +31,11 @@ type SafeFunctionError = {
   authenticatedSession: boolean;
 };
 
+export type RevenueCatActivationResult = {
+  customerInfo: CustomerInfo;
+  authoritativeReconciled: boolean;
+};
+
 async function getSafeFunctionError(
   error: unknown,
   authenticatedSession: boolean
@@ -238,7 +243,7 @@ export async function reconcileAuthoritativeEntitlement(force = false): Promise<
       const { error } = await supabase.functions.invoke(
         RECONCILIATION_FUNCTION,
         {
-          body: {},
+          body: { force },
           headers: { Authorization: `Bearer ${session.access_token}` },
         }
       );
@@ -348,7 +353,7 @@ function isCancelledPurchaseError(error: any): boolean {
 
 export async function purchasePackage(
   pkg: PurchasesPackage
-): Promise<CustomerInfo | null> {
+): Promise<RevenueCatActivationResult | null> {
   await configureRevenueCat();
 
   if (!revenueCatAvailable || !configured) return null;
@@ -356,9 +361,10 @@ export async function purchasePackage(
   try {
     const result = await Purchases.purchasePackage(pkg);
 
-    void reconcileAuthoritativeEntitlement(true);
+    const authoritativeReconciled =
+      await reconcileAuthoritativeEntitlement(true);
 
-    return result.customerInfo;
+    return { customerInfo: result.customerInfo, authoritativeReconciled };
   } catch (error) {
     if (isCancelledPurchaseError(error)) {
       console.log('RevenueCat purchase cancelled by user.');
@@ -370,7 +376,7 @@ export async function purchasePackage(
   }
 }
 
-export async function restorePurchases(): Promise<CustomerInfo | null> {
+export async function restorePurchases(): Promise<RevenueCatActivationResult | null> {
   await configureRevenueCat();
 
   if (!revenueCatAvailable || !configured) return null;
@@ -378,13 +384,28 @@ export async function restorePurchases(): Promise<CustomerInfo | null> {
   try {
     const info = await Purchases.restorePurchases();
 
-    void reconcileAuthoritativeEntitlement(true);
+    const authoritativeReconciled =
+      await reconcileAuthoritativeEntitlement(true);
 
-    return info;
+    return { customerInfo: info, authoritativeReconciled };
   } catch (error) {
     console.error('RevenueCat restore failed:', error);
     return null;
   }
+}
+
+export async function confirmAuthoritativeProActivation(
+  alreadyReconciled: boolean,
+  refreshPersonalSubscription: () => Promise<void>,
+  refreshChildSubscription: () => Promise<boolean | null>
+): Promise<boolean> {
+  const reconciled =
+    alreadyReconciled || await reconcileAuthoritativeEntitlement(true);
+  if (!reconciled) return false;
+
+  await refreshPersonalSubscription();
+  const childIsPro = await refreshChildSubscription();
+  return childIsPro !== false;
 }
 
 export { ENTITLEMENT_ID };

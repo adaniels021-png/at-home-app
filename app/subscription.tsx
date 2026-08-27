@@ -16,7 +16,9 @@ import type { PurchasesPackage } from 'react-native-purchases';
 
 
 import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription } from '../lib/ChildSubscriptionContext';
 import {
+  confirmAuthoritativeProActivation,
   getCurrentOffering,
   getCustomerInfo,
   hasRevenueCatProEntitlement,
@@ -83,6 +85,7 @@ export default function SubscriptionScreen() {
   };
 
   const { isPro, refreshSubscription } = useSubscription();
+  const { refreshChildSubscription } = useChildSubscription();
 
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -108,6 +111,39 @@ export default function SubscriptionScreen() {
     subtext: 'Save with the yearly plan compared with monthly.',
     packageObject: null,
   });
+
+  const showActivationPending = () => {
+    Alert.alert(
+      'Finishing Pro Activation',
+      'Your purchase was successful. We’re finishing Pro activation now. You will not be charged again.',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        {
+          text: 'Try Again',
+          onPress: () => { void retryActivation(); },
+        },
+      ]
+    );
+  };
+
+  const retryActivation = async () => {
+    if (loading || restoring) return;
+    setLoading(true);
+    try {
+      const activated = await confirmAuthoritativeProActivation(
+        false,
+        refreshSubscription,
+        refreshChildSubscription
+      );
+      if (activated) {
+        Alert.alert('Pro Is Ready', 'Your Pro access is now unlocked.');
+      } else {
+        showActivationPending();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     void loadPlans();
@@ -277,9 +313,9 @@ const selectedPlanDetails = useMemo(() => {
         return;
       }
 
-      const customerInfo = await purchasePackage(selectedPackage);
+      const activation = await purchasePackage(selectedPackage);
 
-      if (!customerInfo) {
+      if (!activation) {
         Alert.alert(
           'Purchase Not Completed',
           'The purchase did not finish. Please try again.'
@@ -287,8 +323,8 @@ const selectedPlanDetails = useMemo(() => {
         return;
       }
 
-      const detectedPlan = detectPlanFromCustomerInfo(customerInfo);
-      const proActive = hasRevenueCatProEntitlement(customerInfo);
+      const detectedPlan = detectPlanFromCustomerInfo(activation.customerInfo);
+      const proActive = hasRevenueCatProEntitlement(activation.customerInfo);
 
       setCurrentPlan(detectedPlan);
 
@@ -300,7 +336,16 @@ const selectedPlanDetails = useMemo(() => {
         return;
       }
 
-      await refreshSubscription();
+      const activated = await confirmAuthoritativeProActivation(
+        activation.authoritativeReconciled,
+        refreshSubscription,
+        refreshChildSubscription
+      );
+
+      if (!activated) {
+        showActivationPending();
+        return;
+      }
 
       Alert.alert('Welcome to Pro 🎉', 'Your Pro access is now unlocked.', [
         {
@@ -330,9 +375,9 @@ const selectedPlanDetails = useMemo(() => {
     setRestoring(true);
 
     try {
-      const customerInfo = await restorePurchases();
+      const activation = await restorePurchases();
 
-      if (!customerInfo) {
+      if (!activation) {
         Alert.alert(
           'Restore Failed',
           'No purchase information was returned. Please try again.'
@@ -340,8 +385,8 @@ const selectedPlanDetails = useMemo(() => {
         return;
       }
 
-      const detectedPlan = detectPlanFromCustomerInfo(customerInfo);
-      const proActive = hasRevenueCatProEntitlement(customerInfo);
+      const detectedPlan = detectPlanFromCustomerInfo(activation.customerInfo);
+      const proActive = hasRevenueCatProEntitlement(activation.customerInfo);
 
       setCurrentPlan(detectedPlan);
 
@@ -353,7 +398,16 @@ const selectedPlanDetails = useMemo(() => {
         return;
       }
 
-      await refreshSubscription();
+      const activated = await confirmAuthoritativeProActivation(
+        activation.authoritativeReconciled,
+        refreshSubscription,
+        refreshChildSubscription
+      );
+
+      if (!activated) {
+        showActivationPending();
+        return;
+      }
 
       Alert.alert('Restored', 'Your Pro access has been restored.', [
         {

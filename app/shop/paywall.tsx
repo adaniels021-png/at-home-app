@@ -13,7 +13,9 @@ import {
 import type { PurchasesPackage } from 'react-native-purchases';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSubscription } from '../../lib/SubscriptionContext';
+import { useChildSubscription } from '../../lib/ChildSubscriptionContext';
 import {
+  confirmAuthoritativeProActivation,
   getCurrentOffering,
   hasRevenueCatProEntitlement,
   purchasePackage,
@@ -22,8 +24,40 @@ import {
 export default function Paywall() {
   const router = useRouter();
   const { refreshSubscription } = useSubscription();
+  const { refreshChildSubscription } = useChildSubscription();
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const showActivationPending = () => {
+    Alert.alert(
+      'Finishing Pro Activation',
+      'Your purchase was successful. We’re finishing Pro activation now. You will not be charged again.',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { text: 'Try Again', onPress: () => { void retryActivation(); } },
+      ]
+    );
+  };
+
+  const retryActivation = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const activated = await confirmAuthoritativeProActivation(
+        false,
+        refreshSubscription,
+        refreshChildSubscription
+      );
+      if (activated) {
+        Alert.alert('Pro Is Ready', 'You now have full access to ABA at Home.');
+        router.replace('/(tabs)/dashboard');
+      } else {
+        showActivationPending();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dismissPaywall = () => {
     if (router.canGoBack()) {
@@ -63,12 +97,30 @@ export default function Paywall() {
   const handlePurchase = async (pkg: PurchasesPackage) => {
     try {
       setLoading(true);
-      const customerInfo = await purchasePackage(pkg);
+      const activation = await purchasePackage(pkg);
+
+      if (!activation) {
+        Alert.alert('Purchase Not Completed', 'The purchase did not finish. Please try again.');
+        return;
+      }
       
-      if (hasRevenueCatProEntitlement(customerInfo)) {
-        await refreshSubscription();
+      if (hasRevenueCatProEntitlement(activation.customerInfo)) {
+        const activated = await confirmAuthoritativeProActivation(
+          activation.authoritativeReconciled,
+          refreshSubscription,
+          refreshChildSubscription
+        );
+        if (!activated) {
+          showActivationPending();
+          return;
+        }
         Alert.alert("Welcome to Pro!", "You now have full access to ABA at Home.");
         router.replace('/(tabs)/dashboard');
+      } else {
+        Alert.alert(
+          'Purchase Processing',
+          'Your purchase was successful, but Pro activation is still updating.'
+        );
       }
     } catch (e: any) {
       if (!e.userCancelled) {

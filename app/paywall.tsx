@@ -11,7 +11,9 @@ import {
 import type { PurchasesPackage } from 'react-native-purchases';
 
 import { useSubscription } from '../lib/SubscriptionContext';
+import { useChildSubscription } from '../lib/ChildSubscriptionContext';
 import {
+  confirmAuthoritativeProActivation,
   getCurrentOffering,
   hasRevenueCatProEntitlement,
   purchasePackage,
@@ -26,6 +28,7 @@ const PRIVACY_URL =
 
 export default function PaywallScreen() {
   const { refreshSubscription } = useSubscription();
+  const { refreshChildSubscription } = useChildSubscription();
   const [packageToBuy, setPackageToBuy] =
     useState<PurchasesPackage | null>(null);
 
@@ -34,6 +37,36 @@ export default function PaywallScreen() {
 
   const [purchasing, setPurchasing] =
     useState(false);
+
+  const showActivationPending = () => {
+    Alert.alert(
+      'Finishing Pro Activation',
+      'Your purchase was successful. We’re finishing Pro activation now. You will not be charged again.',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { text: 'Try Again', onPress: () => { void retryActivation(); } },
+      ]
+    );
+  };
+
+  const retryActivation = async () => {
+    if (purchasing) return;
+    setPurchasing(true);
+    try {
+      const activated = await confirmAuthoritativeProActivation(
+        false,
+        refreshSubscription,
+        refreshChildSubscription
+      );
+      if (activated) {
+        Alert.alert('Pro Is Ready', 'All Pro features are now unlocked.');
+      } else {
+        showActivationPending();
+      }
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -105,11 +138,26 @@ export default function PaywallScreen() {
     try {
       setPurchasing(true);
 
-      const customerInfo = await purchasePackage(packageToBuy);
-      const hasPro = hasRevenueCatProEntitlement(customerInfo);
+      const activation = await purchasePackage(packageToBuy);
+      if (!activation) {
+        Alert.alert(
+          'Purchase Not Completed',
+          'The purchase did not finish. Please try again.'
+        );
+        return;
+      }
+      const hasPro = hasRevenueCatProEntitlement(activation?.customerInfo);
 
       if (hasPro) {
-        await refreshSubscription();
+        const activated = await confirmAuthoritativeProActivation(
+          activation.authoritativeReconciled,
+          refreshSubscription,
+          refreshChildSubscription
+        );
+        if (!activated) {
+          showActivationPending();
+          return;
+        }
         Alert.alert(
           'Welcome to Pro!',
           'All Pro features are now unlocked.'
