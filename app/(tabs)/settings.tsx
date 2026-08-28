@@ -52,10 +52,11 @@ export default function SettingsScreen() {
   const childContext = useChild() as any;
   const { selectedChild, refreshChildren } = childContext;
 
-  const { isPro: personalIsPro } = useSubscription();
-  const { isPro } = useChildSubscription();
+  const { isPro: personalIsPro, loading: personalPlanLoading } = useSubscription();
+  const { isPro, loading: childAccessLoading } = useChildSubscription();
 
   const [deletingChild, setDeletingChild] = useState(false);
+  const [removingChildAccess, setRemovingChildAccess] = useState(false);
   const { isAdmin: isAppAdmin } = useAdminAccess();
   
 
@@ -77,7 +78,7 @@ const allowManageSubscription = canManageSubscription(role);
 const allowManagePecs = canManagePecs(role);
 const allowLessonReminders = canManageLessonReminders(role);
 const allowRunAssessments = canRunAssessments(role);
-const allowDeleteOwnAccount = canDeleteOwnAccount(role);
+const allowDeleteOwnAccount = canDeleteOwnAccount();
 
   const childName =
     selectedChild?.child_name ||
@@ -125,6 +126,47 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
           },
         },
       ]
+    );
+  };
+
+  const handleRemoveChildAccess = () => {
+    if (!selectedChild?.id || allowDeleteChild) return;
+
+    Alert.alert(
+      `Remove ${childName} from your account?`,
+      `You'll no longer have access to ${childName} or their information. ${childName}'s profile and data will remain with their owner. This won't affect any other children connected to your account.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove Access',
+          style: 'destructive',
+          onPress: async () => {
+            setRemovingChildAccess(true);
+            try {
+              const { data, error } = await supabase.rpc(
+                'remove_my_child_access',
+                { target_child_id: selectedChild.id },
+              );
+              if (error) throw error;
+              if (data !== true) throw new Error('Access could not be removed.');
+
+              await refreshChildren?.();
+              Alert.alert(
+                'Access Removed',
+                `${childName} was removed from your account. Their profile and data remain with their owner.`,
+              );
+              router.replace('/(tabs)/settings');
+            } catch (error: any) {
+              Alert.alert(
+                'Remove Access Failed',
+                error?.message || 'Could not remove this child from your account.',
+              );
+            } finally {
+              setRemovingChildAccess(false);
+            }
+          },
+        },
+      ],
     );
   };
 
@@ -183,7 +225,9 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
                   hasProAccess && styles.statusPillTextPro,
                 ]}
               >
-                {hasProAccess ? 'Pro tools available' : 'Free plan'}
+                {personalPlanLoading
+                  ? 'Your Plan • Checking…'
+                  : `Your Plan • ${personalHasProAccess ? 'Pro Active' : 'Free'}`}
               </Text>
             </View>
           </View>
@@ -199,7 +243,7 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
   </Section>
 ) : null}
 
-          {!hasProAccess && allowManageSubscription ? (
+          {!personalHasProAccess && allowManageSubscription ? (
             <TouchableOpacity
               style={styles.proCard}
               onPress={() => router.push('/subscription')}
@@ -221,22 +265,52 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
                 <Ionicons name="chevron-forward" size={20} color="#C2410C" />
               </View>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.activeProCard}>
-              <View style={styles.proTopRow}>
-                <View style={styles.activeProIconWrap}>
-                  <Ionicons name="sparkles" size={22} color="#7C3AED" />
-                </View>
+          ) : null}
 
-                <View style={styles.proTextWrap}>
-                  <Text style={styles.activeProTitle}>Pro Active</Text>
-                  <Text style={styles.activeProText}>
-                    Premium tools and testing features are unlocked.
-                  </Text>
-                </View>
+          <View style={styles.activeProCard}>
+            <View style={styles.accessRow}>
+              <View style={styles.activeProIconWrap}>
+                <Ionicons name="card-outline" size={22} color="#7C3AED" />
+              </View>
+              <View style={styles.proTextWrap}>
+                <Text style={styles.activeProTitle}>Your Plan</Text>
+                <Text style={styles.accessValue}>
+                  {personalPlanLoading ? 'Checking…' : personalHasProAccess ? 'Pro Active' : 'Free'}
+                </Text>
+                <Text style={styles.activeProText}>
+                  Your personal ABA at Home subscription.
+                </Text>
               </View>
             </View>
-          )}
+
+            {selectedChild ? (
+              <>
+                <View style={styles.accessDivider} />
+                <View style={styles.accessRow}>
+                  <View style={styles.activeProIconWrap}>
+                    <Ionicons
+                      name={hasProAccess ? 'sparkles' : 'lock-closed-outline'}
+                      size={22}
+                      color="#7C3AED"
+                    />
+                  </View>
+                  <View style={styles.proTextWrap}>
+                    <Text style={styles.activeProTitle}>{childName}&apos;s Access</Text>
+                    <Text style={styles.accessValue}>
+                      {childAccessLoading ? 'Checking…' : hasProAccess ? 'Pro' : 'Free'}
+                    </Text>
+                    <Text style={styles.activeProText}>
+                      {childAccessLoading
+                        ? 'Checking the access available for this child.'
+                        : hasProAccess
+                          ? 'Premium features are available for this child through their family\'s plan.'
+                          : 'This child currently has Free access.'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            ) : null}
+          </View>
 
           <Section title="Account">
             <SettingItem
@@ -256,7 +330,6 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
             <SettingItem
   icon="trash-outline"
   label="Delete Account"
-  sub={!allowDeleteOwnAccount ? 'Owner only' : undefined}
   helper="Permanently delete your account and app data"
   destructive
   disabled={!allowDeleteOwnAccount}
@@ -305,19 +378,30 @@ const allowDeleteOwnAccount = canDeleteOwnAccount(role);
     onPress={() => openPremiumRoute('/settings/manage-caregivers')}
   /> : <SettingItem icon="person-circle-outline" label={`My Access to ${childName}`} helper="View your role and child-specific permissions" onPress={() => openRoute('/settings/caregiver-profile')} />}
 
-  <SettingItem
-    icon="trash-outline"
-    label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
-    helper={
-      selectedChild
-        ? `Permanently delete ${childName} and related app data`
-        : 'No child profile selected'
-    }
-    destructive
-    disabled={deletingChild || !allowDeleteChild}
-    sub={!allowDeleteChild ? 'Owner only' : undefined}
-    onPress={handleDeleteChild}
-  />
+  {allowDeleteChild ? (
+    <SettingItem
+      icon="trash-outline"
+      label={deletingChild ? 'Deleting Child...' : 'Delete Child Profile'}
+      helper={
+        selectedChild
+          ? `Permanently delete ${childName} and related app data`
+          : 'No child profile selected'
+      }
+      destructive
+      disabled={deletingChild || !selectedChild}
+      sub="Owner only"
+      onPress={handleDeleteChild}
+    />
+  ) : selectedChild ? (
+    <SettingItem
+      icon="remove-circle-outline"
+      label={removingChildAccess ? 'Removing Access...' : 'Remove Child From My Account'}
+      helper={`Remove your access to ${childName} without deleting ${childName}'s profile`}
+      destructive
+      disabled={removingChildAccess}
+      onPress={handleRemoveChildAccess}
+    />
+  ) : null}
 </Section>
 
           <Section title="Subscription">
@@ -667,6 +751,24 @@ activeProCard: {
     fontSize: 13,
     lineHeight: 19,
     fontWeight: '700',
+  },
+
+  accessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  accessDivider: {
+    height: 1,
+    backgroundColor: '#DDD6FE',
+    marginVertical: 16,
+  },
+
+  accessValue: {
+    marginTop: 3,
+    color: '#2E1065',
+    fontSize: 18,
+    fontWeight: '900',
   },
 
   versionText: {

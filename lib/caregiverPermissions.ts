@@ -40,7 +40,10 @@ export const canDeleteChildProfile = (role?: string | null) => role === 'owner';
 export const canManageSubscription = (role?: string | null) => role === 'owner';
 export const canManagePecs = (role?: string | null) => role === 'owner' || role === 'parent';
 export const canRunAssessments = (role?: string | null) => role === 'owner' || role === 'parent';
-export const canDeleteOwnAccount = (role?: string | null) => role === 'owner';
+// Account ownership belongs to the authenticated adult, independently of any
+// selected-child role. Route authentication and the server-derived deletion
+// impact remain the authority for the destructive operation.
+export const canDeleteOwnAccount = () => true;
 export const canCustomizeRoutines = (role?: string | null) => role === 'owner' || role === 'parent' || role === 'caregiver';
 export const canUseParentSupport = canUseHelpNowGeneral;
 export const canDeleteChildData = (role?: string | null) => role === 'owner';
