@@ -14,7 +14,7 @@ assert.match(settings, /Remove Child From My Account/);
 assert.match(settings, /remove_my_child_access/);
 assert.match(settings, /Your Plan/);
 assert.match(settings, /\{childName\}&apos;s Access/);
-assert.match(settings, /personalHasProAccess \? 'Pro Active' : 'Free'/);
+assert.match(settings, /personalHasProAccess \? 'Pro' : 'Free'/);
 assert.match(settings, /hasProAccess \? 'Pro' : 'Free'/);
 assert.match(settings, /childAccessLoading/);
 
