@@ -211,25 +211,6 @@ const allowDeleteOwnAccount = canDeleteOwnAccount();
             <Text style={styles.subtitle}>
               Manage your account, child profiles, subscription, legal links, and app tools.
             </Text>
-
-            <View style={styles.statusPill}>
-              <Ionicons
-                name={hasProAccess ? 'sparkles' : 'lock-closed-outline'}
-                size={15}
-                color={hasProAccess ? '#6D28D9' : '#64748B'}
-              />
-
-              <Text
-                style={[
-                  styles.statusPillText,
-                  hasProAccess && styles.statusPillTextPro,
-                ]}
-              >
-                {personalPlanLoading
-                  ? 'Your Plan • Checking…'
-                  : `Your Plan • ${personalHasProAccess ? 'Pro Active' : 'Free'}`}
-              </Text>
-            </View>
           </View>
 
          {isAppAdmin ? (
@@ -270,42 +251,49 @@ const allowDeleteOwnAccount = canDeleteOwnAccount();
           <View style={styles.activeProCard}>
             <View style={styles.accessRow}>
               <View style={styles.activeProIconWrap}>
-                <Ionicons name="card-outline" size={22} color="#7C3AED" />
+                <Ionicons name="card-outline" size={19} color="#7C3AED" />
               </View>
-              <View style={styles.proTextWrap}>
-                <Text style={styles.activeProTitle}>Your Plan</Text>
-                <Text style={styles.accessValue}>
-                  {personalPlanLoading ? 'Checking…' : personalHasProAccess ? 'Pro Active' : 'Free'}
-                </Text>
-                <Text style={styles.activeProText}>
-                  Your personal ABA at Home subscription.
-                </Text>
+              <View style={styles.accessContent}>
+                <View style={styles.accessHeaderRow}>
+                  <Text style={styles.accessLabel}>Your Plan</Text>
+                  <Text
+                    style={[
+                      styles.accessStatus,
+                      personalHasProAccess && styles.accessStatusPro,
+                    ]}
+                  >
+                    {personalPlanLoading ? 'Checking…' : personalHasProAccess ? 'Pro' : 'Free'}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            {selectedChild ? (
+            {selectedChild && !allowManageSubscription ? (
               <>
                 <View style={styles.accessDivider} />
                 <View style={styles.accessRow}>
                   <View style={styles.activeProIconWrap}>
                     <Ionicons
                       name={hasProAccess ? 'sparkles' : 'lock-closed-outline'}
-                      size={22}
+                      size={19}
                       color="#7C3AED"
                     />
                   </View>
-                  <View style={styles.proTextWrap}>
-                    <Text style={styles.activeProTitle}>{childName}&apos;s Access</Text>
-                    <Text style={styles.accessValue}>
-                      {childAccessLoading ? 'Checking…' : hasProAccess ? 'Pro' : 'Free'}
-                    </Text>
-                    <Text style={styles.activeProText}>
-                      {childAccessLoading
-                        ? 'Checking the access available for this child.'
-                        : hasProAccess
-                          ? 'Premium features are available for this child through their family\'s plan.'
-                          : 'This child currently has Free access.'}
-                    </Text>
+                  <View style={styles.accessContent}>
+                    <View style={styles.accessHeaderRow}>
+                      <Text style={styles.accessLabel}>{childName}&apos;s Access</Text>
+                      <Text
+                        style={[
+                          styles.accessStatus,
+                          hasProAccess && styles.accessStatusPro,
+                        ]}
+                      >
+                        {childAccessLoading ? 'Checking…' : hasProAccess ? 'Pro' : 'Free'}
+                      </Text>
+                    </View>
+                    {!childAccessLoading && hasProAccess && !personalHasProAccess ? (
+                      <Text style={styles.accessSupport}>Pro through family plan</Text>
+                    ) : null}
                   </View>
                 </View>
               </>
@@ -596,19 +584,6 @@ subtitle: {
   fontWeight: '700',
 },
 
-statusPill: {
-  marginTop: 16,
-  alignSelf: 'flex-start',
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#F5F3FF',
-  borderRadius: 999,
-  paddingHorizontal: 14,
-  paddingVertical: 8,
-  borderWidth: 1,
-  borderColor: '#DDD6FE',
-},
-
 sectionTitle: {
   fontSize: 19,
   fontWeight: '900',
@@ -673,12 +648,13 @@ proCard: {
 },
 
 activeProCard: {
-  backgroundColor: '#F5F3FF',
-  padding: 18,
-  borderRadius: 28,
+  backgroundColor: '#FAF8FF',
+  paddingHorizontal: 14,
+  paddingVertical: 12,
+  borderRadius: 22,
   marginBottom: 22,
   borderWidth: 1,
-  borderColor: '#C4B5FD',
+  borderColor: '#DDD6FE',
 },
 
   disabledItem: { opacity: 0.6 },
@@ -713,9 +689,9 @@ activeProCard: {
   },
 
   activeProIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 14,
     backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
@@ -739,36 +715,48 @@ activeProCard: {
   },
 
   
-  activeProTitle: {
-    fontWeight: '900',
-    color: '#6D28D9',
-    fontSize: 16,
-  },
-
-  activeProText: {
-    marginTop: 4,
-    color: '#7C3AED',
-    fontSize: 13,
-    lineHeight: 19,
-    fontWeight: '700',
-  },
-
   accessRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
 
+  accessContent: {
+    flex: 1,
+  },
+
+  accessHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  accessLabel: {
+    color: '#2E1065',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  accessStatus: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  accessStatusPro: {
+    color: '#6D28D9',
+  },
+
+  accessSupport: {
+    marginTop: 3,
+    color: '#7C3AED',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
   accessDivider: {
     height: 1,
     backgroundColor: '#DDD6FE',
-    marginVertical: 16,
-  },
-
-  accessValue: {
-    marginTop: 3,
-    color: '#2E1065',
-    fontSize: 18,
-    fontWeight: '900',
+    marginVertical: 10,
   },
 
   versionText: {
@@ -841,17 +829,6 @@ activeProCard: {
 
   contentInner: { 
   width: '100%' 
-},
-
-statusPillText: {
-  marginLeft: 6,
-  color: '#64748B',
-  fontSize: 12,
-  fontWeight: '900',
-},
-
-statusPillTextPro: { 
-  color: '#6D28D9' 
 },
 
 section: { 
