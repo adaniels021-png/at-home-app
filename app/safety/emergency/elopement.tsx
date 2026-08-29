@@ -106,14 +106,23 @@ export default function ElopementSearchScreen() {
     return () => clearInterval(timer);
   }, [stage]);
 
+  const exitElopement = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/(tabs)');
+  }, [router]);
+
   const handleBack = useCallback(() => {
-    if (stage === 'resolved') { router.replace('/safety'); return; }
+    if (stage === 'resolved') { exitElopement(); return; }
     if (stage === 'clothing') { setStage(snapshotMode === 'edit' ? 'search' : 'entry'); return; }
     if (stage === 'location') { setStage('clothing'); return; }
     if (stage === 'time') { setStage('location'); return; }
-    if (stage === 'search') { router.replace('/safety'); return; }
-    router.replace(params.origin === 'help-now' ? '/help-now' : '/safety');
-  }, [params.origin, router, snapshotMode, stage]);
+    if (stage === 'search') { exitElopement(); return; }
+    exitElopement();
+  }, [exitElopement, snapshotMode, stage]);
 
   useFocusEffect(useCallback(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => { handleBack(); return true; });

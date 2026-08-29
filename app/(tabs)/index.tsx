@@ -20,7 +20,7 @@ import AnimatedPressable from '../../components/AnimatedPressable';
 import FadeInView from '../../components/FadeInView';
 import { useChild } from '../../lib/SelectedChildContext';
 import { supabase } from '../../lib/supabase';
-import { canAddChild, canUseHelpNowGeneral, canViewSafetyProfile } from '../../lib/caregiverPermissions';
+import { canAddChild, canUseElopementResponse, canUseHelpNowGeneral, canViewSafetyProfile } from '../../lib/caregiverPermissions';
 
 
 
@@ -32,6 +32,8 @@ export default function HomeScreen() {
   const children = childContext?.children || [];
   const role = selectedChild?.caregiver_access_role;
   const hasGeneralHelpNow = canUseHelpNowGeneral(role);
+  const hasEmergencyResponse = canUseElopementResponse(role);
+  const emergencyResponseLocked = !hasGeneralHelpNow && !hasEmergencyResponse;
 
 const [showChildSelector, setShowChildSelector] = useState(false);
 
@@ -55,6 +57,14 @@ const [showChildSelector, setShowChildSelector] = useState(false);
 
   const openHelpNow = () => {
     if (enteringHelpNow) return;
+
+    if (emergencyResponseLocked) {
+      Alert.alert(
+        'Emergency Response Unavailable',
+        'Emergency Response isn\'t available for your caregiver role. Ask the child\'s account owner if you need safety access.',
+      );
+      return;
+    }
 
     setEnteringHelpNow(true);
     Animated.timing(helpNowTransitionOpacity, {
@@ -398,7 +408,11 @@ useEffect(() => {
       </Text>
 
       <Text style={styles.helpNowSupport}>
-        {hasGeneralHelpNow ? "You're not alone." : 'Emergency information, when it matters.'}
+        {hasGeneralHelpNow
+          ? "You're not alone."
+          : emergencyResponseLocked
+            ? 'Owner or caregiver access required'
+            : 'Emergency information, when it matters.'}
       </Text>
 
     </View>
@@ -407,7 +421,7 @@ useEffect(() => {
 
   <View style={styles.helpNowArrowButton}>
     <Ionicons
-      name="arrow-forward"
+      name={emergencyResponseLocked ? 'lock-closed' : 'arrow-forward'}
       size={20}
       color="#5B3FF4"
     />
@@ -580,9 +594,21 @@ useEffect(() => {
     />
 
     <DropdownItem
-      icon="shield-checkmark-outline"
+      icon={emergencyResponseLocked ? 'lock-closed-outline' : 'shield-checkmark-outline'}
       label={canViewSafetyProfile(role) ? 'Safety' : 'Emergency Response'}
-      onPress={() => router.push(canViewSafetyProfile(role) ? '/safety' : '/safety/emergency/elopement')}
+      helper={emergencyResponseLocked ? 'Owner or caregiver access required' : undefined}
+      locked={emergencyResponseLocked}
+      onPress={() => {
+        if (emergencyResponseLocked) {
+          Alert.alert(
+            'Emergency Response Unavailable',
+            'Emergency Response isn\'t available for your caregiver role. Ask the child\'s account owner if you need safety access.',
+          );
+          return;
+        }
+
+        router.push(canViewSafetyProfile(role) ? '/safety' : '/safety/emergency/elopement');
+      }}
     />
   </DropdownSection>
 </FadeInView>
@@ -717,16 +743,27 @@ function DropdownSection({
 function DropdownItem({
   icon,
   label,
+  helper,
+  locked,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
+  helper?: string;
+  locked?: boolean;
   onPress: () => void;
 }) {
   return (
-    <AnimatedPressable style={styles.dropdownItem} onPress={onPress}>
-      <Ionicons name={icon} size={23} color="#4F46E5" />
-      <Text style={styles.dropdownItemText}>{label}</Text>
+    <AnimatedPressable
+      accessibilityState={{ disabled: locked }}
+      style={[styles.dropdownItem, locked && styles.dropdownItemLocked]}
+      onPress={onPress}
+    >
+      <Ionicons name={icon} size={23} color={locked ? '#64748B' : '#4F46E5'} />
+      <View style={styles.dropdownItemCopy}>
+        <Text style={[styles.dropdownItemText, locked && styles.dropdownItemTextLocked]}>{label}</Text>
+        {helper ? <Text style={styles.dropdownItemHelper}>{helper}</Text> : null}
+      </View>
       <Ionicons name="chevron-forward" size={19} color="#94A3B8" />
     </AnimatedPressable>
   );
@@ -1098,17 +1135,35 @@ dropdownItem: {
   borderBottomColor: '#F8FAFC',
 },
 
+  dropdownItemLocked: {
+    backgroundColor: '#F8FAFC',
+  },
+
   dropdownBody: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
   },
 
-  dropdownItemText: {
+  dropdownItemCopy: {
     flex: 1,
     marginLeft: 10,
+  },
+
+  dropdownItemText: {
     color: '#0F172A',
     fontSize: 14,
     fontWeight: '800',
+  },
+
+  dropdownItemTextLocked: {
+    color: '#475569',
+  },
+
+  dropdownItemHelper: {
+    marginTop: 2,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
   },
 
  progressCard: {
