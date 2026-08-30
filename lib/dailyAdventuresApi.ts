@@ -55,7 +55,7 @@ export async function searchMyActivityLibrary(input: {
     category_filter: input.category || null,
     after_title: input.afterTitle || null,
     after_id: input.afterId || null,
-    page_size: input.limit || 20,
+    page_size: input.limit || 5,
   });
 
   if (error) throw error;
