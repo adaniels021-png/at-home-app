@@ -8,7 +8,11 @@ import {
   buildActivityIllustrationPrompt,
   sha256Hex,
 } from '../_shared/activity-illustration-prompt.ts';
-import { createGeminiImageAdapter, GEMINI_IMAGE_MODEL } from '../_shared/activity-illustration-gemini.ts';
+import {
+  createGeminiImageAdapter,
+  GEMINI_IMAGE_MODEL,
+  GeminiImageProviderError,
+} from '../_shared/activity-illustration-gemini.ts';
 import { extractProviderImage } from '../_shared/activity-illustration-image.ts';
 import { normalizeActivityIllustration } from '../_shared/activity-illustration-normalizer.ts';
 
@@ -50,7 +54,7 @@ Deno.serve(async (req) => {
   const started = Date.now();
   let illustrationId: string | null = null;
   try {
-    const { adminId, userClient, serviceClient } = await authorizeIllustrationAdmin(req);
+    const { userClient, serviceClient } = await authorizeIllustrationAdmin(req);
     let rawBody: unknown;
     try { rawBody = await req.json(); } catch { throw new IllustrationHttpError(400, 'INVALID_JSON'); }
     const body = parseBody(rawBody);
@@ -143,7 +147,10 @@ Deno.serve(async (req) => {
     return response({ illustration_id: current.id, status: draft.status, version: draft.version });
   } catch (error) {
     const known = error instanceof IllustrationHttpError;
-    const code = known ? error.code : String((error as Error)?.message || 'GENERATION_FAILED').replace(/[^A-Z0-9_]/g, '_').slice(0, 80);
+    const providerError = error instanceof GeminiImageProviderError ? error : null;
+    const code = known
+      ? error.code
+      : providerError?.code || String((error as Error)?.message || 'GENERATION_FAILED').replace(/[^A-Z0-9_]/g, '_').slice(0, 80);
     if (illustrationId && !known) {
       try {
         const { serviceClient } = await authorizeIllustrationAdmin(req);
@@ -154,7 +161,16 @@ Deno.serve(async (req) => {
         });
       } catch { /* original failure remains authoritative */ }
     }
-    console.log(JSON.stringify({ event: 'activity_illustration_failed', illustration_id: illustrationId, code, duration_ms: Date.now() - started }));
+    console.log(JSON.stringify({
+      event: 'activity_illustration_failed',
+      illustration_id: illustrationId,
+      code,
+      stage: providerError?.stage,
+      provider_http_status: providerError?.httpStatus,
+      provider_status: providerError?.providerStatus,
+      provider_message: providerError?.providerMessage,
+      duration_ms: Date.now() - started,
+    }));
     return response({ error: code }, known ? error.status : 500);
   }
 });

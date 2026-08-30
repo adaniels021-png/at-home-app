@@ -51,7 +51,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action: () => Promise<unknown>, refreshPersistedFailure = false) => {
     if (working) return;
     try {
       setWorking(true);
@@ -63,7 +63,23 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         setBackendUnavailable(true);
         setState(null);
       } else {
-        setSafeError(error instanceof Error ? error.message : 'Illustration tools could not complete this request.');
+        const safeMessage = error instanceof Error ? error.message : 'Illustration tools could not complete this request.';
+        if (refreshPersistedFailure) {
+          try {
+            const refreshed = await getAdminIllustrationState(activityId);
+            if (refreshed.candidate?.status === 'failed') {
+              setState(refreshed);
+              setSafeError(null);
+              setBackendUnavailable(false);
+            } else {
+              setSafeError(safeMessage);
+            }
+          } catch {
+            setSafeError(safeMessage);
+          }
+        } else {
+          setSafeError(safeMessage);
+        }
       }
     } finally {
       setWorking(false);
@@ -163,7 +179,10 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         <TouchableOpacity
           style={[styles.primary, working && styles.disabled]}
           disabled={working}
-          onPress={() => void run(() => generateActivityIllustration(activityId, approved ? 'regenerate' : 'missing', approved?.id || null))}
+          onPress={() => void run(
+            () => generateActivityIllustration(activityId, approved ? 'regenerate' : 'missing', approved?.id || null),
+            true,
+          )}
         >
           <Ionicons name="sparkles-outline" size={17} color="#FFFFFF" />
           <Text style={styles.primaryText}>{candidate?.status === 'failed' ? 'Retry' : approved ? 'Generate New Illustration' : 'Generate Illustration'}</Text>

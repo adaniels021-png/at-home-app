@@ -37,7 +37,12 @@ assert.match(normalizer, /image\.crop/);
 assert.match(normalizer, /image\.resize\(1024, 1024\)/);
 assert.match(normalizer, /image\.strip\(\)/);
 assert.match(normalizer, /\[84, 80, 76, 72\]/);
-assert.match(provider, /aspectRatio: '1:1'/);
+assert.match(provider, /\/v1beta\/models\/\$\{GEMINI_IMAGE_MODEL\}:generateContent/);
+assert.match(provider, /responseModalities: \['TEXT', 'IMAGE'\]/);
+assert.doesNotMatch(provider, /responseFormat/);
+assert.doesNotMatch(provider, /aspectRatio/);
+assert.match(provider, /PROVIDER_REQUEST_/);
+assert.match(provider, /RETRYABLE_STATUSES/);
 assert.match(generator, /normalizeActivityIllustration/);
 
 assert.doesNotMatch(generic, /activity-illustration-normalizer/);
