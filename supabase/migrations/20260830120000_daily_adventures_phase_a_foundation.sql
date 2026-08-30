@@ -115,7 +115,7 @@ create or replace function public.get_my_daily_adventures(
 )
 returns table(
   assignment_date date,
-  position smallint,
+  "position" smallint,
   assignment_source text,
   assignment_count integer,
   incomplete boolean,
@@ -123,7 +123,7 @@ returns table(
   title text,
   category text,
   location text,
-  time text,
+  "time" text,
   description text,
   try_this jsonb,
   why_it_helps text,
@@ -192,21 +192,21 @@ begin
             and existing.library_activity_id = activity.id
         )
     ), selected_candidates as (
-      select id, candidate_position
-      from ranked_candidates
-      order by candidate_position
+      select ranked.id, ranked.candidate_position
+      from ranked_candidates ranked
+      order by ranked.candidate_position
       limit (3 - existing_count)
     ), numbered_candidates as (
-      select id, row_number() over (order by candidate_position) as sequence
-      from selected_candidates
+      select selected.id, row_number() over (order by selected.candidate_position) as sequence
+      from selected_candidates selected
     ), missing_positions as (
-      select position, row_number() over (order by position) as sequence
+      select positions.position, row_number() over (order by positions.position) as sequence
       from generate_series(1, 3) as positions(position)
       where not exists (
         select 1 from public.daily_adventure_assignments existing
         where existing.child_id = target_child_id
           and existing.assignment_date = effective_date
-          and existing.position = position
+          and existing.position = positions.position
       )
     )
     insert into public.daily_adventure_assignments (
@@ -264,7 +264,7 @@ create or replace function public.search_my_activity_library(
   page_size integer default 20
 )
 returns table(
-  id uuid, title text, category text, location text, time text,
+  id uuid, title text, category text, location text, "time" text,
   description text, try_this jsonb, why_it_helps text, materials jsonb, pro_only boolean
 )
 language plpgsql
@@ -318,7 +318,7 @@ create or replace function public.get_my_activity_detail(
   target_activity_id uuid
 )
 returns table(
-  id uuid, title text, category text, location text, time text,
+  id uuid, title text, category text, location text, "time" text,
   description text, try_this jsonb, why_it_helps text, materials jsonb, pro_only boolean
 )
 language plpgsql
@@ -475,7 +475,7 @@ $$;
 
 create or replace function public.get_my_surprise_activity(target_child_id uuid)
 returns table(
-  id uuid, title text, category text, location text, time text,
+  id uuid, title text, category text, location text, "time" text,
   description text, try_this jsonb, why_it_helps text, materials jsonb, pro_only boolean
 )
 language plpgsql

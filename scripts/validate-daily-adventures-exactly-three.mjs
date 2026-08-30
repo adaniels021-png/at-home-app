@@ -12,5 +12,7 @@ contains(sql, /activity\.pro_only[\s\S]*from public\.daily_adventure_assignments
 contains(sql, /existing_count < 3/, 'Incomplete assignment state is not exposed');
 contains(sql, /assignment_date >= effective_date - 14/, 'Recent-repeat avoidance is missing');
 contains(sql, /md5\(target_child_id::text \|\| ':' \|\| effective_date::text/, 'Selection is not stable for child/date');
+contains(sql, /returns table\([\s\S]*?"position" smallint[\s\S]*?"time" text/, 'Reserved RPC output identifiers must be quoted for PostgreSQL execution');
+contains(sql, /select ranked\.id, ranked\.candidate_position[\s\S]*select selected\.id,[\s\S]*select positions\.position/, 'Assignment CTE columns must be qualified against PL/pgSQL output parameters');
 
 pass('Exactly-three stable assignment contract');
