@@ -31,6 +31,7 @@ function snapshotToActivity(snapshot: any, activityId: string): ActivityView | n
     why_it_helps: snapshot.why_it_helps || snapshot.whyItHelps || snapshot.success_criteria || null,
     materials: textArray(snapshot.materials),
     pro_only: Boolean(snapshot.pro_only),
+    illustration_url: typeof snapshot.illustration_url === 'string' ? snapshot.illustration_url : null,
     legacySnapshot: true,
   };
 }

@@ -17,6 +17,7 @@ export type DailyAdventureAssignment = {
   why_it_helps: string | null;
   materials: string[] | null;
   pro_only: boolean;
+  illustration_url: string | null;
 };
 
 export type ActivityLibraryItem = Omit<
