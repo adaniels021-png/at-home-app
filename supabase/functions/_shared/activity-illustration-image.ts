@@ -1,11 +1,15 @@
+export const MAX_PROVIDER_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_ILLUSTRATION_BYTES = 750 * 1024;
 export const TARGET_ILLUSTRATION_SIZE = 1024;
+export const SUPPORTED_PROVIDER_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+] as const;
 
-export type ValidatedImage = {
+export type ProviderImage = {
   bytes: Uint8Array;
-  mimeType: 'image/webp';
-  width: number;
-  height: number;
+  declaredMimeType: (typeof SUPPORTED_PROVIDER_MIME_TYPES)[number];
 };
 
 function decodeBase64(value: string) {
@@ -13,49 +17,28 @@ function decodeBase64(value: string) {
     throw new Error('INVALID_IMAGE_BASE64');
   }
   const binary = atob(value);
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  if (bytes.length === 0 || bytes.length > MAX_PROVIDER_IMAGE_BYTES) {
+    throw new Error('PROVIDER_IMAGE_SIZE_INVALID');
+  }
+  return bytes;
 }
 
-function readWebpDimensions(bytes: Uint8Array) {
-  const ascii = (offset: number, length: number) =>
-    String.fromCharCode(...bytes.slice(offset, offset + length));
-  if (bytes.length < 30 || ascii(0, 4) !== 'RIFF' || ascii(8, 4) !== 'WEBP') {
-    throw new Error('INVALID_WEBP');
+export function extractProviderImage(payload: unknown): ProviderImage {
+  const candidates = (payload as any)?.candidates;
+  if (!Array.isArray(candidates) || candidates.length !== 1) {
+    throw new Error('PROVIDER_CANDIDATE_COUNT_INVALID');
   }
-  const chunk = ascii(12, 4);
-  if (chunk === 'VP8X') {
-    const width = 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16);
-    const height = 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16);
-    return { width, height };
-  }
-  throw new Error('UNSUPPORTED_WEBP_LAYOUT');
-}
-
-export function validatePersistedWebp(bytes: Uint8Array): ValidatedImage {
-  if (bytes.length === 0 || bytes.length > MAX_ILLUSTRATION_BYTES) {
-    throw new Error('IMAGE_SIZE_INVALID');
-  }
-  const { width, height } = readWebpDimensions(bytes);
-  if (width !== TARGET_ILLUSTRATION_SIZE || height !== TARGET_ILLUSTRATION_SIZE) {
-    throw new Error('NORMALIZATION_REQUIRED');
-  }
-  return { bytes, mimeType: 'image/webp', width, height };
-}
-
-export function validateProviderImageResponse(payload: unknown): ValidatedImage {
-  const parts = (payload as any)?.candidates?.[0]?.content?.parts;
+  const parts = candidates[0]?.content?.parts;
   if (!Array.isArray(parts)) throw new Error('PROVIDER_IMAGE_MISSING');
   const images = parts
     .map((part: any) => part?.inlineData || part?.inline_data)
     .filter((item: any) => item?.data);
   if (images.length !== 1) throw new Error('PROVIDER_IMAGE_COUNT_INVALID');
   const image = images[0];
-  const mimeType = image.mimeType || image.mime_type;
-  if (mimeType !== 'image/webp') throw new Error('NORMALIZATION_REQUIRED');
-  const bytes = decodeBase64(image.data);
-  return validatePersistedWebp(bytes);
+  const declaredMimeType = image.mimeType || image.mime_type;
+  if (!SUPPORTED_PROVIDER_MIME_TYPES.includes(declaredMimeType)) {
+    throw new Error('PROVIDER_IMAGE_MIME_UNSUPPORTED');
+  }
+  return { bytes: decodeBase64(image.data), declaredMimeType };
 }
-
-// Deno Edge has no built-in, verified WebP transcoder. C.3 therefore accepts
-// only provider-native assets already satisfying the persisted master contract.
-export const IMAGE_NORMALIZATION_STATUS = 'BLOCKED_PROVIDER_NATIVE_ONLY' as const;

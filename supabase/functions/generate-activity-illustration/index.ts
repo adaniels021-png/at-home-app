@@ -1,6 +1,7 @@
 import {
   authorizeIllustrationAdmin,
   IllustrationHttpError,
+  isMissingIllustrationStorage,
 } from '../_shared/activity-illustration-auth.ts';
 import {
   ACTIVITY_ILLUSTRATION_PROMPT_VERSION,
@@ -8,7 +9,8 @@ import {
   sha256Hex,
 } from '../_shared/activity-illustration-prompt.ts';
 import { createGeminiImageAdapter, GEMINI_IMAGE_MODEL } from '../_shared/activity-illustration-gemini.ts';
-import { validateProviderImageResponse } from '../_shared/activity-illustration-image.ts';
+import { extractProviderImage } from '../_shared/activity-illustration-image.ts';
+import { normalizeActivityIllustration } from '../_shared/activity-illustration-normalizer.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -101,13 +103,18 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error('PROVIDER_NOT_CONFIGURED');
     const providerPayload = await createGeminiImageAdapter()(prompt, apiKey);
-    const image = validateProviderImageResponse(providerPayload);
+    const image = await normalizeActivityIllustration(extractProviderImage(providerPayload));
     const imageHash = await sha256Hex(image.bytes);
     const draftPath = `${activity.id}/${current.id}/draft.webp`;
     const { error: uploadError } = await serviceClient.storage
       .from('activity-illustration-drafts')
       .upload(draftPath, image.bytes, { contentType: image.mimeType, upsert: false });
-    if (uploadError) throw new Error('DRAFT_UPLOAD_FAILED');
+    if (uploadError) {
+      if (isMissingIllustrationStorage(uploadError)) {
+        throw new IllustrationHttpError(503, 'ILLUSTRATION_INFRASTRUCTURE_UNAVAILABLE');
+      }
+      throw new Error('DRAFT_UPLOAD_FAILED');
+    }
 
     const { data: draft, error: transitionError } = await serviceClient.rpc(
       'mark_activity_illustration_draft',

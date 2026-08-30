@@ -1,6 +1,7 @@
 import {
   authorizeIllustrationAdmin,
   IllustrationHttpError,
+  isMissingIllustrationStorage,
 } from '../_shared/activity-illustration-auth.ts';
 
 const CORS = {
@@ -31,7 +32,12 @@ Deno.serve(async (req) => {
     const { data, error: signError } = await serviceClient.storage
       .from('activity-illustration-drafts')
       .createSignedUrl(expectedPath, expiresIn);
-    if (signError || !data?.signedUrl) throw new Error('PREVIEW_SIGNING_FAILED');
+    if (signError || !data?.signedUrl) {
+      if (signError && isMissingIllustrationStorage(signError)) {
+        throw new IllustrationHttpError(503, 'ILLUSTRATION_INFRASTRUCTURE_UNAVAILABLE');
+      }
+      throw new Error('PREVIEW_SIGNING_FAILED');
+    }
     return json({ illustration_id: candidate.id, signed_url: data.signedUrl, expires_in: expiresIn });
   } catch (error) {
     const status = error instanceof IllustrationHttpError ? error.status : 500;

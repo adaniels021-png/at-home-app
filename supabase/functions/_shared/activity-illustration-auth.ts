@@ -12,6 +12,16 @@ export class IllustrationHttpError extends Error {
   }
 }
 
+export function isMissingIllustrationStorage(error: unknown) {
+  const value = error as { message?: string; statusCode?: string | number; error?: string };
+  const text = `${value?.message || ''} ${value?.error || ''}`.toLowerCase();
+  return (
+    Number(value?.statusCode) === 404 ||
+    text.includes('bucket not found') ||
+    text.includes('resource not found')
+  );
+}
+
 export async function authorizeIllustrationAdmin(
   req: Request,
 ): Promise<AuthorizedIllustrationClients> {

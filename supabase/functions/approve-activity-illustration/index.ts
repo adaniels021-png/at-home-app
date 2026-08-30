@@ -1,8 +1,9 @@
 import {
   authorizeIllustrationAdmin,
   IllustrationHttpError,
+  isMissingIllustrationStorage,
 } from '../_shared/activity-illustration-auth.ts';
-import { validatePersistedWebp } from '../_shared/activity-illustration-image.ts';
+import { inspectNormalizedActivityIllustration } from '../_shared/activity-illustration-normalizer.ts';
 import { sha256Hex } from '../_shared/activity-illustration-prompt.ts';
 
 const CORS = {
@@ -32,8 +33,13 @@ Deno.serve(async (req) => {
     if (error || !candidate || candidate.status !== 'draft' || candidate.draft_storage_path !== expectedDraftPath) throw new IllustrationHttpError(409, 'ILLUSTRATION_NOT_APPROVABLE');
     const { data: blob, error: downloadError } = await serviceClient.storage
       .from('activity-illustration-drafts').download(expectedDraftPath);
-    if (downloadError || !blob) throw new Error('DRAFT_DOWNLOAD_FAILED');
-    const image = validatePersistedWebp(new Uint8Array(await blob.arrayBuffer()));
+    if (downloadError || !blob) {
+      if (downloadError && isMissingIllustrationStorage(downloadError)) {
+        throw new IllustrationHttpError(503, 'ILLUSTRATION_INFRASTRUCTURE_UNAVAILABLE');
+      }
+      throw new Error('DRAFT_DOWNLOAD_FAILED');
+    }
+    const image = await inspectNormalizedActivityIllustration(new Uint8Array(await blob.arrayBuffer()));
     const hash = await sha256Hex(image.bytes);
     if (hash !== candidate.sha256) throw new Error('DRAFT_INTEGRITY_FAILED');
     const approvedPath = `${candidate.activity_id}/v${candidate.version}-${hash.slice(0, 16)}.webp`;
@@ -45,6 +51,9 @@ Deno.serve(async (req) => {
         upsert: false,
       });
     if (uploadError) {
+      if (isMissingIllustrationStorage(uploadError)) {
+        throw new IllustrationHttpError(503, 'ILLUSTRATION_INFRASTRUCTURE_UNAVAILABLE');
+      }
       if (!String(uploadError.message).toLowerCase().includes('already exists')) {
         throw new Error('APPROVED_UPLOAD_FAILED');
       }
