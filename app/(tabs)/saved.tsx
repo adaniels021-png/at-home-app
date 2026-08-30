@@ -13,12 +13,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
+import { setMyActivityState } from '../../lib/dailyAdventuresApi';
 import { supabase } from '../../lib/supabase';
 
 type SavedActivityRow = {
   id: string;
+  library_activity_id: string | null;
   activity_name: string;
   activity_json: {
+    id?: string;
+    library_activity_id?: string;
     name: string;
     materials: string[];
     instructions: string[];
@@ -54,7 +58,7 @@ export default function SavedActivitiesScreen() {
 
       const { data, error } = await supabase
         .from('saved_activities')
-        .select('id, activity_name, activity_json, is_saved, is_favorite, activity_date')
+        .select('id, library_activity_id, activity_name, activity_json, is_saved, is_favorite, activity_date')
         .eq('child_id', selectedChild.id)
         .order('activity_date', { ascending: false })
         .order('created_at', { ascending: false });
@@ -86,12 +90,16 @@ export default function SavedActivitiesScreen() {
     const nextValue = !item.is_saved;
 
     try {
-      const { error } = await supabase
-        .from('saved_activities')
-        .update({ is_saved: nextValue })
-        .eq('id', item.id);
+      const activityId =
+        item.library_activity_id ||
+        item.activity_json.library_activity_id ||
+        item.activity_json.id;
 
-      if (error) throw error;
+      if (!selectedChild?.id || !activityId) {
+        throw new Error('This legacy activity does not have a stable library reference.');
+      }
+
+      await setMyActivityState(selectedChild.id, activityId, { saved: nextValue });
 
       setSavedActivities((prev) =>
         prev.map((activity) =>
@@ -113,12 +121,18 @@ export default function SavedActivitiesScreen() {
     const nextValue = !item.is_favorite;
 
     try {
-      const { error } = await supabase
-        .from('saved_activities')
-        .update({ is_favorite: nextValue })
-        .eq('id', item.id);
+      const activityId =
+        item.library_activity_id ||
+        item.activity_json.library_activity_id ||
+        item.activity_json.id;
 
-      if (error) throw error;
+      if (!selectedChild?.id || !activityId) {
+        throw new Error('This legacy activity does not have a stable library reference.');
+      }
+
+      await setMyActivityState(selectedChild.id, activityId, {
+        favorite: nextValue,
+      });
 
       setSavedActivities((prev) =>
         prev.map((activity) =>

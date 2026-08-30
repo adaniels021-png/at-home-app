@@ -16,10 +16,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getRecommendedActivitiesFromLibrary } from '../../lib/activityLibrary';
-
 import { useChild } from '../../lib/SelectedChildContext';
 import { useChildSubscription as useSubscription } from '../../lib/ChildSubscriptionContext';
+import {
+  getMyDailyAdventures,
+  getMySurpriseActivity,
+  searchMyActivityLibrary,
+  setMyActivityState,
+} from '../../lib/dailyAdventuresApi';
 import {
   canAccessActivity as hasActivityAccess,
   hasEntitlement,
@@ -82,94 +86,6 @@ const FILTERS: {
   { id: 'calm', label: 'Calm', icon: 'moon-outline' },
   { id: 'movement', label: 'Active', icon: 'walk-outline' },
 ];
-
-const LOCATION_MAP: Record<AdventureCategory, string> = {
-  home: 'Home',
-  outdoor: 'Outdoor',
-  community: 'Community',
-  sensory: 'Sensory play',
-  creative: 'Creative play',
-  calm: 'Calm and quiet play',
-  movement: 'Movement and active play',
-  surprise: 'Home, outdoor, or community',
-};
-
-function buildInstantActivities(childName: string): DailyAdventure[] {
-  return normalizeActivities([
-    {
-      name: 'Bubble Chase',
-      title: 'Bubble Chase',
-      category: 'outdoor',
-      location: 'Backyard, park, or sidewalk',
-      time: '5–10 minutes',
-      description:
-        'Blow bubbles and turn it into a playful chase, pop, and laugh adventure.',
-      try_this: [
-        `Let ${childName} pop bubbles with hands, feet, or a wand.`,
-        'Pause before blowing more bubbles to encourage communication.',
-        'Try big bubbles, tiny bubbles, fast bubbles, and slow bubbles.',
-      ],
-      why_it_helps:
-        'Supports movement, shared attention, communication, and joyful connection through play.',
-      materials: [],
-      instructions: [],
-      success_criteria: '',
-    },
-    {
-      name: 'Toy Rescue Mission',
-      title: 'Toy Rescue Mission',
-      category: 'home',
-      location: 'Living room or play area',
-      time: '5 minutes',
-      description:
-        'Pretend toys are stuck around the room and need help getting back home.',
-      try_this: [
-        'Pick 3–5 toys to “rescue.”',
-        'Give each toy a silly voice or sound.',
-        'Celebrate when each toy makes it back to its basket, shelf, or bed.',
-      ],
-      why_it_helps:
-        'Builds pretend play, clean-up routines, following directions, and cooperation without feeling like a chore.',
-      materials: [],
-      instructions: [],
-      success_criteria: '',
-    },
-    {
-      name: 'Grocery Store Helper',
-      title: 'Grocery Store Helper',
-      category: 'community',
-      location: 'Grocery store or quick errand',
-      time: '10–15 minutes',
-      description:
-        'Let your child be your special helper during a simple shopping trip.',
-      try_this: [
-        'Ask your child to help find one color, one fruit, or one box.',
-        'Let them place a safe item in the cart.',
-        'Praise helping, waiting, looking, or staying nearby.',
-      ],
-      why_it_helps:
-        'Supports real-world language, attention, patience, and community participation.',
-      materials: [],
-      instructions: [],
-      success_criteria: '',
-    },
-  ]) as DailyAdventure[];
-}
-
-function isLibraryActivitySet(
-  activityList: DailyAdventure[]
-): boolean {
-  if (!Array.isArray(activityList) || activityList.length === 0) {
-    return false;
-  }
-
-  return activityList.some((activity: any) => {
-    return (
-      activity?.source === 'library' ||
-      Boolean(activity?.library_activity_id)
-    );
-  });
-}
 
 function getAdventureAccent(index: number) {
   const accents = [
@@ -270,8 +186,12 @@ export default function ActivitiesScreen() {
   const { selectedChild } = useChild() as any;
   const { isPro: subscriptionIsPro } = useSubscription();
   const isPro = hasEntitlement({ isPro: subscriptionIsPro }, 'activities');
-  const canAccessActivity = (activity: DailyAdventure) =>
-    hasActivityAccess(subscriptionIsPro, activity);
+  const canAccessActivity = useCallback(
+    (activity: DailyAdventure) =>
+      activity.daily_assignment === true ||
+      hasActivityAccess(subscriptionIsPro, activity),
+    [subscriptionIsPro]
+  );
 
   const [activities, setActivities] = useState<DailyAdventure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -289,9 +209,6 @@ export default function ActivitiesScreen() {
 
   const scrollRef = useRef<ScrollView | null>(null);
   const isMountedRef = useRef(true);
-  const preloadingFiltersRef = useRef(false);
-  const preloadStartedRef = useRef(false);
-  const lastPreloadChildRef = useRef<string | null>(null);
   const filterRequestIdRef = useRef(0);
 
   const todayLabel = useMemo(() => getTodayLocalDateString(), []);
@@ -303,19 +220,19 @@ export default function ActivitiesScreen() {
 
   const carouselItems = useMemo<ActivityCarouselItem[]>(() => {
     const accessibleItems = activities.flatMap((activity, originalIndex) =>
-      hasActivityAccess(subscriptionIsPro, activity)
+      canAccessActivity(activity)
         ? [{ kind: 'activity' as const, activity, originalIndex }]
         : []
     );
 
     const hasLockedActivity = activities.some(
-      (activity) => !hasActivityAccess(subscriptionIsPro, activity)
+      (activity) => !canAccessActivity(activity)
     );
 
     return hasLockedActivity
       ? [...accessibleItems, { kind: 'locked' as const }]
       : accessibleItems;
-  }, [activities, subscriptionIsPro]);
+  }, [activities, canAccessActivity]);
 
   const accessibleActivityCount = carouselItems.filter(
     (item) => item.kind === 'activity'
@@ -367,32 +284,6 @@ export default function ActivitiesScreen() {
     [selectedChild?.id]
   );
 
-  const saveActivitiesForToday = useCallback(
-    async (
-      activityList: DailyAdventure[],
-      filter: AdventureCategory = 'surprise'
-    ) => {
-      if (!selectedChild?.id) return;
-
-      const { error } = await supabase.from('daily_fun_activities').upsert(
-        [
-          {
-            child_id: selectedChild.id,
-            activity_date: getTodayLocalDateString(),
-            activity_filter: filter,
-            activities_json: activityList,
-          },
-        ],
-        { onConflict: 'child_id,activity_date,activity_filter' }
-      );
-
-      if (error) {
-        console.error('Daily adventures save error:', error);
-      }
-    },
-    [selectedChild?.id]
-  );
-
   const upsertSavedActivity = useCallback(
     async (
       activity: DailyAdventure,
@@ -405,114 +296,21 @@ export default function ActivitiesScreen() {
     ) => {
       if (!selectedChild?.id) return;
 
-      const { error } = await supabase.from('saved_activities').upsert(
-        [
-          {
-            child_id: selectedChild.id,
-            activity_date: getTodayLocalDateString(),
-            activity_name: activity.name,
-            activity_json: activity,
-            ...updates,
-          },
-        ],
-        { onConflict: 'child_id,activity_date,activity_name' }
-      );
+      const activityId = activity.library_activity_id || activity.id;
 
-      if (error) throw error;
+      if (!activityId) {
+        throw new Error('This activity does not have a stable library ID.');
+      }
+
+      await setMyActivityState(selectedChild.id, activityId, {
+        saved: updates.is_saved,
+        favorite: updates.is_favorite,
+        completed: updates.completed,
+        feedback: updates.feedback,
+      });
     },
     [selectedChild?.id]
   );
-
-  const getRecentAdventureTitles = useCallback(async () => {
-    if (!selectedChild?.id) return [];
-
-    try {
-      const { data, error } = await supabase
-        .from('daily_fun_activities')
-        .select('activities_json')
-        .eq('child_id', selectedChild.id)
-        .order('activity_date', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      const titles: string[] = [];
-
-      (data || []).forEach((row: any) => {
-        if (Array.isArray(row.activities_json)) {
-          row.activities_json.forEach((activity: any) => {
-            const title = activity?.title || activity?.name;
-            if (title && !titles.includes(title)) titles.push(title);
-          });
-        }
-      });
-
-      return titles.slice(0, 30);
-    } catch (error) {
-      console.error('Recent adventure title load error:', error);
-      return [];
-    }
-  }, [selectedChild?.id]);
-
-const loadSavedTodayActivities = useCallback(
-  async (
-    filter: AdventureCategory = 'surprise'
-  ): Promise<DailyAdventure[]> => {
-    if (!selectedChild?.id) {
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('daily_fun_activities')
-      .select('activities_json')
-      .eq('child_id', selectedChild.id)
-      .eq(
-        'activity_date',
-        getTodayLocalDateString()
-      )
-      .eq('activity_filter', filter)
-      .maybeSingle();
-
-    if (error) {
-      console.error(
-        'Load saved today adventures error:',
-        error
-      );
-
-      return [];
-    }
-
-    const normalized = normalizeActivities(
-      data?.activities_json || []
-    ) as DailyAdventure[];
-
-    /*
-     * Ignore old generic cached activities.
-     *
-     * Only reuse today's cache when it contains activities
-     * pulled from the approved activity library.
-     */
-    if (
-      normalized.length > 0 &&
-      !isLibraryActivitySet(normalized)
-    ) {
-      console.log(
-        'Ignoring old non-library adventure cache:',
-        {
-          filter,
-          titles: normalized.map((activity) =>
-            getAdventureTitle(activity)
-          ),
-        }
-      );
-
-      return [];
-    }
-
-    return normalized;
-  },
-  [selectedChild?.id]
-);
 
 const generateActivitiesForFilter = useCallback(
   async (
@@ -524,184 +322,49 @@ const generateActivitiesForFilter = useCallback(
       return [];
     }
 
-    const recentTitles =
-      await getRecentAdventureTitles();
+    if (filter === 'surprise' && count === 1) {
+      const surprise = await getMySurpriseActivity(selectedChild.id);
+      return surprise
+        ? normalizeActivities([{ ...surprise, name: surprise.title, source: 'library', library_activity_id: surprise.id }]) as DailyAdventure[]
+        : [];
+    }
 
-    const allRecentTitles = Array.from(
-      new Set([
-        ...recentTitles,
-        ...extraRecentTitles,
-      ])
-    );
-
-    console.log(
-      'Loading Daily Adventures from library:',
-      {
-        filter,
-        count,
-        excludedCount: allRecentTitles.length,
-      }
-    );
-
-    const libraryActivities =
-      await getRecommendedActivitiesFromLibrary({
-        filter,
-        count,
-        excludeTitles: allRecentTitles,
-      });
-
-    if (libraryActivities.length > 0) {
-      const selected =
-        libraryActivities.slice(
-          0,
-          count
-        ) as DailyAdventure[];
-
-      console.log(
-        'Daily Adventures library results:',
-        selected.map((activity: any) => ({
-          title:
-            activity.title ||
-            activity.name,
-          category: activity.category,
-          location: activity.location,
-          source: activity.source,
-          libraryActivityId:
-            activity.library_activity_id,
+    if (filter === 'surprise') {
+      const assignments = await getMyDailyAdventures(
+        selectedChild.id,
+        getTodayLocalDateString()
+      );
+      return normalizeActivities(
+        assignments.map((activity) => ({
+          ...activity,
+          name: activity.title,
+          source: 'library',
+          library_activity_id: activity.id,
+          daily_assignment: true,
         }))
-      );
-
-      return selected;
+      ) as DailyAdventure[];
     }
 
-    console.warn(
-      'No approved library activities matched:',
-      {
-        filter,
-        excludedTitles: allRecentTitles,
-      }
-    );
+    const rows = await searchMyActivityLibrary({
+      childId: selectedChild.id,
+      category: filter,
+      limit: Math.min(count, 50),
+    });
+    const excluded = new Set(extraRecentTitles.map((title) => title.toLowerCase()));
 
-    /*
-     * Emergency offline fallback only.
-     *
-     * This should not normally appear when the approved
-     * activity library contains matching records.
-     */
-    const fallbackActivities =
-      buildInstantActivities(childName).filter(
-        (activity) => {
-          if (filter === 'surprise') {
-            return true;
-          }
-
-          const category =
-            getAdventureCategory(activity);
-
-          if (filter === 'home') {
-            return (
-              category === 'home' ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('home') ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('living room')
-            );
-          }
-
-          if (filter === 'outdoor') {
-            return (
-              category === 'outdoor' ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('park') ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('backyard')
-            );
-          }
-
-          if (filter === 'community') {
-            return (
-              category === 'community' ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('store') ||
-              String(
-                activity.location || ''
-              )
-                .toLowerCase()
-                .includes('errand')
-            );
-          }
-
-          return category === filter;
-        }
-      );
-
-    return fallbackActivities
-      .slice(0, count)
-      .map((activity) => ({
-        ...activity,
-        source: 'offline-fallback',
-      })) as DailyAdventure[];
+    return normalizeActivities(
+      rows
+        .filter((activity: any) => !excluded.has(String(activity.title).toLowerCase()))
+        .map((activity: any) => ({
+          ...activity,
+          name: activity.title,
+          source: 'library',
+          library_activity_id: activity.id,
+        }))
+    ) as DailyAdventure[];
   },
-  [
-    childName,
-    getRecentAdventureTitles,
-    selectedChild?.id,
-  ]
+  [selectedChild?.id]
 );
-  
-  const preloadTodayAdventureFilters = useCallback(async () => {
-    if (!selectedChild?.id || !isPro || preloadingFiltersRef.current) {
-      return;
-    }
-
-    preloadingFiltersRef.current = true;
-
-    try {
-      const filtersToPreload: AdventureCategory[] = [
-        'surprise',
-        'home',
-        'outdoor',
-        'community',
-        'calm',
-        'movement',
-      ];
-
-      for (const filter of filtersToPreload) {
-        const saved = await loadSavedTodayActivities(filter);
-
-        if (saved.length > 0) continue;
-
-        const generated = await generateActivitiesForFilter(filter, 3);
-
-        await saveActivitiesForToday(generated, filter);
-      }
-    } catch (error) {
-      console.error('Preload adventure filters error:', error);
-    } finally {
-      preloadingFiltersRef.current = false;
-    }
-  }, [
-    selectedChild?.id,
-    isPro,
-    loadSavedTodayActivities,
-    saveActivitiesForToday,
-    generateActivitiesForFilter,
-  ]);
 
   const loadActivities = useCallback(
     async (
@@ -748,7 +411,6 @@ if (!forceRefresh && isMountedRef.current) {
         setActivities(finalActivities);
         setCurrentIndex(0);
 
-        await saveActivitiesForToday(finalActivities, filter);
         await loadSavedActivityState(finalActivities);
       } catch (error: any) {
         console.error('Load daily adventures error:', error);
@@ -766,12 +428,8 @@ if (!forceRefresh && isMountedRef.current) {
     },
     [
       activeFilter,
-      childName,
-      isPro,
       selectedChild?.id,
-      loadSavedTodayActivities,
       loadSavedActivityState,
-      saveActivitiesForToday,
       generateActivitiesForFilter,
     ]
   );
@@ -782,30 +440,20 @@ if (!forceRefresh && isMountedRef.current) {
 
     void loadActivities(false, activeFilter);
 
-    if (lastPreloadChildRef.current !== selectedChild?.id) {
-      preloadStartedRef.current = false;
-      lastPreloadChildRef.current = selectedChild?.id || null;
-    }
-
-    if (isPro && !preloadStartedRef.current) {
-      preloadStartedRef.current = true;
-      void preloadTodayAdventureFilters();
-    }
-
     return () => {
       isMountedRef.current = false;
     };
-  }, [selectedChild?.id, isPro])
+  }, [activeFilter, loadActivities])
 );
 
   const handleRefresh = async () => {
     Alert.alert(
-      'Get Fresh Adventures?',
-      'This will replace today’s saved Daily Adventures with new ideas.',
+      'Refresh Adventures?',
+      'This reloads today’s three assigned Daily Adventures.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Fresh Ideas',
+          text: 'Refresh',
           onPress: async () => {
             setRefreshing(true);
             await loadActivities(true, activeFilter);
@@ -817,6 +465,11 @@ if (!forceRefresh && isMountedRef.current) {
 
   const handleFilterPress = async (filter: AdventureCategory) => {
     if (!selectedChild?.id || filterLoading) return;
+
+    if (!isPro && filter !== 'surprise') {
+      router.push('/subscription');
+      return;
+    }
 
     filterRequestIdRef.current += 1;
 
@@ -998,6 +651,14 @@ if (!forceRefresh && isMountedRef.current) {
       return;
     }
 
+    if (activeFilter === 'surprise') {
+      Alert.alert(
+        'Today’s Adventures Are Set',
+        'Today’s three Daily Adventures stay the same across your family’s devices.'
+      );
+      return;
+    }
+
     setRegeneratingIndex(index);
 
     try {
@@ -1018,7 +679,6 @@ if (!forceRefresh && isMountedRef.current) {
 
       setActivities(updated);
 
-      await saveActivitiesForToday(updated, activeFilter);
       await loadSavedActivityState(updated);
     } catch (error: any) {
       console.error('Regenerate adventure error:', error);
