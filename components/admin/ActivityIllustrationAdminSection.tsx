@@ -16,6 +16,7 @@ import {
   generateActivityIllustration,
   getActivityIllustrationPreview,
   getAdminIllustrationState,
+  isIllustrationBackendUnavailable,
   rejectActivityIllustration,
 } from '../../lib/adminActivityIllustrations';
 
@@ -26,14 +27,23 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(eligible);
   const [working, setWorking] = useState(false);
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
+  const [safeError, setSafeError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!eligible) return;
     try {
       setLoading(true);
+      setSafeError(null);
       setState(await getAdminIllustrationState(activityId));
-    } catch (error: any) {
-      Alert.alert('Illustration Error', error?.message || 'Could not load illustration status.');
+      setBackendUnavailable(false);
+    } catch (error: unknown) {
+      setState(null);
+      if (isIllustrationBackendUnavailable(error)) {
+        setBackendUnavailable(true);
+      } else {
+        setSafeError('Illustration status is temporarily unavailable. Activity editing is unaffected.');
+      }
     } finally {
       setLoading(false);
     }
@@ -48,8 +58,13 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
       await action();
       setPreviewUrl(null);
       await refresh();
-    } catch (error: any) {
-      Alert.alert('Illustration Action Failed', error?.message || 'Please try again.');
+    } catch (error: unknown) {
+      if (isIllustrationBackendUnavailable(error)) {
+        setBackendUnavailable(true);
+        setState(null);
+      } else {
+        setSafeError(error instanceof Error ? error.message : 'Illustration tools could not complete this request.');
+      }
     } finally {
       setWorking(false);
     }
@@ -74,6 +89,23 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Approve this activity first</Text>
           <Text style={styles.helper}>Illustrations attach to the stable Activity Library record. Approval will not generate artwork automatically.</Text>
+        </View>
+      ) : null}
+
+      {eligible && backendUnavailable ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Illustration tools not available</Text>
+          <Text style={styles.helper}>Illustration tools aren&apos;t available in this environment yet. Activity editing remains available.</Text>
+        </View>
+      ) : null}
+
+      {eligible && safeError && !backendUnavailable ? (
+        <View style={styles.error}>
+          <Text style={styles.errorTitle}>Illustration tools need attention</Text>
+          <Text style={styles.helper}>{safeError}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => void refresh()}>
+            <Text style={styles.retryButtonText}>Retry Status</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -103,7 +135,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         </View>
       ) : null}
 
-      {eligible && !approved && !candidate && !loading ? (
+      {eligible && !backendUnavailable && !safeError && !approved && !candidate && !loading ? (
         <Text style={styles.empty}>No illustration yet.</Text>
       ) : null}
 
@@ -127,7 +159,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         </View>
       ) : null}
 
-      {eligible && canGenerate ? (
+      {eligible && !backendUnavailable && !safeError && canGenerate ? (
         <TouchableOpacity
           style={[styles.primary, working && styles.disabled]}
           disabled={working}
@@ -165,6 +197,8 @@ const styles = StyleSheet.create({
   keepButtonText: { color: '#6D28D9', fontSize: 13, fontWeight: '900' },
   error: { backgroundColor: '#FEF2F2', borderRadius: 16, padding: 13 },
   errorTitle: { color: '#B91C1C', fontWeight: '900' },
+  retryButton: { minHeight: 38, justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  retryButtonText: { color: '#7C3AED', fontWeight: '900', fontSize: 13 },
   artBlock: { gap: 10 },
   image: { width: '100%', aspectRatio: 1, borderRadius: 18, backgroundColor: '#F1F5F9' },
   actions: { gap: 8 },

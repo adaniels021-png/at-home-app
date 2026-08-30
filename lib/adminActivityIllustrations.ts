@@ -1,4 +1,17 @@
 import { supabase } from './supabase';
+import {
+  classifyIllustrationFunctionError,
+  classifyStateRpcError,
+  IllustrationAdminError,
+  IllustrationBackendUnavailableError,
+  isIllustrationBackendUnavailable,
+} from './adminActivityIllustrationErrors';
+
+export {
+  IllustrationAdminError,
+  IllustrationBackendUnavailableError,
+  isIllustrationBackendUnavailable,
+};
 
 export type IllustrationSummary = {
   id: string;
@@ -33,7 +46,9 @@ export async function getAdminIllustrationState(activityId: string) {
   const { data, error } = await supabase.rpc('get_admin_activity_illustration_state', {
     target_activity_id: activityId,
   });
-  if (error) throw error;
+  if (error) {
+    throw classifyStateRpcError(error);
+  }
   return data as AdminIllustrationState;
 }
 
@@ -50,7 +65,7 @@ export async function generateActivityIllustration(
       expected_approved_illustration_id: expectedApprovedId,
     },
   });
-  if (error) throw error;
+  if (error) throw await classifyIllustrationFunctionError(error);
   return data;
 }
 
@@ -59,7 +74,7 @@ export async function getActivityIllustrationPreview(illustrationId: string) {
     'get-activity-illustration-preview',
     { body: { illustration_id: illustrationId } },
   );
-  if (error) throw error;
+  if (error) throw await classifyIllustrationFunctionError(error);
   return data as { signed_url: string; expires_in: number };
 }
 
@@ -73,7 +88,7 @@ export async function approveActivityIllustration(
       expected_approved_illustration_id: expectedApprovedId,
     },
   });
-  if (error) throw error;
+  if (error) throw await classifyIllustrationFunctionError(error);
   return data;
 }
 
@@ -82,6 +97,11 @@ export async function rejectActivityIllustration(illustrationId: string) {
     target_illustration_id: illustrationId,
     target_rejection_reason: 'Rejected during admin illustration review.',
   });
-  if (error) throw error;
+  if (error) {
+    if (error.code === '42883' && String(error.message || '').includes('reject_activity_illustration')) {
+      throw new IllustrationBackendUnavailableError();
+    }
+    throw new IllustrationAdminError('The draft could not be rejected. Refresh and try again.');
+  }
   return data;
 }
