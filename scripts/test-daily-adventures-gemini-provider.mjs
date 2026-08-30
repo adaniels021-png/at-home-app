@@ -98,7 +98,7 @@ const genericGenerator = fs.readFileSync('supabase/functions/generate-ai-asset-i
 const adminUi = fs.readFileSync('components/admin/ActivityIllustrationAdminSection.tsx', 'utf8');
 assert.match(activityGenerator, /ALLOWED_FIELDS/);
 assert.doesNotMatch(activityGenerator, /['"]prompt['"]\s*,?\s*(?:\]|$)/);
-assert.match(activityGenerator, /normalizeActivityIllustration\(extractProviderImage\(providerPayload\)\)/);
+assert.match(activityGenerator, /validateActivityIllustration\(extractProviderImage\(providerPayload\)\)/);
 assert.match(adminUi, /refreshPersistedFailure/);
 assert.match(adminUi, /refreshed\.candidate\?\.status === 'failed'/);
 

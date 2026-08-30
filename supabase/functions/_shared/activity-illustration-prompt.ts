@@ -1,5 +1,5 @@
 export const ACTIVITY_ILLUSTRATION_PROMPT_VERSION =
-  'daily-adventure-illustration-v1';
+  'daily-adventure-illustration-v2';
 
 const CATEGORY_ACCENTS: Record<string, string> = {
   home: 'soft lavender and peach',
@@ -39,7 +39,7 @@ export function buildActivityIllustrationPrompt(
   const tryThis = boundedList(activity.try_this, 2, 160);
   const materials = boundedList(activity.materials, 3, 80);
   const parts = [
-    `Create exactly one square illustration for the Daily Adventure "${bounded(activity.title, 120)}".`,
+    `Create exactly one illustration for the Daily Adventure "${bounded(activity.title, 120)}".`,
     `Activity category: ${category || 'home'}. Location context: ${bounded(activity.location, 100) || 'a simple safe setting'}.`,
     `Activity idea: ${bounded(activity.description, 320)}.`,
     tryThis.length ? `Show the core idea suggested by: ${tryThis.join('; ')}.` : '',
@@ -48,9 +48,10 @@ export function buildActivityIllustrationPrompt(
       ? `Optional scene intent: ${bounded(activity.why_it_helps, 180)}.`
       : '',
     `Use ${accent} as the category accent.`,
-    'Premium soft 3D children\'s educational mini-scene; rounded friendly objects; one to three primary objects; centered subject; generous edge-safe area; subtle depth; soft lighting; calm, playful, child-friendly but not babyish; simple soft background; readable as a small mobile thumbnail.',
+    'Premium soft 3D children\'s educational mini-scene; rounded friendly objects; one to three primary objects; subtle depth; soft lighting; calm, playful, child-friendly but not babyish; simple soft background; readable as a small mobile thumbnail.',
+    'Create a square 1:1 composition with the main subject centered and comfortable edge-safe space.',
     'Depict the activity idea, not every instruction. Be object-focused. Show hands only when genuinely necessary. Avoid full people or children.',
-    'Return one 1024 by 1024 WebP image only. No text, letters, logos, trademarks, watermark, UI, Bun Bun, identifiable child, clinical imagery, unsafe behavior, or busy environment.',
+    'Return one image only. No text, letters, logos, trademarks, watermark, UI, Bun Bun, identifiable child, clinical imagery, unsafe behavior, or busy environment.',
   ].filter(Boolean);
   return parts.join(' ');
 }

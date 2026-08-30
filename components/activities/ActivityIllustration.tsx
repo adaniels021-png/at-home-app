@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Image,
   ImageSourcePropType,
@@ -28,6 +28,14 @@ export function ActivityIllustration({
   style,
 }: Props) {
   const presentation = ACTIVITY_CATEGORY_PRESENTATION[category];
+  const sourceKey = useMemo(() => {
+    if (!imageSource) return null;
+    if (typeof imageSource === 'number') return String(imageSource);
+    if (Array.isArray(imageSource)) return imageSource.map((source) => source.uri || '').join('|');
+    return imageSource.uri || null;
+  }, [imageSource]);
+  const [failedSourceKey, setFailedSourceKey] = useState<string | null>(null);
+  const showImage = Boolean(imageSource && sourceKey && failedSourceKey !== sourceKey);
 
   return (
     <View
@@ -43,8 +51,13 @@ export function ActivityIllustration({
         style,
       ]}
     >
-      {imageSource ? (
-        <Image resizeMode="cover" source={imageSource} style={styles.image} />
+      {showImage ? (
+        <Image
+          onError={() => setFailedSourceKey(sourceKey)}
+          resizeMode="cover"
+          source={imageSource!}
+          style={styles.image}
+        />
       ) : (
         <>
           <View style={[styles.orb, { backgroundColor: `${presentation.accent}18` }]} />

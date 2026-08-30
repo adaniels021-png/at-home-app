@@ -38,7 +38,7 @@ assert.match(generate, /from\('activity_library'\)/);
 assert.match(generate, /reserve_activity_illustration_generation/);
 assert.match(generate, /claim_activity_illustration_provider_call/);
 assert.match(generate, /upsert: false/);
-assert.match(prompt, /daily-adventure-illustration-v1/);
+assert.match(prompt, /daily-adventure-illustration-v2/);
 assert.match(prompt, /No text, letters, logos, trademarks, watermark, UI, Bun Bun/);
 for (const privateTerm of ['child name', 'caregiver name', 'email', 'account id', 'assessment', 'subscription', 'saved history']) {
   assert.ok(!prompt.toLowerCase().includes(privateTerm), `prompt builder references ${privateTerm}`);

@@ -3,6 +3,7 @@ import {
   IllustrationHttpError,
   isMissingIllustrationStorage,
 } from '../_shared/activity-illustration-auth.ts';
+import { SUPPORTED_PROVIDER_MIME_TYPES } from '../_shared/activity-illustration-image.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,10 +24,14 @@ Deno.serve(async (req) => {
     if (!body || Object.keys(body).length !== 1 || !UUID.test(body.illustration_id)) throw new IllustrationHttpError(400, 'INVALID_REQUEST');
     const { data: candidate, error } = await serviceClient
       .from('activity_illustrations')
-      .select('id,activity_id,status,draft_storage_path')
+      .select('id,activity_id,status,draft_storage_path,mime_type')
       .eq('id', body.illustration_id)
       .single();
-    const expectedPath = candidate ? `${candidate.activity_id}/${candidate.id}/draft.webp` : '';
+    if (!SUPPORTED_PROVIDER_MIME_TYPES.includes(candidate?.mime_type as any)) {
+      throw new IllustrationHttpError(404, 'PREVIEW_NOT_AVAILABLE');
+    }
+    const extension = candidate?.mime_type === 'image/png' ? 'png' : candidate?.mime_type === 'image/jpeg' ? 'jpg' : 'webp';
+    const expectedPath = candidate ? `${candidate.activity_id}/${candidate.id}/draft.${extension}` : '';
     if (error || !candidate || candidate.status !== 'draft' || candidate.draft_storage_path !== expectedPath) throw new IllustrationHttpError(404, 'PREVIEW_NOT_AVAILABLE');
     const expiresIn = 300;
     const { data, error: signError } = await serviceClient.storage

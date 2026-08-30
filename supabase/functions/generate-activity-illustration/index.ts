@@ -13,8 +13,10 @@ import {
   GEMINI_IMAGE_MODEL,
   GeminiImageProviderError,
 } from '../_shared/activity-illustration-gemini.ts';
-import { extractProviderImage } from '../_shared/activity-illustration-image.ts';
-import { normalizeActivityIllustration } from '../_shared/activity-illustration-normalizer.ts';
+import {
+  extractProviderImage,
+  validateActivityIllustration,
+} from '../_shared/activity-illustration-image.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -107,12 +109,12 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error('PROVIDER_NOT_CONFIGURED');
     const providerPayload = await createGeminiImageAdapter()(prompt, apiKey);
-    const image = await normalizeActivityIllustration(extractProviderImage(providerPayload));
+    const image = validateActivityIllustration(extractProviderImage(providerPayload));
     const imageHash = await sha256Hex(image.bytes);
-    const draftPath = `${activity.id}/${current.id}/draft.webp`;
+    const draftPath = `${activity.id}/${current.id}/draft.${image.extension}`;
     const { error: uploadError } = await serviceClient.storage
       .from('activity-illustration-drafts')
-      .upload(draftPath, image.bytes, { contentType: image.mimeType, upsert: false });
+      .upload(draftPath, image.bytes, { contentType: image.declaredMimeType, upsert: false });
     if (uploadError) {
       if (isMissingIllustrationStorage(uploadError)) {
         throw new IllustrationHttpError(503, 'ILLUSTRATION_INFRASTRUCTURE_UNAVAILABLE');
@@ -130,7 +132,7 @@ Deno.serve(async (req) => {
         target_prompt_snapshot: prompt,
         target_provider: 'google-gemini',
         target_model: GEMINI_IMAGE_MODEL,
-        target_mime_type: image.mimeType,
+        target_mime_type: image.declaredMimeType,
         target_width: image.width,
         target_height: image.height,
         target_byte_size: image.bytes.length,

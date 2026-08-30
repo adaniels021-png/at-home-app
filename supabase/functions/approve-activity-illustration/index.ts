@@ -3,7 +3,10 @@ import {
   IllustrationHttpError,
   isMissingIllustrationStorage,
 } from '../_shared/activity-illustration-auth.ts';
-import { inspectNormalizedActivityIllustration } from '../_shared/activity-illustration-normalizer.ts';
+import {
+  SUPPORTED_PROVIDER_MIME_TYPES,
+  validateActivityIllustration,
+} from '../_shared/activity-illustration-image.ts';
 import { sha256Hex } from '../_shared/activity-illustration-prompt.ts';
 
 const CORS = {
@@ -26,10 +29,15 @@ Deno.serve(async (req) => {
     if (keys.some((key) => !['illustration_id', 'expected_approved_illustration_id'].includes(key)) || !UUID.test(body?.illustration_id) || (body.expected_approved_illustration_id != null && !UUID.test(body.expected_approved_illustration_id))) throw new IllustrationHttpError(400, 'INVALID_REQUEST');
     const { data: candidate, error } = await serviceClient
       .from('activity_illustrations')
-      .select('id,activity_id,version,status,draft_storage_path,sha256')
+      .select('id,activity_id,version,status,draft_storage_path,mime_type,width,height,byte_size,sha256')
       .eq('id', body.illustration_id)
       .single();
-    const expectedDraftPath = candidate ? `${candidate.activity_id}/${candidate.id}/draft.webp` : '';
+    const declaredMimeType = candidate?.mime_type;
+    if (!SUPPORTED_PROVIDER_MIME_TYPES.includes(declaredMimeType as any)) {
+      throw new IllustrationHttpError(409, 'ILLUSTRATION_NOT_APPROVABLE');
+    }
+    const extension = declaredMimeType === 'image/png' ? 'png' : declaredMimeType === 'image/jpeg' ? 'jpg' : 'webp';
+    const expectedDraftPath = candidate ? `${candidate.activity_id}/${candidate.id}/draft.${extension}` : '';
     if (error || !candidate || candidate.status !== 'draft' || candidate.draft_storage_path !== expectedDraftPath) throw new IllustrationHttpError(409, 'ILLUSTRATION_NOT_APPROVABLE');
     const { data: blob, error: downloadError } = await serviceClient.storage
       .from('activity-illustration-drafts').download(expectedDraftPath);
@@ -39,14 +47,23 @@ Deno.serve(async (req) => {
       }
       throw new Error('DRAFT_DOWNLOAD_FAILED');
     }
-    const image = await inspectNormalizedActivityIllustration(new Uint8Array(await blob.arrayBuffer()));
+    const image = validateActivityIllustration({
+      bytes: new Uint8Array(await blob.arrayBuffer()),
+      declaredMimeType: declaredMimeType as 'image/png' | 'image/jpeg' | 'image/webp',
+    });
     const hash = await sha256Hex(image.bytes);
-    if (hash !== candidate.sha256) throw new Error('DRAFT_INTEGRITY_FAILED');
-    const approvedPath = `${candidate.activity_id}/v${candidate.version}-${hash.slice(0, 16)}.webp`;
+    if (
+      hash !== candidate.sha256 ||
+      image.declaredMimeType !== candidate.mime_type ||
+      image.width !== candidate.width ||
+      image.height !== candidate.height ||
+      image.bytes.length !== candidate.byte_size
+    ) throw new Error('DRAFT_INTEGRITY_FAILED');
+    const approvedPath = `${candidate.activity_id}/v${candidate.version}-${hash.slice(0, 16)}.${image.extension}`;
     const { error: uploadError } = await serviceClient.storage
       .from('activity-illustrations')
       .upload(approvedPath, image.bytes, {
-        contentType: 'image/webp',
+        contentType: image.declaredMimeType,
         cacheControl: '31536000, immutable',
         upsert: false,
       });

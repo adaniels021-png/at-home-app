@@ -137,7 +137,10 @@ export default function ActivityDetailScreen() {
     const materials = textArray(activity.materials);
     return (
       <>
-        <ActivityIllustration category={activity.category} />
+        <ActivityIllustration
+          category={activity.category}
+          imageSource={activity.illustration_url ? { uri: activity.illustration_url } : undefined}
+        />
         <Text style={[styles.category, { color: presentation.accent }]}>{ACTIVITY_CATEGORY_LABELS[activity.category]}</Text>
         <Text style={styles.title}>{activity.title}</Text>
         {[activity.location, activity.time].some(Boolean) ? <View style={styles.metaRow}>{activity.location ? <Meta icon="location-outline" text={activity.location} /> : null}{activity.time ? <Meta icon="time-outline" text={activity.time} /> : null}</View> : null}
