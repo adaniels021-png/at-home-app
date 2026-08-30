@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
@@ -24,6 +24,7 @@ type SavedActivityRow = {
     id?: string;
     library_activity_id?: string;
     name: string;
+    title?: string;
     materials: string[];
     instructions: string[];
     success_criteria: string;
@@ -34,6 +35,7 @@ type SavedActivityRow = {
 };
 
 export default function SavedActivitiesScreen() {
+  const router = useRouter();
   const { selectedChild } = useChild() as any;
 
   const [loading, setLoading] = useState(true);
@@ -263,6 +265,10 @@ export default function SavedActivitiesScreen() {
         ) : (
           visibleActivities.map((item) => {
             const activity = item.activity_json;
+            const stableActivityId =
+              item.library_activity_id ||
+              activity.library_activity_id ||
+              activity.id;
 
             return (
               <View key={item.id} style={styles.card}>
@@ -325,6 +331,30 @@ export default function SavedActivitiesScreen() {
                     {activity.success_criteria}
                   </Text>
                 </View>
+
+                {stableActivityId ? (
+                  <TouchableOpacity
+                    accessibilityLabel={`Open ${activity.title || activity.name} details`}
+                    accessibilityRole="button"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/activities/[activityId]',
+                        params: {
+                          activityId: stableActivityId,
+                          savedActivityId: item.id,
+                        },
+                      })
+                    }
+                    style={styles.openDetailButton}
+                  >
+                    <Text style={styles.openDetailText}>Open activity</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.legacyNote}>
+                    This older saved activity remains available here as a snapshot.
+                  </Text>
+                )}
               </View>
             );
           })
@@ -338,6 +368,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+
+  openDetailButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: '#7138DF',
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+
+  openDetailText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
+
+  legacyNote: {
+    color: '#6B7280',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    marginTop: 14,
   },
 
   content: {
