@@ -14,6 +14,8 @@ excludes(categorySource.match(/ACTIVITY_CATEGORIES = \[[\s\S]*?\] as const/)?.[0
 contains(categorySource, /throw new Error\(`Invalid activity category:/, 'Invalid categories do not fail explicitly');
 contains(sql, /activity_library_category_canonical/, 'Library category constraint is missing');
 contains(sql, /activity_queue_category_canonical/, 'Queue category constraint is missing');
+contains(sql, /alter table public\.activity_queue\s+alter column category set not null/, 'Queue category must reject future NULL values');
 contains(sql, /Invalid activity_library categories must be reviewed explicitly/, 'Migration does not fail on unknown library values');
+contains(sql, /Invalid activity_queue categories must be reviewed explicitly/, 'Migration does not fail on unknown queue values');
 
 pass('Canonical activity category contract');

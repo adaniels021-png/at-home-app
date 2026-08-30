@@ -42,6 +42,8 @@ alter table public.activity_library
 alter table public.activity_queue
   drop constraint if exists activity_queue_category_canonical;
 alter table public.activity_queue
+  alter column category set not null;
+alter table public.activity_queue
   add constraint activity_queue_category_canonical
   check (category in ('home', 'outdoor', 'community', 'movement', 'sensory', 'creative', 'calm'));
 
