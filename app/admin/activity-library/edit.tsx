@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ActivityIllustrationAdminSection } from '../../../components/admin/ActivityIllustrationAdminSection';
+
 import {
   ActivityCategory,
   getActivityCategoryLabel,
@@ -742,6 +744,11 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
               />
             </View>
           </View>
+
+          <ActivityIllustrationAdminSection
+            activityId={activityId}
+            eligible={source === 'library' && status === 'approved'}
+          />
 
           <View style={styles.adminActionsCard}>
             <Text style={styles.sectionTitle}>Admin Actions</Text>
