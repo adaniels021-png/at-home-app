@@ -130,7 +130,7 @@ export default function DailyAdventuresHomeScreen() {
           <View style={styles.support}><View style={styles.supportIcon}><Ionicons name="dice-outline" size={23} color="#6D28D9" /></View><View style={styles.supportText}><Text style={styles.supportTitle}>Low-pressure family fun</Text><Text style={styles.supportCopy}>Simple moments. No lessons. No pressure.</Text></View></View>
         </View>
 
-        <View style={styles.heading}><Text style={styles.sectionTitle}>For {childName} Today</Text><Text style={styles.sectionCopy}>Three personalized ideas picked just for your day.</Text></View>
+        <View style={styles.heading}><Text style={styles.sectionTitle}>For {childName} Today</Text><Text style={styles.sectionCopy}>Three ideas picked just for your day.</Text></View>
         {dailyContent}
 
         {!entitlementLoading && isPro ? <TouchableOpacity accessibilityLabel="Surprise me with an activity" accessibilityRole="button" disabled={surpriseLoading} onPress={() => void handleSurprise()} style={styles.surprise}><View style={styles.magic}><Ionicons name="color-wand-outline" size={28} color="#FFFFFF" /></View><View style={styles.surpriseText}><Text style={styles.surpriseTitle}>Can’t decide?</Text><Text style={styles.surpriseCopy}>Let us pick a fun idea just for you!</Text></View>{surpriseLoading ? <ActivityIndicator color="#FFFFFF" /> : <View style={styles.surpriseAction}><Text style={styles.surpriseActionText}>Surprise Me</Text><Ionicons name="sparkles" size={16} color="#FFFFFF" /></View>}</TouchableOpacity> : null}
