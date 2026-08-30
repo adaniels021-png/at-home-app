@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+export { default } from '../../components/activities/DailyAdventuresScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -181,7 +182,7 @@ function getCategoryLabel(category: string) {
   return labels[cleanCategory] || 'Adventure';
 }
 
-export default function ActivitiesScreen() {
+export function LegacyActivitiesScreen() {
   const router = useRouter();
   const { selectedChild } = useChild() as any;
   const { isPro: subscriptionIsPro } = useSubscription();

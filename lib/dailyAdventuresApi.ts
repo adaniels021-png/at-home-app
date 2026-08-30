@@ -19,6 +19,11 @@ export type DailyAdventureAssignment = {
   pro_only: boolean;
 };
 
+export type ActivityLibraryItem = Omit<
+  DailyAdventureAssignment,
+  'assignment_date' | 'position' | 'assignment_source' | 'assignment_count' | 'incomplete'
+>;
+
 export type ActivityStateUpdate = {
   saved?: boolean;
   favorite?: boolean;
@@ -54,7 +59,7 @@ export async function searchMyActivityLibrary(input: {
   });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as ActivityLibraryItem[];
 }
 
 export async function getMyActivityDetail(childId: string, activityId: string) {
@@ -64,7 +69,7 @@ export async function getMyActivityDetail(childId: string, activityId: string) {
   });
 
   if (error) throw error;
-  return Array.isArray(data) ? data[0] || null : data;
+  return (Array.isArray(data) ? data[0] || null : data) as ActivityLibraryItem | null;
 }
 
 export async function getMySurpriseActivity(childId: string) {
@@ -73,7 +78,7 @@ export async function getMySurpriseActivity(childId: string) {
   });
 
   if (error) throw error;
-  return Array.isArray(data) ? data[0] || null : data;
+  return (Array.isArray(data) ? data[0] || null : data) as ActivityLibraryItem | null;
 }
 
 export async function setMyActivityState(
