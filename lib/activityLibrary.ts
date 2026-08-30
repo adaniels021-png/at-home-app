@@ -1,15 +1,8 @@
 import { normalizeActivities } from './activities';
+import { ActivityCategory } from './activityCategories';
 import { supabase } from './supabase';
 
-export type ActivityLibraryFilter =
-  | 'home'
-  | 'outdoor'
-  | 'community'
-  | 'sensory'
-  | 'creative'
-  | 'calm'
-  | 'movement'
-  | 'surprise';
+export type ActivityLibraryFilter = ActivityCategory | 'surprise';
 
   
 export async function getRecommendedActivitiesFromLibrary({

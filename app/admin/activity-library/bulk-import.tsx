@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { requireActivityCategory } from '../../../lib/activityCategories';
 import { supabase } from '../../../lib/supabase';
 
 type ImportActivity = {
@@ -46,20 +47,7 @@ const SAMPLE_JSON = `[
 ]`;
 
 function normalizeCategory(category?: string) {
-  const value = String(category || 'surprise').toLowerCase().trim();
-
-  const allowed = [
-    'home',
-    'outdoor',
-    'community',
-    'sensory',
-    'creative',
-    'calm',
-    'movement',
-    'surprise',
-  ];
-
-  return allowed.includes(value) ? value : 'surprise';
+  return requireActivityCategory(category);
 }
 
 function cleanActivity(item: ImportActivity) {

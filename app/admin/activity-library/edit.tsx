@@ -16,19 +16,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  ActivityCategory,
+  getActivityCategoryLabel,
+  isActivityCategory,
+} from '../../../lib/activityCategories';
 import { supabase } from '../../../lib/supabase';
 
 type ActivityStatus = 'approved' | 'pending' | 'draft' | 'archived';
-
-type ActivityCategory =
-  | 'home'
-  | 'outdoor'
-  | 'community'
-  | 'movement'
-  | 'sensory'
-  | 'creative'
-  | 'calm'
-  | 'surprise';
 
 type ActivityQueueItem = {
   id: string;
@@ -59,7 +54,6 @@ const CATEGORY_OPTIONS: {
   { id: 'sensory', label: 'Sensory', icon: 'color-palette-outline' },
   { id: 'creative', label: 'Creative', icon: 'brush-outline' },
   { id: 'calm', label: 'Calm', icon: 'moon-outline' },
-  { id: 'surprise', label: 'Surprise', icon: 'sparkles-outline' },
 ];
 
 const STATUS_OPTIONS: {
@@ -102,22 +96,11 @@ function listToText(value: any) {
 }
 
 function normalizeCategory(value: any): ActivityCategory {
-  const clean = String(value || 'home').toLowerCase().trim();
-
-  if (
-    clean === 'home' ||
-    clean === 'outdoor' ||
-    clean === 'community' ||
-    clean === 'movement' ||
-    clean === 'sensory' ||
-    clean === 'creative' ||
-    clean === 'calm' ||
-    clean === 'surprise'
-  ) {
-    return clean;
+  if (isActivityCategory(value)) {
+    return value;
   }
 
-  return 'home';
+  throw new Error(`Invalid activity category: ${String(value)}`);
 }
 
 function normalizeStatus(value: any): ActivityStatus {
@@ -178,8 +161,7 @@ const tableName = source === 'library' ? 'activity_library' : 'activity_queue';
 
   const selectedCategoryLabel = useMemo(() => {
     return (
-      CATEGORY_OPTIONS.find((item) => item.id === category)?.label ||
-      'Activity'
+      getActivityCategoryLabel(category)
     );
   }, [category]);
 

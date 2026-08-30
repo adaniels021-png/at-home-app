@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { requireActivityCategory } from '../../lib/activityCategories';
 import { supabase } from '../../lib/supabase';
 import { useAdminAccess } from '../../lib/adminAccess';
 
@@ -94,8 +95,8 @@ export default function AdminActivityListScreen() {
 
   const categoryOptions = useMemo(() => {
   const categories = activities
-    .map((activity) => activity.category || 'surprise')
-    .filter(Boolean);
+    .map((activity) => activity.category)
+    .filter((category): category is string => Boolean(category));
 
   return ['all', ...Array.from(new Set(categories))];
 }, [activities]);
@@ -168,7 +169,7 @@ function toggleSelected(id: string) {
         .insert([
           {
             title: activity.title || activity.name || 'Untitled Activity',
-            category: activity.category || 'surprise',
+            category: requireActivityCategory(activity.category),
             location: activity.location,
             time: activity.time,
             description: activity.description,

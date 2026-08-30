@@ -1,4 +1,5 @@
 import { generateDailyABAActivities } from './aiService';
+import { ActivityCategory, isActivityCategory } from './activityCategories';
 import { hasEntitlement } from './entitlements';
 
 import { supabase } from './supabase';
@@ -6,20 +7,15 @@ import { supabase } from './supabase';
 export type ActivitySetting = 'home' | 'community' | 'outdoor' | 'either';
 export type ActivityDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
-export type AdventureCategory =
-  | 'home'
-  | 'outdoor'
-  | 'community'
-  | 'sensory'
-  | 'creative'
-  | 'calm'
-  | 'movement'
-  | 'surprise';
+export type AdventureCategory = ActivityCategory | 'surprise';
 
 export type AdventureFeedback = 'loved' | 'good' | 'not_today';
 
 export type DailyActivity = {
   id?: string;
+  library_activity_id?: string;
+  source?: string;
+  daily_assignment?: boolean;
   name: string;
   title?: string;
 
@@ -95,20 +91,11 @@ function safeArray(value: any): string[] {
 function normalizeCategory(value: any): AdventureCategory {
   const category = safeString(value).toLowerCase();
 
-  if (
-    category === 'home' ||
-    category === 'outdoor' ||
-    category === 'community' ||
-    category === 'sensory' ||
-    category === 'creative' ||
-    category === 'calm' ||
-    category === 'movement' ||
-    category === 'surprise'
-  ) {
+  if (isActivityCategory(category) || category === 'surprise') {
     return category;
   }
 
-  return 'surprise';
+  throw new Error(`Invalid activity category: ${String(value)}`);
 }
 
 function normalizeSetting(value: any): ActivitySetting {
@@ -185,6 +172,9 @@ export function normalizeActivity(
 
   return {
     id: safeString(activity?.id),
+    library_activity_id: safeString(activity?.library_activity_id),
+    source: safeString(activity?.source),
+    daily_assignment: activity?.daily_assignment === true,
     name,
     title,
 

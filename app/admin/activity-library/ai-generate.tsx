@@ -13,32 +13,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  ACTIVITY_CATEGORIES,
+  ActivityCategory,
+  requireActivityCategory,
+} from '../../../lib/activityCategories';
 import { normalizeActivities } from '../../../lib/activities';
 import { generateDailyABAActivities } from '../../../lib/aiService';
 import { supabase } from '../../../lib/supabase';
 
-type ActivityCategory =
-  | 'home'
-  | 'outdoor'
-  | 'community'
-  | 'sensory'
-  | 'creative'
-  | 'calm'
-  | 'movement'
-  | 'surprise';
+type ActivityGenerationMode = ActivityCategory | 'surprise';
 
-const CATEGORY_OPTIONS: ActivityCategory[] = [
+const CATEGORY_OPTIONS: ActivityGenerationMode[] = [
   'surprise',
-  'home',
-  'outdoor',
-  'community',
-  'movement',
-  'sensory',
-  'creative',
-  'calm',
+  ...ACTIVITY_CATEGORIES,
 ];
 
-const LOCATION_MAP: Record<ActivityCategory, string> = {
+const LOCATION_MAP: Record<ActivityGenerationMode, string> = {
   home: 'Home',
   outdoor: 'Outdoor',
   community: 'Community',
@@ -51,12 +42,7 @@ const LOCATION_MAP: Record<ActivityCategory, string> = {
 
 function normalizeCategory(category?: string): ActivityCategory {
   const value = String(category || 'surprise').toLowerCase().trim();
-
-  if (CATEGORY_OPTIONS.includes(value as ActivityCategory)) {
-    return value as ActivityCategory;
-  }
-
-  return 'surprise';
+  return requireActivityCategory(value);
 }
 
 function buildPrompt({
@@ -64,7 +50,7 @@ function buildPrompt({
   theme,
   avoidTitles,
 }: {
-  category: ActivityCategory;
+  category: ActivityGenerationMode;
   theme: string;
   avoidTitles: string[];
 }) {
@@ -121,7 +107,7 @@ ${
 `;
 }
 
-function cleanGeneratedActivity(activity: any, category: ActivityCategory) {
+function cleanGeneratedActivity(activity: any, category: ActivityGenerationMode) {
   const title = String(activity?.title || activity?.name || '').trim();
 
   return {
@@ -157,7 +143,7 @@ function cleanGeneratedActivity(activity: any, category: ActivityCategory) {
 export default function AIGenerateActivitiesScreen() {
   const router = useRouter();
 
-  const [category, setCategory] = useState<ActivityCategory>('surprise');
+  const [category, setCategory] = useState<ActivityGenerationMode>('surprise');
   const [countText, setCountText] = useState('10');
   const [theme, setTheme] = useState('');
   const [generating, setGenerating] = useState(false);

@@ -15,19 +15,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  ActivityCategory,
+  getActivityCategoryLabel,
+} from '../../../lib/activityCategories';
 import { supabase } from '../../../lib/supabase';
 
 type ActivityStatus = 'approved' | 'pending' | 'draft' | 'archived';
-
-type ActivityCategory =
-  | 'home'
-  | 'outdoor'
-  | 'community'
-  | 'movement'
-  | 'sensory'
-  | 'creative'
-  | 'calm'
-  | 'surprise';
 
 const CATEGORY_OPTIONS: {
   id: ActivityCategory;
@@ -41,7 +35,6 @@ const CATEGORY_OPTIONS: {
   { id: 'sensory', label: 'Sensory', icon: 'color-palette-outline' },
   { id: 'creative', label: 'Creative', icon: 'brush-outline' },
   { id: 'calm', label: 'Calm', icon: 'moon-outline' },
-  { id: 'surprise', label: 'Surprise', icon: 'sparkles-outline' },
 ];
 
 const STATUS_OPTIONS: {
@@ -103,8 +96,7 @@ export default function NewActivityLibraryScreen() {
 
   const selectedCategoryLabel = useMemo(() => {
     return (
-      CATEGORY_OPTIONS.find((item) => item.id === category)?.label ||
-      'Activity'
+      getActivityCategoryLabel(category)
     );
   }, [category]);
 
