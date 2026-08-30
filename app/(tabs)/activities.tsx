@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-export { default } from '../../components/activities/DailyAdventuresScreen';
+export { default } from '../../components/activities/DailyAdventuresHomeScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
