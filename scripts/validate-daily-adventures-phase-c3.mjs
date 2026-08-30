@@ -54,6 +54,8 @@ assert.match(adminApi, /generate-activity-illustration/);
 assert.match(adminUi, /Current approved illustration/);
 assert.match(adminUi, /Replacement draft/);
 assert.match(adminUi, /Artwork may be outdated/);
+assert.match(adminUi, /Keep Current Illustration/);
+assert.match(adminUi, /No artwork or activity data was changed/);
 assert.match(edit, /ActivityIllustrationAdminSection/);
 assert.doesNotMatch(aiGenerate, /generate-activity-illustration/);
 assert.doesNotMatch(generic, /activity-illustration-drafts/);

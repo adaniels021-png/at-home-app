@@ -86,12 +86,20 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
       ) : null}
 
       {eligible && state?.artwork_may_be_outdated ? (
-        <View style={styles.warning}>
-          <Ionicons name="alert-circle-outline" size={18} color="#B45309" />
-          <View style={styles.warningText}>
-            <Text style={styles.warningTitle}>Artwork may be outdated</Text>
-            <Text style={styles.helper}>This activity changed after the current illustration was created. Keeping it makes no database change.</Text>
+        <View style={styles.warningWrap}>
+          <View style={styles.warning}>
+            <Ionicons name="alert-circle-outline" size={18} color="#B45309" />
+            <View style={styles.warningText}>
+              <Text style={styles.warningTitle}>Artwork may be outdated</Text>
+              <Text style={styles.helper}>This activity changed after the current illustration was created.</Text>
+            </View>
           </View>
+          <TouchableOpacity
+            style={styles.keepButton}
+            onPress={() => Alert.alert('Current Illustration Kept', 'No artwork or activity data was changed.')}
+          >
+            <Text style={styles.keepButtonText}>Keep Current Illustration</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -150,8 +158,11 @@ const styles = StyleSheet.create({
   notice: { backgroundColor: '#F8FAFC', borderRadius: 16, padding: 13 },
   noticeTitle: { color: '#334155', fontWeight: '900' },
   warning: { flexDirection: 'row', backgroundColor: '#FFFBEB', borderRadius: 16, padding: 13 },
+  warningWrap: { gap: 8 },
   warningText: { flex: 1, marginLeft: 9 },
   warningTitle: { color: '#92400E', fontWeight: '900' },
+  keepButton: { minHeight: 40, alignItems: 'center', justifyContent: 'center' },
+  keepButtonText: { color: '#6D28D9', fontSize: 13, fontWeight: '900' },
   error: { backgroundColor: '#FEF2F2', borderRadius: 16, padding: 13 },
   errorTitle: { color: '#B91C1C', fontWeight: '900' },
   artBlock: { gap: 10 },
