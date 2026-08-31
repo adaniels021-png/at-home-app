@@ -14,6 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { generateAssessmentQuestions } from '../lib/aiService';
 import { canRunAssessments } from '../lib/caregiverPermissions';
 import { useChild } from '../lib/SelectedChildContext';
+import {
+  AUTISM_SUPPORT_LEVEL_OPTIONS,
+  DOMAIN_SUPPORT_LEVEL_OPTIONS,
+  restoreAutismSupportAnswers,
+} from '../lib/personalization/autismSupportLevel';
 import { supabase } from '../lib/supabase';
 
 type AssessmentQuestion = {
@@ -176,6 +181,7 @@ export default function ReassessmentScreen() {
   const canAssess = canRunAssessments(role);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [supportAnswers, setSupportAnswers] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -214,16 +220,27 @@ export default function ReassessmentScreen() {
   }))
 );
 
-      const { data, error } = await supabase
-        .from('reassessments')
-        .select('*')
-        .eq('child_id', selectedChild.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const [reassessmentResult, assessmentResult] = await Promise.all([
+        supabase.from('reassessments').select('*').eq('child_id', selectedChild.id)
+          .order('created_at', { ascending: false }).limit(1),
+        supabase.from('assessments').select('responses').eq('child_id', selectedChild.id)
+          .order('completed_at', { ascending: false }).limit(1),
+      ]);
 
-      if (error) throw error;
+      if (reassessmentResult.error) throw reassessmentResult.error;
+      if (assessmentResult.error) throw assessmentResult.error;
 
-      setPreviousReassessment((data?.[0] as ReassessmentRow) || null);
+      const latestReassessment = (reassessmentResult.data?.[0] as ReassessmentRow) || null;
+      setPreviousReassessment(latestReassessment);
+      const assessmentResponses = assessmentResult.data?.[0]?.responses;
+      const responseRecord = assessmentResponses && typeof assessmentResponses === 'object'
+        && !Array.isArray(assessmentResponses)
+        ? assessmentResponses as Record<string, unknown>
+        : {};
+      setSupportAnswers(restoreAutismSupportAnswers(
+        responseRecord.answers ?? responseRecord,
+        latestReassessment?.responses,
+      ));
     } catch (error) {
       console.error('Reassessment load error:', error);
       Alert.alert('Error', 'Could not load the monthly reassessment.');
@@ -280,6 +297,17 @@ const changedCount = comparisonItems.length;
     }));
   };
 
+  const handleSupportAnswer = (key: string, value: string) => {
+    setSupportAnswers((previous) => {
+      const next = { ...previous, [key]: value };
+      if (key === 'autism_support_level' && value !== AUTISM_SUPPORT_LEVEL_OPTIONS[3]) {
+        delete next.social_communication_support_level;
+        delete next.restricted_repetitive_support_level;
+      }
+      return next;
+    });
+  };
+
   const goNext = () => {
     if (!selectedAnswer) {
       Alert.alert('Choose an answer', 'Please select one option before continuing.');
@@ -331,7 +359,7 @@ const changedCount = comparisonItems.length;
       const { error } = await supabase.from('reassessments').insert([
         {
           child_id: selectedChild.id,
-          responses: answers,
+          responses: { ...answers, ...supportAnswers },
           summary,
         },
       ]);
@@ -453,6 +481,50 @@ const changedCount = comparisonItems.length;
             </Text>
           </View>
         )}
+
+        <View style={styles.supportCard}>
+          <Text style={styles.category}>Optional personalization update</Text>
+          <Text style={styles.supportQuestion}>
+            Was {childName} given an autism support level when they were diagnosed?
+          </Text>
+          <Text style={styles.supportHelper}>
+            Update this only if the professionally assigned level has changed. Skills and progress still take precedence.
+          </Text>
+          <View style={styles.optionsWrap}>
+            {AUTISM_SUPPORT_LEVEL_OPTIONS.map((option) => {
+              const selected = supportAnswers.autism_support_level === option;
+              return (
+                <TouchableOpacity key={option} style={[styles.supportOption, selected && styles.optionBtnSelected]}
+                  onPress={() => handleSupportAnswer('autism_support_level', option)}>
+                  <Text style={[styles.supportOptionText, selected && styles.optionTextSelected]}>{option}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {supportAnswers.autism_support_level === AUTISM_SUPPORT_LEVEL_OPTIONS[3] ? (
+            <View style={styles.supportDomains}>
+              {[
+                ['social_communication_support_level', 'Social communication'],
+                ['restricted_repetitive_support_level', 'Restricted/repetitive behaviors and flexibility'],
+              ].map(([key, label]) => (
+                <View key={key} style={styles.supportDomainGroup}>
+                  <Text style={styles.supportDomainLabel}>{label} (optional)</Text>
+                  <View style={styles.supportDomainOptions}>
+                    {DOMAIN_SUPPORT_LEVEL_OPTIONS.map((option) => {
+                      const selected = supportAnswers[key] === option;
+                      return (
+                        <TouchableOpacity key={option} style={[styles.supportChip, selected && styles.optionBtnSelected]}
+                          onPress={() => handleSupportAnswer(key, option)}>
+                          <Text style={[styles.supportChipText, selected && styles.optionTextSelected]}>{option}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
 
         <View style={styles.questionCard}>
           <Text style={styles.category}>{currentQuestion.category}</Text>
@@ -679,6 +751,17 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     marginBottom: 20,
   },
+  supportCard: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#DDD6FE', marginBottom: 16 },
+  supportQuestion: { color: '#0F172A', fontSize: 17, lineHeight: 23, fontWeight: '800' },
+  supportHelper: { color: '#64748B', fontSize: 13, lineHeight: 19, marginVertical: 8 },
+  supportOption: { minHeight: 44, justifyContent: 'center', backgroundColor: '#F8FAFC', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  supportOptionText: { color: '#334155', fontSize: 13, fontWeight: '700' },
+  supportDomains: { marginTop: 14, gap: 14 },
+  supportDomainGroup: { gap: 8 },
+  supportDomainLabel: { color: '#334155', fontSize: 13, fontWeight: '800' },
+  supportDomainOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  supportChip: { minHeight: 44, justifyContent: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  supportChipText: { color: '#475569', fontSize: 12, fontWeight: '700' },
   category: {
     fontSize: 12,
     fontWeight: '800',

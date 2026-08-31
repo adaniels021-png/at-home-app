@@ -14,6 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChild } from '../../lib/SelectedChildContext';
 import { canRunAssessments } from '../../lib/caregiverPermissions';
+import {
+  AUTISM_SUPPORT_LEVEL_OPTIONS,
+  buildAutismSupportLevelProfile,
+  DOMAIN_SUPPORT_LEVEL_OPTIONS,
+} from '../../lib/personalization/autismSupportLevel';
 import { supabase } from '../../lib/supabase';
 
 type QuestionType = 'choice' | 'multi' | 'text';
@@ -42,6 +47,14 @@ const QUESTIONS: AssessmentQuestion[] = [
       'School readiness',
       'Independence',
     ],
+  },
+  {
+    id: 'autism_support_level',
+    section: 'About Your Child',
+    question: 'Was your child given an autism support level when they were diagnosed?',
+    helper: "That's okay if you don't know. We'll use the rest of the assessment to personalize support.",
+    type: 'choice',
+    options: [...AUTISM_SUPPORT_LEVEL_OPTIONS],
   },
   {
     id: 'communication_level',
@@ -364,6 +377,7 @@ function buildLessonProfile(
     routine_targets: routineChallenges,
     preferred_interests: favoriteInterests,
     preferred_reinforcers: favoriteInterests,
+    autism_support: buildAutismSupportLevelProfile(answers),
     recommended_pecs_cards: [
       'Help',
       'Break',
@@ -417,16 +431,28 @@ export default function AssessmentScreen() {
   const selectedAnswer = answers[question.id];
 
   const canContinue = useMemo(() => {
+    if (question.id === 'autism_support_level') return true;
     if (question.type === 'text') return true;
     if (Array.isArray(selectedAnswer)) return selectedAnswer.length > 0;
     return !!selectedAnswer;
-  }, [question.type, selectedAnswer]);
+  }, [question.id, question.type, selectedAnswer]);
 
   const setSingleAnswer = (value: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [question.id]: value,
-    }));
+    setAnswers((prev) => {
+      const next = { ...prev, [question.id]: value };
+      if (
+        question.id === 'autism_support_level'
+        && value !== AUTISM_SUPPORT_LEVEL_OPTIONS[3]
+      ) {
+        delete next.social_communication_support_level;
+        delete next.restricted_repetitive_support_level;
+      }
+      return next;
+    });
+  };
+
+  const setSupportDomainAnswer = (key: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [key]: value }));
   };
 
   const toggleMultiAnswer = (value: string) => {
@@ -694,6 +720,36 @@ await supabase
               );
             })}
 
+          {question.id === 'autism_support_level'
+            && selectedAnswer === AUTISM_SUPPORT_LEVEL_OPTIONS[3] ? (
+            <View style={styles.domainSupportWrap}>
+              {[
+                ['social_communication_support_level', 'Social communication'],
+                ['restricted_repetitive_support_level', 'Restricted/repetitive behaviors and flexibility'],
+              ].map(([key, label]) => (
+                <View key={key} style={styles.domainSupportGroup}>
+                  <Text style={styles.domainSupportLabel}>{label} (optional)</Text>
+                  <View style={styles.domainSupportOptions}>
+                    {DOMAIN_SUPPORT_LEVEL_OPTIONS.map((option) => {
+                      const active = answers[key] === option;
+                      return (
+                        <TouchableOpacity
+                          key={option}
+                          style={[styles.domainSupportButton, active && styles.optionActive]}
+                          onPress={() => setSupportDomainAnswer(key, option)}
+                        >
+                          <Text style={[styles.domainSupportText, active && styles.optionTextActive]}>
+                            {option}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           {question.type === 'text' ? (
             <TextInput
               style={styles.textInput}
@@ -854,6 +910,22 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: 14,
   },
+
+  domainSupportWrap: { marginTop: 16, gap: 16 },
+  domainSupportGroup: { gap: 8 },
+  domainSupportLabel: { color: '#334155', fontSize: 13, fontWeight: '800' },
+  domainSupportOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  domainSupportButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  domainSupportText: { color: '#475569', fontSize: 12, fontWeight: '700' },
 
   optionButton: {
     backgroundColor: '#F8FAFC',

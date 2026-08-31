@@ -2,7 +2,7 @@ import type { ChildPersonalizationProfile } from './types';
 
 export type PersonalizationDiagnosticSummary = Pick<
   ChildPersonalizationProfile,
-  'schemaVersion' | 'age' | 'priorities' | 'communication' | 'dailyLiving' | 'regulation' | 'sensory' | 'social' | 'safety' | 'lessonState'
+  'schemaVersion' | 'age' | 'autismSupport' | 'priorities' | 'communication' | 'dailyLiving' | 'regulation' | 'sensory' | 'social' | 'safety' | 'lessonState'
 > & {
   restrictions: Pick<
     ChildPersonalizationProfile['restrictions'],
@@ -20,6 +20,7 @@ export function inspectPersonalizationProfile(
   return {
     schemaVersion: profile.schemaVersion,
     age: profile.age,
+    autismSupport: profile.autismSupport,
     priorities: profile.priorities,
     communication: profile.communication,
     dailyLiving: profile.dailyLiving,

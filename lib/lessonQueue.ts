@@ -1,6 +1,8 @@
 import { generatePremiumLesson } from '@/lib/aiService';
 import { hasEntitlement } from '@/lib/entitlements';
 import { supabase } from '@/lib/supabase';
+import { buildAutismSupportLessonGuidance } from '@/lib/personalization/autismSupportLevel';
+import { buildChildPersonalizationProfile } from '@/lib/personalization/buildChildProfile';
 
 const FREE_QUEUE_LIMIT = 1;
 const PRO_QUEUE_LIMIT = 3;
@@ -213,6 +215,14 @@ async function generateFullAiLesson({
   category: string;
   lessonNumber: number;
 }) {
+  let personalizationGuidance = '';
+  try {
+    const profile = await buildChildPersonalizationProfile(childId);
+    personalizationGuidance = buildAutismSupportLessonGuidance(profile);
+  } catch (error) {
+    console.warn('Personalization profile unavailable for lesson generation:', error);
+  }
+
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
     try {
       const generated = await generatePremiumLesson({
@@ -221,6 +231,7 @@ async function generateFullAiLesson({
         skill: category,
         location: 'Home',
         lessonNumber,
+        personalizationGuidance,
       });
 
       return normalizeGeneratedLesson(generated, category, childName, lessonNumber);

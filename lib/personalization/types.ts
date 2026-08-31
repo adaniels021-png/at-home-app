@@ -37,6 +37,13 @@ export type AttentionSupport =
 
 export type AssessmentAnswers = Record<string, string | string[] | null | undefined>;
 
+export type AutismSupportLevelProfile = {
+  overall: '1' | '2' | '3' | 'mixed' | 'unknown';
+  socialCommunication: '1' | '2' | '3' | 'unknown';
+  restrictedRepetitive: '1' | '2' | '3' | 'unknown';
+  source: 'caregiver_reported_professional' | 'unknown';
+};
+
 export type ChildPersonalizationProfile = {
   childId: string;
   schemaVersion: number;
@@ -51,6 +58,7 @@ export type ChildPersonalizationProfile = {
   age: {
     years: number | null;
   };
+  autismSupport: AutismSupportLevelProfile;
   priorities: {
     primary: string[];
     parentGoals: string[];

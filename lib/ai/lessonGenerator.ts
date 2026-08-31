@@ -27,6 +27,7 @@ export type GenerateLessonParams = {
   avoidSkills?: string[];
 
   lessonVarietyGuidance?: string;
+  personalizationGuidance?: string;
 };
 
 function getDifficultyModifier(
@@ -156,6 +157,7 @@ export async function generatePremiumLesson(
       behaviorPattern,
       avoidSkills = [],
       lessonVarietyGuidance = '',
+      personalizationGuidance = '',
     } = params;
 
     const difficultyModifier =
@@ -179,6 +181,7 @@ export async function generatePremiumLesson(
         lessonVarietyGuidance ||
         'Rotate lesson types so lessons never feel repetitive.',
       avoidSkills,
+      personalizationGuidance,
     });
 
     const raw =

@@ -25,6 +25,7 @@ export function buildLessonPrompt(params: {
   behaviorSummary: string;
   varietyGuidance: string;
   avoidSkills: string[];
+  personalizationGuidance?: string;
 }) {
   return `
 You are creating a real parent-led ABA home lesson for a child.
@@ -53,6 +54,9 @@ ${params.difficultyModifier}
 Behavior/support pattern:
 ${params.behaviorSummary}
 
+${params.personalizationGuidance
+  ? `Personalization guidance:\n${params.personalizationGuidance}\n`
+  : ''}
 Variety guidance:
 ${params.varietyGuidance}
 

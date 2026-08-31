@@ -23,6 +23,7 @@ import type {
   SupportLevel,
 } from './types';
 import { canonicalInterestKeys, canonicalTargetsFromAssessment } from './canonicalAssessment';
+import { buildAutismSupportLevelProfile } from './autismSupportLevel';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -226,6 +227,7 @@ export function normalizeLegacyChildProfile(
         asString(child.onboarding_parent_goals_completed_at) || asString(child.updated_at),
     },
     age: { years: age },
+    autismSupport: buildAutismSupportLevelProfile(answers, input.reassessment?.responses),
     priorities: {
       primary,
       parentGoals,
