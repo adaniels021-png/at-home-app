@@ -115,6 +115,13 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
   const candidate = state?.candidate;
   const approved = state?.approved;
   const canGenerate = !candidate || candidate.status === 'failed';
+  const generationLabel = candidate?.status === 'failed'
+    ? approved ? 'Try Again' : 'Retry Illustration'
+    : approved ? 'Generate New Illustration' : 'Generate Illustration';
+  const keepCurrentIllustration = () => Alert.alert(
+    'Current Illustration Kept',
+    'No artwork or activity data was changed.',
+  );
 
   return (
     <View style={styles.card}>
@@ -170,7 +177,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
           </View>
           <TouchableOpacity
             style={styles.keepButton}
-            onPress={() => Alert.alert('Current Illustration Kept', 'No artwork or activity data was changed.')}
+            onPress={keepCurrentIllustration}
           >
             <Text style={styles.keepButtonText}>Keep Current Illustration</Text>
           </TouchableOpacity>
@@ -182,11 +189,19 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
       ) : null}
 
       {eligible && candidate?.status === 'generating' ? (
-        <View style={styles.notice}><Text style={styles.noticeTitle}>Creating illustration…</Text><Text style={styles.helper}>Duplicate generation is disabled. Current approved artwork remains live.</Text></View>
+        <View style={styles.notice}><Text style={styles.noticeTitle}>{approved ? 'Creating replacement illustration…' : 'Creating illustration…'}</Text><Text style={styles.helper}>Duplicate generation is disabled. {approved ? 'The approved illustration remains family-visible.' : 'This activity will not show draft artwork to families.'}</Text></View>
       ) : null}
 
       {eligible && candidate?.status === 'failed' ? (
-        <View style={styles.error}><Text style={styles.errorTitle}>Illustration generation failed</Text><Text style={styles.helper}>{candidate.error_message || candidate.error_code || 'The provider response could not be safely processed.'}</Text></View>
+        <View style={styles.error}>
+          <Text style={styles.errorTitle}>{approved ? "New illustration couldn't be generated" : 'Illustration generation failed'}</Text>
+          <Text style={styles.helper}>{approved ? 'The approved illustration is still active and family-visible.' : candidate.error_message || candidate.error_code || 'The provider response could not be safely processed.'}</Text>
+          {approved ? (
+            <TouchableOpacity style={styles.keepButton} onPress={keepCurrentIllustration}>
+              <Text style={styles.keepButtonText}>Keep Current Illustration</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       ) : null}
 
       {eligible && candidate?.status === 'draft' ? (
@@ -211,7 +226,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
           )}
         >
           <Ionicons name="sparkles-outline" size={17} color="#FFFFFF" />
-          <Text style={styles.primaryText}>{candidate?.status === 'failed' ? 'Retry' : approved ? 'Generate New Illustration' : 'Generate Illustration'}</Text>
+          <Text style={styles.primaryText}>{generationLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </View>

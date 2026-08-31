@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { normalizeAdminIllustrationState } from './adminIllustrationState';
+import type { AdminIllustrationState } from './adminIllustrationState';
 import {
   classifyIllustrationFunctionError,
   classifyStateRpcError,
@@ -12,27 +14,8 @@ export {
   IllustrationBackendUnavailableError,
   isIllustrationBackendUnavailable,
 };
-
-export type IllustrationSummary = {
-  id: string;
-  version: number;
-  status: 'generating' | 'draft' | 'approved' | 'failed' | 'rejected' | 'superseded';
-  approved_public_url?: string | null;
-  source_content_hash: string;
-  created_at?: string | null;
-  generated_at?: string | null;
-  reviewed_at?: string | null;
-  error_code?: string | null;
-  error_message?: string | null;
-};
-
-export type AdminIllustrationState = {
-  activity_id: string;
-  current_source_content_hash: string;
-  artwork_may_be_outdated: boolean;
-  approved: IllustrationSummary | null;
-  candidate: IllustrationSummary | null;
-};
+export type { AdminIllustrationState, IllustrationSummary } from './adminIllustrationState';
+export { normalizeAdminIllustrationState } from './adminIllustrationState';
 
 function idempotencyKey() {
   if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
@@ -49,7 +32,7 @@ export async function getAdminIllustrationState(activityId: string) {
   if (error) {
     throw classifyStateRpcError(error);
   }
-  return data as AdminIllustrationState;
+  return normalizeAdminIllustrationState(data as AdminIllustrationState);
 }
 
 export async function generateActivityIllustration(
