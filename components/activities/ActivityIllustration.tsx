@@ -17,6 +17,7 @@ import {
 type Props = {
   category: ActivityCategory;
   compact?: boolean;
+  detail?: boolean;
   imageSource?: ImageSourcePropType;
   style?: StyleProp<ViewStyle>;
 };
@@ -24,6 +25,7 @@ type Props = {
 export function ActivityIllustration({
   category,
   compact = false,
+  detail = false,
   imageSource,
   style,
 }: Props) {
@@ -43,7 +45,7 @@ export function ActivityIllustration({
       importantForAccessibility="no-hide-descendants"
       style={[
         styles.base,
-        compact ? styles.compact : styles.full,
+        compact ? styles.compact : detail ? styles.detail : styles.full,
         {
           backgroundColor: presentation.background,
           borderColor: presentation.border,
@@ -83,6 +85,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   compact: { width: 78, height: 78, borderRadius: 20 },
+  detail: { width: '100%', aspectRatio: 4 / 3 },
   full: { width: '100%', height: 190 },
   image: { width: '100%', height: '100%' },
   orb: {

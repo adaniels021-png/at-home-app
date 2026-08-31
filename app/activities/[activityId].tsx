@@ -139,6 +139,7 @@ export default function ActivityDetailScreen() {
       <>
         <ActivityIllustration
           category={activity.category}
+          detail
           imageSource={activity.illustration_url ? { uri: activity.illustration_url } : undefined}
         />
         <Text style={[styles.category, { color: presentation.accent }]}>{ACTIVITY_CATEGORY_LABELS[activity.category]}</Text>
