@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,6 +19,7 @@ import {
   getAdminIllustrationState,
   isIllustrationBackendUnavailable,
   rejectActivityIllustration,
+  uploadActivityIllustration,
 } from '../../lib/adminActivityIllustrations';
 
 type Props = { activityId: string; eligible: boolean };
@@ -115,13 +117,50 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
   const candidate = state?.candidate;
   const approved = state?.approved;
   const canGenerate = !candidate || candidate.status === 'failed';
+  const failedManualUpload = candidate?.status === 'failed'
+    && candidate.source_type === 'manual_upload';
   const generationLabel = candidate?.status === 'failed'
-    ? approved ? 'Try Again' : 'Retry Illustration'
+    ? failedManualUpload
+      ? approved ? 'Generate New Illustration' : 'Generate with AI'
+      : approved ? 'Try Again' : 'Retry Illustration'
     : approved ? 'Generate New Illustration' : 'Generate Illustration';
   const keepCurrentIllustration = () => Alert.alert(
     'Current Illustration Kept',
     'No artwork or activity data was changed.',
   );
+  const pickAndUploadIllustration = async () => {
+    if (working) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Photo Access Needed', 'Please allow photo access to upload an illustration.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
+    });
+    const asset = result.canceled ? null : result.assets?.[0];
+    if (!asset) return;
+    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+      setSafeError('This image is too large. Choose an image under 5 MB.');
+      return;
+    }
+    const mimeType = asset.mimeType || '';
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(mimeType)) {
+      setSafeError("This image format isn't supported. Choose a PNG, JPG, or WebP.");
+      return;
+    }
+    await run(() => uploadActivityIllustration(
+      activityId,
+      {
+        uri: asset.uri,
+        name: asset.fileName || `activity-illustration.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`,
+        mimeType,
+      },
+      approved?.id || null,
+    ), true);
+  };
 
   return (
     <View style={styles.card}>
@@ -206,7 +245,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
 
       {eligible && candidate?.status === 'draft' ? (
         <View style={styles.artBlock}>
-          <Text style={styles.label}>{approved ? 'Replacement draft' : 'Draft ready for review'}</Text>
+          <Text style={styles.label}>{candidate.source_type === 'manual_upload' ? approved ? 'Uploaded replacement' : 'Uploaded Illustration' : approved ? 'Replacement draft' : 'Draft ready for review'}</Text>
           {previewUrl ? <Image source={{ uri: previewUrl }} style={styles.image} /> : null}
           <View style={styles.actions}>
             <Action label="Private Preview" icon="eye-outline" disabled={working} onPress={() => void loadPrivatePreview(candidate.id)} />
@@ -217,7 +256,8 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
       ) : null}
 
       {eligible && !backendUnavailable && !safeError && canGenerate ? (
-        <TouchableOpacity
+        <View style={styles.generationActions}>
+          <TouchableOpacity
           style={[styles.primary, working && styles.disabled]}
           disabled={working}
           onPress={() => void run(
@@ -226,8 +266,17 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
           )}
         >
           <Ionicons name="sparkles-outline" size={17} color="#FFFFFF" />
-          <Text style={styles.primaryText}>{generationLabel}</Text>
-        </TouchableOpacity>
+            <Text style={styles.primaryText}>{approved || candidate?.status === 'failed' ? generationLabel : 'Generate with AI'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.uploadButton, working && styles.disabled]}
+            disabled={working}
+            onPress={() => void pickAndUploadIllustration()}
+          >
+            <Ionicons name="cloud-upload-outline" size={17} color="#6D28D9" />
+            <Text style={styles.uploadButtonText}>{failedManualUpload ? 'Try Upload Again' : approved ? 'Upload Replacement' : 'Upload My Own Illustration'}</Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
@@ -264,6 +313,9 @@ const styles = StyleSheet.create({
   actions: { gap: 8 },
   primary: { minHeight: 46, borderRadius: 15, backgroundColor: '#7C3AED', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   primaryText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
+  generationActions: { gap: 9 },
+  uploadButton: { minHeight: 46, borderRadius: 15, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#DDD6FE', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  uploadButtonText: { color: '#6D28D9', fontWeight: '900', fontSize: 14 },
   secondary: { minHeight: 42, borderRadius: 13, borderWidth: 1, borderColor: '#DDD6FE', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   secondaryText: { color: '#6D28D9', fontWeight: '900', fontSize: 13 },
   destructive: { color: '#DC2626' },

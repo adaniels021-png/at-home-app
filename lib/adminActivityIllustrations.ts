@@ -61,6 +61,27 @@ export async function getActivityIllustrationPreview(illustrationId: string) {
   return data as { signed_url: string; expires_in: number };
 }
 
+export async function uploadActivityIllustration(
+  activityId: string,
+  file: { uri: string; name: string; mimeType: string },
+  expectedApprovedId: string | null,
+) {
+  const form = new FormData();
+  form.append('activity_id', activityId);
+  form.append('idempotency_key', idempotencyKey());
+  if (expectedApprovedId) form.append('expected_approved_illustration_id', expectedApprovedId);
+  form.append('image', {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType,
+  } as unknown as Blob);
+  const { data, error } = await supabase.functions.invoke('upload-activity-illustration', {
+    body: form,
+  });
+  if (error) throw await classifyIllustrationFunctionError(error);
+  return data;
+}
+
 export async function approveActivityIllustration(
   illustrationId: string,
   expectedApprovedId: string | null,

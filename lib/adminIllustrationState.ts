@@ -2,6 +2,7 @@ export type IllustrationSummary = {
   id: string;
   version: number;
   status: 'generating' | 'draft' | 'approved' | 'failed' | 'rejected' | 'superseded';
+  source_type?: 'ai' | 'manual_upload';
   approved_public_url?: string | null;
   source_content_hash: string;
   created_at?: string | null;

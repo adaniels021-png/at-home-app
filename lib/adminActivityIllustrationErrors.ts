@@ -40,6 +40,21 @@ export async function classifyIllustrationFunctionError(error: any): Promise<Err
       if (payload?.error === 'APPROVAL_CONFLICT') {
         return new IllustrationAdminError('Illustration state changed. Refresh before approving.');
       }
+      if (payload?.error === 'IMAGE_SIZE_INVALID') {
+        return new IllustrationAdminError('This image is too large. Choose an image under 5 MB.');
+      }
+      if (payload?.error === 'IMAGE_FORMAT_UNSUPPORTED' || String(payload?.error || '').includes('MIME')) {
+        return new IllustrationAdminError("This image format isn't supported. Choose a PNG, JPG, or WebP.");
+      }
+      if (payload?.error === 'IMAGE_DIMENSIONS_TOO_SMALL') {
+        return new IllustrationAdminError('This image is too small. Choose an image at least 512 px wide and tall.');
+      }
+      if (payload?.error === 'IMAGE_DIMENSIONS_TOO_LARGE') {
+        return new IllustrationAdminError('This image is too large. Choose dimensions no greater than 4096 px.');
+      }
+      if (payload?.error === 'ILLUSTRATION_CANDIDATE_ACTIVE') {
+        return new IllustrationAdminError('Review or resolve the current illustration draft before adding another.');
+      }
     } catch {
       // Never surface raw Edge/PostgREST response text to the Admin UI.
     }

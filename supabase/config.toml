@@ -438,3 +438,8 @@ entrypoint = "./functions/generate-daily-lessons/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/reconcile-revenuecat-entitlement/index.ts"
+
+[functions.upload-activity-illustration]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/upload-activity-illustration/index.ts"
