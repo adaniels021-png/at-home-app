@@ -13,6 +13,7 @@ import {
 
 import {
   AdminIllustrationState,
+  IllustrationAdminError,
   approveActivityIllustration,
   generateActivityIllustration,
   getActivityIllustrationPreview,
@@ -30,21 +31,25 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
   const [loading, setLoading] = useState(eligible);
   const [working, setWorking] = useState(false);
   const [backendUnavailable, setBackendUnavailable] = useState(false);
-  const [safeError, setSafeError] = useState<string | null>(null);
+  const [stateError, setStateError] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!eligible) return;
     try {
       setLoading(true);
-      setSafeError(null);
+      setStateError(null);
       setState(await getAdminIllustrationState(activityId));
+      setAiError(null);
+      setUploadError(null);
       setBackendUnavailable(false);
     } catch (error: unknown) {
       setState(null);
       if (isIllustrationBackendUnavailable(error)) {
         setBackendUnavailable(true);
       } else {
-        setSafeError('Illustration status is temporarily unavailable. Activity editing is unaffected.');
+        setStateError('Illustration status is temporarily unavailable. Activity editing is unaffected.');
       }
     } finally {
       setLoading(false);
@@ -53,10 +58,17 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const run = async (action: () => Promise<unknown>, refreshPersistedFailure = false) => {
+  const run = async (
+    action: () => Promise<unknown>,
+    actionKind: 'ai' | 'upload' | 'other',
+    refreshPersistedFailure = false,
+  ) => {
     if (working) return;
+    const previousCandidateId = state?.candidate?.id;
     try {
       setWorking(true);
+      if (actionKind === 'ai') setAiError(null);
+      if (actionKind === 'upload') setUploadError(null);
       await action();
       setPreviewUrl(null);
       await refresh();
@@ -66,21 +78,35 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         setState(null);
       } else {
         const safeMessage = error instanceof Error ? error.message : 'Illustration tools could not complete this request.';
-        if (refreshPersistedFailure) {
+        if (
+          actionKind === 'ai'
+          && error instanceof IllustrationAdminError
+          && error.kind === 'ai_transient'
+        ) {
+          setAiError(safeMessage);
+        } else if (refreshPersistedFailure) {
           try {
             const refreshed = await getAdminIllustrationState(activityId);
-            if (refreshed.candidate?.status === 'failed') {
+            if (
+              refreshed.candidate?.status === 'failed'
+              && refreshed.candidate.id !== previousCandidateId
+            ) {
               setState(refreshed);
-              setSafeError(null);
+              if (actionKind === 'ai') setAiError(null);
+              if (actionKind === 'upload') setUploadError(null);
               setBackendUnavailable(false);
             } else {
-              setSafeError(safeMessage);
+              if (actionKind === 'ai') setAiError(safeMessage);
+              else if (actionKind === 'upload') setUploadError(safeMessage);
+              else setStateError(safeMessage);
             }
           } catch {
-            setSafeError(safeMessage);
+            setStateError('Illustration status is temporarily unavailable. Activity editing is unaffected.');
           }
         } else {
-          setSafeError(safeMessage);
+          if (actionKind === 'ai') setAiError(safeMessage);
+          else if (actionKind === 'upload') setUploadError(safeMessage);
+          else setStateError(safeMessage);
         }
       }
     } finally {
@@ -92,7 +118,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
     if (working) return;
     try {
       setWorking(true);
-      setSafeError(null);
+      setStateError(null);
       const preview = await getActivityIllustrationPreview(illustrationId);
       if (typeof preview.signed_url !== 'string' || !preview.signed_url.trim()) {
         throw new Error('The private preview could not be loaded. Please try again.');
@@ -103,7 +129,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         setBackendUnavailable(true);
         setState(null);
       } else {
-        setSafeError(
+        setStateError(
           error instanceof Error
             ? error.message
             : 'Illustration tools could not complete this request.',
@@ -143,12 +169,12 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
     const asset = result.canceled ? null : result.assets?.[0];
     if (!asset) return;
     if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-      setSafeError('This image is too large. Choose an image under 5 MB.');
+      setUploadError('This image is too large. Choose an image under 5 MB.');
       return;
     }
     const mimeType = asset.mimeType || '';
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(mimeType)) {
-      setSafeError("This image format isn't supported. Choose a PNG, JPG, or WebP.");
+      setUploadError("This image format isn't supported. Choose a PNG, JPG, or WebP.");
       return;
     }
     await run(() => uploadActivityIllustration(
@@ -159,7 +185,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         mimeType,
       },
       approved?.id || null,
-    ), true);
+    ), 'upload', true);
   };
 
   return (
@@ -187,10 +213,10 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         </View>
       ) : null}
 
-      {eligible && safeError && !backendUnavailable ? (
+      {eligible && stateError && !backendUnavailable ? (
         <View style={styles.error}>
           <Text style={styles.errorTitle}>Illustration tools need attention</Text>
-          <Text style={styles.helper}>{safeError}</Text>
+          <Text style={styles.helper}>{stateError}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => void refresh()}>
             <Text style={styles.retryButtonText}>Retry Status</Text>
           </TouchableOpacity>
@@ -223,7 +249,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
         </View>
       ) : null}
 
-      {eligible && !backendUnavailable && !safeError && !approved && !candidate && !loading ? (
+      {eligible && !backendUnavailable && !stateError && !approved && !candidate && !loading ? (
         <Text style={styles.empty}>No illustration yet.</Text>
       ) : null}
 
@@ -249,19 +275,34 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
           {previewUrl ? <Image source={{ uri: previewUrl }} style={styles.image} /> : null}
           <View style={styles.actions}>
             <Action label="Private Preview" icon="eye-outline" disabled={working} onPress={() => void loadPrivatePreview(candidate.id)} />
-            <Action label={approved ? 'Approve Replacement' : 'Approve'} icon="checkmark-circle-outline" disabled={working} onPress={() => run(() => approveActivityIllustration(candidate.id, approved?.id || null))} />
-            <Action label="Reject" icon="close-circle-outline" destructive disabled={working} onPress={() => Alert.alert('Reject Illustration?', 'The activity and current approved artwork will remain unchanged.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Reject', style: 'destructive', onPress: () => void run(() => rejectActivityIllustration(candidate.id)) }])} />
+            <Action label={approved ? 'Approve Replacement' : 'Approve'} icon="checkmark-circle-outline" disabled={working} onPress={() => run(() => approveActivityIllustration(candidate.id, approved?.id || null), 'other')} />
+            <Action label="Reject" icon="close-circle-outline" destructive disabled={working} onPress={() => Alert.alert('Reject Illustration?', 'The activity and current approved artwork will remain unchanged.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Reject', style: 'destructive', onPress: () => void run(() => rejectActivityIllustration(candidate.id), 'other') }])} />
           </View>
         </View>
       ) : null}
 
-      {eligible && !backendUnavailable && !safeError && canGenerate ? (
+      {eligible && aiError && !backendUnavailable && !stateError && canGenerate ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>{aiError}</Text>
+          <Text style={styles.helper}>Try again later, or upload your own illustration.</Text>
+        </View>
+      ) : null}
+
+      {eligible && uploadError && !backendUnavailable && !stateError && canGenerate ? (
+        <View style={styles.error}>
+          <Text style={styles.errorTitle}>Upload could not be completed</Text>
+          <Text style={styles.helper}>{uploadError}</Text>
+        </View>
+      ) : null}
+
+      {eligible && !backendUnavailable && !stateError && canGenerate ? (
         <View style={styles.generationActions}>
           <TouchableOpacity
-          style={[styles.primary, working && styles.disabled]}
-          disabled={working}
+          style={[styles.primary, (working || Boolean(aiError)) && styles.disabled]}
+          disabled={working || Boolean(aiError)}
           onPress={() => void run(
             () => generateActivityIllustration(activityId, approved ? 'regenerate' : 'missing', approved?.id || null),
+            'ai',
             true,
           )}
         >

@@ -6,9 +6,15 @@ export class IllustrationBackendUnavailableError extends Error {
 }
 
 export class IllustrationAdminError extends Error {
-  constructor(message = 'Illustration tools could not complete this request.') {
+  readonly kind: 'general' | 'ai_transient';
+
+  constructor(
+    message = 'Illustration tools could not complete this request.',
+    kind: 'general' | 'ai_transient' = 'general',
+  ) {
     super(message);
     this.name = 'IllustrationAdminError';
+    this.kind = kind;
   }
 }
 
@@ -35,7 +41,10 @@ export async function classifyIllustrationFunctionError(error: any): Promise<Err
         return new IllustrationBackendUnavailableError();
       }
       if (payload?.error === 'GENERATION_RATE_LIMITED') {
-        return new IllustrationAdminError('Illustration generation is temporarily rate limited.');
+        return new IllustrationAdminError(
+          'AI generation is taking a short break.',
+          'ai_transient',
+        );
       }
       if (payload?.error === 'APPROVAL_CONFLICT') {
         return new IllustrationAdminError('Illustration state changed. Refresh before approving.');

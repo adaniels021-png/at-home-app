@@ -11,6 +11,7 @@ const edge = read('supabase/functions/upload-activity-illustration/index.ts');
 const migration = read('supabase/migrations/20260831122500_daily_adventures_manual_illustration_upload.sql');
 const component = read('components/admin/ActivityIllustrationAdminSection.tsx');
 const client = read('lib/adminActivityIllustrations.ts');
+const errors = read('lib/adminActivityIllustrationErrors.ts');
 const approval = read('supabase/functions/approve-activity-illustration/index.ts');
 const family = read('supabase/migrations/20260831120000_daily_adventures_activity_illustration_foundation.sql');
 
@@ -71,6 +72,31 @@ assert.match(component, /Upload My Own Illustration/);
 assert.match(component, /Upload Replacement/);
 assert.match(component, /Try Upload Again/);
 assert.match(component, /Uploaded Illustration/);
+assert.match(component, /const \[stateError, setStateError\]/);
+assert.match(component, /const \[aiError, setAiError\]/);
+assert.match(component, /const \[uploadError, setUploadError\]/);
+assert.match(errors, /AI generation is taking a short break/);
+assert.match(component, /error instanceof IllustrationAdminError/);
+assert.match(component, /error\.kind === 'ai_transient'/);
+assert.match(component, /refreshed\.candidate\.id !== previousCandidateId/);
+assert.match(component, /Try again later, or upload your own illustration/);
+assert.doesNotMatch(component, /!safeError && canGenerate/);
+const actionSection = component.slice(
+  component.indexOf('{eligible && !backendUnavailable && !stateError && canGenerate'),
+  component.indexOf('\n    </View>\n  );'),
+);
+assert.match(actionSection, /disabled=\{working \|\| Boolean\(aiError\)\}/);
+assert.match(actionSection, /disabled=\{working\}[\s\S]*pickAndUploadIllustration/);
+assert.doesNotMatch(actionSection, /uploadButton[\s\S]{0,180}Boolean\(aiError\)/);
+assert.match(component, /candidate\?\.status === 'generating'/);
+assert.match(component, /candidate\?\.status === 'draft'/);
+assert.match(component, /const canGenerate = !candidate \|\| candidate\.status === 'failed'/);
+const retryStatus = component.slice(
+  component.indexOf('Retry Status') - 180,
+  component.indexOf('Retry Status') + 80,
+);
+assert.match(retryStatus, /onPress=\{\(\) => void refresh\(\)\}/);
+assert.doesNotMatch(retryStatus, /generateActivityIllustration|uploadActivityIllustration/);
 const uploadHandler = component.slice(
   component.indexOf('const pickAndUploadIllustration'),
   component.indexOf('return ('),

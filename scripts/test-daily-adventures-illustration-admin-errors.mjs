@@ -38,6 +38,13 @@ const unexpectedFunction = await classifyIllustrationFunctionError({
 assert.ok(unexpectedFunction instanceof IllustrationAdminError);
 assert.doesNotMatch(unexpectedFunction.message, /database|private detail/i);
 
+const rateLimited = await classifyIllustrationFunctionError({
+  context: new Response(JSON.stringify({ error: 'GENERATION_RATE_LIMITED' }), { status: 429 }),
+});
+assert.ok(rateLimited instanceof IllustrationAdminError);
+assert.equal(rateLimited.kind, 'ai_transient');
+assert.equal(rateLimited.message, 'AI generation is taking a short break.');
+
 console.log('Daily Adventures C.3A Admin error classification: PASS');
 console.log('Missing exact RPC/function/storage: graceful unavailable');
 console.log('Permission/integrity/database failures: sanitized unexpected error');

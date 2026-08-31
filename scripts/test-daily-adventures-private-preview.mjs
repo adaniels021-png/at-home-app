@@ -11,7 +11,7 @@ const handler = component.slice(
 );
 
 assert.match(handler, /setWorking\(true\)/);
-assert.match(handler, /setSafeError\(null\)/);
+assert.match(handler, /setStateError\(null\)/);
 assert.match(handler, /await getActivityIllustrationPreview\(illustrationId\)/);
 assert.match(handler, /typeof preview\.signed_url !== 'string'/);
 assert.match(handler, /setPreviewUrl\(preview\.signed_url\)/);
