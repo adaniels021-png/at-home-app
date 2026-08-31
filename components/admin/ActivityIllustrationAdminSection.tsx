@@ -86,6 +86,32 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
     }
   };
 
+  const loadPrivatePreview = async (illustrationId: string) => {
+    if (working) return;
+    try {
+      setWorking(true);
+      setSafeError(null);
+      const preview = await getActivityIllustrationPreview(illustrationId);
+      if (typeof preview.signed_url !== 'string' || !preview.signed_url.trim()) {
+        throw new Error('The private preview could not be loaded. Please try again.');
+      }
+      setPreviewUrl(preview.signed_url);
+    } catch (error: unknown) {
+      if (isIllustrationBackendUnavailable(error)) {
+        setBackendUnavailable(true);
+        setState(null);
+      } else {
+        setSafeError(
+          error instanceof Error
+            ? error.message
+            : 'Illustration tools could not complete this request.',
+        );
+      }
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const candidate = state?.candidate;
   const approved = state?.approved;
   const canGenerate = !candidate || candidate.status === 'failed';
@@ -168,7 +194,7 @@ export function ActivityIllustrationAdminSection({ activityId, eligible }: Props
           <Text style={styles.label}>{approved ? 'Replacement draft' : 'Draft ready for review'}</Text>
           {previewUrl ? <Image source={{ uri: previewUrl }} style={styles.image} /> : null}
           <View style={styles.actions}>
-            <Action label="Private Preview" icon="eye-outline" disabled={working} onPress={() => run(async () => setPreviewUrl((await getActivityIllustrationPreview(candidate.id)).signed_url))} />
+            <Action label="Private Preview" icon="eye-outline" disabled={working} onPress={() => void loadPrivatePreview(candidate.id)} />
             <Action label={approved ? 'Approve Replacement' : 'Approve'} icon="checkmark-circle-outline" disabled={working} onPress={() => run(() => approveActivityIllustration(candidate.id, approved?.id || null))} />
             <Action label="Reject" icon="close-circle-outline" destructive disabled={working} onPress={() => Alert.alert('Reject Illustration?', 'The activity and current approved artwork will remain unchanged.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Reject', style: 'destructive', onPress: () => void run(() => rejectActivityIllustration(candidate.id)) }])} />
           </View>
